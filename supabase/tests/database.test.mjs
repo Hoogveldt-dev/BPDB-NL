@@ -310,6 +310,61 @@ const a8 = await als(Z, `select public.vereis_email()`);
 check('hulpfunctie is niet aan te roepen via de API', !!a8.fout, JSON.stringify(a8));
 
 // ---------------------------------------------------------------------------
+// Extra bier per kroeg (geen punten)
+// ---------------------------------------------------------------------------
+
+const K6 = await id('node/6');
+const puntenVoor = (await een(`select count(*)::int as n from public.punten`)).n;
+const x1 = await als(Y, `select * from public.meld_aanbod(${K6}, 'guinness', null, 50, 650)`);
+const ax = x1.rows?.[0];
+check('anonieme speler kan Guinness toevoegen', ax?.merk === 'Guinness' && ax?.prijs_cent === 650, JSON.stringify(x1));
+const x2 = await als(B, `select * from public.meld_aanbod(${K6}, 'cider')`);
+check('onbekende soort kan niet', /soort bier uit de lijst/.test(x2.fout ?? ''), JSON.stringify(x2));
+const x3 = await als(B, `select * from public.meld_aanbod(${K6}, 'witbier', 'Wieckse', null, 450)`);
+check('prijs zonder glasmaat kan niet', /glasmaat/.test(x3.fout ?? ''), JSON.stringify(x3));
+const x4 = await als(B, `select * from public.meld_aanbod(${K6}, 'witbier', 'Wieckse')`);
+check('bier zonder prijs toevoegen', !x4.fout && x4.rows?.[0]?.prijs_cent === null, JSON.stringify(x4));
+const x5 = await als(C, `select * from public.meld_aanbod(${K6}, 'witbier', 'wieckse')`);
+check('hetzelfde bier nog eens zonder prijs kan niet', /staat er al/.test(x5.fout ?? ''), JSON.stringify(x5));
+const x6 = await als(null, `select * from public.meld_aanbod(${K6}, 'ipa', 'Lowlander', 33, 550)`);
+check('anoniem zonder account kan niets toevoegen', !!x6.fout, JSON.stringify(x6));
+const x7 = await als(A, `insert into public.kroeg_aanbod (kroeg_id, soort) values (${K6}, 'ipa')`);
+check('direct schrijven in kroeg_aanbod kan niet', /permission denied/.test(x7.fout ?? ''), JSON.stringify(x7));
+const puntenNa = (await een(`select count(*)::int as n from public.punten`)).n;
+check('extra bier levert geen punten op', puntenNa === puntenVoor, `${puntenVoor} -> ${puntenNa}`);
+
+// Nieuwe prijs vervangt de oude, de oude blijft bewaard
+const x8 = await als(C, `select * from public.meld_aanbod(${K6}, 'guinness', null, 50, 690)`);
+check('nieuwe prijs voor hetzelfde bier', x8.rows?.[0]?.prijs_cent === 690, JSON.stringify(x8));
+const gs = (await db.query(`select status, prijs_cent from public.kroeg_aanbod where kroeg_id = ${K6} and soort = 'guinness' order by id`)).rows;
+check('oude prijs blijft bewaard als vervangen', gs.length === 2 && gs[0].status === 'vervangen' && gs[1].status === 'actief', JSON.stringify(gs));
+const x9 = await als(null, `select soort_naam, merk, volume_cl, prijs_cent, door from public.aanbod_overzicht where kroeg_id = ${K6} order by volgorde`);
+check('overzicht toont alleen wat er nu getapt wordt', x9.rows?.length === 2 && x9.rows[0].prijs_cent === 690 && x9.rows[0].door === 'anna2', JSON.stringify(x9));
+
+// Bevestigen en afkeuren
+const G = x8.rows[0].id;
+const y1 = await als(Y, `select public.beoordeel_aanbod(${G}, 'klopt')`);
+check('anonieme speler kan extra bier niet bevestigen', /Koppel eerst je e-mailadres/.test(y1.fout ?? ''), JSON.stringify(y1));
+const y2 = await als(C, `select public.beoordeel_aanbod(${G}, 'klopt')`);
+check('eigen extra bier bevestigen kan niet', /eigen melding/.test(y2.fout ?? ''), JSON.stringify(y2));
+const y3 = await als(A, `select public.beoordeel_aanbod(${G}, 'klopt') as s`);
+const gc = await een(`select gecontroleerd_op from public.kroeg_aanbod where id = ${G}`);
+check('klopt zet de datum van controle', y3.rows?.[0]?.s === 'actief' && gc.gecontroleerd_op !== null, JSON.stringify({ y3, gc }));
+const y4 = await als(A, `select public.beoordeel_aanbod(${G}, 'klopt_niet') as s`);
+check('later toch klopt niet (van de tap): telt als een', y4.rows?.[0]?.s === 'actief', JSON.stringify(y4));
+const y5 = await als(B, `select public.beoordeel_aanbod(${G}, 'klopt_niet') as s`);
+check('twee keer klopt niet: bier verdwijnt', y5.rows?.[0]?.s === 'weg', JSON.stringify(y5));
+const y6 = await als(D, `select public.beoordeel_aanbod(${G}, 'klopt')`);
+check('verdwenen bier beoordelen kan niet', /niet meer/.test(y6.fout ?? ''), JSON.stringify(y6));
+const W = x4.rows[0].id;
+const y7 = await als(B, `select public.beoordeel_aanbod(${W}, 'klopt_niet') as s`);
+check('eigen melding intrekken', y7.rows?.[0]?.s === 'weg', JSON.stringify(y7));
+const y8 = await als(null, `select count(*)::int as n from public.aanbod_overzicht where kroeg_id = ${K6}`);
+check('ingetrokken en afgekeurd bier niet meer in het overzicht', y8.rows?.[0]?.n === 0, JSON.stringify(y8));
+const y9 = await als(A, `select public.beoordeel_aanbod(${G}, 'klopt')`);
+check('afgekeurd bier opnieuw bevestigen kan niet', /niet meer/.test(y9.fout ?? ''), JSON.stringify(y9));
+
+// ---------------------------------------------------------------------------
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);
