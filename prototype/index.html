@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>BPDB Kroegkaart</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Prototype v1 van de Beer Price Database: speel kroegen vrij door een bierprijs in te vullen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Martian+Mono:wght@400;600&family=Rammetto+One&display=swap">
+<style>
+/* Layout: kaart is het spelbord. Desktop: zijpaneel links + kaart rechts. Telefoon: paneel boven, kaart in het midden, lijst eronder. Detailkaart als bottom sheet. */
+:root {
+  /* Donker als basis: een kroegkaart gebruik je 's avonds. Neutralen trekken naar stout-bruin. */
+  --bg: #14110e;
+  --surface: #1d1915;
+  --surface-2: #27221c;
+  --line: #3a3229;
+  --fg: #f3ede1;
+  --muted: #a79a87;
+  --amber: #f4b000;
+  --amber-ink: #1b1305;
+  --amber-text: #f6c443;
+  --fresh: #5ccf8c;
+  --stale: #f0993d;
+  --old: #ee6158;
+  --locked: #6f655a;
+  --land: #1a1613;
+  --street: #2b241e;
+  --water: #1b2b35;
+  --water-hi: #24394a;
+  --park: #1c2719;
+  --fog: #070605;
+  --fog-op: .66;
+  --t1: #7aa7ff;
+  --t2: #f4b000;
+  --t3: #d98bff;
+  --t4: #4fd1c5;
+  --shadow: 0 18px 50px rgb(0 0 0 / .45);
+
+  --f-display: "Rammetto One", "Arial Black", Impact, sans-serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --r-s: 8px;
+  --r-m: 14px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #e9ece9; --surface: #ffffff; --surface-2: #f2f4f1; --line: #d3d8d2;
+    --fg: #1a1714; --muted: #5d625b; --amber: #f2ad00; --amber-ink: #1b1305; --amber-text: #8c5e00;
+    --fresh: #1d9a57; --stale: #c26810; --old: #cc372f; --locked: #8b8f8a;
+    --land: #e4e7e1; --street: #fbfbf8; --water: #bcd3de; --water-hi: #d3e3ea; --park: #cfe0c4;
+    --fog: #4b5054; --fog-op: .48;
+    --t1: #2f63d6; --t2: #c98a00; --t3: #9b3fd1; --t4: #12877d;
+    --shadow: 0 18px 50px rgb(30 40 30 / .18);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #e9ece9; --surface: #ffffff; --surface-2: #f2f4f1; --line: #d3d8d2;
+  --fg: #1a1714; --muted: #5d625b; --amber: #f2ad00; --amber-ink: #1b1305; --amber-text: #8c5e00;
+  --fresh: #1d9a57; --stale: #c26810; --old: #cc372f; --locked: #8b8f8a;
+  --land: #e4e7e1; --street: #fbfbf8; --water: #bcd3de; --water-hi: #d3e3ea; --park: #cfe0c4;
+  --fog: #4b5054; --fog-op: .48;
+  --t1: #2f63d6; --t2: #c98a00; --t3: #9b3fd1; --t4: #12877d;
+  --shadow: 0 18px 50px rgb(30 40 30 / .18);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600; }
+
+/* ---------- App grid ---------- */
+.app {
+  display: grid; height: 100%;
+  grid-template-columns: minmax(340px, 400px) 1fr;
+  grid-template-rows: auto auto auto 1fr;
+  grid-template-areas: "head map" "hud map" "tabs map" "views map";
+}
+.head, .hud, .tabs, .views { background: var(--surface); border-right: 1px solid var(--line); padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: 18px; }
+.head { grid-area: head; padding-block: 16px 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hud { grid-area: hud; padding-block: 6px 14px; display: grid; gap: 10px; }
+.tabs { grid-area: tabs; padding-block: 0; display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.views { grid-area: views; overflow-y: auto; padding-block: 14px 28px; min-width: 0; }
+.map-wrap { grid-area: map; position: relative; overflow: hidden; background: var(--land); min-height: 0; }
+
+/* ---------- Header ---------- */
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { flex: none; }
+.brand-name { font-family: var(--f-display); font-size: 24px; line-height: 1; letter-spacing: .01em; }
+.brand-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.me-chip { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; flex: none; }
+.me-chip .pts { font-size: 13px; font-weight: 600; }
+.me-chip small { display: block; font-size: 10.5px; color: var(--muted); line-height: 1.1; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--amber-ink); flex: none; }
+
+/* ---------- HUD ---------- */
+.city-line { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.city-line h1 { font-size: 15px; font-weight: 700; margin: 0; }
+.city-line h1 span { color: var(--muted); font-weight: 500; }
+.city-line .num { font-size: 12px; color: var(--muted); }
+.bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--surface-2); gap: 2px; }
+.bar i { display: block; height: 100%; transition: flex-grow .6s ease; }
+.bar .b-fresh { background: var(--fresh); }
+.bar .b-stale { background: var(--stale); }
+.bar .b-old { background: var(--old); }
+.bar .b-locked { background: var(--locked); opacity: .45; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--surface-2); border-radius: var(--r-s); padding: 8px 10px; min-width: 0; }
+.stat b { display: block; font-size: 16px; font-weight: 600; }
+.stat span { font-size: 11px; color: var(--muted); }
+
+/* ---------- Tabs ---------- */
+.tab { appearance: none; background: none; border: 0; padding: 12px 12px 11px; font-weight: 600; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--amber); }
+.tab:hover { color: var(--fg); }
+
+/* ---------- Chips / segmented ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { appearance: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }
+.chip .c { font-family: var(--f-data); font-size: 11px; opacity: .75; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; }
+.d-fresh { background: var(--fresh); } .d-stale { background: var(--stale); } .d-old { background: var(--old); } .d-locked { background: var(--locked); }
+
+/* ---------- Pub list ---------- */
+.list-head { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 6px; }
+.pubs { list-style: none; margin: 0; padding: 0; }
+.pub-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px; }
+.pub-row:hover, .pub-row.sel { background: var(--surface-2); }
+.pub-row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pub-row .sub { font-size: 12px; color: var(--muted); }
+.pub-row .pr { text-align: right; font-size: 14px; font-weight: 600; }
+.pub-row .pr small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; }
+.pub-row.locked .nm { color: var(--muted); }
+
+/* ---------- Map ---------- */
+#map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
+#map.dragging { cursor: grabbing; }
+.m-land { fill: var(--land); }
+.m-street { stroke: var(--street); fill: none; }
+.m-water { stroke: var(--water); fill: none; }
+.m-water-hi { stroke: var(--water-hi); fill: none; }
+.m-waterfill { fill: var(--water); }
+.m-park { fill: var(--park); }
+.m-label { fill: var(--muted); font-family: var(--f-body); font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.m-label-s { fill: var(--muted); font-family: var(--f-body); font-size: 12px; font-style: italic; }
+.m-wijkline { stroke: var(--muted); stroke-dasharray: 2 7; stroke-linecap: round; fill: none; opacity: .5; }
+.m-fog { fill: var(--fog); opacity: var(--fog-op); pointer-events: none; }
+.wijk-tint { opacity: 0; transition: opacity .35s; pointer-events: none; }
+.show-wijken .wijk-tint { opacity: .22; }
+.pin { cursor: pointer; }
+.pin .pill { fill: var(--surface); stroke-width: 2.5; }
+.pin .ptxt { font-family: var(--f-data); font-size: 13px; font-weight: 600; fill: var(--fg); text-anchor: middle; }
+.pin.mine .pill { fill: var(--amber); }
+.pin.mine .ptxt { fill: var(--amber-ink); }
+.pin .tip { stroke-width: 0; }
+.pin.locked circle { fill: var(--surface-2); stroke: var(--locked); stroke-width: 2; }
+.pin.locked path { fill: var(--locked); }
+.pin:hover .pill, .pin:focus-visible .pill, .pin.sel .pill { stroke: var(--amber); stroke-width: 3.5; }
+.pin.locked:hover circle, .pin.locked.sel circle { stroke: var(--amber); }
+.pin:focus { outline: none; }
+.crown { fill: var(--amber); stroke: var(--surface); stroke-width: 1.5; }
+.pin.mine .crown { fill: var(--fg); }
+
+.map-ctrl { position: absolute; right: calc(14px + env(safe-area-inset-right, 0px)); bottom: 14px; display: grid; gap: 6px; }
+.map-ctrl button, .legend { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-s); box-shadow: var(--shadow); }
+.map-ctrl button { width: 40px; height: 40px; font-size: 20px; font-weight: 600; cursor: pointer; display: grid; place-items: center; }
+.map-ctrl button:hover { border-color: var(--amber); }
+.legend { position: absolute; left: calc(14px + env(safe-area-inset-left, 0px)); bottom: 14px; padding: 10px 12px; display: grid; gap: 6px; font-size: 12px; max-width: calc(100% - 100px); }
+.legend .row { display: flex; gap: 12px; flex-wrap: wrap; }
+.legend label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+
+/* ---------- Sheet (pub detail) ---------- */
+.sheet { position: absolute; top: 14px; right: calc(14px + env(safe-area-inset-right, 0px)); width: 380px; max-width: calc(100% - 28px); max-height: calc(100% - 28px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); box-shadow: var(--shadow); padding: 18px; display: grid; gap: 14px; z-index: 5; }
+.sheet-close { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--surface-2); cursor: pointer; font-size: 18px; }
+.sheet h2 { margin: 0; font-size: 20px; line-height: 1.2; padding-right: 36px; text-wrap: balance; }
+.sheet .addr { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.price-block { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.big-price { font-family: var(--f-display); font-size: 40px; line-height: 1; }
+.big-price small { font-family: var(--f-body); font-size: 13px; color: var(--muted); display: block; margin-top: 6px; }
+.norm { text-align: right; }
+.norm b { font-family: var(--f-data); font-size: 15px; }
+.norm div { font-size: 11.5px; color: var(--muted); }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.status { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); }
+.status.ok { color: var(--fresh); } .status.wait { color: var(--stale); } .status.bad { color: var(--old); }
+.meta { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.meta-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+.meta-row .lbl { color: var(--muted); width: 92px; flex: none; font-size: 12.5px; }
+.banner { border-radius: var(--r-s); padding: 10px 12px; font-size: 13px; background: color-mix(in srgb, var(--old) 14%, transparent); border: 1px solid color-mix(in srgb, var(--old) 45%, transparent); }
+.banner.lock { background: var(--surface-2); border-color: var(--line); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn { appearance: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 11px 12px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.btn:hover { border-color: var(--amber); }
+.btn.primary { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.wide { grid-column: 1 / -1; }
+.btn[disabled] { opacity: .55; cursor: default; filter: none; border-color: var(--line); }
+.btn .pts { font-family: var(--f-data); font-size: 12px; font-weight: 600; opacity: .8; }
+.spark { width: 100%; height: 56px; display: block; }
+.spark .ln { fill: none; stroke: var(--amber); stroke-width: 2; }
+.spark .ar { fill: var(--amber); opacity: .12; }
+.spark .gd { stroke: var(--line); stroke-width: 1; }
+.spark .dt { fill: var(--amber); }
+.spark text { fill: var(--muted); font-family: var(--f-data); font-size: 10px; }
+
+/* ---------- Form ---------- */
+.form { display: grid; gap: 14px; }
+.field { display: grid; gap: 6px; }
+.field > span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.stepper { display: grid; grid-template-columns: 48px 1fr 48px; gap: 6px; align-items: stretch; }
+.stepper button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; font-size: 22px; font-weight: 600; cursor: pointer; }
+.stepper input { width: 100%; text-align: center; font-family: var(--f-display); font-size: 30px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 0; }
+.calc { font-size: 12.5px; color: var(--muted); }
+.calc b { color: var(--fg); font-family: var(--f-data); font-weight: 600; }
+.warn { font-size: 12.5px; color: var(--old); }
+.toggle { display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--amber); }
+.toggle small { color: var(--muted); display: block; font-size: 11.5px; }
+.file { font-size: 12.5px; color: var(--muted); }
+.file input { margin-top: 4px; max-width: 100%; color: var(--muted); }
+
+/* ---------- Leaderboard ---------- */
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; border: 1px solid var(--line); }
+.seg button { border: 0; background: none; border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
+.lb-ctrl { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.goal { margin: 12px 0 4px; font-size: 13px; color: var(--muted); }
+.goal b { color: var(--amber-text); }
+.lb { list-style: none; margin: 8px 0 0; padding: 0; }
+.lb li { display: grid; grid-template-columns: 26px 28px 1fr auto; gap: 10px; align-items: center; padding: 9px 6px; border-bottom: 1px solid var(--line); border-radius: 6px; }
+.lb li.me { background: color-mix(in srgb, var(--amber) 13%, transparent); }
+.lb .rk { font-family: var(--f-data); font-size: 12px; color: var(--muted); text-align: right; }
+.lb .rk.top { color: var(--amber-text); font-weight: 600; }
+.lb .who { min-width: 0; }
+.lb .who b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb .who span { font-size: 11.5px; color: var(--muted); }
+.lb .sc { text-align: right; font-family: var(--f-data); font-size: 13px; font-weight: 600; }
+.lb .sc small { display: block; font-family: var(--f-body); font-size: 11px; color: var(--muted); font-weight: 400; }
+.wijken { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.wijk { border: 1px solid var(--line); border-radius: var(--r-s); padding: 10px; background: var(--surface-2); min-width: 0; }
+.wijk .wn { font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.wijk .wo { font-size: 12px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wijk .wb { height: 4px; border-radius: 4px; background: var(--line); margin-top: 8px; overflow: hidden; }
+.wijk .wb i { display: block; height: 100%; }
+h3 { font-size: 13px; margin: 22px 0 4px; }
+h3:first-child { margin-top: 0; }
+
+/* ---------- Rules ---------- */
+.rules p { margin: 6px 0 10px; color: var(--fg); max-width: 62ch; }
+.rules p.m { color: var(--muted); font-size: 13.5px; }
+.ptable { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.ptable td { padding: 8px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ptable td:last-child { text-align: right; font-family: var(--f-data); font-weight: 600; white-space: nowrap; }
+.ptable td small { display: block; color: var(--muted); font-size: 11.5px; }
+.ptable .neg { color: var(--old); }
+.callout { border-left: 3px solid var(--old); padding: 2px 0 2px 12px; margin: 10px 0; }
+.callout b { display: block; margin-bottom: 2px; }
+
+/* ---------- Toast ---------- */
+.toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; z-index: 50; width: min(420px, calc(100% - 32px)); pointer-events: none; }
+.toast { background: var(--fg); color: var(--bg); border-radius: 12px; padding: 11px 14px; font-size: 13.5px; font-weight: 600; box-shadow: var(--shadow); display: flex; gap: 10px; align-items: center; animation: tin .25s ease-out; }
+.toast .tp { font-family: var(--f-data); background: var(--amber); color: var(--amber-ink); border-radius: 6px; padding: 2px 6px; font-size: 12px; flex: none; }
+@keyframes tin { from { transform: translateY(10px); opacity: 0; } }
+
+/* ---------- Telefoon ---------- */
+@media (max-width: 820px) {
+  html, body { height: auto; }
+  .app { height: auto; grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: "head" "hud" "tabs" "map" "views"; }
+  .head, .hud, .tabs, .views { border-right: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: var(--surface); }
+  .views { overflow: visible; }
+  .map-wrap { height: 64vh; min-height: 400px; max-height: 640px; }
+  .app:not([data-tab="kaart"]) .map-wrap { display: none; }
+  .sheet { position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; max-height: 82vh; border-radius: 18px 18px 0 0; padding: 20px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); z-index: 40; animation: sup .25s ease-out; }
+  .sheet::before { content: ""; width: 40px; height: 4px; border-radius: 4px; background: var(--line); justify-self: center; margin-top: -8px; }
+  .toasts { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stat b { font-size: 14.5px; }
+}
+@keyframes sup { from { transform: translateY(30px); opacity: .4; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="app" id="app" data-tab="kaart">
+  <header class="head">
+    <div class="brand">
+      <svg width="34" height="40" viewBox="0 0 34 40" aria-hidden="true">
+        <path d="M5 9h24l-3 29H8z" fill="var(--amber)"/>
+        <path d="M8.6 30h16.8l-.8 8H9.4z" fill="var(--amber-ink)" opacity=".18"/>
+        <path d="M3 10c0-4 3-6 6-6 1-3 4-4 7-3 2-1 6-1 8 2 4 0 7 2 7 6 0 2-1 3-3 3H6c-2 0-3-1-3-2z" fill="var(--fg)"/>
+      </svg>
+      <div>
+        <div class="brand-name">BPDB</div>
+        <div class="brand-sub">Beer Price Database · Kroegkaart</div>
+      </div>
+    </div>
+    <div class="me-chip" title="Jouw punten">
+      <div class="avatar" style="background:var(--t2)">JIJ</div>
+      <div><span class="pts num" id="mePts">0</span><small>punten</small></div>
+    </div>
+  </header>
+
+  <section class="hud" aria-label="Voortgang van de stad">
+    <div class="city-line">
+      <h1>Voorbeeldstad <span>(fictief)</span></h1>
+      <span class="num" id="cityCount"></span>
+    </div>
+    <div class="bar" id="cityBar" role="img" aria-label="Verdeling van kroegen naar versheid"></div>
+    <div class="stats">
+      <div class="stat"><b class="num" id="stMedian"></b><span>mediaan per 25 cl</span></div>
+      <div class="stat"><b class="num" id="stFresh"></b><span>vers, onder 30 dagen</span></div>
+      <div class="stat"><b class="num" id="stMine"></b><span>jij bent kroegbaas</span></div>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Weergave">
+    <button class="tab" role="tab" id="tab-kaart" aria-selected="true" data-tab="kaart">Kaart</button>
+    <button class="tab" role="tab" id="tab-ranglijst" aria-selected="false" data-tab="ranglijst">Ranglijst</button>
+    <button class="tab" role="tab" id="tab-regels" aria-selected="false" data-tab="regels">Spelregels</button>
+  </nav>
+
+  <main class="map-wrap" id="mapWrap">
+    <svg id="map" role="application" aria-label="Kaart van Voorbeeldstad met kroegen"></svg>
+    <div class="legend">
+      <div class="row">
+        <span><i class="dot d-fresh"></i>vers</span>
+        <span><i class="dot d-stale"></i>30+ d</span>
+        <span><i class="dot d-old"></i>heroverbaar</span>
+        <span><i class="dot d-locked"></i>op slot</span>
+      </div>
+      <label for="wijkToggle"><input type="checkbox" id="wijkToggle"> Toon wie welke wijk beheerst</label>
+    </div>
+    <div class="map-ctrl">
+      <button id="zIn" aria-label="Inzoomen">+</button>
+      <button id="zOut" aria-label="Uitzoomen">&minus;</button>
+      <button id="zAll" aria-label="Hele stad tonen" style="font-size:13px">&#8634;</button>
+    </div>
+    <div class="sheet" id="sheet" hidden></div>
+  </main>
+
+  <section class="views">
+    <div id="view-kaart">
+      <div class="chips" id="filters" role="group" aria-label="Filter kroegen"></div>
+      <div class="list-head">
+        <span class="eyebrow" id="listTitle"></span>
+        <span class="eyebrow">per 25 cl</span>
+      </div>
+      <ul class="pubs" id="pubList"></ul>
+    </div>
+
+    <div id="view-ranglijst" hidden>
+      <div class="lb-ctrl">
+        <div class="seg" id="lbWho">
+          <button aria-pressed="true" data-v="spelers">Spelers</button>
+          <button aria-pressed="false" data-v="teams">Teams</button>
+        </div>
+        <div class="seg" id="lbWhen">
+          <button aria-pressed="false" data-v="week">Week</button>
+          <button aria-pressed="true" data-v="maand">Maand</button>
+          <button aria-pressed="false" data-v="altijd">Altijd</button>
+        </div>
+      </div>
+      <p class="goal" id="lbGoal"></p>
+      <ol class="lb" id="lbList"></ol>
+      <h3>Wijken</h3>
+      <p class="goal" style="margin-top:0">Wie de meeste kroegbaas-titels in een wijk heeft, beheerst die wijk.</p>
+      <div class="wijken" id="wijkGrid"></div>
+    </div>
+
+    <div id="view-regels" class="rules" hidden>
+      <h3>Zo speel je</h3>
+      <p>Elke kroeg in de stad staat al op de kaart, maar zit onder de mist. Vul als eerste een bierprijs in en je speelt hem vrij. Punten krijg je pas als een andere speler je prijs bevestigt.</p>
+      <table class="ptable">
+        <tr><td>Kroeg vrijspelen<small>Eerste prijs ooit. Je naam blijft als ontdekker op de kroeg.</small></td><td>+50</td></tr>
+        <tr><td>Prijswijziging melden<small>Na bevestiging word je kroegbaas.</small></td><td>+30</td></tr>
+        <tr><td>Kroeg heroveren<small>Niemand heeft hem 90 dagen gecontroleerd.</small></td><td>+25</td></tr>
+        <tr><td>&ldquo;Klopt nog&rdquo; bevestigen<small>Max. 1 keer per kroeg per 7 dagen.</small></td><td>+5</td></tr>
+        <tr><td>Foto van de prijslijst<small>Versnelt de bevestiging.</small></td><td>+5</td></tr>
+        <tr><td>Ter plaatse<small>Binnen 75 meter van de kroeg. Niet verplicht.</small></td><td>&times;1,5</td></tr>
+        <tr><td>Bijdrage weerlegd<small>Ook je betrouwbaarheid daalt.</small></td><td class="neg">&minus;20</td></tr>
+      </table>
+
+      <h3>Kroegbaas</h3>
+      <p>De kroegbaas is wie de laatste bevestigde prijswijziging meldde. Je houdt de titel zolang de prijs gelijk blijft. Controleert 90 dagen niemand de kroeg, dan komt de titel vrij voor wie hem als eerste weer checkt.</p>
+      <p class="m">Waarom niet gewoon de laatste bijdrage? Dan loont het om elke dag blind op &ldquo;klopt nog&rdquo; te tikken. Dat levert ruis op in plaats van informatie.</p>
+
+      <h3>Betrouwbaarheid</h3>
+      <p>Naast punten heb je een betrouwbaarheid. Die stijgt als anderen jouw prijzen bevestigen en daalt als ze worden weerlegd. Spelers boven 90% kunnen een prijs alleen bevestigen; anderen hebben samen twee stemmen nodig. Prijzen die flink afwijken van de stadsmediaan vragen altijd twee bevestigingen.</p>
+
+      <h3>Wat we bewust niet doen</h3>
+      <div class="callout"><b>Geen tokens, geen virtueel vastgoed</b>Kroegen kun je niet kopen of verkopen. Echt geld trekt speculanten aan in plaats van bierdrinkers, valt onder MiCA en mogelijk de Kansspelautoriteit, en een onveranderlijk grootboek botst met foutcorrectie en de AVG.</div>
+      <div class="callout"><b>We belonen bijdragen, niet drinken</b>Geen opdrachten als &ldquo;bezoek vijf kroegen vanavond&rdquo;. Een prijs aflezen kan zonder iets te bestellen. Alleen voor 18+.</div>
+    </div>
+  </section>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+  /* ---------- Hulpjes ---------- */
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+  const R = mulberry32(51126);
+  const rnd = (a,b) => a + R()*(b-a);
+  const rint = (a,b) => Math.floor(rnd(a,b+1));
+  const pick = arr => arr[Math.floor(R()*arr.length)];
+  const eur = c => new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(c/100);
+  const eurShort = c => (c/100).toFixed(2).replace('.',',');
+  const nf = n => n.toLocaleString('nl-NL');
+  const $ = s => document.querySelector(s);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Spelwereld ---------- */
+  const W = 900, H = 1000, CX = 450, CY = 130, R_CENTRUM = 215;
+  const GLAZEN = [{id:'fluitje',naam:'Fluitje',cl:20},{id:'vaasje',naam:'Vaasje',cl:25},{id:'glas',naam:'Glas',cl:33},{id:'pul',naam:'Pul',cl:50}];
+  const MERKEN = ['Heineken','Amstel','Grolsch','Brand','Bavaria','Hertog Jan'];
+  const TEAMS = {
+    t1:{naam:'Sv. Ketelbinkie', kleur:'var(--t1)'},
+    t2:{naam:'Roeivereniging De Kromme Riem', kleur:'var(--t2)'},
+    t3:{naam:'Dispuut Gouden Tap', kleur:'var(--t3)'},
+    t4:{naam:'HC Oost', kleur:'var(--t4)'}
+  };
+  const SPELERS = [
+    {id:'me', naam:'Jij', team:'t2'},
+    {id:'fj', naam:'fluitjesjager', team:'t1'},
+    {id:'sk', naam:'schuimkraag', team:'t3'},
+    {id:'bb', naam:'barkrukbaron', team:'t1'},
+    {id:'vv', naam:'vaasjevolger', team:'t4'},
+    {id:'pp', naam:'pilsprofeet', team:'t3'},
+    {id:'hh', naam:'happyhourhanna', team:'t2'},
+    {id:'tm', naam:'tapmeester', team:'t4'},
+    {id:'kk', naam:'kratkoning', team:'t1'},
+    {id:'mo', naam:'moutmeisje', team:'t2'}
+  ];
+  const S = Object.fromEntries(SPELERS.map(p => [p.id, p]));
+  const WIJKEN = {
+    centrum:{naam:'Centrum', basis:410},
+    oost:{naam:'Oost', basis:355},
+    zuid:{naam:'Zuid', basis:375},
+    west:{naam:'West', basis:340}
+  };
+
+  const deg = a => a*Math.PI/180;
+  const P = (a,r) => [CX + r*Math.cos(deg(a)), CY + r*Math.sin(deg(a))];
+  const inPark = (x,y) => ((x-175)/135)**2 + ((y-870)/80)**2 < 1;
+  function wijkVan(x,y){
+    const d = Math.hypot(x-CX, y-CY);
+    if (d < R_CENTRUM) return 'centrum';
+    const a = Math.atan2(y-CY, x-CX)*180/Math.PI;
+    return a < 60 ? 'oost' : a < 120 ? 'zuid' : 'west';
+  }
+
+  /* Kroegnamen: fictief */
+  const ADJ = ['Gouden','Zwarte','Blauwe','Ouwe','Kromme','Vergulde','Rode','Stille','Dolle','Groene','Witte','Lange','Halve','Scheve'];
+  const NOUN = ['Tap','Kat','Sluis','Haring','Kruik','Zwaan','Brug','Ton','Molen','Hoek','Pomp','Kraan','Klok','Gaper','Schuit','Kikker','Valk','Pijp'];
+  const VAST = ['Kade 14','Het Pomphuis','Café Ketelbinkie','De Schuimkraag','Bar Fluitje','Het Wapen van Oost','Proeflokaal Het Vat','De Laatste Ronde','Café Onder de Toren','Het Sluiswachtershuis'];
+  const STRATEN = ['Tapsteeg','Moutkade','Hopstraat','Gistgracht','Kuipersteeg','Brouwerskade','Ketelstraat','Vatenplein','Schuimstraat','Fustkade','Mouterspad','Kraansteeg'];
+  const usedNames = new Set();
+  function naam(i){
+    if (i % 5 === 2 && VAST[i/5|0]) return VAST[i/5|0];
+    let n; do { n = (R()<.2 ? 'Proeflokaal ' : R()<.3 ? 'Bar ' : 'Café ') + 'De ' + pick(ADJ) + ' ' + pick(NOUN); } while (usedNames.has(n));
+    usedNames.add(n); return n;
+  }
+
+  /* Kroegen plaatsen zonder overlap */
+  const pubs = [];
+  let guard = 0;
+  while (pubs.length < 56 && guard++ < 20000) {
+    const x = rnd(45, 855), y = rnd(205, 965);
+    if (inPark(x,y)) continue;
+    if (pubs.some(p => ((p.x-x)/66)**2 + ((p.y-y)/40)**2 < 1)) continue;
+    pubs.push({x, y});
+  }
+  pubs.forEach((p,i) => {
+    p.id = i;
+    p.naam = naam(i);
+    p.adres = pick(STRATEN) + ' ' + rint(1,148);
+    p.wijk = wijkVan(p.x,p.y);
+    p.unlocked = R() < .64;
+    p.ontdekker = null; p.baas = null; p.mijnCheck = false;
+    if (!p.unlocked) return;
+    const glas = R()<.5 ? GLAZEN[1] : R()<.5 ? GLAZEN[0] : R()<.6 ? GLAZEN[3] : GLAZEN[2];
+    p.glas = glas.id; p.merk = pick(MERKEN);
+    const per25 = WIJKEN[p.wijk].basis + rnd(-45, 55);
+    p.prijs = Math.round(per25*glas.cl/25/10)*10;
+    const r = R();
+    p.age = r < .5 ? rint(1,29) : r < .75 ? rint(31,89) : rint(92,170);
+    const s = R();
+    p.status = s < .14 ? 'onbevestigd' : s < .19 ? 'betwist' : 'bevestigd';
+    p.conf = p.status === 'onbevestigd' ? 1 : p.status === 'betwist' ? 2 : rint(2,7);
+    const others = SPELERS.slice(1);
+    p.ontdekker = R() < .1 ? 'me' : pick(others).id;
+    p.baas = p.age > 90 ? null : (R() < .07 ? 'me' : pick(others).id);
+    p.sinds = p.age + rint(0, 140);
+    /* Prijshistorie: 6 metingen, met een stap bij de laatste wijziging */
+    const stap = rint(1,4)*10, stapAt = rint(1,4);
+    p.hist = Array.from({length:6}, (_,k) => k < stapAt ? p.prijs - stap : p.prijs);
+  });
+  /* Zorg dat "Jij" een startpositie heeft */
+  pubs.filter(p => p.unlocked && p.age < 60).slice(0,3).forEach(p => p.baas = 'me');
+  pubs.filter(p => p.unlocked).slice(5,9).forEach(p => p.ontdekker = 'me');
+
+  const glasVan = id => GLAZEN.find(g => g.id === id);
+  const per25 = p => Math.round(p.prijs*25/glasVan(p.glas).cl);
+  const fresh = p => !p.unlocked ? 'locked' : p.age <= 30 ? 'fresh' : p.age <= 90 ? 'stale' : 'old';
+  const kleur = {fresh:'var(--fresh)', stale:'var(--stale)', old:'var(--old)', locked:'var(--locked)'};
+  function mediaan(){ const v = pubs.filter(p=>p.unlocked).map(per25).sort((a,b)=>a-b); const m = v.length>>1; return v.length%2 ? v[m] : Math.round((v[m-1]+v[m])/2); }
+
+  /* Punten en ranglijst-basis */
+  const extra = {}; SPELERS.forEach(s => extra[s.id] = {altijd: rint(150, 820), maand: rint(60, 380), week: rint(10, 140), trust: rint(74, 98)});
+  extra.me = {altijd: 610, maand: 235, week: 45, trust: 91};
+  /* Startstand: punten uit ontdekte kroegen en titels. Daarna komen punten alleen nog via bevestigde acties binnen. */
+  SPELERS.forEach(s => {
+    const o = pubs.filter(p => p.ontdekker === s.id).length, b = pubs.filter(p => p.baas === s.id).length;
+    extra[s.id].altijd += o*50 + b*30; extra[s.id].maand += b*30; extra[s.id].week += b*10;
+  });
+  const punten = id => extra[id];
+
+  /* ---------- Kaart tekenen ---------- */
+  const svg = $('#map');
+  const NS = 'http://www.w3.org/2000/svg';
+  let selected = null;
+  function arcPath(r, a1=4, a2=176){ const [x1,y1]=P(a1,r), [x2,y2]=P(a2,r); return `M${x1} ${y1}A${r} ${r} 0 0 1 ${x2} ${y2}`; }
+  function sector(a1,a2,r1,r2){
+    const [ax,ay]=P(a1,r1),[bx,by]=P(a1,r2),[cx,cy]=P(a2,r2),[dx,dy]=P(a2,r1);
+    return `M${ax} ${ay}L${bx} ${by}A${r2} ${r2} 0 0 1 ${cx} ${cy}L${dx} ${dy}A${r1} ${r1} 0 0 0 ${ax} ${ay}Z`;
+  }
+  const WIJK_GEO = {
+    centrum: (()=>{const [x1,y1]=P(-12,R_CENTRUM),[x2,y2]=P(192,R_CENTRUM);return `M${x1} ${y1}A${R_CENTRUM} ${R_CENTRUM} 0 1 1 ${x2} ${y2}Z`})(),
+    oost: sector(-40,60,R_CENTRUM,1500),
+    zuid: sector(60,120,R_CENTRUM,1500),
+    west: sector(120,220,R_CENTRUM,1500)
+  };
+  const WIJK_LABEL = { centrum: P(90,150), oost: P(28,560), zuid: P(90,640), west: P(150,560) };
+
+  function drawBase(){
+    let s = `<defs>
+      <clipPath id="clipW"><rect x="0" y="0" width="${W}" height="${H}"/></clipPath>
+      <radialGradient id="hole"><stop offset="0" stop-color="#000" stop-opacity="1"/><stop offset=".55" stop-color="#000" stop-opacity="1"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <mask id="fogMask" maskUnits="userSpaceOnUse" x="-400" y="-400" width="${W+800}" height="${H+800}"><rect x="-400" y="-400" width="${W+800}" height="${H+800}" fill="#fff"/><g id="holes"></g></mask>
+    </defs>
+    <rect class="m-land" x="-400" y="-400" width="${W+800}" height="${H+800}"/>
+    <g clip-path="url(#clipW)">
+      <g id="tints"></g>
+      <ellipse class="m-park" cx="175" cy="870" rx="135" ry="80"/>
+      <ellipse class="m-park" cx="770" cy="930" rx="70" ry="45"/>`;
+    /* ringstraten en radiale straten */
+    [125,212,297,382,470,560,650,740,830].forEach(r => s += `<path class="m-street" stroke-width="${r%2?5:7}" d="${arcPath(r,-30,210)}"/>`);
+    [-15,12,35,58,82,106,130,152,175,198].forEach(a => { const [x1,y1]=P(a,60),[x2,y2]=P(a,1300); s += `<line class="m-street" stroke-width="6" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`; });
+    for (let i=0;i<14;i++){ const a=rnd(0,180), r=rnd(240,800); const [x,y]=P(a,r); s += `<line class="m-street" stroke-width="3.5" x1="${x}" y1="${y}" x2="${x+rnd(-60,60)}" y2="${y+rnd(30,70)}"/>`; }
+    /* grachten */
+    [170,255,340,425].forEach(r => s += `<path class="m-water" stroke-width="13" d="${arcPath(r)}"/><path class="m-water-hi" stroke-width="2" d="${arcPath(r)}"/>`);
+    s += `<path class="m-water" stroke-width="10" d="M${CX} ${CY+40}L${CX} ${CY+430}"/>`;
+    /* rivier en haven */
+    s += `<path class="m-waterfill" d="M-20 40C180 70 330 135 450 112S760 50 920 92V-20H-20Z"/>
+          <path class="m-water" stroke-width="58" d="M-20 70C180 98 330 160 450 136S760 80 920 118"/>
+          <rect class="m-waterfill" x="742" y="120" width="160" height="62" rx="6"/>
+          <text class="m-label-s" x="90" y="50">De Rivier</text>
+          <text class="m-label-s" x="770" y="160">Haven</text>
+          <text class="m-label-s" x="125" y="875">Stadspark</text>`;
+    /* wijkgrenzen en labels */
+    Object.values(WIJK_GEO).forEach(d => s += `<path class="m-wijkline" stroke-width="2.5" d="${d}"/>`);
+    Object.entries(WIJK_LABEL).forEach(([k,[x,y]]) => s += `<text class="m-label" x="${x}" y="${y}" text-anchor="middle">${WIJKEN[k].naam}</text>`);
+    s += `</g>
+      <rect class="m-fog" x="-400" y="-400" width="${W+800}" height="${H+800}" mask="url(#fogMask)"/>
+      <g id="pins"></g>`;
+    svg.innerHTML = s;
+  }
+
+  const LOCK = 'M-3.6 -1h7.2v6h-7.2zM-2.2 -1v-2a2.2 2.2 0 0 1 4.4 0v2h-1.2v-2a1 1 0 0 0 -2 0v2z';
+  const CROWN = 'M-8 4l-2-9 5.5 4 4.5-7 4.5 7 5.5-4-2 9z';
+  function drawPins(){
+    const holes = svg.querySelector('#holes'), g = svg.querySelector('#pins');
+    holes.innerHTML = pubs.filter(p=>p.unlocked).map(p => `<circle data-h="${p.id}" cx="${p.x}" cy="${p.y-10}" r="${p.anim ? 0 : 78}" fill="url(#hole)"/>`).join('');
+    const order = [...pubs].sort((a,b) => a.y - b.y);
+    g.innerHTML = order.map(p => {
+      const st = fresh(p), sel = selected === p.id ? ' sel' : '';
+      const lbl = `${p.naam}, ${p.unlocked ? eur(p.prijs)+' voor een '+glasVan(p.glas).naam.toLowerCase() : 'op slot'}`;
+      if (!p.unlocked) return `<g class="pin locked${sel}" data-id="${p.id}" tabindex="0" role="button" aria-label="${lbl}" transform="translate(${p.x} ${p.y})"><circle r="11"/><path d="${LOCK}" transform="scale(1.25)"/></g>`;
+      const mine = p.baas === 'me' ? ' mine' : '';
+      return `<g class="pin${mine}${sel}" data-id="${p.id}" tabindex="0" role="button" aria-label="${lbl}" transform="translate(${p.x} ${p.y})">
+        <path class="tip" d="M-6 -4L0 4L6 -4Z" fill="${kleur[st]}"/>
+        <rect class="pill" x="-31" y="-28" width="62" height="25" rx="12.5" stroke="${kleur[st]}"/>
+        <text class="ptxt" x="0" y="-11">${eurShort(per25(p))}</text>
+        ${p.baas === 'me' ? `<path class="crown" d="${CROWN}" transform="translate(24 -29) scale(.75)"/>` : ''}
+      </g>`;
+    }).join('');
+    pubs.forEach(p => { if (p.anim) { animateHole(p); p.anim = false; } });
+  }
+  function animateHole(p){
+    const c = svg.querySelector(`[data-h="${p.id}"]`); if (!c) return;
+    if (reduce) { c.setAttribute('r', 78); return; }
+    const t0 = performance.now();
+    (function step(t){ const k = Math.min(1,(t-t0)/900), e = 1-Math.pow(1-k,3); c.setAttribute('r', (78*e).toFixed(1)); if (k<1) requestAnimationFrame(step); })(t0);
+  }
+  function drawTints(){
+    const own = wijkEigenaars('spelers');
+    svg.querySelector('#tints').innerHTML = Object.entries(WIJK_GEO).map(([k,d]) => {
+      const o = own[k]; const c = o ? TEAMS[S[o.id].team].kleur : 'transparent';
+      return `<path class="wijk-tint" d="${d}" fill="${c}"/>`;
+    }).join('');
+  }
+
+  /* ---------- Pannen en zoomen ---------- */
+  const vb = {x:0, y:150, w:W, h:H-150};
+  const FULL = {...vb};
+  function setVB(){ svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
+  svg.setAttribute('preserveAspectRatio','xMidYMid slice');
+  function upp(){ const r = svg.getBoundingClientRect(); return 1/Math.max(r.width/vb.w, r.height/vb.h); }
+  function clamp(){ vb.w = Math.min(Math.max(vb.w, 220), 1100); vb.h = vb.w*(FULL.h/FULL.w); vb.x = Math.min(Math.max(vb.x, -150), W - vb.w + 150); vb.y = Math.min(Math.max(vb.y, 0), H - vb.h + 120); }
+  function zoom(f, cx, cy){ cx ??= vb.x+vb.w/2; cy ??= vb.y+vb.h/2; const nw = vb.w*f, nh = vb.h*f; vb.x = cx-(cx-vb.x)*f; vb.y = cy-(cy-vb.y)*f; vb.w = nw; vb.h = nh; clamp(); setVB(); }
+  function focusPub(p){ const r = svg.getBoundingClientRect(); const s = upp(); const visW = r.width*s, visH = r.height*s; vb.x = p.x - vb.w/2 + (innerWidth>820 ? Math.min(190, visW*.22) : 0); vb.y = p.y - vb.h/2 + (innerWidth>820 ? 0 : visH*.12); clamp(); setVB(); }
+  let drag = null, moved = false;
+  svg.addEventListener('pointerdown', e => { drag = {x:e.clientX, y:e.clientY, vx:vb.x, vy:vb.y, id:e.pointerId}; moved = false; });
+  svg.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX-drag.x, dy = e.clientY-drag.y;
+    if (!moved && Math.hypot(dx,dy) < 5) return;
+    if (!moved) { moved = true; svg.setPointerCapture(drag.id); svg.classList.add('dragging'); }
+    const s = upp(); vb.x = drag.vx - dx*s; vb.y = drag.vy - dy*s; clamp(); setVB();
+  });
+  const endDrag = () => { drag = null; svg.classList.remove('dragging'); };
+  svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
+  svg.addEventListener('wheel', e => { e.preventDefault(); const r = svg.getBoundingClientRect(), s = upp(); const cx = vb.x + (e.clientX - r.left - (r.width - vb.w/s)/2)*s, cy = vb.y + (e.clientY - r.top - (r.height - vb.h/s)/2)*s; zoom(e.deltaY > 0 ? 1.12 : 1/1.12, cx, cy); }, {passive:false});
+  svg.addEventListener('click', e => { if (moved) return; const g = e.target.closest('.pin'); if (g) openPub(+g.dataset.id); });
+  svg.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && e.target.closest('.pin')) { e.preventDefault(); openPub(+e.target.closest('.pin').dataset.id); } });
+  $('#zIn').onclick = () => zoom(1/1.3); $('#zOut').onclick = () => zoom(1.3);
+  $('#zAll').onclick = () => { Object.assign(vb, FULL); if (innerWidth <= 820) { vb.w = 620; vb.h = vb.w*(FULL.h/FULL.w); vb.x = 140; vb.y = 190; } clamp(); setVB(); };
+  $('#wijkToggle').onchange = e => $('#mapWrap').classList.toggle('show-wijken', e.target.checked);
+
+  /* ---------- HUD ---------- */
+  let shownPts = 0;
+  function myPts(){ return punten('me').altijd; }
+  function countUp(){
+    const target = myPts(), from = shownPts, t0 = performance.now(), el = $('#mePts');
+    if (reduce || from === target) { shownPts = target; el.textContent = nf(target); return; }
+    (function step(t){ const k = Math.min(1,(t-t0)/700); shownPts = Math.round(from + (target-from)*k); el.textContent = nf(shownPts); if (k<1) requestAnimationFrame(step); })(t0);
+  }
+  function drawHud(){
+    const n = {fresh:0, stale:0, old:0, locked:0}; pubs.forEach(p => n[fresh(p)]++);
+    const un = pubs.length - n.locked;
+    $('#cityCount').textContent = `${un} van ${pubs.length} vrijgespeeld · ${Math.round(un/pubs.length*100)}%`;
+    $('#cityBar').innerHTML = ['fresh','stale','old','locked'].map(k => `<i class="b-${k}" style="flex-grow:${n[k]}" title="${n[k]}"></i>`).join('');
+    $('#stMedian').textContent = eur(mediaan());
+    $('#stFresh').textContent = Math.round(n.fresh/un*100) + '%';
+    $('#stMine').textContent = pubs.filter(p => p.baas === 'me').length + 'x';
+    countUp();
+  }
+
+  /* ---------- Lijst ---------- */
+  const FILTERS = [
+    {id:'goedkoop', naam:'Goedkoopst', f:p=>p.unlocked, sort:(a,b)=>per25(a)-per25(b), titel:'Goedkoopste kroegen'},
+    {id:'slot', naam:'Op slot', f:p=>!p.unlocked, sort:(a,b)=>a.naam.localeCompare(b.naam), titel:'Nog vrij te spelen'},
+    {id:'herover', naam:'Heroverbaar', f:p=>fresh(p)==='old', sort:(a,b)=>b.age-a.age, titel:'Langst niet gecontroleerd'},
+    {id:'mijn', naam:'Mijn kroegen', f:p=>p.baas==='me', sort:(a,b)=>a.age-b.age, titel:'Jij bent kroegbaas'}
+  ];
+  let filter = 'goedkoop', showAll = false;
+  function drawList(){
+    $('#filters').innerHTML = FILTERS.map(f => `<button class="chip" aria-pressed="${f.id===filter}" data-f="${f.id}">${f.naam}<span class="c">${pubs.filter(f.f).length}</span></button>`).join('');
+    const F = FILTERS.find(f => f.id === filter);
+    $('#listTitle').textContent = F.titel;
+    const all = pubs.filter(F.f).sort(F.sort), rows = showAll ? all : all.slice(0, 12);
+    $('#pubList').innerHTML = (rows.length ? rows.map(p => {
+      const st = fresh(p);
+      return `<li class="pub-row${p.unlocked?'':' locked'}${selected===p.id?' sel':''}" data-id="${p.id}" tabindex="0">
+        <i class="dot d-${st}"></i>
+        <div style="min-width:0"><div class="nm">${p.naam}</div><div class="sub">${WIJKEN[p.wijk].naam} · ${p.unlocked ? (st==='old' ? `${p.age} dagen niet gecheckt` : `${p.merk}, ${glasVan(p.glas).naam.toLowerCase()} ${glasVan(p.glas).cl} cl`) : 'Speel vrij voor +50'}</div></div>
+        <div class="pr num">${p.unlocked ? eur(per25(p)) : '?'}${p.unlocked ? `<small>${eur(p.prijs)} / ${glasVan(p.glas).cl} cl</small>` : ''}</div>
+      </li>`;
+    }).join('') : `<li class="sub" style="padding:14px 6px;color:var(--muted)">Nog niets hier. Vul een prijs in bij een kroeg op slot of een heroverbare kroeg om kroegbaas te worden.</li>`)
+      + (all.length > rows.length ? `<li style="padding-top:12px"><button class="btn" style="width:100%" id="moreBtn">Toon alle ${all.length}</button></li>` : '');
+  }
+  $('#filters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { filter = b.dataset.f; showAll = false; drawList(); } });
+  $('#pubList').addEventListener('click', e => { if (e.target.closest('#moreBtn')) { showAll = true; return drawList(); } const li = e.target.closest('[data-id]'); if (li) { const p = pubs[+li.dataset.id]; openPub(p.id); focusPub(p); if (innerWidth<=820) $('#mapWrap').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'}); } });
+  $('#pubList').addEventListener('keydown', e => { if (e.key==='Enter') e.target.closest('[data-id]')?.click(); });
+
+  /* ---------- Detailkaart ---------- */
+  const sheet = $('#sheet');
+  function openPub(id){ selected = id; renderSheet(); drawPins(); drawList(); }
+  function closeSheet(){ selected = null; sheet.hidden = true; drawPins(); drawList(); }
+  function spark(p){
+    const v = p.hist.map(c => Math.round(c*25/glasVan(p.glas).cl)); const lo = Math.min(...v)-15, hi = Math.max(...v)+15;
+    const w = 320, h = 56, X = i => 6 + i*(w-40)/(v.length-1), Y = c => 6 + (h-14)*(1-(c-lo)/(hi-lo));
+    const pts = v.map((c,i) => `${X(i).toFixed(1)},${Y(c).toFixed(1)}`).join(' ');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Prijs per 25 cl over de laatste 12 maanden">
+      <line class="gd" x1="6" x2="${w-34}" y1="${h-8}" y2="${h-8}"/>
+      <polygon class="ar" points="6,${h-8} ${pts} ${X(v.length-1)},${h-8}"/>
+      <polyline class="ln" points="${pts}"/>
+      <circle class="dt" cx="${X(v.length-1)}" cy="${Y(v[v.length-1])}" r="3.5"/>
+      <text x="${w-30}" y="${Y(v[v.length-1])+4}">${eurShort(v[v.length-1])}</text>
+    </svg>`;
+  }
+  function statusPill(p){
+    if (p.status === 'bevestigd') return `<span class="status ok">&#10003; Bevestigd door ${p.conf}</span>`;
+    if (p.status === 'betwist') return `<span class="status bad">&#9888; Betwist</span>`;
+    return `<span class="status wait">&#9203; Wacht op bevestiging</span>`;
+  }
+  const leeftijd = d => d === 0 ? 'vandaag' : d === 1 ? 'gisteren' : `${d} dagen geleden`;
+  function renderSheet(){
+    const p = pubs[selected]; if (!p) return;
+    sheet.hidden = false;
+    let h = `<button class="sheet-close" aria-label="Sluiten">&times;</button>
+      <div><h2>${p.naam}</h2><div class="addr">${p.adres} · ${WIJKEN[p.wijk].naam}</div></div>`;
+    if (!p.unlocked) {
+      h += `<div class="banner lock"><b>Op slot.</b> Niemand heeft hier nog een prijs ingevuld. Wie dat als eerste doet, speelt de kroeg vrij en blijft voor altijd de ontdekker.</div>
+        <div class="actions"><button class="btn primary wide" data-act="form-unlock">Speel vrij <span class="pts">+50</span></button></div>`;
+    } else {
+      const g = glasVan(p.glas), st = fresh(p);
+      h += `<div class="price-block">
+          <div class="big-price">${eur(p.prijs)}<small>${p.merk} · ${g.naam.toLowerCase()} ${g.cl} cl</small></div>
+          <div class="norm"><b>${eur(per25(p))}</b><div>per 25 cl · stad ${eur(mediaan())}</div></div>
+        </div>
+        <div class="pills">${statusPill(p)}<span class="status"><i class="dot d-${st}"></i>Gecheckt ${leeftijd(p.age)}</span></div>`;
+      if (st === 'old') h += `<div class="banner"><b>Heroverbaar.</b> ${p.age} dagen niet gecontroleerd, dus er is geen kroegbaas. Check de prijs en de titel is van jou.</div>`;
+      h += `<div>${spark(p)}<div class="eyebrow" style="margin-top:4px">Prijs per 25 cl, laatste 12 maanden</div></div>
+        <div class="meta">
+          <div class="meta-row"><span class="lbl">Kroegbaas</span>${p.baas ? `${av(p.baas)}<b>${S[p.baas].naam}</b><span style="color:var(--muted);font-size:12px">${p.sinds === 0 ? 'sinds vandaag' : `sinds ${p.sinds} dagen`}</span>` : '<span style="color:var(--muted)">Vrij</span>'}</div>
+          <div class="meta-row"><span class="lbl">Ontdekker</span>${av(p.ontdekker)}<span>${S[p.ontdekker].naam}</span></div>
+        </div>
+        <div class="actions">
+          <button class="btn" data-act="confirm" ${p.mijnCheck ? 'disabled' : ''}>${p.mijnCheck ? 'Door jou gecheckt' : 'Klopt nog'} <span class="pts">${p.mijnCheck ? '' : (st==='old' ? '+25' : '+5')}</span></button>
+          <button class="btn primary" data-act="form-change">Prijs is anders <span class="pts">${st==='old' ? '+25' : '+30'}</span></button>
+        </div>`;
+    }
+    sheet.innerHTML = h;
+  }
+  const av = id => `<span class="avatar" style="width:24px;height:24px;font-size:10px;background:${TEAMS[S[id].team].kleur}">${S[id].naam.slice(0,2).toUpperCase()}</span>`;
+
+  /* ---------- Invoerformulier ---------- */
+  let form = null;
+  function renderForm(mode){
+    const p = pubs[selected];
+    form = { mode, merk: p.merk || 'Heineken', glas: p.glas || 'vaasje', prijs: p.prijs || Math.round(mediaan()/10)*10, plaats: true, foto: false };
+    drawForm();
+  }
+  function formPts(){
+    const p = pubs[selected];
+    let base = form.mode === 'unlock' ? 50 : fresh(p) === 'old' ? 25 : 30;
+    if (form.plaats) base = Math.round(base*1.5);
+    if (form.foto) base += 5;
+    return base;
+  }
+  function drawForm(){
+    const p = pubs[selected];
+    const g = glasVan(form.glas), norm = Math.round(form.prijs*25/g.cl), med = mediaan();
+    const afwijk = Math.abs(norm - med) > 110;
+    const titel = form.mode === 'unlock' ? 'Eerste prijs invullen' : 'Nieuwe prijs melden';
+    sheet.innerHTML = `<button class="sheet-close" aria-label="Sluiten">&times;</button>
+      <div><div class="eyebrow">${titel}</div><h2>${p.naam}</h2></div>
+      <form class="form" id="priceForm">
+        <div class="field"><span>Merk</span><div class="chips" data-k="merk">${MERKEN.map(m => `<button type="button" class="chip" aria-pressed="${m===form.merk}" data-v="${m}">${m}</button>`).join('')}</div></div>
+        <div class="field"><span>Glas</span><div class="chips" data-k="glas">${GLAZEN.map(x => `<button type="button" class="chip" aria-pressed="${x.id===form.glas}" data-v="${x.id}">${x.naam} <span class="c">${x.cl} cl</span></button>`).join('')}</div></div>
+        <label class="field" for="priceIn"><span>Prijs</span>
+          <div class="stepper"><button type="button" data-step="-10" aria-label="10 cent minder">&minus;</button><input id="priceIn" inputmode="decimal" value="${eurShort(form.prijs)}" aria-label="Prijs in euro"><button type="button" data-step="10" aria-label="10 cent meer">+</button></div>
+        </label>
+        <div class="calc">Dat is <b>${eur(norm)}</b> per 25 cl. Stadsmediaan: <b>${eur(med)}</b>.</div>
+        ${afwijk ? `<div class="warn">Flink afwijkend van de stadsmediaan. Deze prijs heeft twee bevestigingen nodig.</div>` : ''}
+        <label class="toggle" for="plaatsIn"><input type="checkbox" id="plaatsIn" ${form.plaats?'checked':''}><span>Ik ben ter plaatse <small>Locatie wordt alleen bij het indienen gecontroleerd. Levert &times;1,5 op.</small></span></label>
+        <label class="file" for="fotoIn">Foto van de prijslijst (optioneel, +5)<br><input type="file" id="fotoIn" accept="image/*"></label>
+        <button class="btn primary" type="submit">${form.mode==='unlock' ? 'Speel vrij' : 'Meld prijs'} <span class="pts">+${formPts()}</span></button>
+        <p class="calc" style="margin:0">Je punten komen binnen zodra een andere speler je prijs bevestigt.</p>
+      </form>`;
+  }
+  function parsePrijs(s){ const v = parseFloat(String(s).replace(',', '.').replace(/[^\d.]/g,'')); return isFinite(v) ? Math.round(v*100) : null; }
+
+  sheet.addEventListener('click', e => {
+    if (e.target.closest('.sheet-close')) return closeSheet();
+    const chip = e.target.closest('[data-k] .chip');
+    if (chip && form) { form[chip.parentElement.dataset.k] = chip.dataset.v; return drawForm(); }
+    const st = e.target.closest('[data-step]');
+    if (st && form) { form.prijs = Math.max(50, form.prijs + +st.dataset.step); return drawForm(); }
+    const a = e.target.closest('[data-act]')?.dataset.act;
+    if (a === 'form-unlock') renderForm('unlock');
+    if (a === 'form-change') renderForm('change');
+    if (a === 'confirm') doConfirm();
+  });
+  sheet.addEventListener('change', e => {
+    if (!form) return;
+    if (e.target.id === 'plaatsIn') { form.plaats = e.target.checked; drawForm(); }
+    if (e.target.id === 'fotoIn') { form.foto = e.target.files.length > 0; const sb = sheet.querySelector('[type=submit] .pts'); if (sb) sb.textContent = '+' + formPts(); }
+    if (e.target.id === 'priceIn') { const v = parsePrijs(e.target.value); if (v) { form.prijs = v; drawForm(); } }
+  });
+  sheet.addEventListener('submit', e => {
+    e.preventDefault();
+    const inp = sheet.querySelector('#priceIn'); const v = parsePrijs(inp.value); if (v) form.prijs = v;
+    const p = pubs[selected], pts = formPts(), mode = form.mode, wasOld = fresh(p) === 'old';
+    const prev = p.unlocked ? per25(p) : null;
+    Object.assign(p, { merk: form.merk, glas: form.glas, prijs: form.prijs, age: 0, status:'onbevestigd', conf:1, mijnCheck: true });
+    if (mode === 'unlock') { p.unlocked = true; p.anim = true; p.ontdekker = 'me'; p.hist = Array(6).fill(form.prijs); p.sinds = 0; }
+    else { p.hist = [...p.hist.slice(1), form.prijs]; }
+    form = null;
+    toast(mode === 'unlock' ? 'Kroeg vrijgespeeld. Wacht op bevestiging.' : 'Prijs gemeld. Wacht op bevestiging.', `+${pts} straks`);
+    refresh(); renderSheet();
+    const pid = p.id;
+    setTimeout(() => {
+      const q = pubs[pid]; const by = pick(SPELERS.slice(1));
+      q.status = 'bevestigd'; q.conf = 2;
+      const wordtBaas = mode !== 'unlock' || wasOld || !q.baas;
+      if (wordtBaas) { q.baas = 'me'; q.sinds = 0; }
+      extra.me.altijd += pts; extra.me.maand += pts; extra.me.week += pts;
+      toast(`${by.naam} bevestigde je prijs bij ${q.naam}.${wordtBaas ? ' Jij bent nu kroegbaas.' : ''}`, `+${pts}`);
+      refresh(); if (selected === pid) renderSheet();
+    }, reduce ? 800 : 2600);
+  });
+  function doConfirm(){
+    const p = pubs[selected], wasOld = fresh(p) === 'old', pts = wasOld ? 25 : 5;
+    p.mijnCheck = true; p.age = 0; p.conf += 1;
+    toast(wasOld ? 'Check ingediend. Wacht op een tweede bron.' : 'Bevestiging ingediend.', `+${pts} straks`);
+    refresh(); renderSheet();
+    const pid = p.id;
+    setTimeout(() => {
+      const q = pubs[pid]; q.status = 'bevestigd';
+      if (wasOld) { q.baas = 'me'; q.sinds = 0; }
+      extra.me.altijd += pts;
+      extra.me.maand += pts; extra.me.week += pts;
+      toast(wasOld ? `Heroverd. Jij bent kroegbaas van ${q.naam}.` : 'Consensus bereikt: je bevestiging klopte.', `+${pts}`);
+      refresh(); if (selected === pid) renderSheet();
+    }, reduce ? 700 : 1800);
+  }
+  function toast(msg, pts){
+    const t = document.createElement('div'); t.className = 'toast';
+    t.innerHTML = `${pts ? `<span class="tp">${pts}</span>` : ''}<span>${msg}</span>`;
+    $('#toasts').appendChild(t); setTimeout(() => t.remove(), 4200);
+  }
+
+  /* ---------- Ranglijst ---------- */
+  let lbWho = 'spelers', lbWhen = 'maand';
+  function wijkEigenaars(mode){
+    const out = {};
+    Object.keys(WIJKEN).forEach(w => {
+      const tel = {}; const inW = pubs.filter(p => p.wijk === w);
+      inW.forEach(p => { if (!p.baas) return; const k = mode === 'teams' ? S[p.baas].team : p.baas; tel[k] = (tel[k]||0) + 1; });
+      const best = Object.entries(tel).sort((a,b) => b[1]-a[1])[0];
+      out[w] = best ? {id: best[0], n: best[1], tot: inW.length} : null;
+      if (out[w] && mode === 'teams') out[w].team = best[0];
+    });
+    return out;
+  }
+  function drawLeaderboard(){
+    let rows;
+    if (lbWho === 'spelers') {
+      rows = SPELERS.map(s => ({ id:s.id, naam:s.naam, sub: TEAMS[s.team].naam, kleur: TEAMS[s.team].kleur, pts: punten(s.id)[lbWhen], baas: pubs.filter(p=>p.baas===s.id).length, trust: extra[s.id].trust, me: s.id==='me' }));
+    } else {
+      rows = Object.entries(TEAMS).map(([k,t]) => { const leden = SPELERS.filter(s => s.team===k); return { id:k, naam:t.naam, sub: `${leden.length} leden`, kleur:t.kleur, pts: leden.reduce((a,s)=>a+punten(s.id)[lbWhen],0), baas: pubs.filter(p=>p.baas && S[p.baas].team===k).length, trust: Math.round(leden.reduce((a,s)=>a+extra[s.id].trust,0)/leden.length), me: S.me.team===k }; });
+    }
+    rows.sort((a,b) => b.pts - a.pts);
+    const mi = rows.findIndex(r => r.me);
+    $('#lbGoal').innerHTML = mi > 0 ? `Nog <b>${nf(rows[mi-1].pts - rows[mi].pts + 1)} punten</b> tot plek ${mi}. Een kroeg vrijspelen ter plaatse levert 75 op.` : `Je staat <b>bovenaan</b>. Hou je kroegen vers.`;
+    $('#lbList').innerHTML = rows.map((r,i) => `<li class="${r.me?'me':''}">
+      <span class="rk${i<3?' top':''}">${i+1}</span>
+      <span class="avatar" style="background:${r.kleur}">${r.naam.slice(0,2).toUpperCase()}</span>
+      <div class="who"><b>${r.naam}</b><span>${r.sub} · ${r.baas}x kroegbaas · ${r.trust}% betrouwbaar</span></div>
+      <div class="sc">${nf(r.pts)}<small>punten</small></div></li>`).join('');
+    const own = wijkEigenaars(lbWho);
+    $('#wijkGrid').innerHTML = Object.entries(WIJKEN).map(([k,w]) => {
+      const o = own[k]; const nm = o ? (lbWho==='teams' ? TEAMS[o.id].naam : S[o.id].naam) : 'Niemand';
+      const c = o ? (lbWho==='teams' ? TEAMS[o.id].kleur : TEAMS[S[o.id].team].kleur) : 'var(--locked)';
+      const pct = o ? Math.round(o.n/o.tot*100) : 0;
+      return `<div class="wijk"><div class="wn"><i class="dot" style="background:${c}"></i>${w.naam}</div><div class="wo">${nm}${o ? ` · ${o.n} van ${o.tot}` : ''}</div><div class="wb"><i style="width:${pct}%;background:${c}"></i></div></div>`;
+    }).join('');
+  }
+  function seg(id, set){ $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x===b)); set(b.dataset.v); drawLeaderboard(); }); }
+  seg('#lbWho', v => lbWho = v); seg('#lbWhen', v => lbWhen = v);
+
+  /* ---------- Tabs ---------- */
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    const v = t.dataset.tab; $('#app').dataset.tab = v;
+    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x===t));
+    ['kaart','ranglijst','regels'].forEach(k => $('#view-'+k).hidden = k !== v);
+    if (v === 'ranglijst') drawLeaderboard();
+  }));
+
+  function refresh(){ drawPins(); drawTints(); drawHud(); drawList(); if (!$('#view-ranglijst').hidden) drawLeaderboard(); }
+
+  /* ---------- Start ---------- */
+  drawBase();
+  if (innerWidth <= 820) { vb.w = 620; vb.h = vb.w*(FULL.h/FULL.w); vb.x = 140; vb.y = 190; }
+  clamp(); setVB();
+  refresh();
+  /* Open een heroverbare kroeg als voorbeeld, zodat het eerste beeld laat zien wat je kunt doen */
+  const start = pubs.filter(p => fresh(p)==='old').sort((a,b)=>Math.hypot(a.x-CX,a.y-400)-Math.hypot(b.x-CX,b.y-400))[0];
+  if (start && innerWidth > 820) openPub(start.id);
+})();
+</script>
+
+</body>
+</html>
