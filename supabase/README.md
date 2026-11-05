@@ -5,6 +5,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Onderdeel | Bestand | Wat het doet |
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
+| Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 
@@ -19,7 +20,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `bevestigingen` | Oordelen van andere spelers over een melding (`klopt` of `klopt_niet`). |
 | `punten` | Audit-log van punten; de ranglijst is een query hierop. |
 
-Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
+Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `kroeg_bijdragers` en `kroeg_stamgast`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
 ## Spelregels in de database
 
@@ -36,10 +37,11 @@ Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand
 | Weerlegd | Twee keer "klopt niet" (of een keer van een speler boven 90%). Een weerlegde eerste prijs zet de kroeg terug onder de mist. |
 | Punten | Vrijspelen +50, wijziging +30, bevestigen +5, klopt nog +5, oude prijs (90+ dagen) controleren +15, foto +5, ter plaatse x1,5, weerlegd -20. Punten pas na bevestiging. |
 | Betrouwbaarheid | Start op 50. Bevestigde melding +2, weerlegde melding -10, juist oordeel +1, onjuist oordeel -3. |
+| Stamgast | Per kroeg de speler met de meeste bevestigde bijdragen (eigen meldingen plus "klopt" op meldingen die bevestigd zijn), vanaf 2. Bij gelijkspel wie de stand het eerst bereikte. Geen punten, alleen de naam bovenaan de geschiedenis. |
 
 ## Installeren op het Supabase-project
 
-Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot` (5 november 2026): het schema staat erin (migratie `20261105180124`), de Edge Function `osm-import` draait en de Security Advisor is schoon. Voor een nieuw project:
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot` (5 november 2026): het schema staat erin (migratie `20261105180124`), de Edge Function `osm-import` draait en de Security Advisor is schoon. Ook de migratie `20261105220601_stamkroeg` staat erin (5 november 2026). Voor een nieuw project:
 
 **1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
