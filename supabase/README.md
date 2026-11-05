@@ -7,6 +7,8 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
+| Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
+| Tests | `tests/database.test.mjs` | Alle migraties en spelregels in een Postgres in het geheugen (PGlite met PostGIS). Draai `npm install` en daarna `npm run test:db`. |
 
 ## Datamodel
 
@@ -59,7 +61,12 @@ Of plak de migratie in de SQL Editor van het dashboard.
 supabase functions deploy osm-import
 ```
 
-**3. Inloggen instellen.** Dashboard → Authentication → URL Configuration: zet de Site URL op het adres waar de app draait (bijvoorbeeld je GitHub Pages-adres) en voeg dat adres toe aan de Redirect URLs. Voor lokaal testen: `http://localhost:8765`.
+**3. Inloggen instellen.** Spelers loggen in met een code van 6 cijfers die ze per mail krijgen en in de app typen. Een link gebruiken we niet meer: die werkt maar een keer, gaat stuk als een virusscanner van het mailprogramma hem eerst opent, en opent op een iPhone in Safari in plaats van in de app op het beginscherm. In het dashboard, onder Authentication:
+
+- **Emails, Templates:** zet bij **Confirm signup** (de mail voor nieuwe spelers) en bij **Magic Link** (de mail voor bestaande spelers) dezelfde tekst, met `{{ .Token }}` erin. Onderwerp: `Je inlogcode voor de Kroegkaart`. Tekst: kopieer `supabase/templates/inlogcode.html`. Staat er geen `{{ .Token }}` in de mail, dan krijgt de speler geen code en kan hij niet inloggen.
+- **Emails, SMTP Settings:** koppel een eigen mailprovider (bijvoorbeeld Resend of Postmark) met een eigen afzender. De standaardmailer van Supabase stuurt maar een paar mails per uur en alleen naar leden van je Supabase-team. Zonder eigen SMTP kunnen andere spelers dus geen code krijgen.
+- **Rate Limits:** zet na het koppelen van SMTP het aantal mails per uur hoger (bijvoorbeeld 100).
+- **URL Configuration:** Site URL `https://bpdb-nl.pages.dev`. Redirect URLs: `https://bpdb-nl.pages.dev/**` en voor lokaal testen `http://localhost:8765/**`. Dit is alleen nog nodig voor oude inloglinks.
 
 **4. Jezelf beheerder maken.** Log eerst in via de app (tabblad Ik). Voer daarna in de SQL Editor uit:
 

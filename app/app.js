@@ -5,7 +5,23 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_KEY, STAD, KAARTSTIJL } from "./config.js";
 
 const maplibregl = window.maplibregl;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Een fout van een inloglink staat in de adresbalk (#error_code=otp_expired of ?error_code=...).
+// Lees die uit voordat Supabase de adresbalk bijwerkt.
+const urlFout = (() => {
+  const p = new URLSearchParams(location.hash.slice(1) || location.search);
+  return p.get("error_code") || p.get("error_description") || p.get("error");
+})();
+
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    // Een oude inloglink komt terug met ?code=; die wisselt supabase-js zelf in
+    detectSessionInUrl: true,
+    flowType: "pkce",
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Hulpjes
@@ -59,7 +75,35 @@ const state = {
   sessie: null,
   profiel: null,
   pos: null,
+  // Na het versturen van een inlogcode: { email, naam }
+  inlog: null,
 };
+
+// Onthoud e-mail en spelersnaam op dit apparaat, zodat je ze bij de volgende keer niet opnieuw typt.
+const onthouden = {
+  lees() { try { return JSON.parse(localStorage.getItem("bpdb-inlog") ?? "{}"); } catch { return {}; } },
+  schrijf(v) { try { localStorage.setItem("bpdb-inlog", JSON.stringify(v)); } catch { /* privévenster */ } },
+};
+
+// Meldingen van Supabase Auth in gewone taal.
+function vertaalAuthFout(fout) {
+  const m = String(fout?.message ?? fout ?? "").toLowerCase();
+  const sec = m.match(/after (\d+) seconds?/);
+  if (sec) return `Wacht nog ${sec[1]} seconden voordat je een nieuwe code vraagt.`;
+  if (m.includes("expired") || (m.includes("invalid") && (m.includes("token") || m.includes("otp"))))
+    return "Deze code klopt niet of is verlopen. Vraag een nieuwe aan.";
+  if (m.includes("rate limit")) return "Er zijn te veel inlogmails verstuurd. Probeer het later opnieuw.";
+  if (m.includes("email") && (m.includes("invalid") || m.includes("validate"))) return "Dit e-mailadres klopt niet.";
+  if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "Nieuwe accounts kunnen nu niet worden aangemaakt.";
+  if (m.includes("fetch") || m.includes("network")) return "Geen verbinding. Controleer je internet en probeer het opnieuw.";
+  return "Inloggen lukte niet. Probeer het nog eens.";
+}
+
+// Is de speler iets aan het typen? Dan tekenen we het scherm niet opnieuw, anders verdwijnt de invoer.
+function bezigMetTypen() {
+  const a = document.activeElement;
+  return !!a && body.contains(a) && a.matches("input, select, textarea");
+}
 
 // ---------------------------------------------------------------------------
 // Kaart
@@ -230,7 +274,7 @@ function vernieuw() {
   clearTimeout(vernieuwTimer);
   vernieuwTimer = setTimeout(async () => {
     await Promise.all([laadKroegen(), laadStad(), laadProfiel()]);
-    draw();
+    if (!bezigMetTypen()) draw();
   }, 400);
 }
 
@@ -453,14 +497,25 @@ async function rangView() {
 }
 
 function ikView() {
+  if (!state.sessie && state.inlog) {
+    return `<h2>Vul je code in</h2>
+      <p class="muted">We hebben een code gemaild naar <strong>${esc(state.inlog.email)}</strong>. Typ hem hieronder in. Zie je niets, kijk dan ook bij spam.</p>
+      <form class="form" id="codeForm">
+        <label>Code uit de mail</label>
+        <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" required autofocus>
+        <div class="btns"><button class="btn primary" type="submit">Inloggen</button></div>
+      </form>
+      <div class="btns"><button class="btn" data-nieuwecode>Nieuwe code sturen</button><button class="btn" data-anderadres>Ander e-mailadres</button></div>`;
+  }
   if (!state.sessie) {
+    const vorig = onthouden.lees();
     return `<h2>Doe mee</h2>
-      <p class="muted">Log in met je e-mailadres. Je krijgt een link om in te loggen, geen wachtwoord nodig.</p>
+      <p class="muted">Log in met je e-mailadres. Je krijgt een code per mail, geen wachtwoord nodig.</p>
       <form class="form" id="loginForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
-        <label>Spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(vorig.email ?? "")}" required>
+        <label>Spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" value="${esc(vorig.naam ?? "")}" required>
         <label class="check"><input type="checkbox" name="leeftijd" required> Ik ben 18 jaar of ouder</label>
-        <div class="btns"><button class="btn primary" type="submit">Stuur inloglink</button></div>
+        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
       </form>
       <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
   }
@@ -597,6 +652,8 @@ body.addEventListener("click", (e) => {
   if (t.dataset.klopt) return kloptNog(Number(t.dataset.klopt));
   if (t.dataset.oordeel) return beoordeel(Number(t.dataset.g), t.dataset.oordeel);
   if (t.dataset.logout !== undefined) return sb.auth.signOut();
+  if (t.dataset.nieuwecode !== undefined) return stuurCode(state.inlog.email, state.inlog.naam, t);
+  if (t.dataset.anderadres !== undefined) { state.inlog = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
 });
 
@@ -620,12 +677,21 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "prijsForm") return verstuurPrijs(f);
   if (f.id === "loginForm") {
     const fd = new FormData(f);
-    const { error } = await sb.auth.signInWithOtp({
-      email: String(fd.get("email")),
-      options: { data: { naam: String(fd.get("naam")).trim() }, emailRedirectTo: location.origin + location.pathname },
-    });
-    if (error) return toast(error.message);
-    f.innerHTML = `<div class="card">Check je mail en tik op de inloglink.</div>`;
+    const email = String(fd.get("email")).trim().toLowerCase();
+    const naam = String(fd.get("naam")).trim();
+    onthouden.schrijf({ email, naam });
+    return stuurCode(email, naam, f.querySelector("button[type=submit]"));
+  }
+  if (f.id === "codeForm") {
+    const knop = f.querySelector("button[type=submit]");
+    knop.disabled = true;
+    const code = String(new FormData(f).get("code")).replace(/\D/g, "");
+    const { error } = await sb.auth.verifyOtp({ email: state.inlog.email, token: code, type: "email" });
+    knop.disabled = false;
+    if (error) return toast(vertaalAuthFout(error));
+    // onAuthStateChange zet de sessie en tekent het scherm opnieuw
+    toast("Je bent ingelogd");
+    return;
   }
   if (f.id === "naamForm") {
     const naam = String(new FormData(f).get("naam")).trim();
@@ -635,6 +701,23 @@ body.addEventListener("submit", async (e) => {
     await laadProfiel(); draw();
   }
 });
+
+// Stuurt een inlogcode per mail. Nieuwe spelers krijgen zo meteen een account, met de spelersnaam uit het formulier.
+// De code typ je in de app: dat werkt ook als de mail op een ander apparaat of in een andere browser opengaat,
+// en een virusscanner van het mailprogramma kan hem niet "opgebruiken" zoals bij een link.
+async function stuurCode(email, naam, knop) {
+  if (knop) knop.disabled = true;
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true, data: { naam }, emailRedirectTo: location.origin + location.pathname },
+  });
+  if (knop) knop.disabled = false;
+  if (error) return toast(vertaalAuthFout(error));
+  const nieuw = state.inlog == null;
+  state.inlog = { email, naam };
+  if (nieuw) draw();
+  else toast("Nieuwe code verstuurd. Gebruik de nieuwste mail.");
+}
 
 async function importeer(knop) {
   knop.disabled = true; knop.textContent = "Bezig met importeren…";
@@ -673,13 +756,25 @@ sb.channel("stad")
 // Start
 // ---------------------------------------------------------------------------
 
-sb.auth.onAuthStateChange(async (_e, sessie) => {
+sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   state.sessie = sessie;
-  await laadProfiel();
-  draw();
+  if (sessie) state.inlog = null;
+  // Tokenvernieuwing: niets opnieuw laden
+  if (gebeurtenis === "TOKEN_REFRESHED") return;
+  // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.
+  setTimeout(async () => {
+    await laadProfiel();
+    if (!bezigMetTypen()) draw();
+  }, 0);
 });
 
 (async function start() {
+  if (urlFout) {
+    toast("Deze inloglink is verlopen of al gebruikt. Log in met de code uit de nieuwste mail.");
+    history.replaceState(null, "", location.pathname);
+    state.tab = "ik";
+    document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === "ik")));
+  }
   const { data } = await sb.auth.getSession();
   state.sessie = data.session;
   await Promise.all([laadKroegen(), laadStad(), laadProfiel()]);
