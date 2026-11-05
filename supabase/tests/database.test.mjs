@@ -32,7 +32,8 @@ await db.exec(`
 
   create schema auth;
   grant usage on schema auth to anon, authenticated, service_role;
-  create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}');
+  create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}',
+    is_anonymous boolean not null default false);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant execute on function auth.uid() to anon, authenticated, service_role;
 
@@ -257,6 +258,56 @@ const r26 = await als(A, `insert into storage.objects (bucket_id, name) values (
 check('foto uploaden in eigen map', !r26.fout, JSON.stringify(r26));
 const r27 = await als(A, `insert into storage.objects (bucket_id, name) values ('prijslijsten', '${B}/foto.jpg')`);
 check('foto uploaden in de map van een ander kan niet', /row-level security/.test(r27.fout ?? ''), JSON.stringify(r27));
+
+// ---------------------------------------------------------------------------
+// Anonieme spelers (zonder e-mailadres)
+// ---------------------------------------------------------------------------
+
+const Z = '66666666-6666-6666-6666-666666666666';
+const Y = '77777777-7777-7777-7777-777777777777';
+const F = '88888888-8888-8888-8888-888888888888';
+await db.exec(`
+  insert into auth.users (id, email, raw_user_meta_data, is_anonymous) values
+    ('${Z}', null, '{"naam": "Zoë"}', true),
+    ('${Y}', null, '{}', true),
+    ('${F}', 'frank.de.vries@example.nl', '{}', false);
+`);
+const nZ = await een(`select naam from public.profielen where id = '${Z}'`);
+check('anonieme speler krijgt profiel met eigen naam', nZ?.naam === 'Zoë', JSON.stringify(nZ));
+const nY = await een(`select naam from public.profielen where id = '${Y}'`);
+check('anonieme speler zonder naam heet speler', nY?.naam === 'speler', JSON.stringify(nY));
+const nF = await een(`select naam from public.profielen where id = '${F}'`);
+check('naam is nooit een stuk van het e-mailadres', nF?.naam === 'speler2', JSON.stringify(nF));
+
+const K4 = await id('node/4');
+const a1 = await als(Z, `select * from public.meld_prijs(${K4}, 'Heineken', 25, 330)`);
+const ga = a1.rows?.[0];
+check('anonieme speler kan een prijs melden', ga?.status === 'wacht', JSON.stringify(a1));
+const a2 = await als(Y, `select public.beoordeel(${ga.id}, 'klopt')`);
+check('anonieme speler kan niet bevestigen', /Koppel eerst je e-mailadres/.test(a2.fout ?? ''), JSON.stringify(a2));
+const a3 = await als(Y, `select public.beoordeel(${ga.id}, 'klopt_niet')`);
+check('anonieme speler kan niet weerleggen', /Koppel eerst je e-mailadres/.test(a3.fout ?? ''), JSON.stringify(a3));
+const a4 = await als(A, `select public.beoordeel(${ga.id}, 'klopt') as s`);
+check('speler met e-mail bevestigt melding van anonieme speler', a4.rows?.[0]?.s === 'bevestigd', JSON.stringify(a4));
+const pZ = await een(`select altijd from public.ranglijst where id = '${Z}'`);
+check('anonieme speler krijgt punten na bevestiging', pZ.altijd === 30, JSON.stringify(pZ));
+const a5 = await als(Z, `select * from public.klopt_nog(${K1})`);
+check('anonieme speler kan geen klopt nog doen', /Koppel eerst je e-mailadres/.test(a5.fout ?? ''), JSON.stringify(a5));
+
+// Ook boven 90% betrouwbaarheid wordt een anonieme melder niet direct bevestigd
+await db.exec(`update public.profielen set betrouwbaarheid = 95 where id = '${Z}'`);
+const K5 = await id('node/5');
+const a6 = await als(Z, `select * from public.meld_prijs(${K5}, 'Heineken', 25, 330)`);
+check('anonieme melder boven 90% wacht toch op bevestiging', a6.rows?.[0]?.status === 'wacht', JSON.stringify(a6));
+
+// E-mailadres gekoppeld: hetzelfde account, met punten, mag nu wel bevestigen
+await db.exec(`update auth.users set is_anonymous = false, email = 'zoe@example.nl' where id = '${Z}'`);
+const pZ2 = await een(`select naam, altijd from public.ranglijst where id = '${Z}'`);
+check('na koppelen blijven naam en punten behouden', pZ2.naam === 'Zoë' && pZ2.altijd === 30, JSON.stringify(pZ2));
+const a7 = await als(Z, `select * from public.klopt_nog(${K3})`);
+check('na koppelen kan de speler klopt nog doen', !a7.fout, JSON.stringify(a7));
+const a8 = await als(Z, `select public.vereis_email()`);
+check('hulpfunctie is niet aan te roepen via de API', !!a8.fout, JSON.stringify(a8));
 
 // ---------------------------------------------------------------------------
 
