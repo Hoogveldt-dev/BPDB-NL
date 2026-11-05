@@ -15,7 +15,7 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg. Spelers spelen samen de
 - Database: `supabase/migrations/`, uitleg in `supabase/README.md`, test in `supabase/tests/database.test.mjs` (PGlite met PostGIS, bootst rollen, `auth.users`, `auth.uid()` en opslag na).
 - Kroegimport uit OpenStreetMap en wijken van het CBS: Edge Function `supabase/functions/osm-import/`.
 - Inloggen met Apple en Google: knoppen in `aanbiederKnoppen()`, op slot tot de aanbieder in Supabase aanstaat (`laadAanbieders()` leest `/auth/v1/settings`). Stappenplan: `docs/inloggen-met-apple-en-google.md`. Zet nooit een `.p8`-sleutel of geheime sleutel van Apple of Google in de app of in Git.
-- Ideeën die nog uitgewerkt moeten worden: `docs/kroegentocht.md`.
+- Ideeën die nog uitgewerkt moeten worden: `docs/kroegentocht.md` en `docs/toekomstplannen.md` (prijs zonder alcohol, punten voor extra bier).
 - Inloggen: nieuwe spelers beginnen anoniem (`startForm`, `signInAnonymously`) en koppelen later hun e-mailadres (`koppelForm`, `updateUser` en `verifyOtp` met `type: 'email_change'`). Bestaande spelers loggen in met een code (`loginForm`). Alles via `stuurCode` en `codeForm` in `app/app.js`; mailtekst in `supabase/templates/inlogcode.html`.
 
 ## Inloggen (lessen uit Woober, Woofer en DBDB)
@@ -29,7 +29,8 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg. Spelers spelen samen de
 - Supabase stuurt zonder eigen SMTP alleen mail naar leden van het team en maar een paar per uur. Voor echte spelers is eigen SMTP nodig.
 
 ## Afspraken
-- Iedereen mag alles lezen; schrijven gaat alleen via de functies `meld_prijs`, `beoordeel` en `klopt_nog`. Spelers kunnen alleen hun eigen naam wijzigen. Geef nooit direct schrijfrechten op `gebeurtenissen`, `bevestigingen`, `punten` of `kroegen`.
+- Iedereen mag alles lezen; schrijven gaat alleen via de functies `meld_prijs`, `beoordeel`, `klopt_nog`, `meld_aanbod` en `beoordeel_aanbod`. Spelers kunnen alleen hun eigen naam wijzigen. Geef nooit direct schrijfrechten op `gebeurtenissen`, `bevestigingen`, `punten`, `kroegen`, `kroeg_aanbod` of `aanbod_oordelen`.
+- Het spel (vrijspelen, punten, ranglijst, versheid, mediaan) draait alleen om de goedkoopste pils van de tap in een vaasje (25 cl); een ander glas wordt omgerekend en op de kaart met een ≈ getoond (`spelPrijs()`). Ander bier en andere maten staan apart in `kroeg_aanbod` ("Ook op de tap", filter `state.soort`) en leveren geen punten op. Wijzig dat alleen als Kjell erom vraagt.
 - Spellogica staat in het schema `private` als `security definer` met `set search_path = ''` en controleert zelf `auth.uid()`. Nieuwe functies: `revoke execute ... from public, anon` en alleen `grant` aan `authenticated` als de app ze aanroept. Autorisatie gebruikt nooit `user_metadata`.
 - Spelregels (punten, bevestigen, uitschieters, betrouwbaarheid, 75 m ter plaatse) staan in `supabase/README.md` en de migratie. Wijzig ze alleen als Kjell erom vraagt, en dan migratie, README en test samen.
 - We belonen bijdragen, nooit drinken. Spelers zijn 18 jaar of ouder.

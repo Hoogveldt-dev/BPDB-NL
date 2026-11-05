@@ -4,7 +4,7 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 
 ## Inloggen: meteen beginnen, later e-mail koppelen
 
-1. **Migratie.** Voer `supabase/migrations/20261106090000_anonieme_spelers.sql` uit op project `yzaootlrhxzyxtvacrot` en zet de versie in `supabase_migrations.schema_migrations` gelijk aan `20261106090000`. Draai daarna de Security Advisor.
+1. **Migraties.** Voer `supabase/migrations/20261106090000_anonieme_spelers.sql` en daarna `20261106120000_extra_bier.sql` uit op project `yzaootlrhxzyxtvacrot` en zet de versies in `supabase_migrations.schema_migrations` gelijk aan de bestandsnamen (`20261106090000` en `20261106120000`). Draai daarna de Security Advisor. Zonder de tweede migratie werkt de app ook, maar zonder "Ook op de tap".
 2. **Anonieme accounts.** Supabase, Authentication, Sign In / Providers: zet **Allow anonymous sign-ins** en **Allow manual linking** aan. Zonder deze stap kan niemand nieuw meedoen.
 3. **Mailtemplates.** Authentication, Emails, Templates. Zet bij **Magic Link**, **Change Email Address** en **Confirm signup** het onderwerp `Je code voor de Kroegkaart` en de tekst uit `supabase/templates/inlogcode.html` (met `{{ .Token }}`). Zonder deze stap krijgt een speler een link in plaats van een code en kan hij in de app niets invullen.
 4. **Eigen SMTP.** Authentication, Emails, SMTP Settings. Koppel Resend, Postmark of een andere mailprovider met een eigen afzender. Zonder deze stap krijgen alleen leden van je Supabase-team een mail, en maar een paar per uur.
