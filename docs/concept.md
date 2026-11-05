@@ -4,7 +4,7 @@ Beer Price Database (BPDB) is een door gebruikers gevulde database van bierprijz
 
 Prototypes (open lokaal in een browser, geen build nodig):
 
-- [`prototype/index.html`](../prototype/index.html): v2, iPhone-eerst, Nijmegen.
+- [`prototype/index.html`](../prototype/index.html): v2, iPhone-eerst, Nijmegen, samenwerken.
 - [`prototype/v1/index.html`](../prototype/v1/index.html): v1, eerste opzet.
 
 ## 0. Besluiten
@@ -14,9 +14,10 @@ Prototypes (open lokaal in een browser, geen build nodig):
 | Kroegen vooraf op de kaart onder een mist, vrijspelen met een eerste prijs | Ja | Vast |
 | Controle | Peer-to-peer bevestiging met betrouwbaarheidsscore; geen echte blockchain, geen tokens | Vast |
 | Kroegen bevestigen zelf hun prijs | Niet in de basis; misschien later, altijd naast P2P | Later |
-| Kroegbaas-titel | Aan in het prototype, uit te zetten om te vergelijken | Proef |
-| Wijken | Uit in het prototype, aan te zetten om te vergelijken | Proef |
-| Teams | Niet in v1 | Later |
+| Spelvorm | Samenwerken: iedereen speelt samen de hele stad vrij en houdt hem vers | Vast |
+| Ranglijst | Blijft: laat zien wie het meest bijdraagt | Vast |
+| Veroveringen (kroegbaas, wijkbezit) | Uitgeschakeld en uit de interface; code blijft achter een functievlag | Later |
+| Teams | Uitgeschakeld; uitwerking staat in prototype v1 en hieronder | Later |
 | Geschiedenis per kroeg | Ja: eerst gemeld, wijzigingen, controles, met datum en naam | Vast |
 | Pilotstad | Nijmegen | Vast |
 | Doelgroep ontwerp | iPhone eerst; strak, licht futuristisch, kaart in de stijl van Apple Kaarten | Vast |
@@ -58,11 +59,36 @@ Upgraden betekent: Python 2 naar 3, Django 1.11 naar 5, rest-auth vervangen, de 
 
 ## 2. Gamification
 
+De eerste versie draait om een **groepsprestatie**: iedereen werkt samen om Nijmegen volledig vrij te spelen en up-to-date te houden. Er valt niets te veroveren. De ranglijst blijft, als erkenning voor wie het meest bijdraagt.
+
+### 2.0 Samen (vast)
+
+Tabblad "Samen" in de app:
+
+- **Stadsvoortgang**: een grote ring met het percentage vrijgespeelde kroegen en mijlpalen bij 25, 50, 75 en 100%. "Nog 15 kroegen tot de mijlpaal van 100%."
+- **Weekdoelen voor iedereen**: aantal bijdragen van alle spelers samen, aantal oude prijzen (90+ dagen) dat nog ververst moet worden, en het percentage verse prijzen.
+- **Per wijk**: voortgang en versheid per wijk, als gezamenlijk doel, zonder eigenaar.
+- **Recent in de stad**: wie wat vrijspeelde, wijzigde of controleerde.
+- **Op de kroegpagina**: wie de kroeg ontdekte en hoeveel spelers de prijs samen bijhielden.
+- **Bevestigingsmelding**: "Nijmegen is nu samen 77% vrijgespeeld."
+
+Nieuw in de puntentabel: **oude prijs controleren** (+15) voor prijzen van 90 dagen of ouder. Dat vervangt "vrije titel pakken" en houdt de stad vers zonder dat iemand iets afpakt.
+
+### Functievlaggen
+
+In `prototype/index.html` staat bovenaan het script:
+
+```js
+const FEATURES = { veroveringen: false, teams: false };
+```
+
+Met `veroveringen: true` komen kroegbaas-titels, wijkbezit, de wijkenlaag op de kaart en het oude tabblad "Spel" (met aan/uit-schakelaars) terug. De code daarvoor (`baasHtml`, `spelView`, `drawWijken`, `deriveBaas`) staat er nog in. Teams zijn uitgewerkt in [`prototype/v1`](../prototype/v1/index.html); in de echte app komen ze achter dezelfde soort vlag.
+
 ### 2.1 De mist (vast)
 
 Elke kroeg uit OpenStreetMap staat op de kaart, maar onder een stippenraster. Wie als eerste een prijs invult, speelt de kroeg vrij: de mist trekt daar weg en je naam blijft als ontdekker bij de kroeg staan. Zo zie je in één oogopslag waar nog data ontbreekt.
 
-### 2.2 Kroegbaas (proef)
+### 2.2 Kroegbaas (uitgeschakeld, voor later)
 
 - **Wie**: de melder van de laatste bevestigde *prijswijziging*.
 - **Houden**: zolang de prijs gelijk blijft *en* de kroegbaas de kroeg zelf minstens eens per 90 dagen controleert.
@@ -74,11 +100,11 @@ Elke kroeg uit OpenStreetMap staat op de kaart, maar onder een stippenraster. Wi
 2. Juist kroegen met een stabiele prijs raken zo toch gecontroleerd: de kroegbaas heeft een reden om terug te komen ("je titel verloopt over 9 dagen").
 3. Als een check door een ander de titel zou verlengen, hoeft de kroegbaas zelf niets te doen. Als een check door een ander de titel zou *afpakken*, krijg je sniping. De eigen-check-regel vermijdt beide.
 
-In het prototype kun je de titels uitzetten om te zien hoe de app zonder dit spel aanvoelt.
+Staat uit; terug te zetten met de functievlag `veroveringen`.
 
-### 2.3 Wijken (proef)
+### 2.3 Wijkbezit (uitgeschakeld, voor later)
 
-Wie de meeste kroegbaas-titels in een wijk heeft, beheerst die wijk. Werkt alleen samen met kroegbaas-titels. Staat in het prototype standaard uit.
+Wie de meeste kroegbaas-titels in een wijk heeft, beheerst die wijk. Werkt alleen samen met kroegbaas-titels. In de samenwerkversie tonen wijken alleen gezamenlijke voortgang.
 
 ### 2.4 Teams (later)
 
@@ -89,8 +115,9 @@ Teams zijn groepen spelers die samen punten en titels verzamelen, bijvoorbeeld e
 | Actie | Punten | Voorwaarde |
 |---|---:|---|
 | Kroeg vrijspelen (eerste prijs) | +50 | Ontdekker-badge blijft permanent |
-| Prijswijziging melden | +30 | Pas na bevestiging; maakt je kroegbaas |
-| Vrije titel pakken | +25 | Kroegbaas checkte 90 dagen niet zelf |
+| Prijswijziging melden | +30 | Pas na bevestiging (met veroveringen: maakt je kroegbaas) |
+| Oude prijs controleren | +15 | Prijs is 90 dagen of ouder |
+| Vrije titel pakken (alleen met veroveringen) | +25 | Kroegbaas checkte 90 dagen niet zelf |
 | "Klopt nog" | +5 | Max. 1 keer per kroeg per 7 dagen |
 | Ter plaatse (binnen 75 m) | x1,5 | Automatisch via locatie |
 | Foto van de prijslijst | +5 | Optioneel |
@@ -144,5 +171,5 @@ Wijk         id, cbs_code, naam, geometrie
 ## 6. Open vragen
 
 1. Welke techniek precies (zie 1.2)? Te beslissen voor de eerste sprint.
-2. Kroegbaas en wijken: na de proef met het prototype definitief aan of uit?
+2. Wanneer zetten we veroveringen of teams weer aan, en op basis van welk signaal (bijv. na 100% vrijgespeeld)?
 3. Welke kroegsoorten tellen mee (alleen cafés en bars, of ook restaurants met een tap)?

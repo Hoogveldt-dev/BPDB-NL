@@ -63,6 +63,7 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
 html, body { height: 100%; overflow: hidden; }
 body { background: var(--land); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.4; -webkit-font-smoothing: antialiased; }
 button, input { font: inherit; color: inherit; }
@@ -302,6 +303,50 @@ button { cursor: pointer; }
 .pt td:last-child { text-align: right; font: 800 15px var(--f-round); white-space: nowrap; }
 .pt small { display: block; color: var(--muted); font-size: 12px; }
 .pt .neg { color: var(--old-t); }
+.ctrls > button[hidden] + button { border-top: 0; }
+.together { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 16px; }
+.bigring { width: 96px; height: 96px; position: relative; }
+.bigring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.bigring circle { fill: none; stroke-width: 9; }
+.bigring .bg { stroke: var(--surface-2); }
+.bigring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+.bigring b { position: absolute; inset: 0; display: grid; place-items: center; font: 900 24px var(--f-round); letter-spacing: -.02em; }
+.together h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.together p { margin: 3px 0 0; font-size: 13.5px; color: var(--muted); }
+.ms { padding: 4px 16px 16px; }
+.ms .track { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); margin: 10px 8px 8px; }
+.ms .track > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--accent); }
+.ms .mk { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--surface); border: 2px solid var(--locked); display: grid; place-items: center; }
+.ms .mk.done { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.ms .mk svg { width: 9px; height: 9px; }
+.ms .lbls { position: relative; height: 16px; margin: 0 8px; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.ms .lbls span { position: absolute; transform: translateX(-50%); }
+.ms .lbls span:last-child { transform: translateX(-80%); }
+.ms p { margin: 6px 0 0; font-size: 13.5px; }
+.ms p b { color: var(--accent-text); }
+.wk { padding: 12px; display: grid; gap: 8px; }
+.wk + .wk { border-top: var(--hair); }
+.wk .top { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; font-weight: 600; }
+.wk .top span { font: 800 14.5px var(--f-round); white-space: nowrap; }
+.wk .bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.wk .bar i { display: block; height: 100%; border-radius: 3px; }
+.wk small { font-size: 12.5px; color: var(--muted); }
+.wrow { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; font-size: 14px; }
+.wrow + .wrow { border-top: var(--hair); }
+.wrow .bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; display: flex; gap: 1px; }
+.wrow .bar i { display: block; height: 100%; }
+.wrow span { font: 800 13px var(--f-round); color: var(--muted); }
+.feed { list-style: none; margin: 0; padding: 0; }
+.feed li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding: 9px 12px; font-size: 14px; }
+.feed li + li { border-top: var(--hair); }
+.feed li small { display: block; font-size: 12px; color: var(--muted); }
+.feed button { border: 0; background: none; padding: 0; font-weight: 600; text-align: left; color: var(--fg); }
+.mini { display: grid; gap: 7px; padding: 12px; border-radius: var(--r); background: var(--surface); border: var(--hair); width: 100%; text-align: left; }
+.mini .top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 600; }
+.mini .top span { color: var(--muted); font-weight: 500; font-size: 13px; }
+.mini .bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.mini .bar i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+.mini small { font-size: 12.5px; color: var(--muted); }
 .demo { font-size: 11.5px; color: var(--muted); text-align: center; margin: 4px 0 0; }
 
 /* Toast (iOS-banner) */
@@ -352,7 +397,7 @@ button { cursor: pointer; }
     <div class="segm" id="tabs" role="tablist">
       <button role="tab" aria-pressed="true" data-tab="kroegen">Kroegen</button>
       <button role="tab" aria-pressed="false" data-tab="ranglijst">Ranglijst</button>
-      <button role="tab" aria-pressed="false" data-tab="spel">Spel</button>
+      <button role="tab" aria-pressed="false" data-tab="samen">Samen</button>
     </div>
   </div>
   <div class="body" id="body"></div>
@@ -597,7 +642,16 @@ button { cursor: pointer; }
   PTS.me = {altijd: 905, maand: 265, week: 40};
 
   /* ================= Spelmodus (per kijker onthouden) ================= */
-  const game = { kroegbaas: store.get('kroegbaas', true), wijken: store.get('wijken', false) };
+  /* Functievlaggen. Veroveringen (kroegbaas-titels en wijkbezit) en teams staan uit en verdwijnen
+     dan volledig uit de interface. De code blijft staan zodat ze later terug kunnen: zet de vlag op
+     true. Veroveringen: alles achter game.kroegbaas / game.wijken (o.a. baasHtml, spelView,
+     drawWijken). Teams: uitgewerkt in prototype/v1 en in docs/concept.md. */
+  const FEATURES = { veroveringen: false, teams: false };
+  const game = {
+    kroegbaas: FEATURES.veroveringen && store.get('kroegbaas', true),
+    wijken: FEATURES.veroveringen && store.get('wijken', false)
+  };
+  const OUD_BONUS = 15; /* punten voor het controleren van een prijs van 90+ dagen oud */
 
   /* ================= Kaart: pannen, zoomen, spelden ================= */
   const mapEl = $('#mapEl'), world = $('#world'), pinsEl = $('#pins');
@@ -788,7 +842,7 @@ button { cursor: pointer; }
     {id:'slot', naam:'Op slot', f:p=>!p.unlocked, sort:(a,b)=>afstand(a)-afstand(b)},
     game.kroegbaas
       ? {id:'vrij', naam:'Titel vrij', f:p=>p.unlocked && !p.baas, sort:(a,b)=>b.age-a.age}
-      : {id:'vrij', naam:'Verouderd', f:p=>fresh(p)==='old', sort:(a,b)=>b.age-a.age},
+      : {id:'vrij', naam:'Oud, 90+ dagen', f:p=>fresh(p)==='old', sort:(a,b)=>b.age-a.age},
     ...(game.kroegbaas ? [{id:'mijn', naam:'Mijn titels', f:p=>p.baas==='me', sort:(a,b)=>b.baasCheck-a.baasCheck}] : []),
     {id:'dichtbij', naam:'Dichtbij', f:()=>true, sort:(a,b)=>afstand(a)-afstand(b)}
   ];
@@ -811,8 +865,12 @@ button { cursor: pointer; }
       <div class="tiles">
         <div class="tile"><b class="tn">${eur(mediaan())}</b><span>mediaan per 25 cl</span></div>
         <div class="tile"><b class="tn">${Math.round(n.fresh/un*100)}%</b><span>prijzen vers</span></div>
-        ${game.kroegbaas ? `<div class="tile"><b class="tn">${pubs.filter(p=>p.baas==='me').length}</b><span>jouw titels</span></div>` : `<div class="tile"><b class="tn">${pubs.filter(p=>ontdekker(p)==='me').length}</b><span>door jou ontdekt</span></div>`}
+        ${game.kroegbaas ? `<div class="tile"><b class="tn">${pubs.filter(p=>p.baas==='me').length}</b><span>jouw titels</span></div>` : `<div class="tile"><b class="tn">${mijnBijdragen()}</b><span>jouw bijdragen</span></div>`}
       </div>
+      ${!game.kroegbaas ? (() => { const w = weekStats(); return `<button class="mini" data-goto="samen">
+        <span class="top">Samen deze week <span class="tn">${w.n} van ${WEEKDOEL}</span></span>
+        <span class="bar"><i style="width:${Math.min(100, w.n/WEEKDOEL*100)}%"></i></span>
+        <small>${w.spelers} spelers hielden prijzen bij. Nog ${Math.max(0, WEEKDOEL - w.n)} bijdragen tot het weekdoel.</small></button>`; })() : ''}
       ${near ? `<button class="near" data-open="${near.id}">
         <span class="ic">${ICON.pin}</span>
         <span><b>${near.naam}</b><span>${fmtAfstand(afstand(near))} van je af · nog op slot</span></span>
@@ -833,6 +891,7 @@ button { cursor: pointer; }
     if (!p.unlocked) sub = `${DISTRICTS[p.wijk].naam} · ${fmtAfstand(afstand(p))} · speel vrij voor +50`;
     else if (game.kroegbaas && p.baas === 'me') sub = `Jouw titel · verloopt over ${90-p.baasCheck} dagen`;
     else if (game.kroegbaas && !p.baas) sub = `${DISTRICTS[p.wijk].naam} · titel vrij · ${p.age} dagen niet gecheckt`;
+    else if (!game.kroegbaas && st === 'old') sub = `${DISTRICTS[p.wijk].naam} · ${p.age} dagen oud · controleer voor +${OUD_BONUS}`;
     else sub = `${DISTRICTS[p.wijk].naam} · ${p.merk}, ${glas(p.glas).naam.toLowerCase()} · ${geleden(p.age)}`;
     return `<button class="row" data-open="${p.id}">
       <i class="d" style="background:${KLEUR[st]}"></i>
@@ -884,6 +943,13 @@ button { cursor: pointer; }
       <span>${isMe ? `Je titel verloopt over <b>${left} dagen</b>. Check de prijs zelf om hem te houden.` : `Verloopt over <b>${left} dagen</b> als ${S[p.baas].naam} niet zelf checkt. Meld jij een bevestigde prijswijziging, dan is de titel meteen van jou.`}</span></div></div>`;
   }
 
+  function bijdragersHtml(p){
+    const ids = [...new Set(p.events.map(e => e.by).concat(p.events.flatMap(e => e.bev || [])))];
+    const o = ontdekker(p);
+    return `<div class="grp"><div class="baas"><span class="crownic" style="background:color-mix(in srgb, var(--blue) 14%, transparent);color:var(--blue)">${ICON.pin}</span>
+      <div><div class="t">Ontdekt op ${datum(p.events[0].d)} door</div><b>${naamVan(o)}</b></div>${av(o, true)}</div>
+      <div class="expiry"><span>${ids.length === 1 ? 'Nog maar één speler heeft deze prijs bijgehouden.' : `${ids.length} spelers hielden deze prijs samen bij.`}${fresh(p) === 'old' ? ` Deze prijs is ${p.age} dagen oud: controleer hem voor <b>+${OUD_BONUS}</b>.` : ''}</span></div></div>`;
+  }
   function detailView(p){
     const head = `<div class="dhead"><div><h2>${p.naam}</h2><p>${p.adres} · ${fmtAfstand(afstand(p))}</p></div><button class="xbtn" data-close aria-label="Sluiten">${ICON.x}</button></div>`;
     if (form) return head + formHtml(p);
@@ -891,13 +957,13 @@ button { cursor: pointer; }
       const bonus = afstand(p) <= 75;
       return head + `
         <div class="grp"><div class="baas"><span class="crownic lk">${ICON.lock}</span><div><div class="t">Op slot</div><b>Nog niemand heeft hier een prijs gemeld</b></div></div>
-        <div class="expiry">Vul als eerste een prijs in. Je naam blijft voor altijd als ontdekker bij deze kroeg staan${game.kroegbaas ? ' en je wordt de eerste kroegbaas' : ''}.</div></div>
+        <div class="expiry">Vul als eerste een prijs in. Je naam blijft voor altijd als ontdekker bij deze kroeg staan${game.kroegbaas ? ' en je wordt de eerste kroegbaas' : ', en de mist trekt hier voor iedereen weg'}.</div></div>
         <div class="acts"><button class="btn pri full" data-act="unlock">Speel vrij <span class="p">+${bonus ? 75 : 50}</span></button></div>
         ${bonus ? `<p class="calc" style="margin:-8px 4px 0">Je bent ${fmtAfstand(afstand(p))} van de kroeg, dus je krijgt de bonus voor ter plaatse (×1,5).</p>` : ''}`;
     }
     const g = glas(p.glas), md = mediaan(), d = per25(p) - md, st = fresh(p);
     const mijnRecent = p.events.some(e => e.by === 'me' && e.d < 7);
-    const checkPts = game.kroegbaas && !p.baas ? 25 : 5;
+    const checkPts = game.kroegbaas && !p.baas ? 25 : (!game.kroegbaas && st === 'old') ? OUD_BONUS : 5;
     return head + `
       <div class="pricecard">
         <div class="bigp tn">${eur(p.prijs)}</div>
@@ -909,7 +975,7 @@ button { cursor: pointer; }
         <button class="btn" data-act="check" ${mijnRecent ? 'disabled' : ''}>${mijnRecent ? 'Door jou gecheckt' : 'Klopt nog'}${mijnRecent ? '' : ` <span class="p">+${checkPts}</span>`}</button>
         <button class="btn pri" data-act="change">Prijs is anders <span class="p">+30</span></button>
       </div>
-      ${baasHtml(p)}
+      ${game.kroegbaas ? baasHtml(p) : bijdragersHtml(p)}
       <div><p class="cap">Prijs per 25 cl</p><div class="grp" style="padding:10px 12px 6px">${spark(p)}</div></div>
       <div><p class="cap">Geschiedenis</p><div class="grp">${historyHtml(p)}</div></div>`;
   }
@@ -941,13 +1007,14 @@ button { cursor: pointer; }
   }
 
   function leaderView(){
-    const rows = SPELERS.map(s => ({id:s.id, pts:PTS[s.id][lbWhen], titels:pubs.filter(p=>p.baas===s.id).length, ontdekt:pubs.filter(p=>ontdekker(p)===s.id).length})).sort((a,b)=>b.pts-a.pts);
+    const rows = SPELERS.map(s => ({id:s.id, pts:PTS[s.id][lbWhen], titels:pubs.filter(p=>p.baas===s.id).length, ontdekt:pubs.filter(p=>ontdekker(p)===s.id).length, bijdragen:bijdragenVan(s.id)})).sort((a,b)=>b.pts-a.pts);
     const mi = rows.findIndex(r=>r.id==='me'), own = eigenaars();
     return `
       <div class="lt"><h1>Ranglijst</h1><p>Nijmegen</p></div>
       <div class="segm" style="margin-top:-6px">${['week','maand','altijd'].map(w=>`<button aria-pressed="${w===lbWhen}" data-w="${w}">${w==='altijd'?'Altijd':w==='week'?'Deze week':'Deze maand'}</button>`).join('')}</div>
+      ${!game.kroegbaas ? `<p class="goal">Iedereen speelt dezelfde stad vrij. De ranglijst laat zien wie daar het meest aan bijdraagt.</p>` : ''}
       <p class="goal">${mi>0 ? `Nog <b>${nf(rows[mi-1].pts-rows[mi].pts+1)} punten</b> tot plek ${mi}. Een kroeg vrijspelen ter plaatse levert 75 op.` : 'Je staat <b>bovenaan</b>. Houd je prijzen vers.'}</p>
-      <div class="grp">${rows.map((r,i)=>`<div class="lbr${r.id==='me'?' me':''}"><span class="rk${i<3?' top':''}">${i+1}</span>${av(r.id,true)}<div class="who"><b>${naamVan(r.id)}</b><span>${r.ontdekt} ontdekt${game.kroegbaas?` · ${r.titels} titels`:''}</span></div><span class="sc tn">${nf(r.pts)}</span></div>`).join('')}</div>
+      <div class="grp">${rows.map((r,i)=>`<div class="lbr${r.id==='me'?' me':''}"><span class="rk${i<3?' top':''}">${i+1}</span>${av(r.id,true)}<div class="who"><b>${naamVan(r.id)}</b><span>${r.ontdekt} ontdekt · ${r.bijdragen} bijdragen${game.kroegbaas?` · ${r.titels} titels`:''}</span></div><span class="sc tn">${nf(r.pts)}</span></div>`).join('')}</div>
       ${game.kroegbaas && game.wijken ? `<div><p class="cap">Wijken</p><div class="wgrid">${Object.entries(DISTRICTS).map(([k,d])=>{const o=own[k];const c=o.eigenaar?S[o.eigenaar].kleur:'var(--locked)';return `<div class="wcard"><b>${d.naam}</b><span>${o.eigenaar?`${naamVan(o.eigenaar)} · ${o.n} van ${o.tot}`:'Niemand'}</span><div class="wb"><i style="width:${o.tot?o.n/o.tot*100:0}%;background:${c}"></i></div></div>`}).join('')}</div></div>` : ''}`;
   }
 
@@ -976,14 +1043,65 @@ button { cursor: pointer; }
         <p class="m">Geen tokens, geen virtueel vastgoed. We belonen bijdragen, niet drinken. Alleen voor 18+.</p></div>`;
   }
 
+  const WEEKDOEL = 12;
+  const bijdragenVan = id => pubs.reduce((a,p) => a + p.events.filter(e => e.by === id && !e.pending).length, 0);
+  const mijnBijdragen = () => bijdragenVan('me');
+  function weekStats(){ const ev = pubs.flatMap(p => p.events.filter(e => e.d < 7 && !e.pending)); return {n: ev.length, spelers: new Set(ev.map(e => e.by)).size}; }
+  const CHECK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 6.5 2.3 2.3 4.7-5"/></svg>';
+  function samenView(){
+    const un = pubs.filter(p=>p.unlocked).length, tot = pubs.length, pct = Math.round(un/tot*100);
+    const MS = [25,50,75,100], next = MS.find(m => m > pct), nodig = next ? Math.ceil(next/100*tot) - un : 0;
+    const w = weekStats(), oud = pubs.filter(p=>fresh(p)==='old').length, vers = pubs.filter(p=>fresh(p)==='fresh').length;
+    const mijnOntdekt = pubs.filter(p=>ontdekker(p)==='me').length;
+    const feed = pubs.flatMap(p => p.events.filter(e => e.d <= 14).map(e => ({e, p}))).sort((a,b) => a.e.d - b.e.d).slice(0, 8);
+    const C = 2*Math.PI*42;
+    return `
+      <div class="lt"><h1>Samen</h1><p>Iedereen speelt dezelfde stad vrij en houdt hem vers</p></div>
+      <div class="grp">
+        <div class="together">
+          <div class="bigring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="bg" cx="50" cy="50" r="42"/><circle class="fg" cx="50" cy="50" r="42" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-un/tot)).toFixed(1)}"/></svg><b class="tn">${pct}%</b></div>
+          <div><h3>Nijmegen vrijgespeeld</h3><p>${un} van ${tot} kroegen, samen met ${SPELERS.length - 1} anderen. Jij ontdekte er ${mijnOntdekt}.</p></div>
+        </div>
+        <div class="ms">
+          <div class="track"><i style="width:${pct}%"></i>${MS.map(m => `<span class="mk${pct>=m?' done':''}" style="left:${m}%">${pct>=m?CHECK:''}</span>`).join('')}</div>
+          <div class="lbls">${MS.map(m => `<span style="left:${m}%">${m}%</span>`).join('')}</div>
+          <p>${next ? `Nog <b>${nodig} ${nodig===1?'kroeg':'kroegen'}</b> tot de mijlpaal van ${next}%.` : '<b>De hele stad is vrijgespeeld.</b> Nu alles vers houden.'}</p>
+        </div>
+      </div>
+      <div><p class="cap">Doelen deze week</p><div class="grp">
+        <div class="wk"><div class="top">Bijdragen van iedereen <span class="tn">${w.n} / ${WEEKDOEL}</span></div><div class="bar"><i style="width:${Math.min(100,w.n/WEEKDOEL*100)}%;background:var(--accent)"></i></div><small>${w.spelers} spelers deden deze week mee.</small></div>
+        <div class="wk"><div class="top">Oude prijzen verversen <span class="tn">nog ${oud}</span></div><div class="bar"><i style="width:${Math.round((1-oud/un)*100)}%;background:var(--fresh)"></i></div><small>Prijzen van 90 dagen of ouder. Een controle levert +${OUD_BONUS} op.</small></div>
+        <div class="wk"><div class="top">Vers houden <span class="tn">${Math.round(vers/un*100)}%</span></div><div class="bar"><i style="width:${Math.round(vers/un*100)}%;background:var(--fresh)"></i></div><small>Deel van de prijzen dat de laatste 30 dagen is gecontroleerd.</small></div>
+      </div></div>
+      <div><p class="cap">Per wijk</p><div class="grp">${Object.entries(DISTRICTS).map(([k,d]) => {
+        const inW = pubs.filter(p=>p.wijk===k), n = {fresh:0, stale:0, old:0, locked:0}; inW.forEach(p => n[fresh(p)]++);
+        return `<div class="wrow"><b>${d.naam}</b><div class="bar">${['fresh','stale','old','locked'].map(f => `<i style="flex-grow:${n[f]};background:${KLEUR[f]}${f==='locked'?';opacity:.35':''}"></i>`).join('')}</div><span class="tn">${inW.length-n.locked}/${inW.length}</span></div>`;
+      }).join('')}</div></div>
+      <div><p class="cap">Recent in de stad</p><div class="grp"><ul class="feed">${feed.map(({e,p}) => {
+        const wat = e.t === 'eerst' ? 'speelde vrij:' : e.t === 'wijziging' ? 'meldde een nieuwe prijs bij' : 'controleerde';
+        return `<li>${av(e.by, true)}<div><span>${naamVan(e.by)} ${wat} </span><button data-open="${p.id}">${p.naam}</button><small>${geleden(e.d)}${e.pending ? ' · wacht op bevestiging' : ''}</small></div></li>`;
+      }).join('')}</ul></div></div>
+      <div><p class="cap">Punten</p><div class="grp"><table class="pt">
+        <tr><td>Kroeg vrijspelen<small>Eerste prijs ooit. Je blijft de ontdekker.</small></td><td>+50</td></tr>
+        <tr><td>Prijswijziging melden<small>Telt pas na bevestiging door een ander.</small></td><td>+30</td></tr>
+        <tr><td>Oude prijs controleren<small>Prijs is 90 dagen of ouder.</small></td><td>+${OUD_BONUS}</td></tr>
+        <tr><td>“Klopt nog”<small>Max. 1 keer per kroeg per 7 dagen.</small></td><td>+5</td></tr>
+        <tr><td>Foto van de prijslijst</td><td>+5</td></tr>
+        <tr><td>Ter plaatse<small>Binnen 75 m, via je locatie.</small></td><td>×1,5</td></tr>
+        <tr><td>Bijdrage weerlegd<small>Ook je betrouwbaarheid daalt.</small></td><td class="neg">−20</td></tr>
+      </table></div></div>
+      <div class="prose"><p class="cap">Controle door spelers</p>
+        <p>Een prijs telt pas als een andere speler hem bevestigt. Wie vaak gelijk krijgt, bouwt betrouwbaarheid op; boven 90% is jouw bevestiging alleen al genoeg. Er is geen beheerder die elke invoer goedkeurt.</p>
+        <p class="m">Geen tokens, geen virtueel vastgoed. We belonen bijdragen, niet drinken. Alleen voor 18+.</p></div>`;
+  }
   function draw(){
     if (selected !== null) body.innerHTML = detailView(pubs[selected]);
-    else body.innerHTML = tab === 'kroegen' ? homeView() : tab === 'ranglijst' ? leaderView() : spelView();
+    else body.innerHTML = tab === 'kroegen' ? homeView() : tab === 'ranglijst' ? leaderView() : (FEATURES.veroveringen ? spelView() : samenView());
   }
   let shown = 0;
   function hud(){
     const un = pubs.filter(p=>p.unlocked).length;
-    $('#chipCount').textContent = `${un}/${pubs.length} vrijgespeeld`;
+    $('#chipCount').textContent = `Samen ${un}/${pubs.length} vrijgespeeld`;
     $('#ringFg').setAttribute('stroke-dashoffset', (94.25*(1-un/pubs.length)).toFixed(2));
     const to = PTS.me.altijd, from = shown, el = $('#mePts'), t0 = performance.now();
     if (reduce || from === to) { shown = to; el.textContent = nf(to); return; }
@@ -1009,6 +1127,7 @@ button { cursor: pointer; }
   body.addEventListener('click', e => {
     const t = e.target;
     const o = t.closest('[data-open]'); if (o) return openPub(+o.dataset.open);
+    const gt = t.closest('[data-goto]'); if (gt) { setTab(gt.dataset.goto); if (!wide() && detent==='peek') setDetent('mid'); return; }
     if (t.closest('[data-close]')) return closePub();
     const f = t.closest('[data-f]'); if (f) { filter = f.dataset.f; showAll = false; return draw(); }
     if (t.closest('[data-more]')) { showAll = true; return draw(); }
@@ -1049,12 +1168,14 @@ button { cursor: pointer; }
       ev.pending = false; ev.bev = [by];
       if (game.kroegbaas) { p.baas = 'me'; p.baasSinds = 0; p.baasCheck = 0; }
       PTS.me.altijd += pts; PTS.me.maand += pts; PTS.me.week += pts;
-      toast(`${S[by].naam} bevestigde je prijs.${game.kroegbaas ? ' Jij bent nu kroegbaas.' : ''}`, `+${pts}`);
+      const un = pubs.filter(q=>q.unlocked).length;
+      toast(`${S[by].naam} bevestigde je prijs.${game.kroegbaas ? ' Jij bent nu kroegbaas.' : mode === 'unlock' ? ` Nijmegen is nu samen ${Math.round(un/pubs.length*100)}% vrijgespeeld.` : ''}`, `+${pts}`);
       refreshAll();
     }, reduce ? 900 : 2600);
   });
   function doCheck(p){
-    const wasVrij = game.kroegbaas && !p.baas, wasMine = game.kroegbaas && p.baas === 'me', pts = wasVrij ? 25 : 5;
+    const wasVrij = game.kroegbaas && !p.baas, wasMine = game.kroegbaas && p.baas === 'me', wasOud = !game.kroegbaas && fresh(p) === 'old';
+    const pts = wasVrij ? 25 : wasOud ? OUD_BONUS : 5;
     const ev = {t:'check', d:0, by:'me', prijs:p.prijs, pending:true};
     p.events.push(ev); p.age = 0;
     toast(wasVrij ? 'Check ingediend. Wacht op een tweede bron.' : wasMine ? 'Check ingediend. Na bevestiging wordt je titel verlengd.' : 'Check ingediend.', `+${pts} straks`);
@@ -1064,11 +1185,12 @@ button { cursor: pointer; }
       if (wasVrij) { p.baas = 'me'; p.baasSinds = 0; }
       if (p.baas === 'me') p.baasCheck = 0;
       PTS.me.altijd += pts; PTS.me.maand += pts; PTS.me.week += pts;
-      toast(wasVrij ? `Titel gepakt. Jij bent kroegbaas van ${p.naam}.` : wasMine ? 'Titel verlengd: weer 90 dagen.' : 'Je check komt overeen met de rest.', `+${pts}`);
+      toast(wasVrij ? `Titel gepakt. Jij bent kroegbaas van ${p.naam}.` : wasMine ? 'Titel verlengd: weer 90 dagen.' : wasOud ? `${p.naam} is weer vers. Nog ${pubs.filter(q=>fresh(q)==='old').length} oude prijzen in de stad.` : 'Je check komt overeen met de rest.', `+${pts}`);
       refreshAll();
     }, reduce ? 800 : 1900);
   }
   function setGame(k, v){
+    if (!FEATURES.veroveringen) return;
     game[k] = v; store.set(k, v);
     if (k === 'wijken' && v && !game.kroegbaas) { game.kroegbaas = true; store.set('kroegbaas', true); }
     refreshAll();
