@@ -7,6 +7,8 @@ Beer Price Database voor Nederland: een door gebruikers gevulde kaart met bierpr
 - [`docs/concept.md`](docs/concept.md): besluiten, analyse van de Guindex-code, spelregels, geschiedenis per kroeg, ontwerp en datamodel.
 - [`prototype/index.html`](prototype/index.html): klikbaar prototype v2 (iPhone eerst, Nijmegen). Open het bestand in een browser; er is geen build of server nodig.
 - [`prototype/v1/index.html`](prototype/v1/index.html): eerste prototype.
+- [`app/`](app/): de echte app (PWA) op Supabase: kaart van Nijmegen met kroegen uit OpenStreetMap, inloggen, prijzen melden en bevestigen, foto's, ranglijst en live updates.
+- [`supabase/`](supabase/README.md): databaseschema, spelregels, Edge Function voor de kroegimport en installatiestappen.
 
 Alle data in de prototypes is verzonnen. De kaart van Nijmegen is vereenvoudigd nagetekend.
 
@@ -19,3 +21,13 @@ Alle data in de prototypes is verzonnen. De kaart van Nijmegen is vereenvoudigd 
 - De ranglijst bekijken: wie draagt het meest bij.
 
 Veroveringen (kroegbaas, wijkbezit) en teams staan uit. De code staat er nog in, achter `FEATURES` bovenaan het script in `prototype/index.html`.
+
+## De app draaien
+
+De app heeft geen build nodig. Lokaal:
+
+```bash
+python3 -m http.server 8765 --directory app
+```
+
+Open daarna http://localhost:8765. Eerst moet de backend klaarstaan: zie [`supabase/README.md`](supabase/README.md).

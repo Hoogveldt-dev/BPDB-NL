@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BPDB Kroegkaart</title>
+<meta name="description" content="Samen de bierprijzen van de stad vrijspelen en vers houden.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e2023" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="map" aria-label="Kaart met kroegen"></div>
+
+<div id="hud" class="glass" aria-live="polite">
+  <div class="hud-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="ring-bg"/><circle cx="18" cy="18" r="15" class="ring-fg" id="hudRing"/></svg></div>
+  <div><div class="hud-pct" id="hudPct">0%</div><div class="hud-sub" id="hudSub">vrijgespeeld</div></div>
+</div>
+
+<button id="locate" class="glass mapbtn" aria-label="Naar mijn locatie">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3 3 10.5l7.2 2.3L12.5 20z"/></svg>
+</button>
+
+<section id="sheet" class="glass" data-detent="half">
+  <div class="grabber" id="grabber" aria-hidden="true"></div>
+  <nav id="tabs" role="tablist">
+    <button data-tab="kaart" aria-pressed="true">Kaart</button>
+    <button data-tab="samen" aria-pressed="false">Samen</button>
+    <button data-tab="rang" aria-pressed="false">Ranglijst</button>
+    <button data-tab="ik" aria-pressed="false" id="tabIk">Ik</button>
+  </nav>
+  <div id="body"></div>
+</section>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
