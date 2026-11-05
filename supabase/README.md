@@ -5,7 +5,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Onderdeel | Bestand | Wat het doet |
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
-| Stamkroeg | `migrations/20261105200000_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
+| Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 
@@ -41,7 +41,7 @@ Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand
 
 ## Installeren op het Supabase-project
 
-Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot` (5 november 2026): het schema staat erin (migratie `20261105180124`), de Edge Function `osm-import` draait en de Security Advisor is schoon. De migratie `20261105200000_stamkroeg` moet daar nog worden toegepast met `supabase db push`. Voor een nieuw project:
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot` (5 november 2026): het schema staat erin (migratie `20261105180124`), de Edge Function `osm-import` draait en de Security Advisor is schoon. Ook de migratie `20261105220601_stamkroeg` staat erin (5 november 2026). Voor een nieuw project:
 
 **1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
