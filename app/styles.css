@@ -108,6 +108,18 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: v
 .btn.bad { background: var(--old); color: #fff; }
 .btn:disabled { opacity: .5; cursor: default; }
 
+/* Inloggen met Apple of Google; met een slotje zolang het in Supabase nog niet aanstaat */
+.sociaal { display: grid; gap: 8px; margin-top: 12px; }
+.btn.aanbieder { display: flex; align-items: center; gap: 10px; background: var(--surface); border: var(--hair); color: var(--fg); text-align: left; }
+.btn.aanbieder svg.logo { width: 18px; height: 18px; flex: none; }
+.btn.aanbieder .naam { flex: 1; }
+.btn.aanbieder.op-slot { opacity: 1; color: var(--muted); }
+.btn.aanbieder.op-slot svg.logo { opacity: .5; }
+.slot { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); color: var(--muted); border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 700; }
+.slot svg { width: 11px; height: 11px; }
+.of { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 14px 0 2px; }
+.of::before, .of::after { content: ""; flex: 1; border-top: var(--hair); }
+
 .form label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
 .form input, .form select { width: 100%; border: var(--hair); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
 .form .check { display: flex; gap: 8px; align-items: center; color: var(--fg); font-size: 14px; }
@@ -148,3 +160,12 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: v
 
 .maplibregl-ctrl-attrib { font-size: 10px; }
 .empty { text-align: center; padding: 30px 0; color: var(--muted); }
+
+/* Filter op soort bier en extra bier per kroeg */
+.soortkeuze { width: 100%; margin: 4px 0 8px; border: var(--hair); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 9px 12px; font-size: 14px; }
+.aanbod-lijst { list-style: none; margin: 0; padding: 0; }
+.aanbod { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 0; border-bottom: var(--hair); }
+.aanbod .price { font-weight: 700; }
+.aanbod-knoppen { grid-column: 1 / -1; display: flex; gap: 6px; }
+.aanbod-knoppen:empty { display: none; }
+.mini { border: var(--hair); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }

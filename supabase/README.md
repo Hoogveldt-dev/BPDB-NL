@@ -5,8 +5,12 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Onderdeel | Bestand | Wat het doet |
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
+| Anonieme spelers | `migrations/20261106090000_anonieme_spelers.sql` | Meteen meespelen zonder e-mailadres; bevestigen alleen met e-mailadres |
+| Extra bier | `migrations/20261106120000_extra_bier.sql` | Wat een kroeg naast de pils tapt (Guinness, witbier, ander merk), met of zonder prijs; geen punten |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
+| Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
+| Tests | `tests/database.test.mjs` | Alle migraties en spelregels in een Postgres in het geheugen (PGlite met PostGIS). Draai `npm install` en daarna `npm run test:db`. |
 
 ## Datamodel
 
@@ -18,16 +22,21 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `gebeurtenissen` | Audit-log: eerste prijs, wijziging of controle, met status `wacht`, `bevestigd` of `weerlegd`. |
 | `bevestigingen` | Oordelen van andere spelers over een melding (`klopt` of `klopt_niet`). |
 | `punten` | Audit-log van punten; de ranglijst is een query hierop. |
+| `biersoorten` | Vaste lijst soorten voor extra bier (Guinness, witbier, IPA en meer). |
+| `kroeg_aanbod` | Extra bier per kroeg: soort, merk, glas en prijs (beide optioneel), met status `actief`, `vervangen` of `weg`. Een nieuwe prijs vervangt de oude; niets wordt verwijderd. |
+| `aanbod_oordelen` | "Klopt" of "klopt niet" bij extra bier, een per speler per bier. |
 
-Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
+Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
 ## Spelregels in de database
 
-Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand zichzelf punten kan geven:
+De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). Schenkt een kroeg geen vaasje, dan meld je het kleinste glas en rekent de app om naar 25 cl (`per25_cent`). Iedereen mag alles lezen. Schrijven gaat alleen via deze functies, zodat niemand zichzelf punten kan geven:
 
 - `meld_prijs(kroeg, merk, volume_cl, prijs_cent, lat, lon, foto_pad)`: eerste prijs (speelt de kroeg vrij) of prijswijziging. Ter plaatse = binnen 75 m.
 - `beoordeel(gebeurtenis, 'klopt' | 'klopt_niet')`: een melding van een ander bevestigen of weerleggen.
 - `klopt_nog(kroeg, lat, lon)`: de huidige prijs controleren, hoogstens een keer per kroeg per 7 dagen.
+- `meld_aanbod(kroeg, soort, merk, volume_cl, prijs_cent)`: extra bier toevoegen of een nieuwe prijs ervan melden. Merk, glas en prijs zijn optioneel; bij een prijs hoort een glas. Geen punten.
+- `beoordeel_aanbod(aanbod, 'klopt' | 'klopt_niet')`: extra bier van een ander bevestigen (zet de datum van controle) of afkeuren; twee keer "klopt niet" en het verdwijnt. Je eigen extra trek je in met "klopt niet". Alleen met e-mailadres, behalve intrekken.
 
 | Regel | Uitwerking |
 |---|---|
@@ -36,6 +45,7 @@ Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand
 | Weerlegd | Twee keer "klopt niet" (of een keer van een speler boven 90%). Een weerlegde eerste prijs zet de kroeg terug onder de mist. |
 | Punten | Vrijspelen +50, wijziging +30, bevestigen +5, klopt nog +5, oude prijs (90+ dagen) controleren +15, foto +5, ter plaatse x1,5, weerlegd -20. Punten pas na bevestiging. |
 | Betrouwbaarheid | Start op 50. Bevestigde melding +2, weerlegde melding -10, juist oordeel +1, onjuist oordeel -3. |
+| Anonieme spelers | Beginnen zonder e-mailadres en mogen prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas met een gekoppeld e-mailadres, en een anonieme melder wordt nooit direct bevestigd (ook niet boven 90%). Zo kan niemand met wegwerpaccounts zijn eigen meldingen bevestigen. Na het koppelen blijft het account met alle punten hetzelfde. |
 
 ## Installeren op het Supabase-project
 
@@ -59,7 +69,14 @@ Of plak de migratie in de SQL Editor van het dashboard.
 supabase functions deploy osm-import
 ```
 
-**3. Inloggen instellen.** Dashboard → Authentication → URL Configuration: zet de Site URL op het adres waar de app draait (bijvoorbeeld je GitHub Pages-adres) en voeg dat adres toe aan de Redirect URLs. Voor lokaal testen: `http://localhost:8765`.
+**3. Inloggen instellen.** Nieuwe spelers beginnen anoniem, zonder e-mailadres. Wie zijn punten wil bewaren of prijzen van anderen wil bevestigen, koppelt later een e-mailadres. Bestaande spelers loggen in met een code van 6 cijfers die ze per mail krijgen en in de app typen. Een link gebruiken we niet meer: die werkt maar een keer, gaat stuk als een virusscanner van het mailprogramma hem eerst opent, en opent op een iPhone in Safari in plaats van in de app op het beginscherm. In het dashboard, onder Authentication:
+
+- **Sign In / Providers:** zet **Allow anonymous sign-ins** en **Allow manual linking** aan. Zonder het eerste kan niemand nieuw meedoen.
+- **Attack Protection:** zet bij voorkeur een captcha aan (Cloudflare Turnstile), anders kan iemand massaal anonieme accounts aanmaken. Let op: de app stuurt nog geen captcha mee; dat moet eerst in de app worden ingebouwd. Tot die tijd geldt de limiet van 30 nieuwe anonieme accounts per uur per IP-adres (Rate Limits).
+- **Emails, Templates:** zet bij **Magic Link** (inloggen), **Change Email Address** (een anonieme speler koppelt zijn e-mailadres) en **Confirm signup** dezelfde tekst, met `{{ .Token }}` erin. Onderwerp: `Je code voor de Kroegkaart`. Tekst: kopieer `supabase/templates/inlogcode.html`. Staat er geen `{{ .Token }}` in de mail, dan krijgt de speler geen code en kan hij niet inloggen.
+- **Emails, SMTP Settings:** koppel een eigen mailprovider (bijvoorbeeld Resend of Postmark) met een eigen afzender. De standaardmailer van Supabase stuurt maar een paar mails per uur en alleen naar leden van je Supabase-team. Zonder eigen SMTP kunnen andere spelers dus geen code krijgen.
+- **Rate Limits:** zet na het koppelen van SMTP het aantal mails per uur hoger (bijvoorbeeld 100).
+- **URL Configuration:** Site URL `https://bpdb-nl.pages.dev`. Redirect URLs: `https://bpdb-nl.pages.dev/**` en voor lokaal testen `http://localhost:8765/**`. Dit is alleen nog nodig voor oude inloglinks.
 
 **4. Jezelf beheerder maken.** Log eerst in via de app (tabblad Ik). Voer daarna in de SQL Editor uit:
 
