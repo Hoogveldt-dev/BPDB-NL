@@ -231,6 +231,10 @@ button { cursor: pointer; }
 .expiry .track { height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
 .expiry .track i { display: block; height: 100%; border-radius: 3px; }
 .expiry b { color: var(--fg); }
+.stam { border-bottom: var(--hair); }
+.stam .crownic { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent-text); }
+.stam.vrij .crownic { background: var(--surface-2); color: var(--muted); }
+.stam .expiry { padding-top: 0; }
 .tl { list-style: none; margin: 0; padding: 4px 12px; }
 .tl li { display: grid; grid-template-columns: 14px 1fr; gap: 10px; padding: 9px 0; position: relative; }
 .tl li::before { content: ""; position: absolute; left: 6px; top: 22px; bottom: -9px; border-left: 1.5px solid var(--sep); }
@@ -429,7 +433,8 @@ button { cursor: pointer; }
     lock: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7.5a5 5 0 0 1 10 0V10h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2.4 0h5.2V7.5a2.6 2.6 0 0 0-5.2 0z"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 7 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1 1 5 5-5 5"/></svg>',
     x: '<svg viewBox="0 0 12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m1.5 1.5 9 9m0-9-9 9"/></svg>',
-    pin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>'
+    pin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>',
+    glas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h10v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M16 8h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M9 9v8M12.5 9v8"/></svg>'
   };
 
   /* ================= Spelers (verzonnen) ================= */
@@ -922,6 +927,28 @@ button { cursor: pointer; }
     </svg>`;
   }
 
+  /* Stamgast: wie het vaakst de prijs bijwerkte of bevestigde. Telt bevestigde meldingen
+     (eerst, wijziging, check) en bevestigingen; openstaande meldingen tellen niet mee.
+     Gelijkspel: wie de stand het eerst bereikte. Vanaf STAMGAST_MIN bijdragen. */
+  const STAMGAST_MIN = 2;
+  function bijdragers(p){
+    const t = {};
+    const tel = (id, d) => { const r = t[id] ??= {id, n:0, laatst:Infinity}; r.n++; r.laatst = Math.min(r.laatst, d); };
+    p.events.filter(e => !e.pending).forEach(e => { tel(e.by, e.d); (e.bev || []).forEach(b => tel(b, e.d)); });
+    return Object.values(t).sort((a,b) => b.n - a.n || b.laatst - a.laatst);
+  }
+  function stamgastHtml(p){
+    const lijst = bijdragers(p), top = lijst[0], stam = top && top.n >= STAMGAST_MIN ? top : null;
+    const mijn = lijst.find(r => r.id === 'me')?.n || 0;
+    const keer = n => n === 1 ? '1 keer' : `${n} keer`, bijdr = n => n === 1 ? '1 bijdrage' : `${n} bijdragen`;
+    const sub = !stam ? `Nog <b>${bijdr(Math.max(1, STAMGAST_MIN - mijn))}</b> en jouw naam staat hier.`
+      : stam.id === 'me' ? 'Dit is jouw stamkroeg. Blijf de prijs bijhouden om dat zo te houden.'
+      : `Jij: ${keer(mijn)}. Nog <b>${bijdr(stam.n - mijn + 1)}</b> om stamgast te worden.`;
+    return `<div class="stam${stam ? '' : ' vrij'}"><div class="baas"><span class="crownic">${ICON.glas}</span>
+      <div><div class="t">${stam ? `Stamgast · ${keer(stam.n)} bijgewerkt of bevestigd` : 'Stamgast'}</div><b>${stam ? naamVan(stam.id) : 'Nog niemand'}</b></div>${stam ? av(stam.id, true) : ''}</div>
+      <div class="expiry"><span>${sub}</span></div></div>`;
+  }
+
   function historyHtml(p){
     return `<ul class="tl">${[...p.events].reverse().map(e => {
       const who = e.by === 'me' ? 'jou' : S[e.by].naam;
@@ -977,7 +1004,7 @@ button { cursor: pointer; }
       </div>
       ${game.kroegbaas ? baasHtml(p) : bijdragersHtml(p)}
       <div><p class="cap">Prijs per 25 cl</p><div class="grp" style="padding:10px 12px 6px">${spark(p)}</div></div>
-      <div><p class="cap">Geschiedenis</p><div class="grp">${historyHtml(p)}</div></div>`;
+      <div><p class="cap">Geschiedenis</p><div class="grp">${stamgastHtml(p)}${historyHtml(p)}</div></div>`;
   }
 
   function formHtml(p){
