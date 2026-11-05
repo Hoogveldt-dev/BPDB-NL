@@ -93,6 +93,10 @@ function vertaalAuthFout(fout) {
   if (m.includes("expired") || (m.includes("invalid") && (m.includes("token") || m.includes("otp"))))
     return "Deze code klopt niet of is verlopen. Vraag een nieuwe aan.";
   if (m.includes("rate limit")) return "Er zijn te veel inlogmails verstuurd. Probeer het later opnieuw.";
+  if (m.includes("anonymous sign-ins are disabled")) return "Meteen beginnen staat nog niet aan. Probeer het later opnieuw.";
+  if (m.includes("signups not allowed for otp")) return "Dit e-mailadres hoort nog niet bij een account. Begin hierboven en koppel daarna je e-mailadres.";
+  if (m.includes("already been registered") || m.includes("email_exists"))
+    return "Dit e-mailadres hoort al bij een account. Log uit en log daarmee in; de punten van deze speler gaan dan niet mee.";
   if (m.includes("email") && (m.includes("invalid") || m.includes("validate"))) return "Dit e-mailadres klopt niet.";
   if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "Nieuwe accounts kunnen nu niet worden aangemaakt.";
   if (m.includes("fetch") || m.includes("network")) return "Geen verbinding. Controleer je internet en probeer het opnieuw.";
@@ -347,8 +351,9 @@ function detailView() {
     actie = `<div class="btns"><button class="btn primary" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Speel vrij met een prijs</button></div>`;
   } else {
     actie = `<div class="btns">
-      <button class="btn good" data-klopt="${k.id}" ${ingelogd ? "" : "disabled"}>Klopt nog</button>
-      <button class="btn" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Prijs is anders</button></div>`;
+      <button class="btn good" data-klopt="${k.id}" ${ingelogd && !anoniem() ? "" : "disabled"}>Klopt nog</button>
+      <button class="btn" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Prijs is anders</button></div>
+      ${anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om prijzen te controleren.</div>` : ""}`;
   }
   return `<button class="back" data-back>‹ Terug</button>
     <h2>${esc(k.naam)}</h2>
@@ -361,7 +366,7 @@ function detailView() {
       : `<div class="muted" style="margin-top:8px">Nog geen bevestigde prijs.</div>`}
       ${k.ontdekker ? `<div class="small" style="margin-top:8px">Ontdekt door <b>${esc(k.ontdekker)}</b> ${wanneer(k.ontdekt_op)}</div>` : ""}
       ${actie}
-      ${ingelogd ? "" : `<div class="small muted" style="margin-top:8px">Log in via het tabblad Ik om mee te spelen.</div>`}
+      ${ingelogd ? "" : `<div class="small muted" style="margin-top:8px">Doe mee via het tabblad Ik. Een e-mailadres is niet nodig.</div>`}
     </div>
     <h3>Prijs per 25 cl, afgelopen jaar</h3>
     <div id="spark"></div>
@@ -384,6 +389,7 @@ async function laadTijdlijn(id) {
       ${open.foto_pad ? `<div class="small"><a href="${fotoUrl(open.foto_pad)}" target="_blank" rel="noopener">Foto van de prijslijst</a></div>` : ""}
       ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door een andere speler.</div>`
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
+        : anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om meldingen van anderen te bevestigen of te weerleggen.</div>`
         : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}" ${state.sessie ? "" : "disabled"}>Klopt</button>
              <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}" ${state.sessie ? "" : "disabled"}>Klopt niet</button></div>`}`;
   }
@@ -496,30 +502,50 @@ async function rangView() {
       <span class="price">${r[kolom]}<small>punten</small></span></li>`).join("")}</ul>` : `<div class="empty">Nog niemand heeft punten in deze periode.</div>`}`;
 }
 
+// Speelt de speler zonder e-mailadres (anoniem account van Supabase)?
+function anoniem() {
+  return !!state.sessie?.user?.is_anonymous;
+}
+
+function codeFormulier(knop) {
+  return `<p class="muted small">We hebben een code gemaild naar <strong>${esc(state.inlog.email)}</strong>. Typ hem hieronder in. Zie je niets, kijk dan ook bij spam.</p>
+    <form class="form" id="codeForm">
+      <label>Code uit de mail</label>
+      <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" required autofocus>
+      <div class="btns"><button class="btn primary" type="submit">${knop}</button></div>
+    </form>
+    <div class="btns"><button class="btn" data-nieuwecode>Nieuwe code sturen</button><button class="btn" data-anderadres>Ander e-mailadres</button></div>`;
+}
+
 function ikView() {
   if (!state.sessie && state.inlog) {
-    return `<h2>Vul je code in</h2>
-      <p class="muted">We hebben een code gemaild naar <strong>${esc(state.inlog.email)}</strong>. Typ hem hieronder in. Zie je niets, kijk dan ook bij spam.</p>
-      <form class="form" id="codeForm">
-        <label>Code uit de mail</label>
-        <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" required autofocus>
-        <div class="btns"><button class="btn primary" type="submit">Inloggen</button></div>
-      </form>
-      <div class="btns"><button class="btn" data-nieuwecode>Nieuwe code sturen</button><button class="btn" data-anderadres>Ander e-mailadres</button></div>`;
+    return `<h2>Vul je code in</h2>${codeFormulier("Inloggen")}`;
   }
   if (!state.sessie) {
     const vorig = onthouden.lees();
     return `<h2>Doe mee</h2>
-      <p class="muted">Log in met je e-mailadres. Je krijgt een code per mail, geen wachtwoord nodig.</p>
-      <form class="form" id="loginForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(vorig.email ?? "")}" required>
+      <p class="muted">Kies een spelersnaam en begin meteen. Geen e-mail of wachtwoord nodig.</p>
+      <form class="form" id="startForm">
         <label>Spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" value="${esc(vorig.naam ?? "")}" required>
         <label class="check"><input type="checkbox" name="leeftijd" required> Ik ben 18 jaar of ouder</label>
-        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
+        <div class="btns"><button class="btn primary" type="submit">Begin meteen</button></div>
       </form>
-      <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
+      <p class="small muted">We belonen bijdragen, nooit drinken.</p>
+      <h3>Al een account?</h3>
+      <form class="form" id="loginForm">
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(vorig.email ?? "")}" required>
+        <div class="btns"><button class="btn" type="submit">Stuur inlogcode</button></div>
+      </form>`;
   }
   const p = state.profiel;
+  const koppelen = !anoniem() ? "" : `<h3>Bewaar je account</h3>
+    <div class="card">
+      <div class="small">Je speelt zonder e-mailadres. Koppel er een om je punten te bewaren, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.</div>
+      ${state.inlog ? codeFormulier("Koppelen") : `<form class="form" id="koppelForm">
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
+        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
+      </form>`}
+    </div>`;
   return `<h2>${esc(p?.naam ?? "")}</h2>
     <div class="card">
       <div style="display:flex;gap:16px">
@@ -529,6 +555,7 @@ function ikView() {
       </div>
       <div class="small muted" style="margin-top:8px">Deze week ${p?.week ?? 0} punten, deze maand ${p?.maand ?? 0}.</div>
     </div>
+    ${koppelen}
     <form class="form" id="naamForm"><label>Spelersnaam</label><input name="naam" minlength="2" maxlength="30" value="${esc(p?.naam ?? "")}">
       <div class="btns"><button class="btn" type="submit">Naam opslaan</button></div></form>
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
@@ -574,7 +601,9 @@ function setTab(t) {
   state.tab = t; state.selected = null; state.form = null;
   document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === t)));
   kaartBijwerken(); draw(); body.scrollTop = 0;
-  if (!wide() && sheet.dataset.detent === "peek") setDetent("half");
+  // Ik bevat formulieren; in de halve stand valt de onderkant buiten beeld
+  if (!wide() && t === "ik") setDetent("full");
+  else if (!wide() && sheet.dataset.detent === "peek") setDetent("half");
 }
 
 async function verstuurPrijs(form) {
@@ -651,10 +680,18 @@ body.addEventListener("click", (e) => {
   }
   if (t.dataset.klopt) return kloptNog(Number(t.dataset.klopt));
   if (t.dataset.oordeel) return beoordeel(Number(t.dataset.g), t.dataset.oordeel);
-  if (t.dataset.logout !== undefined) return sb.auth.signOut();
-  if (t.dataset.nieuwecode !== undefined) return stuurCode(state.inlog.email, state.inlog.naam, t);
+  if (t.dataset.logout !== undefined) {
+    if (anoniem() && !confirm("Je speelt zonder e-mailadres. Als je uitlogt, ben je deze speler en je punten kwijt. Toch uitloggen?")) return;
+    return sb.auth.signOut();
+  }
+  if (t.dataset.nieuwecode !== undefined) return stuurCode(state.inlog.email, state.inlog.soort, t);
   if (t.dataset.anderadres !== undefined) { state.inlog = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
+});
+
+// Wie iets gaat invullen, krijgt het hele blad te zien
+body.addEventListener("focusin", (e) => {
+  if (!wide() && e.target.matches("input, select, textarea") && !e.target.matches("[data-zoek]")) setDetent("full");
 });
 
 body.addEventListener("input", (e) => {
@@ -675,22 +712,34 @@ body.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   if (f.id === "prijsForm") return verstuurPrijs(f);
-  if (f.id === "loginForm") {
-    const fd = new FormData(f);
-    const email = String(fd.get("email")).trim().toLowerCase();
-    const naam = String(fd.get("naam")).trim();
-    onthouden.schrijf({ email, naam });
-    return stuurCode(email, naam, f.querySelector("button[type=submit]"));
+  if (f.id === "startForm") {
+    const naam = String(new FormData(f).get("naam")).trim();
+    onthouden.schrijf({ ...onthouden.lees(), naam });
+    const knop = f.querySelector("button[type=submit]");
+    knop.disabled = true;
+    const { error } = await sb.auth.signInAnonymously({ options: { data: { naam } } });
+    knop.disabled = false;
+    if (error) return toast(vertaalAuthFout(error));
+    // onAuthStateChange zet de sessie en tekent het scherm opnieuw
+    return toast("Welkom! Je kunt meteen meespelen");
+  }
+  if (f.id === "loginForm" || f.id === "koppelForm") {
+    const email = String(new FormData(f).get("email")).trim().toLowerCase();
+    onthouden.schrijf({ ...onthouden.lees(), email });
+    return stuurCode(email, f.id === "loginForm" ? "inloggen" : "koppelen", f.querySelector("button[type=submit]"));
   }
   if (f.id === "codeForm") {
     const knop = f.querySelector("button[type=submit]");
     knop.disabled = true;
     const code = String(new FormData(f).get("code")).replace(/\D/g, "");
-    const { error } = await sb.auth.verifyOtp({ email: state.inlog.email, token: code, type: "email" });
+    const koppelen = state.inlog.soort === "koppelen";
+    const { error } = await sb.auth.verifyOtp({ email: state.inlog.email, token: code, type: koppelen ? "email_change" : "email" });
     knop.disabled = false;
     if (error) return toast(vertaalAuthFout(error));
+    state.inlog = null;
     // onAuthStateChange zet de sessie en tekent het scherm opnieuw
-    toast("Je bent ingelogd");
+    toast(koppelen ? "Je e-mailadres is gekoppeld. Je punten zijn bewaard" : "Je bent ingelogd");
+    if (koppelen) { await laadProfiel(); draw(); }
     return;
   }
   if (f.id === "naamForm") {
@@ -702,19 +751,21 @@ body.addEventListener("submit", async (e) => {
   }
 });
 
-// Stuurt een inlogcode per mail. Nieuwe spelers krijgen zo meteen een account, met de spelersnaam uit het formulier.
+// Stuurt een code per mail. "inloggen": bestaand account met e-mailadres. "koppelen": een anonieme speler
+// koppelt zijn e-mailadres; het account met alle punten blijft hetzelfde. Nieuwe spelers beginnen anoniem
+// (startForm), dus inloggen maakt geen nieuw account aan.
 // De code typ je in de app: dat werkt ook als de mail op een ander apparaat of in een andere browser opengaat,
 // en een virusscanner van het mailprogramma kan hem niet "opgebruiken" zoals bij een link.
-async function stuurCode(email, naam, knop) {
+async function stuurCode(email, soort, knop) {
   if (knop) knop.disabled = true;
-  const { error } = await sb.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: true, data: { naam }, emailRedirectTo: location.origin + location.pathname },
-  });
+  const terug = location.origin + location.pathname;
+  const { error } = soort === "koppelen"
+    ? await sb.auth.updateUser({ email }, { emailRedirectTo: terug })
+    : await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: terug } });
   if (knop) knop.disabled = false;
   if (error) return toast(vertaalAuthFout(error));
   const nieuw = state.inlog == null;
-  state.inlog = { email, naam };
+  state.inlog = { email, soort };
   if (nieuw) draw();
   else toast("Nieuwe code verstuurd. Gebruik de nieuwste mail.");
 }
@@ -758,7 +809,8 @@ sb.channel("stad")
 
 sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   state.sessie = sessie;
-  if (sessie) state.inlog = null;
+  // Bij koppelen bestaat de sessie al; dan blijft het codeformulier staan tot de code is ingevuld
+  if (!sessie || state.inlog?.soort === "inloggen") state.inlog = null;
   // Tokenvernieuwing: niets opnieuw laden
   if (gebeurtenis === "TOKEN_REFRESHED") return;
   // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.

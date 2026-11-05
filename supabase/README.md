@@ -5,6 +5,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Onderdeel | Bestand | Wat het doet |
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
+| Anonieme spelers | `migrations/20261106090000_anonieme_spelers.sql` | Meteen meespelen zonder e-mailadres; bevestigen alleen met e-mailadres |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
@@ -38,6 +39,7 @@ Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand
 | Weerlegd | Twee keer "klopt niet" (of een keer van een speler boven 90%). Een weerlegde eerste prijs zet de kroeg terug onder de mist. |
 | Punten | Vrijspelen +50, wijziging +30, bevestigen +5, klopt nog +5, oude prijs (90+ dagen) controleren +15, foto +5, ter plaatse x1,5, weerlegd -20. Punten pas na bevestiging. |
 | Betrouwbaarheid | Start op 50. Bevestigde melding +2, weerlegde melding -10, juist oordeel +1, onjuist oordeel -3. |
+| Anonieme spelers | Beginnen zonder e-mailadres en mogen prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas met een gekoppeld e-mailadres, en een anonieme melder wordt nooit direct bevestigd (ook niet boven 90%). Zo kan niemand met wegwerpaccounts zijn eigen meldingen bevestigen. Na het koppelen blijft het account met alle punten hetzelfde. |
 
 ## Installeren op het Supabase-project
 
@@ -61,9 +63,11 @@ Of plak de migratie in de SQL Editor van het dashboard.
 supabase functions deploy osm-import
 ```
 
-**3. Inloggen instellen.** Spelers loggen in met een code van 6 cijfers die ze per mail krijgen en in de app typen. Een link gebruiken we niet meer: die werkt maar een keer, gaat stuk als een virusscanner van het mailprogramma hem eerst opent, en opent op een iPhone in Safari in plaats van in de app op het beginscherm. In het dashboard, onder Authentication:
+**3. Inloggen instellen.** Nieuwe spelers beginnen anoniem, zonder e-mailadres. Wie zijn punten wil bewaren of prijzen van anderen wil bevestigen, koppelt later een e-mailadres. Bestaande spelers loggen in met een code van 6 cijfers die ze per mail krijgen en in de app typen. Een link gebruiken we niet meer: die werkt maar een keer, gaat stuk als een virusscanner van het mailprogramma hem eerst opent, en opent op een iPhone in Safari in plaats van in de app op het beginscherm. In het dashboard, onder Authentication:
 
-- **Emails, Templates:** zet bij **Confirm signup** (de mail voor nieuwe spelers) en bij **Magic Link** (de mail voor bestaande spelers) dezelfde tekst, met `{{ .Token }}` erin. Onderwerp: `Je inlogcode voor de Kroegkaart`. Tekst: kopieer `supabase/templates/inlogcode.html`. Staat er geen `{{ .Token }}` in de mail, dan krijgt de speler geen code en kan hij niet inloggen.
+- **Sign In / Providers:** zet **Allow anonymous sign-ins** en **Allow manual linking** aan. Zonder het eerste kan niemand nieuw meedoen.
+- **Attack Protection:** zet bij voorkeur een captcha aan (Cloudflare Turnstile), anders kan iemand massaal anonieme accounts aanmaken. Let op: de app stuurt nog geen captcha mee; dat moet eerst in de app worden ingebouwd. Tot die tijd geldt de limiet van 30 nieuwe anonieme accounts per uur per IP-adres (Rate Limits).
+- **Emails, Templates:** zet bij **Magic Link** (inloggen), **Change Email Address** (een anonieme speler koppelt zijn e-mailadres) en **Confirm signup** dezelfde tekst, met `{{ .Token }}` erin. Onderwerp: `Je code voor de Kroegkaart`. Tekst: kopieer `supabase/templates/inlogcode.html`. Staat er geen `{{ .Token }}` in de mail, dan krijgt de speler geen code en kan hij niet inloggen.
 - **Emails, SMTP Settings:** koppel een eigen mailprovider (bijvoorbeeld Resend of Postmark) met een eigen afzender. De standaardmailer van Supabase stuurt maar een paar mails per uur en alleen naar leden van je Supabase-team. Zonder eigen SMTP kunnen andere spelers dus geen code krijgen.
 - **Rate Limits:** zet na het koppelen van SMTP het aantal mails per uur hoger (bijvoorbeeld 100).
 - **URL Configuration:** Site URL `https://bpdb-nl.pages.dev`. Redirect URLs: `https://bpdb-nl.pages.dev/**` en voor lokaal testen `http://localhost:8765/**`. Dit is alleen nog nodig voor oude inloglinks.

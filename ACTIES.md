@@ -1,10 +1,17 @@
 # Wat Kjell zelf nog moet doen
 
-Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md`, stap 3.
+Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md`, stap 3. Doe stap 1 tot en met 4 voordat de nieuwe app live gaat.
 
-## Inloggen met een code (nodig voor de nieuwe app)
+## Inloggen: meteen beginnen, later e-mail koppelen
 
-1. **Mailtemplates.** Supabase, Authentication, Emails, Templates. Zet bij **Confirm signup** en bij **Magic Link** het onderwerp `Je inlogcode voor de Kroegkaart` en de tekst uit `supabase/templates/inlogcode.html` (met `{{ .Token }}`). Zonder deze stap krijgt een speler nog een link in plaats van een code en kan hij in de app niets invullen.
-2. **Eigen SMTP.** Authentication, Emails, SMTP Settings. Koppel Resend, Postmark of een andere mailprovider met een eigen afzender. Zonder deze stap krijgen alleen leden van je Supabase-team een mail, en maar een paar per uur.
-3. **Rate limit.** Authentication, Rate Limits: zet het aantal mails per uur hoger zodra SMTP gekoppeld is.
-4. **Adressen.** Authentication, URL Configuration: Site URL `https://bpdb-nl.pages.dev`, Redirect URLs `https://bpdb-nl.pages.dev/**` en `http://localhost:8765/**`.
+1. **Migratie.** Voer `supabase/migrations/20261106090000_anonieme_spelers.sql` uit op project `yzaootlrhxzyxtvacrot` en zet de versie in `supabase_migrations.schema_migrations` gelijk aan `20261106090000`. Draai daarna de Security Advisor.
+2. **Anonieme accounts.** Supabase, Authentication, Sign In / Providers: zet **Allow anonymous sign-ins** en **Allow manual linking** aan. Zonder deze stap kan niemand nieuw meedoen.
+3. **Mailtemplates.** Authentication, Emails, Templates. Zet bij **Magic Link**, **Change Email Address** en **Confirm signup** het onderwerp `Je code voor de Kroegkaart` en de tekst uit `supabase/templates/inlogcode.html` (met `{{ .Token }}`). Zonder deze stap krijgt een speler een link in plaats van een code en kan hij in de app niets invullen.
+4. **Eigen SMTP.** Authentication, Emails, SMTP Settings. Koppel Resend, Postmark of een andere mailprovider met een eigen afzender. Zonder deze stap krijgen alleen leden van je Supabase-team een mail, en maar een paar per uur.
+5. **Rate limits.** Authentication, Rate Limits: zet het aantal mails per uur hoger zodra SMTP gekoppeld is. Nieuwe anonieme accounts staan standaard op 30 per uur per IP-adres; dat is genoeg.
+6. **Adressen.** Authentication, URL Configuration: Site URL `https://bpdb-nl.pages.dev`, Redirect URLs `https://bpdb-nl.pages.dev/**` en `http://localhost:8765/**`.
+
+## Later
+
+- **Captcha.** Supabase raadt een captcha aan bij anonieme accounts (Cloudflare Turnstile). Zet die pas aan in Supabase als de app hem meestuurt; anders werken beginnen en inloggen niet meer.
+- **Opruimen.** Supabase ruimt oude anonieme accounts niet zelf op. Als het er veel worden, kunnen we een taak maken die accounts zonder punten na bijvoorbeeld 30 dagen verwijdert.

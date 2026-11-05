@@ -14,10 +14,12 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg. Spelers spelen samen de
 - Openbare instellingen: `app/config.js` (project-URL en publishable key). Zet hier nooit de service_role-key, secret key of het databasewachtwoord.
 - Database: `supabase/migrations/`, uitleg in `supabase/README.md`, test in `supabase/tests/database.test.mjs` (PGlite met PostGIS, bootst rollen, `auth.users`, `auth.uid()` en opslag na).
 - Kroegimport uit OpenStreetMap en wijken van het CBS: Edge Function `supabase/functions/osm-import/`.
-- Inloggen: code van 6 cijfers per mail (`stuurCode` en `codeForm` in `app/app.js`), mailtekst in `supabase/templates/inlogcode.html`.
+- Inloggen: nieuwe spelers beginnen anoniem (`startForm`, `signInAnonymously`) en koppelen later hun e-mailadres (`koppelForm`, `updateUser` en `verifyOtp` met `type: 'email_change'`). Bestaande spelers loggen in met een code (`loginForm`). Alles via `stuurCode` en `codeForm` in `app/app.js`; mailtekst in `supabase/templates/inlogcode.html`.
 
-## Inloggen (lessen uit Woober en Woofer)
-- Inloggen gaat met een code die de speler in de app typt (`signInWithOtp` en daarna `verifyOtp` met `type: 'email'`), niet met een link. Een link werkt maar een keer, wordt soms door virusscanners van mailprogramma's opgebruikt en opent op een iPhone in Safari in plaats van in de PWA op het beginscherm.
+## Inloggen (lessen uit Woober, Woofer en DBDB)
+- Meteen kunnen beginnen zonder account (het idee van DBDB), maar met een echt account van Supabase dat je later aan een e-mailadres koppelt, zodat punten niet verloren gaan.
+- Anonieme spelers mogen prijzen melden, maar niet bevestigen, weerleggen of "klopt nog" doen (`private.vereis_email()`), en worden nooit direct bevestigd. Een nieuwe functie waarmee spelers elkaars werk goedkeuren, roept ook `private.vereis_email()` aan. In de app is dat `anoniem()`.
+- Inloggen gaat met een code die de speler in de app typt (`signInWithOtp` en daarna `verifyOtp` met `type: 'email'`), niet met een link. `shouldCreateUser` staat uit: nieuwe spelers beginnen anoniem. Een link werkt maar een keer, wordt soms door virusscanners van mailprogramma's opgebruikt en opent op een iPhone in Safari in plaats van in de PWA op het beginscherm.
 - De client gebruikt `flowType: 'pkce'`.
 - Wacht nooit op een Supabase-aanroep binnen `onAuthStateChange`: supabase-js houdt dan een slot vast en de app kan vastlopen. Doe het werk in een `setTimeout(..., 0)`.
 - Toon fouten van Supabase Auth via `vertaalAuthFout()` in gewone taal, nooit de Engelse melding.
