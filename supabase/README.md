@@ -4,7 +4,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 
 | Onderdeel | Bestand | Wat het doet |
 |---|---|---|
-| Schema en spelregels | `migrations/20261105120000_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
+| Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 
@@ -39,20 +39,19 @@ Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand
 
 ## Installeren op het Supabase-project
 
-Directe databaseverbindingen waren vanuit de ontwikkelomgeving niet mogelijk, dus deze stappen doe je zelf.
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot` (5 november 2026): het schema staat erin (migratie `20261105180124`), de Edge Function `osm-import` draait en de Security Advisor is schoon. Voor een nieuw project:
 
-**1. Schema toepassen.** Kies een van de twee:
-
-- Dashboard: open SQL Editor, plak de inhoud van `migrations/20261105120000_kroegkaart_schema.sql` en klik Run.
-- CLI, vanuit de hoofdmap van de repo:
+**1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
 ```bash
-supabase link --project-ref yzaootlrhxzyxtvacrot
+supabase link --project-ref <project-ref>
 ```
 
 ```bash
 supabase db push
 ```
+
+Of plak de migratie in de SQL Editor van het dashboard.
 
 **2. Edge Function uitrollen:**
 
