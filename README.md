@@ -30,4 +30,12 @@ De app heeft geen build nodig. Lokaal:
 python3 -m http.server 8765 --directory app
 ```
 
-Open daarna http://localhost:8765. Eerst moet de backend klaarstaan: zie [`supabase/README.md`](supabase/README.md).
+Open daarna http://localhost:8765. Eerst moet de backend klaarstaan: zie [`supabase/README.md`](supabase/README.md). De app draait online op https://bpdb-nl.pages.dev.
+
+## Controleren
+
+```bash
+npm install
+npm run check     # syntaxis van de app
+npm run test:db   # schema en spelregels in een Postgres in het geheugen
+```
