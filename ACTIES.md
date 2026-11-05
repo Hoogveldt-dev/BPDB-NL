@@ -11,6 +11,14 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 5. **Rate limits.** Authentication, Rate Limits: zet het aantal mails per uur hoger zodra SMTP gekoppeld is. Nieuwe anonieme accounts staan standaard op 30 per uur per IP-adres; dat is genoeg.
 6. **Adressen.** Authentication, URL Configuration: Site URL `https://bpdb-nl.pages.dev`, Redirect URLs `https://bpdb-nl.pages.dev/**` en `http://localhost:8765/**`.
 
+## Inloggen met Apple en Google
+
+De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze vanzelf open. Stappenplan: `docs/inloggen-met-apple-en-google.md`.
+
+1. **Google:** project in Google Cloud, toestemmingsscherm, webclient, Client ID en secret in Supabase, Google aanzetten, app op In production.
+2. **Apple:** lidmaatschap Apple Developer Program, Services ID en sleutel, geheime sleutel in Supabase, Apple aanzetten. De geheime sleutel verloopt na hoogstens 6 maanden.
+3. **Privacyverklaring:** Google vraagt om een link. BPDB heeft er nog geen.
+
 ## Later
 
 - **Captcha.** Supabase raadt een captcha aan bij anonieme accounts (Cloudflare Turnstile). Zet die pas aan in Supabase als de app hem meestuurt; anders werken beginnen en inloggen niet meer.

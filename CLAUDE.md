@@ -14,6 +14,8 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg. Spelers spelen samen de
 - Openbare instellingen: `app/config.js` (project-URL en publishable key). Zet hier nooit de service_role-key, secret key of het databasewachtwoord.
 - Database: `supabase/migrations/`, uitleg in `supabase/README.md`, test in `supabase/tests/database.test.mjs` (PGlite met PostGIS, bootst rollen, `auth.users`, `auth.uid()` en opslag na).
 - Kroegimport uit OpenStreetMap en wijken van het CBS: Edge Function `supabase/functions/osm-import/`.
+- Inloggen met Apple en Google: knoppen in `aanbiederKnoppen()`, op slot tot de aanbieder in Supabase aanstaat (`laadAanbieders()` leest `/auth/v1/settings`). Stappenplan: `docs/inloggen-met-apple-en-google.md`. Zet nooit een `.p8`-sleutel of geheime sleutel van Apple of Google in de app of in Git.
+- Ideeën die nog uitgewerkt moeten worden: `docs/kroegentocht.md`.
 - Inloggen: nieuwe spelers beginnen anoniem (`startForm`, `signInAnonymously`) en koppelen later hun e-mailadres (`koppelForm`, `updateUser` en `verifyOtp` met `type: 'email_change'`). Bestaande spelers loggen in met een code (`loginForm`). Alles via `stuurCode` en `codeForm` in `app/app.js`; mailtekst in `supabase/templates/inlogcode.html`.
 
 ## Inloggen (lessen uit Woober, Woofer en DBDB)
