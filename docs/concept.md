@@ -173,3 +173,4 @@ Wijk         id, cbs_code, naam, geometrie
 1. Welke techniek precies (zie 1.2)? Te beslissen voor de eerste sprint.
 2. Wanneer zetten we veroveringen of teams weer aan, en op basis van welk signaal (bijv. na 100% vrijgespeeld)?
 3. Welke kroegsoorten tellen mee (alleen cafés en bars, of ook restaurants met een tap)?
+4. Kroegentocht: een route langs gekozen kroegen, met afstand en kcal. Idee, nog uit te werken: [kroegentocht.md](kroegentocht.md).
