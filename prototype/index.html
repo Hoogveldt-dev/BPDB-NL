@@ -7,894 +7,1092 @@
 <body>
 <title>BPDB Kroegkaart</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Prototype v1 van de Beer Price Database: speel kroegen vrij door een bierprijs in te vullen.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e2023" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Martian+Mono:wght@400;600&family=Rammetto+One&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Nunito:wght@700;800;900&display=swap">
 <style>
-/* Layout: kaart is het spelbord. Desktop: zijpaneel links + kaart rechts. Telefoon: paneel boven, kaart in het midden, lijst eronder. Detailkaart als bottom sheet. */
+/* Layout: iPhone eerst. Kaart vult het scherm, alles erboven is glas: een bottom sheet met drie standen (zoals Kaarten op iOS), zwevende kaartknoppen rechtsboven. Vanaf 900px wordt de sheet een zwevende zijbalk links. */
 :root {
-  /* Donker als basis: een kroegkaart gebruik je 's avonds. Neutralen trekken naar stout-bruin. */
-  --bg: #14110e;
-  --surface: #1d1915;
-  --surface-2: #27221c;
-  --line: #3a3229;
-  --fg: #f3ede1;
-  --muted: #a79a87;
-  --amber: #f4b000;
-  --amber-ink: #1b1305;
-  --amber-text: #f6c443;
-  --fresh: #5ccf8c;
-  --stale: #f0993d;
-  --old: #ee6158;
-  --locked: #6f655a;
-  --land: #1a1613;
-  --street: #2b241e;
-  --water: #1b2b35;
-  --water-hi: #24394a;
-  --park: #1c2719;
-  --fog: #070605;
-  --fog-op: .66;
-  --t1: #7aa7ff;
-  --t2: #f4b000;
-  --t3: #d98bff;
-  --t4: #4fd1c5;
-  --shadow: 0 18px 50px rgb(0 0 0 / .45);
+  /* Kaart, in de stijl van Apple Kaarten (licht) */
+  --land: #f6f3ee; --block: #ebe6de; --road: #ffffff; --casing: #ddd5c9; --major: #ffe7a3; --major-casing: #ecc35a;
+  --water: #a9d6f5; --park: #cde8b8; --rail: #c4bdb2; --label: #7c766d; --label-water: #3f86bd;
+  --fog: #9a9ba1; --fog-op: .30; --fogdot: #5c5d63;
+  /* Interface, iOS-systeemkleuren */
+  --surface: #ffffff; --surface-2: #f2f2f7; --glass: rgb(250 250 252 / .74); --sep: rgb(60 60 67 / .16);
+  --fg: #1c1c1e; --muted: #6e6e73;
+  --accent: #ffc21a; --accent-ink: #2a1d00; --accent-text: #946400;
+  --fresh: #34c759; --fresh-t: #1f8a3c; --stale: #ff9500; --stale-t: #c45200; --old: #ff3b30; --old-t: #d70015;
+  --locked: #aeaeb2; --blue: #007aff;
+  --a1: #5e5ce6; --a2: #ff2d55; --a3: #30b0c7; --a4: #af52de; --a5: #32ade6; --a6: #00c7be;
+  --shadow: 0 10px 34px rgb(0 0 0 / .14), 0 1px 3px rgb(0 0 0 / .08);
+  --hair: .5px solid var(--sep);
 
-  --f-display: "Rammetto One", "Arial Black", Impact, sans-serif;
-  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-data: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-
-  --r-s: 8px;
-  --r-m: 14px;
-  color-scheme: dark;
+  --f-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Figtree", system-ui, sans-serif;
+  --f-round: ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, "Figtree", sans-serif;
+  --r: 14px;
 }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #e9ece9; --surface: #ffffff; --surface-2: #f2f4f1; --line: #d3d8d2;
-    --fg: #1a1714; --muted: #5d625b; --amber: #f2ad00; --amber-ink: #1b1305; --amber-text: #8c5e00;
-    --fresh: #1d9a57; --stale: #c26810; --old: #cc372f; --locked: #8b8f8a;
-    --land: #e4e7e1; --street: #fbfbf8; --water: #bcd3de; --water-hi: #d3e3ea; --park: #cfe0c4;
-    --fog: #4b5054; --fog-op: .48;
-    --t1: #2f63d6; --t2: #c98a00; --t3: #9b3fd1; --t4: #12877d;
-    --shadow: 0 18px 50px rgb(30 40 30 / .18);
-    color-scheme: light;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --land: #1e2023; --block: #282b2f; --road: #3a3e44; --casing: #17181a; --major: #6a5a30; --major-casing: #3d3422;
+    --water: #0f3150; --park: #1b3326; --rail: #4c5057; --label: #8e8e93; --label-water: #64a6dc;
+    --fog: #050607; --fog-op: .48; --fogdot: #8e8e93;
+    --surface: #1c1c1e; --surface-2: #2c2c2e; --glass: rgb(30 30 32 / .72); --sep: rgb(84 84 88 / .55);
+    --fg: #f2f2f7; --muted: #98989f;
+    --accent: #ffc83d; --accent-ink: #261a00; --accent-text: #ffd35c;
+    --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
+    --locked: #636366; --blue: #0a84ff;
+    --shadow: 0 10px 34px rgb(0 0 0 / .5), 0 1px 3px rgb(0 0 0 / .3);
+    color-scheme: dark;
   }
 }
-:root[data-theme="light"] {
-  --bg: #e9ece9; --surface: #ffffff; --surface-2: #f2f4f1; --line: #d3d8d2;
-  --fg: #1a1714; --muted: #5d625b; --amber: #f2ad00; --amber-ink: #1b1305; --amber-text: #8c5e00;
-  --fresh: #1d9a57; --stale: #c26810; --old: #cc372f; --locked: #8b8f8a;
-  --land: #e4e7e1; --street: #fbfbf8; --water: #bcd3de; --water-hi: #d3e3ea; --park: #cfe0c4;
-  --fog: #4b5054; --fog-op: .48;
-  --t1: #2f63d6; --t2: #c98a00; --t3: #9b3fd1; --t4: #12877d;
-  --shadow: 0 18px 50px rgb(30 40 30 / .18);
-  color-scheme: light;
+:root[data-theme="dark"] {
+  --land: #1e2023; --block: #282b2f; --road: #3a3e44; --casing: #17181a; --major: #6a5a30; --major-casing: #3d3422;
+  --water: #0f3150; --park: #1b3326; --rail: #4c5057; --label: #8e8e93; --label-water: #64a6dc;
+  --fog: #050607; --fog-op: .48; --fogdot: #8e8e93;
+  --surface: #1c1c1e; --surface-2: #2c2c2e; --glass: rgb(30 30 32 / .72); --sep: rgb(84 84 88 / .55);
+  --fg: #f2f2f7; --muted: #98989f;
+  --accent: #ffc83d; --accent-ink: #261a00; --accent-text: #ffd35c;
+  --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
+  --locked: #636366; --blue: #0a84ff;
+  --shadow: 0 10px 34px rgb(0 0 0 / .5), 0 1px 3px rgb(0 0 0 / .3);
+  color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
-button { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
-.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--land); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.4; -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2.5px solid var(--blue); outline-offset: 2px; }
+.tn { font-variant-numeric: tabular-nums; }
+.glass { background: var(--glass); -webkit-backdrop-filter: blur(28px) saturate(1.8); backdrop-filter: blur(28px) saturate(1.8); border: var(--hair); box-shadow: var(--shadow); }
 
-/* ---------- App grid ---------- */
-.app {
-  display: grid; height: 100%;
-  grid-template-columns: minmax(340px, 400px) 1fr;
-  grid-template-rows: auto auto auto 1fr;
-  grid-template-areas: "head map" "hud map" "tabs map" "views map";
-}
-.head, .hud, .tabs, .views { background: var(--surface); border-right: 1px solid var(--line); padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: 18px; }
-.head { grid-area: head; padding-block: 16px 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.hud { grid-area: hud; padding-block: 6px 14px; display: grid; gap: 10px; }
-.tabs { grid-area: tabs; padding-block: 0; display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
-.views { grid-area: views; overflow-y: auto; padding-block: 14px 28px; min-width: 0; }
-.map-wrap { grid-area: map; position: relative; overflow: hidden; background: var(--land); min-height: 0; }
-
-/* ---------- Header ---------- */
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.brand svg { flex: none; }
-.brand-name { font-family: var(--f-display); font-size: 24px; line-height: 1; letter-spacing: .01em; }
-.brand-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
-.me-chip { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; flex: none; }
-.me-chip .pts { font-size: 13px; font-weight: 600; }
-.me-chip small { display: block; font-size: 10.5px; color: var(--muted); line-height: 1.1; }
-.avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--amber-ink); flex: none; }
-
-/* ---------- HUD ---------- */
-.city-line { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.city-line h1 { font-size: 15px; font-weight: 700; margin: 0; }
-.city-line h1 span { color: var(--muted); font-weight: 500; }
-.city-line .num { font-size: 12px; color: var(--muted); }
-.bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--surface-2); gap: 2px; }
-.bar i { display: block; height: 100%; transition: flex-grow .6s ease; }
-.bar .b-fresh { background: var(--fresh); }
-.bar .b-stale { background: var(--stale); }
-.bar .b-old { background: var(--old); }
-.bar .b-locked { background: var(--locked); opacity: .45; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.stat { background: var(--surface-2); border-radius: var(--r-s); padding: 8px 10px; min-width: 0; }
-.stat b { display: block; font-size: 16px; font-weight: 600; }
-.stat span { font-size: 11px; color: var(--muted); }
-
-/* ---------- Tabs ---------- */
-.tab { appearance: none; background: none; border: 0; padding: 12px 12px 11px; font-weight: 600; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; }
-.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--amber); }
-.tab:hover { color: var(--fg); }
-
-/* ---------- Chips / segmented ---------- */
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { appearance: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-.chip[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }
-.chip .c { font-family: var(--f-data); font-size: 11px; opacity: .75; }
-.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; }
-.d-fresh { background: var(--fresh); } .d-stale { background: var(--stale); } .d-old { background: var(--old); } .d-locked { background: var(--locked); }
-
-/* ---------- Pub list ---------- */
-.list-head { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 6px; }
-.pubs { list-style: none; margin: 0; padding: 0; }
-.pub-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px; }
-.pub-row:hover, .pub-row.sel { background: var(--surface-2); }
-.pub-row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pub-row .sub { font-size: 12px; color: var(--muted); }
-.pub-row .pr { text-align: right; font-size: 14px; font-weight: 600; }
-.pub-row .pr small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 400; }
-.pub-row.locked .nm { color: var(--muted); }
-
-/* ---------- Map ---------- */
-#map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
-#map.dragging { cursor: grabbing; }
+/* ---------- Kaart ---------- */
+#mapEl { position: fixed; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+#mapSvg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#pins { position: absolute; inset: 0; pointer-events: none; }
 .m-land { fill: var(--land); }
-.m-street { stroke: var(--street); fill: none; }
-.m-water { stroke: var(--water); fill: none; }
-.m-water-hi { stroke: var(--water-hi); fill: none; }
-.m-waterfill { fill: var(--water); }
+.m-block { fill: var(--block); }
 .m-park { fill: var(--park); }
-.m-label { fill: var(--muted); font-family: var(--f-body); font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
-.m-label-s { fill: var(--muted); font-family: var(--f-body); font-size: 12px; font-style: italic; }
-.m-wijkline { stroke: var(--muted); stroke-dasharray: 2 7; stroke-linecap: round; fill: none; opacity: .5; }
-.m-fog { fill: var(--fog); opacity: var(--fog-op); pointer-events: none; }
-.wijk-tint { opacity: 0; transition: opacity .35s; pointer-events: none; }
-.show-wijken .wijk-tint { opacity: .22; }
-.pin { cursor: pointer; }
-.pin .pill { fill: var(--surface); stroke-width: 2.5; }
-.pin .ptxt { font-family: var(--f-data); font-size: 13px; font-weight: 600; fill: var(--fg); text-anchor: middle; }
-.pin.mine .pill { fill: var(--amber); }
-.pin.mine .ptxt { fill: var(--amber-ink); }
-.pin .tip { stroke-width: 0; }
-.pin.locked circle { fill: var(--surface-2); stroke: var(--locked); stroke-width: 2; }
-.pin.locked path { fill: var(--locked); }
-.pin:hover .pill, .pin:focus-visible .pill, .pin.sel .pill { stroke: var(--amber); stroke-width: 3.5; }
-.pin.locked:hover circle, .pin.locked.sel circle { stroke: var(--amber); }
-.pin:focus { outline: none; }
-.crown { fill: var(--amber); stroke: var(--surface); stroke-width: 1.5; }
-.pin.mine .crown { fill: var(--fg); }
+.m-water { fill: none; stroke: var(--water); stroke-linecap: round; stroke-linejoin: round; }
+.m-casing { fill: none; stroke: var(--casing); stroke-linecap: round; stroke-linejoin: round; }
+.m-road { fill: none; stroke: var(--road); stroke-linecap: round; stroke-linejoin: round; }
+.m-major-casing { fill: none; stroke: var(--major-casing); stroke-linecap: round; stroke-linejoin: round; }
+.m-major { fill: none; stroke: var(--major); stroke-linecap: round; stroke-linejoin: round; }
+.m-rail { fill: none; stroke: var(--rail); }
+.m-rail-dash { fill: none; stroke: var(--land); stroke-dasharray: 6 6; }
+.m-dist { fill: var(--label); font: 600 10px var(--f-ui); letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
+.m-street { fill: var(--label); font: 500 6.5px var(--f-ui); }
+.m-waterlbl { fill: var(--label-water); font: italic 600 11px var(--f-ui); letter-spacing: .06em; }
+.m-poi { fill: var(--fg); font: 600 7.5px var(--f-ui); opacity: .7; }
+.m-fog { fill: var(--fog); opacity: var(--fog-op); }
+.m-fogdots { opacity: .5; }
+.wijk-blob { opacity: 0; transition: opacity .35s; }
+.show-wijken .wijk-blob { opacity: .2; }
+.wijk-lbl { opacity: 0; transition: opacity .35s; font: 800 9px var(--f-round); letter-spacing: .04em; paint-order: stroke; stroke: var(--land); stroke-width: 3px; }
+.show-wijken .wijk-lbl { opacity: 1; }
 
-.map-ctrl { position: absolute; right: calc(14px + env(safe-area-inset-right, 0px)); bottom: 14px; display: grid; gap: 6px; }
-.map-ctrl button, .legend { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-s); box-shadow: var(--shadow); }
-.map-ctrl button { width: 40px; height: 40px; font-size: 20px; font-weight: 600; cursor: pointer; display: grid; place-items: center; }
-.map-ctrl button:hover { border-color: var(--amber); }
-.legend { position: absolute; left: calc(14px + env(safe-area-inset-left, 0px)); bottom: 14px; padding: 10px 12px; display: grid; gap: 6px; font-size: 12px; max-width: calc(100% - 100px); }
-.legend .row { display: flex; gap: 12px; flex-wrap: wrap; }
-.legend label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; }
-.legend span { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+/* Kaartspelden: vaste pixelgrootte, net als in Kaarten */
+.pin { position: absolute; left: 0; top: 0; width: 0; height: 0; padding: 0; border: 0; background: none; pointer-events: auto; will-change: transform; }
+.pin > * { position: absolute; display: none; }
+.pin.m-pill .pill, .pin.m-dot .dotm, .pin.m-lock .lockm { display: flex; }
+.pin.off { display: none; }
+.pill { left: 0; bottom: 7px; transform: translateX(-50%); align-items: center; gap: 5px; height: 27px; padding: 0 10px 0 7px; border-radius: 14px; background: var(--surface); box-shadow: 0 2px 8px rgb(0 0 0 / .18), 0 0 0 .5px rgb(0 0 0 / .08); font: 800 13.5px var(--f-round); white-space: nowrap; color: var(--fg); transition: transform .18s; }
+.pill::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: inherit; transform: translateX(-50%) rotate(45deg); border-radius: 2px; z-index: -1; }
+.pill .fd { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.pill .pv { display: inline-flex; align-items: center; gap: 3px; }
+.pill svg { width: 13px; height: 13px; }
+.pin.mine .pill { background: var(--accent); color: var(--accent-ink); }
+.pill .vac { color: var(--old); }
+.pin.sel .pill { transform: translateX(-50%) scale(1.14); box-shadow: 0 6px 18px rgb(0 0 0 / .28), 0 0 0 2.5px var(--blue); }
+.dotm { left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 1px 3px rgb(0 0 0 / .3); }
+.pin.is-locked .dotm { left: -4px; top: -4px; width: 8px; height: 8px; border-width: 1.5px; background: var(--locked); }
+.pin.sel .dotm { box-shadow: 0 0 0 3px var(--blue); }
+.lockm { left: -12px; top: -12px; width: 24px; height: 24px; border-radius: 50%; align-items: center; justify-content: center; background: var(--glass); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px dashed var(--locked); color: var(--muted); }
+.lockm svg { width: 11px; height: 11px; }
+.pin.sel .lockm { border: 2px solid var(--blue); color: var(--blue); }
+.pin:focus-visible { outline: none; }
+.pin:focus-visible .pill, .pin:focus-visible .lockm, .pin:focus-visible .dotm { outline: 2.5px solid var(--blue); outline-offset: 2px; }
+.ripple { position: absolute; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; border: 2px solid var(--accent); pointer-events: none; animation: rip 1.1s ease-out forwards; }
+@keyframes rip { to { transform: scale(9); opacity: 0; border-width: .5px; } }
+.me-loc { position: absolute; width: 0; height: 0; pointer-events: none; }
+.me-loc::before { content: ""; position: absolute; left: -24px; top: -24px; width: 48px; height: 48px; border-radius: 50%; background: var(--blue); opacity: .16; animation: pulse 2.4s ease-in-out infinite; }
+.me-loc::after { content: ""; position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; border-radius: 50%; background: var(--blue); border: 3px solid #fff; box-shadow: 0 1px 4px rgb(0 0 0 / .35); }
+@keyframes pulse { 50% { transform: scale(.55); opacity: .3; } }
 
-/* ---------- Sheet (pub detail) ---------- */
-.sheet { position: absolute; top: 14px; right: calc(14px + env(safe-area-inset-right, 0px)); width: 380px; max-width: calc(100% - 28px); max-height: calc(100% - 28px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); box-shadow: var(--shadow); padding: 18px; display: grid; gap: 14px; z-index: 5; }
-.sheet-close { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--surface-2); cursor: pointer; font-size: 18px; }
-.sheet h2 { margin: 0; font-size: 20px; line-height: 1.2; padding-right: 36px; text-wrap: balance; }
-.sheet .addr { color: var(--muted); font-size: 13px; margin-top: 2px; }
-.price-block { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.big-price { font-family: var(--f-display); font-size: 40px; line-height: 1; }
-.big-price small { font-family: var(--f-body); font-size: 13px; color: var(--muted); display: block; margin-top: 6px; }
-.norm { text-align: right; }
-.norm b { font-family: var(--f-data); font-size: 15px; }
-.norm div { font-size: 11.5px; color: var(--muted); }
+/* ---------- Zwevende knoppen ---------- */
+.city-chip { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: max(12px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 9px; padding: 6px 12px 6px 6px; border-radius: 22px; z-index: 10; }
+.city-chip b { display: block; font-size: 13.5px; line-height: 1.1; }
+.city-chip span { font-size: 11.5px; color: var(--muted); }
+.ring { width: 32px; height: 32px; transform: rotate(-90deg); flex: none; }
+.ring circle { fill: none; stroke-width: 4; }
+.ring .bg { stroke: var(--sep); }
+.ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+.ctrls { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); right: max(12px, env(safe-area-inset-right, 0px)); display: grid; border-radius: 12px; overflow: hidden; z-index: 10; }
+.ctrls button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; color: var(--blue); }
+.ctrls button + button { border-top: var(--hair); }
+.ctrls button[aria-pressed="true"] { color: var(--accent-text); }
+.ctrls svg { width: 20px; height: 20px; }
+.ctrls .zoom { display: none; }
+@media (hover: hover) and (pointer: fine) { .ctrls .zoom { display: grid; } }
+
+/* ---------- Sheet ---------- */
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; height: calc(100% - env(safe-area-inset-top, 0px) - 10px); display: flex; flex-direction: column; border-radius: 16px 16px 0 0; z-index: 20; transform: translateY(var(--sy, 60%)); transition: transform .42s cubic-bezier(.2,.9,.25,1); border-bottom: 0; }
+.sheet.dragging { transition: none; }
+.grab { padding: 7px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); touch-action: none; cursor: grab; flex: none; }
+.grab::before { content: ""; display: block; width: 38px; height: 5px; border-radius: 3px; background: var(--sep); margin: 0 auto 9px; }
+.searchrow { display: flex; gap: 10px; align-items: center; }
+.search { flex: 1; display: flex; align-items: center; gap: 7px; background: var(--surface-2); border-radius: 11px; padding: 0 10px; height: 38px; min-width: 0; }
+.search svg { width: 16px; height: 16px; color: var(--muted); flex: none; }
+.search input { border: 0; background: none; outline: none; width: 100%; font-size: 16px; min-width: 0; }
+.search input::placeholder { color: var(--muted); }
+.me-btn { display: flex; align-items: center; gap: 7px; border: 0; background: none; padding: 0; flex: none; }
+.me-btn .pts { font: 800 15px var(--f-round); display: block; line-height: 1.1; }
+.me-btn small { display: block; font-size: 10.5px; color: var(--muted); line-height: 1; text-align: left; }
+.av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 800 12px var(--f-round); color: #fff; flex: none; }
+.av.sm { width: 26px; height: 26px; font-size: 10px; }
+.av.me { background: var(--accent); color: var(--accent-ink); }
+.segm { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--surface-2); border-radius: 9px; padding: 2px; margin-top: 10px; }
+.segm button { border: 0; background: none; border-radius: 7px; padding: 6px 4px; font-size: 13px; font-weight: 600; color: var(--fg); }
+.segm button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 2px 6px rgb(0 0 0 / .12), 0 0 0 .5px rgb(0 0 0 / .04); }
+.body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: grid; grid-auto-rows: max-content; gap: 18px; align-content: start; }
+
+/* Inhoud */
+.lt h1 { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; line-height: 1.1; }
+.lt p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.fbar { display: flex; height: 8px; gap: 2px; border-radius: 4px; overflow: hidden; }
+.fbar i { display: block; transition: flex-grow .6s; }
+.fbar-key { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 7px; }
+.fbar-key span { display: inline-flex; align-items: center; gap: 5px; }
+.d { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tile { background: var(--surface-2); border-radius: 12px; padding: 10px 11px; min-width: 0; }
+.tile b { display: block; font: 800 19px var(--f-round); letter-spacing: -.01em; }
+.tile span { font-size: 11.5px; color: var(--muted); line-height: 1.25; display: block; }
+.near { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 12px; border-radius: var(--r); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); border: .5px solid color-mix(in srgb, var(--accent) 50%, transparent); text-align: left; width: 100%; }
+.near .ic { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.near .ic svg { width: 18px; height: 18px; }
+.near b { display: block; font-size: 14.5px; }
+.near > span > span { font-size: 12.5px; color: var(--muted); }
+.near .go { background: var(--accent); color: var(--accent-ink); border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.cap { font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 6px 4px; font-weight: 500; }
+.grp { background: var(--surface); border-radius: var(--r); overflow: hidden; border: var(--hair); }
+.row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 11px; align-items: center; padding: 11px 12px; width: 100%; text-align: left; border: 0; background: none; position: relative; }
+.row + .row::before { content: ""; position: absolute; top: 0; left: 32px; right: 0; border-top: var(--hair); }
+.row:active, .row:hover { background: var(--surface-2); }
+.row .nm { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .sub { display: block; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .pr { font: 800 15.5px var(--f-round); text-align: right; }
+.row .pr small { display: block; font: 500 11px var(--f-ui); color: var(--muted); }
+.chev { width: 7px; height: 12px; color: var(--locked); }
+.more { width: 100%; border: 0; background: none; color: var(--blue); font-weight: 600; padding: 12px; border-top: var(--hair); }
+.filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
+.filters::-webkit-scrollbar { display: none; }
+.fchip { flex: none; border: 0; background: var(--surface-2); border-radius: 16px; padding: 7px 12px; font-size: 13.5px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+.fchip span { color: var(--muted); font-weight: 500; }
+.fchip[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+.fchip[aria-pressed="true"] span { color: inherit; opacity: .7; }
+
+/* Detail */
+.dhead { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.dhead h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.015em; line-height: 1.15; text-wrap: balance; }
+.dhead p { margin: 3px 0 0; color: var(--muted); font-size: 13.5px; }
+.xbtn { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; flex: none; }
+.xbtn svg { width: 12px; height: 12px; }
+.pricecard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: end; }
+.bigp { font: 900 46px var(--f-round); letter-spacing: -.03em; line-height: 1; }
+.bigp-sub { font-size: 13.5px; color: var(--muted); grid-column: 1; }
+.cmp { text-align: right; grid-row: 1 / 3; grid-column: 2; align-self: center; }
+.cmp b { font: 800 17px var(--f-round); display: block; }
+.cmp span { font-size: 12px; color: var(--muted); display: block; }
+.cmp .delta { font-size: 12px; font-weight: 700; }
 .pills { display: flex; gap: 6px; flex-wrap: wrap; }
-.status { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); }
-.status.ok { color: var(--fresh); } .status.wait { color: var(--stale); } .status.bad { color: var(--old); }
-.meta { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
-.meta-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
-.meta-row .lbl { color: var(--muted); width: 92px; flex: none; font-size: 12.5px; }
-.banner { border-radius: var(--r-s); padding: 10px 12px; font-size: 13px; background: color-mix(in srgb, var(--old) 14%, transparent); border: 1px solid color-mix(in srgb, var(--old) 45%, transparent); }
-.banner.lock { background: var(--surface-2); border-color: var(--line); }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.btn { appearance: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 11px 12px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
-.btn:hover { border-color: var(--amber); }
-.btn.primary { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }
-.btn.primary:hover { filter: brightness(1.06); }
-.btn.wide { grid-column: 1 / -1; }
-.btn[disabled] { opacity: .55; cursor: default; filter: none; border-color: var(--line); }
-.btn .pts { font-family: var(--f-data); font-size: 12px; font-weight: 600; opacity: .8; }
-.spark { width: 100%; height: 56px; display: block; }
-.spark .ln { fill: none; stroke: var(--amber); stroke-width: 2; }
-.spark .ar { fill: var(--amber); opacity: .12; }
-.spark .gd { stroke: var(--line); stroke-width: 1; }
-.spark .dt { fill: var(--amber); }
-.spark text { fill: var(--muted); font-family: var(--f-data); font-size: 10px; }
+.st { font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 14px; background: var(--surface-2); display: inline-flex; gap: 6px; align-items: center; }
+.st.ok { color: var(--fresh-t); } .st.wait { color: var(--stale-t); }
+.acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn { border: 0; border-radius: 12px; padding: 13px 10px; font-size: 15px; font-weight: 700; background: var(--surface-2); color: var(--blue); display: flex; gap: 7px; justify-content: center; align-items: center; }
+.btn.pri { background: var(--accent); color: var(--accent-ink); }
+.btn.full { grid-column: 1 / -1; }
+.btn[disabled] { color: var(--muted); cursor: default; }
+.btn .p { font: 800 12.5px var(--f-round); opacity: .75; }
+.baas { display: grid; grid-template-columns: auto 1fr auto; gap: 11px; align-items: center; padding: 12px; }
+.baas .t { font-size: 12px; color: var(--muted); }
+.baas b { font-size: 15px; }
+.crownic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent-text); }
+.crownic svg { width: 20px; height: 20px; }
+.crownic.vac { background: color-mix(in srgb, var(--old) 16%, transparent); color: var(--old-t); }
+.crownic.lk { background: var(--surface-2); color: var(--muted); }
+.expiry { padding: 0 12px 12px; display: grid; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.expiry .track { height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.expiry .track i { display: block; height: 100%; border-radius: 3px; }
+.expiry b { color: var(--fg); }
+.tl { list-style: none; margin: 0; padding: 4px 12px; }
+.tl li { display: grid; grid-template-columns: 14px 1fr; gap: 10px; padding: 9px 0; position: relative; }
+.tl li::before { content: ""; position: absolute; left: 6px; top: 22px; bottom: -9px; border-left: 1.5px solid var(--sep); }
+.tl li:last-child::before { display: none; }
+.tl .k { width: 13px; height: 13px; border-radius: 50%; margin-top: 3px; border: 2.5px solid var(--surface); box-shadow: 0 0 0 1.5px var(--locked); background: var(--surface); }
+.tl .k.chg { background: var(--accent); box-shadow: 0 0 0 1.5px var(--accent); }
+.tl .k.first { background: var(--blue); box-shadow: 0 0 0 1.5px var(--blue); }
+.tl .what { font-size: 14px; font-weight: 600; }
+.tl .what s { color: var(--muted); font-weight: 500; }
+.tl .who { font-size: 12.5px; color: var(--muted); }
+.tl .pend { color: var(--stale-t); font-weight: 600; }
+.spark { width: 100%; height: 64px; display: block; }
+.spark .ln { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linejoin: round; }
+.spark .ar { fill: var(--accent); opacity: .16; }
+.spark .gd { stroke: var(--sep); }
+.spark .md { stroke: var(--muted); stroke-dasharray: 3 4; opacity: .7; }
+.spark text { fill: var(--muted); font: 600 10px var(--f-ui); }
 
-/* ---------- Form ---------- */
-.form { display: grid; gap: 14px; }
-.field { display: grid; gap: 6px; }
-.field > span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
-.stepper { display: grid; grid-template-columns: 48px 1fr 48px; gap: 6px; align-items: stretch; }
-.stepper button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; font-size: 22px; font-weight: 600; cursor: pointer; }
-.stepper input { width: 100%; text-align: center; font-family: var(--f-display); font-size: 30px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 0; }
-.calc { font-size: 12.5px; color: var(--muted); }
-.calc b { color: var(--fg); font-family: var(--f-data); font-weight: 600; }
-.warn { font-size: 12.5px; color: var(--old); }
-.toggle { display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; }
-.toggle input { width: 18px; height: 18px; accent-color: var(--amber); }
-.toggle small { color: var(--muted); display: block; font-size: 11.5px; }
-.file { font-size: 12.5px; color: var(--muted); }
-.file input { margin-top: 4px; max-width: 100%; color: var(--muted); }
+/* Formulier */
+.form { display: grid; gap: 16px; }
+.field { display: grid; gap: 7px; }
+.field > .cap { margin: 0 0 0 2px; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.opt { border: 0; background: var(--surface-2); border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 600; }
+.opt small { color: var(--muted); font-weight: 500; margin-left: 3px; }
+.opt[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+.opt[aria-pressed="true"] small { color: inherit; opacity: .7; }
+.stepper { display: grid; grid-template-columns: 54px 1fr 54px; gap: 8px; }
+.stepper button { border: 0; border-radius: 12px; background: var(--surface-2); font-size: 24px; font-weight: 500; color: var(--blue); }
+.stepper input { width: 100%; min-width: 0; text-align: center; border: 0; border-radius: 12px; background: var(--surface-2); font: 900 34px var(--f-round); padding: 8px 0; letter-spacing: -.02em; }
+.calc { font-size: 13px; color: var(--muted); }
+.calc b { color: var(--fg); }
+.warn { font-size: 13px; color: var(--old-t); font-weight: 600; }
+.cell { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; }
+.cell + .cell { border-top: var(--hair); }
+.cell b { display: block; font-size: 15px; font-weight: 600; color: var(--fg); }
+.cell span { font-size: 12.5px; color: var(--muted); display: block; }
+.sw { appearance: none; -webkit-appearance: none; width: 51px; height: 31px; border-radius: 16px; background: var(--sep); position: relative; flex: none; transition: background .2s; cursor: pointer; margin: 0; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgb(0 0 0 / .25); transition: transform .2s; }
+.sw:checked { background: var(--fresh); }
+.sw:checked::after { transform: translateX(20px); }
+.sw:disabled { opacity: .5; cursor: default; }
+.filebtn input { display: block; margin-top: 6px; max-width: 100%; font-size: 13px; color: var(--muted); }
 
-/* ---------- Leaderboard ---------- */
-.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; border: 1px solid var(--line); }
-.seg button { border: 0; background: none; border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
-.lb-ctrl { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.goal { margin: 12px 0 4px; font-size: 13px; color: var(--muted); }
-.goal b { color: var(--amber-text); }
-.lb { list-style: none; margin: 8px 0 0; padding: 0; }
-.lb li { display: grid; grid-template-columns: 26px 28px 1fr auto; gap: 10px; align-items: center; padding: 9px 6px; border-bottom: 1px solid var(--line); border-radius: 6px; }
-.lb li.me { background: color-mix(in srgb, var(--amber) 13%, transparent); }
-.lb .rk { font-family: var(--f-data); font-size: 12px; color: var(--muted); text-align: right; }
-.lb .rk.top { color: var(--amber-text); font-weight: 600; }
-.lb .who { min-width: 0; }
-.lb .who b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lb .who span { font-size: 11.5px; color: var(--muted); }
-.lb .sc { text-align: right; font-family: var(--f-data); font-size: 13px; font-weight: 600; }
-.lb .sc small { display: block; font-family: var(--f-body); font-size: 11px; color: var(--muted); font-weight: 400; }
-.wijken { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-.wijk { border: 1px solid var(--line); border-radius: var(--r-s); padding: 10px; background: var(--surface-2); min-width: 0; }
-.wijk .wn { font-weight: 700; display: flex; align-items: center; gap: 6px; }
-.wijk .wo { font-size: 12px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wijk .wb { height: 4px; border-radius: 4px; background: var(--line); margin-top: 8px; overflow: hidden; }
-.wijk .wb i { display: block; height: 100%; }
-h3 { font-size: 13px; margin: 22px 0 4px; }
-h3:first-child { margin-top: 0; }
+/* Ranglijst */
+.lbr { display: grid; grid-template-columns: 22px auto 1fr auto; gap: 11px; align-items: center; padding: 10px 12px; position: relative; }
+.lbr + .lbr::before { content: ""; position: absolute; top: 0; left: 44px; right: 0; border-top: var(--hair); }
+.lbr.me { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.lbr .rk { font: 800 14px var(--f-round); color: var(--muted); text-align: center; }
+.lbr .rk.top { color: var(--accent-text); }
+.lbr .who { min-width: 0; }
+.lbr .who b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lbr .who span { font-size: 12px; color: var(--muted); }
+.lbr .sc { font: 800 15px var(--f-round); text-align: right; }
+.goal { font-size: 13.5px; color: var(--muted); margin: 0 4px; }
+.goal b { color: var(--fg); }
+.wgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.wcard { background: var(--surface); border: var(--hair); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.wcard b { font-size: 14px; }
+.wcard span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wcard .wb { height: 4px; border-radius: 2px; background: var(--surface-2); margin-top: 8px; overflow: hidden; }
+.wcard .wb i { display: block; height: 100%; }
 
-/* ---------- Rules ---------- */
-.rules p { margin: 6px 0 10px; color: var(--fg); max-width: 62ch; }
-.rules p.m { color: var(--muted); font-size: 13.5px; }
-.ptable { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-.ptable td { padding: 8px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.ptable td:last-child { text-align: right; font-family: var(--f-data); font-weight: 600; white-space: nowrap; }
-.ptable td small { display: block; color: var(--muted); font-size: 11.5px; }
-.ptable .neg { color: var(--old); }
-.callout { border-left: 3px solid var(--old); padding: 2px 0 2px 12px; margin: 10px 0; }
-.callout b { display: block; margin-bottom: 2px; }
+/* Spel */
+.prose p { margin: 0 4px 8px; font-size: 14.5px; max-width: 62ch; }
+.prose p.m { color: var(--muted); font-size: 13.5px; }
+.pt { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pt td { padding: 10px 12px; vertical-align: top; }
+.pt tr + tr td { border-top: var(--hair); }
+.pt td:last-child { text-align: right; font: 800 15px var(--f-round); white-space: nowrap; }
+.pt small { display: block; color: var(--muted); font-size: 12px; }
+.pt .neg { color: var(--old-t); }
+.demo { font-size: 11.5px; color: var(--muted); text-align: center; margin: 4px 0 0; }
 
-/* ---------- Toast ---------- */
-.toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; z-index: 50; width: min(420px, calc(100% - 32px)); pointer-events: none; }
-.toast { background: var(--fg); color: var(--bg); border-radius: 12px; padding: 11px 14px; font-size: 13.5px; font-weight: 600; box-shadow: var(--shadow); display: flex; gap: 10px; align-items: center; animation: tin .25s ease-out; }
-.toast .tp { font-family: var(--f-data); background: var(--amber); color: var(--amber-ink); border-radius: 6px; padding: 2px 6px; font-size: 12px; flex: none; }
-@keyframes tin { from { transform: translateY(10px); opacity: 0; } }
+/* Toast (iOS-banner) */
+.toasts { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 62px); left: 50%; transform: translateX(-50%); width: min(400px, calc(100% - 24px)); display: grid; gap: 8px; z-index: 60; pointer-events: none; }
+.toast { display: flex; gap: 10px; align-items: center; padding: 11px 14px; border-radius: 18px; font-size: 14px; font-weight: 600; animation: tin .35s cubic-bezier(.2,.9,.25,1); }
+.toast .tp { font: 800 13px var(--f-round); background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 3px 7px; flex: none; }
+@keyframes tin { from { transform: translateY(-14px) scale(.96); opacity: 0; } }
 
-/* ---------- Telefoon ---------- */
-@media (max-width: 820px) {
-  html, body { height: auto; }
-  .app { height: auto; grid-template-columns: 1fr; grid-template-rows: none; grid-template-areas: "head" "hud" "tabs" "map" "views"; }
-  .head, .hud, .tabs, .views { border-right: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
-  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: var(--surface); }
-  .views { overflow: visible; }
-  .map-wrap { height: 64vh; min-height: 400px; max-height: 640px; }
-  .app:not([data-tab="kaart"]) .map-wrap { display: none; }
-  .sheet { position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; max-height: 82vh; border-radius: 18px 18px 0 0; padding: 20px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); z-index: 40; animation: sup .25s ease-out; }
-  .sheet::before { content: ""; width: 40px; height: 4px; border-radius: 4px; background: var(--line); justify-self: center; margin-top: -8px; }
-  .toasts { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
-  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .stat b { font-size: 14.5px; }
+/* ---------- Groot scherm: zijbalk ---------- */
+@media (min-width: 900px) {
+  .sheet { left: 12px; right: auto; top: 12px; bottom: 12px; width: 384px; height: auto; border-radius: 18px; transform: none !important; border-bottom: var(--hair); }
+  .grab { cursor: default; padding-top: 14px; }
+  .grab::before { display: none; }
+  .city-chip { left: 408px; }
+  .toasts { left: auto; right: 72px; transform: none; top: 12px; }
 }
-@keyframes sup { from { transform: translateY(30px); opacity: .4; } }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before { animation: none !important; transition: none !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
 
-<div class="app" id="app" data-tab="kaart">
-  <header class="head">
-    <div class="brand">
-      <svg width="34" height="40" viewBox="0 0 34 40" aria-hidden="true">
-        <path d="M5 9h24l-3 29H8z" fill="var(--amber)"/>
-        <path d="M8.6 30h16.8l-.8 8H9.4z" fill="var(--amber-ink)" opacity=".18"/>
-        <path d="M3 10c0-4 3-6 6-6 1-3 4-4 7-3 2-1 6-1 8 2 4 0 7 2 7 6 0 2-1 3-3 3H6c-2 0-3-1-3-2z" fill="var(--fg)"/>
-      </svg>
-      <div>
-        <div class="brand-name">BPDB</div>
-        <div class="brand-sub">Beer Price Database · Kroegkaart</div>
-      </div>
-    </div>
-    <div class="me-chip" title="Jouw punten">
-      <div class="avatar" style="background:var(--t2)">JIJ</div>
-      <div><span class="pts num" id="mePts">0</span><small>punten</small></div>
-    </div>
-  </header>
-
-  <section class="hud" aria-label="Voortgang van de stad">
-    <div class="city-line">
-      <h1>Voorbeeldstad <span>(fictief)</span></h1>
-      <span class="num" id="cityCount"></span>
-    </div>
-    <div class="bar" id="cityBar" role="img" aria-label="Verdeling van kroegen naar versheid"></div>
-    <div class="stats">
-      <div class="stat"><b class="num" id="stMedian"></b><span>mediaan per 25 cl</span></div>
-      <div class="stat"><b class="num" id="stFresh"></b><span>vers, onder 30 dagen</span></div>
-      <div class="stat"><b class="num" id="stMine"></b><span>jij bent kroegbaas</span></div>
-    </div>
-  </section>
-
-  <nav class="tabs" role="tablist" aria-label="Weergave">
-    <button class="tab" role="tab" id="tab-kaart" aria-selected="true" data-tab="kaart">Kaart</button>
-    <button class="tab" role="tab" id="tab-ranglijst" aria-selected="false" data-tab="ranglijst">Ranglijst</button>
-    <button class="tab" role="tab" id="tab-regels" aria-selected="false" data-tab="regels">Spelregels</button>
-  </nav>
-
-  <main class="map-wrap" id="mapWrap">
-    <svg id="map" role="application" aria-label="Kaart van Voorbeeldstad met kroegen"></svg>
-    <div class="legend">
-      <div class="row">
-        <span><i class="dot d-fresh"></i>vers</span>
-        <span><i class="dot d-stale"></i>30+ d</span>
-        <span><i class="dot d-old"></i>heroverbaar</span>
-        <span><i class="dot d-locked"></i>op slot</span>
-      </div>
-      <label for="wijkToggle"><input type="checkbox" id="wijkToggle"> Toon wie welke wijk beheerst</label>
-    </div>
-    <div class="map-ctrl">
-      <button id="zIn" aria-label="Inzoomen">+</button>
-      <button id="zOut" aria-label="Uitzoomen">&minus;</button>
-      <button id="zAll" aria-label="Hele stad tonen" style="font-size:13px">&#8634;</button>
-    </div>
-    <div class="sheet" id="sheet" hidden></div>
-  </main>
-
-  <section class="views">
-    <div id="view-kaart">
-      <div class="chips" id="filters" role="group" aria-label="Filter kroegen"></div>
-      <div class="list-head">
-        <span class="eyebrow" id="listTitle"></span>
-        <span class="eyebrow">per 25 cl</span>
-      </div>
-      <ul class="pubs" id="pubList"></ul>
-    </div>
-
-    <div id="view-ranglijst" hidden>
-      <div class="lb-ctrl">
-        <div class="seg" id="lbWho">
-          <button aria-pressed="true" data-v="spelers">Spelers</button>
-          <button aria-pressed="false" data-v="teams">Teams</button>
-        </div>
-        <div class="seg" id="lbWhen">
-          <button aria-pressed="false" data-v="week">Week</button>
-          <button aria-pressed="true" data-v="maand">Maand</button>
-          <button aria-pressed="false" data-v="altijd">Altijd</button>
-        </div>
-      </div>
-      <p class="goal" id="lbGoal"></p>
-      <ol class="lb" id="lbList"></ol>
-      <h3>Wijken</h3>
-      <p class="goal" style="margin-top:0">Wie de meeste kroegbaas-titels in een wijk heeft, beheerst die wijk.</p>
-      <div class="wijken" id="wijkGrid"></div>
-    </div>
-
-    <div id="view-regels" class="rules" hidden>
-      <h3>Zo speel je</h3>
-      <p>Elke kroeg in de stad staat al op de kaart, maar zit onder de mist. Vul als eerste een bierprijs in en je speelt hem vrij. Punten krijg je pas als een andere speler je prijs bevestigt.</p>
-      <table class="ptable">
-        <tr><td>Kroeg vrijspelen<small>Eerste prijs ooit. Je naam blijft als ontdekker op de kroeg.</small></td><td>+50</td></tr>
-        <tr><td>Prijswijziging melden<small>Na bevestiging word je kroegbaas.</small></td><td>+30</td></tr>
-        <tr><td>Kroeg heroveren<small>Niemand heeft hem 90 dagen gecontroleerd.</small></td><td>+25</td></tr>
-        <tr><td>&ldquo;Klopt nog&rdquo; bevestigen<small>Max. 1 keer per kroeg per 7 dagen.</small></td><td>+5</td></tr>
-        <tr><td>Foto van de prijslijst<small>Versnelt de bevestiging.</small></td><td>+5</td></tr>
-        <tr><td>Ter plaatse<small>Binnen 75 meter van de kroeg. Niet verplicht.</small></td><td>&times;1,5</td></tr>
-        <tr><td>Bijdrage weerlegd<small>Ook je betrouwbaarheid daalt.</small></td><td class="neg">&minus;20</td></tr>
-      </table>
-
-      <h3>Kroegbaas</h3>
-      <p>De kroegbaas is wie de laatste bevestigde prijswijziging meldde. Je houdt de titel zolang de prijs gelijk blijft. Controleert 90 dagen niemand de kroeg, dan komt de titel vrij voor wie hem als eerste weer checkt.</p>
-      <p class="m">Waarom niet gewoon de laatste bijdrage? Dan loont het om elke dag blind op &ldquo;klopt nog&rdquo; te tikken. Dat levert ruis op in plaats van informatie.</p>
-
-      <h3>Betrouwbaarheid</h3>
-      <p>Naast punten heb je een betrouwbaarheid. Die stijgt als anderen jouw prijzen bevestigen en daalt als ze worden weerlegd. Spelers boven 90% kunnen een prijs alleen bevestigen; anderen hebben samen twee stemmen nodig. Prijzen die flink afwijken van de stadsmediaan vragen altijd twee bevestigingen.</p>
-
-      <h3>Wat we bewust niet doen</h3>
-      <div class="callout"><b>Geen tokens, geen virtueel vastgoed</b>Kroegen kun je niet kopen of verkopen. Echt geld trekt speculanten aan in plaats van bierdrinkers, valt onder MiCA en mogelijk de Kansspelautoriteit, en een onveranderlijk grootboek botst met foutcorrectie en de AVG.</div>
-      <div class="callout"><b>We belonen bijdragen, niet drinken</b>Geen opdrachten als &ldquo;bezoek vijf kroegen vanavond&rdquo;. Een prijs aflezen kan zonder iets te bestellen. Alleen voor 18+.</div>
-    </div>
-  </section>
+<div id="mapEl" aria-label="Kaart van Nijmegen">
+  <svg id="mapSvg" aria-hidden="true"><g id="world"></g></svg>
+  <div id="pins"></div>
 </div>
+
+<div class="city-chip glass" aria-live="polite">
+  <svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15"/><circle class="fg" id="ringFg" cx="18" cy="18" r="15" stroke-dasharray="94.25" stroke-dashoffset="94.25"/></svg>
+  <div><b>Nijmegen</b><span id="chipCount" class="tn"></span></div>
+</div>
+
+<div class="ctrls glass">
+  <button id="btnWijken" aria-pressed="false" aria-label="Wijken tonen" title="Wijken tonen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 3 7.5l9 4.5 9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></button>
+  <button id="btnLocate" aria-label="Naar mijn locatie" title="Naar mijn locatie"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3 3 10.5l7.4 2.2L12.6 20z"/></svg></button>
+  <button class="zoom" id="zIn" aria-label="Inzoomen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="zoom" id="zOut" aria-label="Uitzoomen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+</div>
+
+<section class="sheet glass" id="sheet" aria-label="Kroegen in Nijmegen">
+  <div class="grab" id="grab">
+    <div class="searchrow">
+      <label class="search" for="q">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+        <input id="q" type="search" placeholder="Zoek een kroeg of straat" autocomplete="off">
+      </label>
+      <button class="me-btn" id="meBtn" aria-label="Jouw punten, open ranglijst"><span class="av me">JIJ</span><span><span class="pts tn" id="mePts">0</span><small>punten</small></span></button>
+    </div>
+    <div class="segm" id="tabs" role="tablist">
+      <button role="tab" aria-pressed="true" data-tab="kroegen">Kroegen</button>
+      <button role="tab" aria-pressed="false" data-tab="ranglijst">Ranglijst</button>
+      <button role="tab" aria-pressed="false" data-tab="spel">Spel</button>
+    </div>
+  </div>
+  <div class="body" id="body"></div>
+</section>
+
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
 (() => {
-  /* ---------- Hulpjes ---------- */
+  /* ================= Hulpjes ================= */
   function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-  const R = mulberry32(51126);
-  const rnd = (a,b) => a + R()*(b-a);
-  const rint = (a,b) => Math.floor(rnd(a,b+1));
-  const pick = arr => arr[Math.floor(R()*arr.length)];
-  const eur = c => new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(c/100);
-  const eurShort = c => (c/100).toFixed(2).replace('.',',');
-  const nf = n => n.toLocaleString('nl-NL');
+  const R = mulberry32(1944);
+  const rnd = (a,b) => a + R()*(b-a), rint = (a,b) => Math.floor(rnd(a,b+1)), pick = a => a[Math.floor(R()*a.length)];
+  const gauss = () => (R()+R()+R()+R()-2)/0.577;
   const $ = s => document.querySelector(s);
+  const eur = c => new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(c/100);
+  const kort = c => (c/100).toFixed(2).replace('.',',');
+  const nf = n => n.toLocaleString('nl-NL');
+  const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---------- Spelwereld ---------- */
-  const W = 900, H = 1000, CX = 450, CY = 130, R_CENTRUM = 215;
-  const GLAZEN = [{id:'fluitje',naam:'Fluitje',cl:20},{id:'vaasje',naam:'Vaasje',cl:25},{id:'glas',naam:'Glas',cl:33},{id:'pul',naam:'Pul',cl:50}];
-  const MERKEN = ['Heineken','Amstel','Grolsch','Brand','Bavaria','Hertog Jan'];
-  const TEAMS = {
-    t1:{naam:'Sv. Ketelbinkie', kleur:'var(--t1)'},
-    t2:{naam:'Roeivereniging De Kromme Riem', kleur:'var(--t2)'},
-    t3:{naam:'Dispuut Gouden Tap', kleur:'var(--t3)'},
-    t4:{naam:'HC Oost', kleur:'var(--t4)'}
+  const wide = () => innerWidth >= 900;
+  const TODAY = new Date();
+  const datum = d => new Date(TODAY.getTime() - d*864e5).toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const geleden = d => d <= 0 ? 'vandaag' : d === 1 ? 'gisteren' : `${d} dagen geleden`;
+  const store = { get(k,d){ try { const v = localStorage.getItem('bpdb.'+k); return v === null ? d : JSON.parse(v); } catch { return d; } }, set(k,v){ try { localStorage.setItem('bpdb.'+k, JSON.stringify(v)); } catch {} } };
+  const ICON = {
+    crownO: '<svg class="vac" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 8.5 7.5 12 12 5l4.5 7L21 8.5 19 18H5z"/></svg>',
+    crown: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7.5 12 12 5l4.5 7L21 8.5 19 18H5z"/><rect x="5" y="19.2" width="14" height="2" rx="1"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7.5a5 5 0 0 1 10 0V10h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2.4 0h5.2V7.5a2.6 2.6 0 0 0-5.2 0z"/></svg>',
+    chev: '<svg class="chev" viewBox="0 0 7 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1 1 5 5-5 5"/></svg>',
+    x: '<svg viewBox="0 0 12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m1.5 1.5 9 9m0-9-9 9"/></svg>',
+    pin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>'
   };
+
+  /* ================= Spelers (verzonnen) ================= */
   const SPELERS = [
-    {id:'me', naam:'Jij', team:'t2'},
-    {id:'fj', naam:'fluitjesjager', team:'t1'},
-    {id:'sk', naam:'schuimkraag', team:'t3'},
-    {id:'bb', naam:'barkrukbaron', team:'t1'},
-    {id:'vv', naam:'vaasjevolger', team:'t4'},
-    {id:'pp', naam:'pilsprofeet', team:'t3'},
-    {id:'hh', naam:'happyhourhanna', team:'t2'},
-    {id:'tm', naam:'tapmeester', team:'t4'},
-    {id:'kk', naam:'kratkoning', team:'t1'},
-    {id:'mo', naam:'moutmeisje', team:'t2'}
+    {id:'me', naam:'Jij', kleur:'var(--accent)'},
+    {id:'ww', naam:'waalkadewolf', kleur:'var(--a1)'},
+    {id:'mm', naam:'molenstraatmuis', kleur:'var(--a2)'},
+    {id:'vv', naam:'valkhofvalk', kleur:'var(--a3)'},
+    {id:'fj', naam:'fluitjesjager', kleur:'var(--a4)'},
+    {id:'sk', naam:'schuimkraag', kleur:'var(--a5)'},
+    {id:'bb', naam:'bottendaalbaas', kleur:'var(--a6)'},
+    {id:'pp', naam:'pilsprofeet', kleur:'var(--a1)'},
+    {id:'hz', naam:'hezelhopper', kleur:'var(--a2)'},
+    {id:'ok', naam:'oversteekkoning', kleur:'var(--a4)'}
   ];
-  const S = Object.fromEntries(SPELERS.map(p => [p.id, p]));
-  const WIJKEN = {
-    centrum:{naam:'Centrum', basis:410},
-    oost:{naam:'Oost', basis:355},
-    zuid:{naam:'Zuid', basis:375},
-    west:{naam:'West', basis:340}
+  const S = Object.fromEntries(SPELERS.map(s => [s.id, s]));
+  const ANDEREN = SPELERS.slice(1).map(s => s.id);
+  const naamVan = id => id === 'me' ? 'Jij' : S[id].naam;
+  const av = (id, sm) => `<span class="av${sm?' sm':''}${id==='me'?' me':''}" style="${id==='me'?'':'background:'+S[id].kleur}">${id==='me'?'JIJ':S[id].naam.slice(0,2).toUpperCase()}</span>`;
+
+  /* ================= Kaart van Nijmegen (vereenvoudigd) ================= */
+  const W = 1000, H = 1000;
+  const WAAL = [[-80,292],[100,318],[250,322],[400,302],[520,274],[640,246],[760,219],[880,190],[1080,158]];
+  const SPIEGEL = [[150,314],[195,245],[300,192],[450,170],[600,178],[720,193],[800,210]];
+  const PARKS = [[588,332,58,24],[662,376,44,46],[330,420,44,34],[712,440,40,28],[170,905,110,78],[840,820,70,60]];
+  const ME_LOC = [470, 433];
+  function smooth(pts){
+    let d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i=0;i<pts.length-1;i++){
+      const p0 = pts[i-1]||pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2]||p2;
+      d += `C${(p1[0]+(p2[0]-p0[0])/6).toFixed(1)} ${(p1[1]+(p2[1]-p0[1])/6).toFixed(1)} ${(p2[0]-(p3[0]-p1[0])/6).toFixed(1)} ${(p2[1]-(p3[1]-p1[1])/6).toFixed(1)} ${p2[0]} ${p2[1]}`;
+    }
+    return d;
+  }
+  function distLine(x,y,pts){
+    let best = 1e9;
+    for (let i=0;i<pts.length-1;i++){
+      const [ax,ay]=pts[i],[bx,by]=pts[i+1], dx=bx-ax, dy=by-ay, t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));
+      best = Math.min(best, Math.hypot(x-ax-t*dx, y-ay-t*dy));
+    }
+    return best;
+  }
+  function interpY(pts,x){ for (let i=0;i<pts.length-1;i++){ const [ax,ay]=pts[i],[bx,by]=pts[i+1]; if ((x>=ax&&x<=bx)||(x>=bx&&x<=ax)) return ay+(by-ay)*(x-ax)/((bx-ax)||1); } return null; }
+  const inPark = (x,y) => PARKS.some(([cx,cy,rx,ry]) => ((x-cx)/rx)**2 + ((y-cy)/ry)**2 < 1);
+  const inWater = (x,y,m=0) => distLine(x,y,WAAL) < 44+m || distLine(x,y,SPIEGEL) < 19+m;
+  const between = (x,y) => { if (x<=150 || x>=800) return false; const yw = interpY(WAAL,x), ys = interpY(SPIEGEL,x); return ys!==null && y>ys && y<yw; };
+
+  const ROADS = {
+    major: [
+      {n:'Waalbrug', p:[[655,0],[648,150],[640,246],[628,338]]},
+      {n:'De Oversteek', p:[[872,0],[864,150],[856,236],[842,330],[800,430],[760,548]]}
+    ],
+    main: [
+      {n:'Oranjesingel', p:[[628,338],[662,424],[640,520],[560,572],[470,582],[400,560]]},
+      {n:'Graafseweg', p:[[400,560],[300,602],[180,662],[30,742]]},
+      {n:'Sint Annastraat', p:[[400,560],[410,680],[428,820],[446,1010]]},
+      {n:'Groesbeekseweg', p:[[470,582],[530,700],[590,820],[640,1010]]},
+      {n:'Berg en Dalseweg', p:[[640,520],[760,560],[880,602],[1020,644]]},
+      {n:'Waalkade', p:[[352,362],[440,344],[548,320],[600,304]]},
+      {n:'Hertogstraat', p:[[505,420],[565,440],[640,470]]},
+      {n:'Molenstraat', p:[[476,412],[456,452],[432,500],[410,552]]},
+      {n:'Van Welderenstraat', p:[[440,482],[492,522],[540,562]]},
+      {n:'', p:[[400,560],[330,580],[262,590]]},
+      {n:'', p:[[30,60],[300,70],[648,82],[864,92],[1020,96]]},
+      {n:'', p:[[640,520],[720,660],[760,800],[780,1010]]},
+      {n:'', p:[[262,590],[240,450],[300,390],[352,362]]}
+    ]
   };
-
-  const deg = a => a*Math.PI/180;
-  const P = (a,r) => [CX + r*Math.cos(deg(a)), CY + r*Math.sin(deg(a))];
-  const inPark = (x,y) => ((x-175)/135)**2 + ((y-870)/80)**2 < 1;
-  function wijkVan(x,y){
-    const d = Math.hypot(x-CX, y-CY);
-    if (d < R_CENTRUM) return 'centrum';
-    const a = Math.atan2(y-CY, x-CX)*180/Math.PI;
-    return a < 60 ? 'oost' : a < 120 ? 'zuid' : 'west';
-  }
-
-  /* Kroegnamen: fictief */
-  const ADJ = ['Gouden','Zwarte','Blauwe','Ouwe','Kromme','Vergulde','Rode','Stille','Dolle','Groene','Witte','Lange','Halve','Scheve'];
-  const NOUN = ['Tap','Kat','Sluis','Haring','Kruik','Zwaan','Brug','Ton','Molen','Hoek','Pomp','Kraan','Klok','Gaper','Schuit','Kikker','Valk','Pijp'];
-  const VAST = ['Kade 14','Het Pomphuis','Café Ketelbinkie','De Schuimkraag','Bar Fluitje','Het Wapen van Oost','Proeflokaal Het Vat','De Laatste Ronde','Café Onder de Toren','Het Sluiswachtershuis'];
-  const STRATEN = ['Tapsteeg','Moutkade','Hopstraat','Gistgracht','Kuipersteeg','Brouwerskade','Ketelstraat','Vatenplein','Schuimstraat','Fustkade','Mouterspad','Kraansteeg'];
-  const usedNames = new Set();
-  function naam(i){
-    if (i % 5 === 2 && VAST[i/5|0]) return VAST[i/5|0];
-    let n; do { n = (R()<.2 ? 'Proeflokaal ' : R()<.3 ? 'Bar ' : 'Café ') + 'De ' + pick(ADJ) + ' ' + pick(NOUN); } while (usedNames.has(n));
-    usedNames.add(n); return n;
-  }
-
-  /* Kroegen plaatsen zonder overlap */
-  const pubs = [];
-  let guard = 0;
-  while (pubs.length < 56 && guard++ < 20000) {
-    const x = rnd(45, 855), y = rnd(205, 965);
-    if (inPark(x,y)) continue;
-    if (pubs.some(p => ((p.x-x)/66)**2 + ((p.y-y)/40)**2 < 1)) continue;
-    pubs.push({x, y});
-  }
-  pubs.forEach((p,i) => {
-    p.id = i;
-    p.naam = naam(i);
-    p.adres = pick(STRATEN) + ' ' + rint(1,148);
-    p.wijk = wijkVan(p.x,p.y);
-    p.unlocked = R() < .64;
-    p.ontdekker = null; p.baas = null; p.mijnCheck = false;
-    if (!p.unlocked) return;
-    const glas = R()<.5 ? GLAZEN[1] : R()<.5 ? GLAZEN[0] : R()<.6 ? GLAZEN[3] : GLAZEN[2];
-    p.glas = glas.id; p.merk = pick(MERKEN);
-    const per25 = WIJKEN[p.wijk].basis + rnd(-45, 55);
-    p.prijs = Math.round(per25*glas.cl/25/10)*10;
-    const r = R();
-    p.age = r < .5 ? rint(1,29) : r < .75 ? rint(31,89) : rint(92,170);
-    const s = R();
-    p.status = s < .14 ? 'onbevestigd' : s < .19 ? 'betwist' : 'bevestigd';
-    p.conf = p.status === 'onbevestigd' ? 1 : p.status === 'betwist' ? 2 : rint(2,7);
-    const others = SPELERS.slice(1);
-    p.ontdekker = R() < .1 ? 'me' : pick(others).id;
-    p.baas = p.age > 90 ? null : (R() < .07 ? 'me' : pick(others).id);
-    p.sinds = p.age + rint(0, 140);
-    /* Prijshistorie: 6 metingen, met een stap bij de laatste wijziging */
-    const stap = rint(1,4)*10, stapAt = rint(1,4);
-    p.hist = Array.from({length:6}, (_,k) => k < stapAt ? p.prijs - stap : p.prijs);
-  });
-  /* Zorg dat "Jij" een startpositie heeft */
-  pubs.filter(p => p.unlocked && p.age < 60).slice(0,3).forEach(p => p.baas = 'me');
-  pubs.filter(p => p.unlocked).slice(5,9).forEach(p => p.ontdekker = 'me');
-
-  const glasVan = id => GLAZEN.find(g => g.id === id);
-  const per25 = p => Math.round(p.prijs*25/glasVan(p.glas).cl);
-  const fresh = p => !p.unlocked ? 'locked' : p.age <= 30 ? 'fresh' : p.age <= 90 ? 'stale' : 'old';
-  const kleur = {fresh:'var(--fresh)', stale:'var(--stale)', old:'var(--old)', locked:'var(--locked)'};
-  function mediaan(){ const v = pubs.filter(p=>p.unlocked).map(per25).sort((a,b)=>a-b); const m = v.length>>1; return v.length%2 ? v[m] : Math.round((v[m-1]+v[m])/2); }
-
-  /* Punten en ranglijst-basis */
-  const extra = {}; SPELERS.forEach(s => extra[s.id] = {altijd: rint(150, 820), maand: rint(60, 380), week: rint(10, 140), trust: rint(74, 98)});
-  extra.me = {altijd: 610, maand: 235, week: 45, trust: 91};
-  /* Startstand: punten uit ontdekte kroegen en titels. Daarna komen punten alleen nog via bevestigde acties binnen. */
-  SPELERS.forEach(s => {
-    const o = pubs.filter(p => p.ontdekker === s.id).length, b = pubs.filter(p => p.baas === s.id).length;
-    extra[s.id].altijd += o*50 + b*30; extra[s.id].maand += b*30; extra[s.id].week += b*10;
-  });
-  const punten = id => extra[id];
-
-  /* ---------- Kaart tekenen ---------- */
-  const svg = $('#map');
-  const NS = 'http://www.w3.org/2000/svg';
-  let selected = null;
-  function arcPath(r, a1=4, a2=176){ const [x1,y1]=P(a1,r), [x2,y2]=P(a2,r); return `M${x1} ${y1}A${r} ${r} 0 0 1 ${x2} ${y2}`; }
-  function sector(a1,a2,r1,r2){
-    const [ax,ay]=P(a1,r1),[bx,by]=P(a1,r2),[cx,cy]=P(a2,r2),[dx,dy]=P(a2,r1);
-    return `M${ax} ${ay}L${bx} ${by}A${r2} ${r2} 0 0 1 ${cx} ${cy}L${dx} ${dy}A${r1} ${r1} 0 0 0 ${ax} ${ay}Z`;
-  }
-  const WIJK_GEO = {
-    centrum: (()=>{const [x1,y1]=P(-12,R_CENTRUM),[x2,y2]=P(192,R_CENTRUM);return `M${x1} ${y1}A${R_CENTRUM} ${R_CENTRUM} 0 1 1 ${x2} ${y2}Z`})(),
-    oost: sector(-40,60,R_CENTRUM,1500),
-    zuid: sector(60,120,R_CENTRUM,1500),
-    west: sector(120,220,R_CENTRUM,1500)
+  const RAIL = [[[246,0],[250,150],[256,300],[262,460],[262,590],[330,690],[480,762],[700,822],[1060,884]], [[262,590],[150,700],[-30,810]]];
+  const BLOCKS = [
+    [475,425,118,84,14,20,.86],[440,356,90,22,-12,17,.8],[205,520,120,90,0,26,.72],[330,690,112,82,-6,24,.86],
+    [770,540,190,118,22,28,.82],[610,780,210,130,32,30,.72],[520,78,380,62,4,32,.56],[110,690,100,110,48,30,.62],[880,390,110,60,-10,28,.6]
+  ];
+  const DISTRICTS = {
+    centrum:{naam:'Centrum', c:[478,430], s:[50,32], n:24, basis:395, straten:['Grote Markt','Molenstraat','Hertogstraat','Lange Hezelstraat','Houtstraat','Bloemerstraat','Ziekerstraat','Burchtstraat','Van Welderenstraat','Kelfkensbos']},
+    benedenstad:{naam:'Benedenstad', c:[450,350], s:[60,7], n:7, basis:420, straten:['Waalkade','Lage Markt','Steenstraat']},
+    bottendaal:{naam:'Bottendaal', c:[330,690], s:[48,34], n:8, basis:345, straten:['Groenestraat','Bottendaalseweg']},
+    oost:{naam:'Oost', c:[768,548], s:[80,46], n:10, basis:362, straten:['Berg en Dalseweg','Javastraat','Daalseweg']},
+    lent:{naam:'Lent', c:[520,84], s:[140,18], n:4, basis:372, straten:[]},
+    hengstdal:{naam:'Hengstdal', c:[640,742], s:[56,40], n:4, basis:340, straten:['Groesbeekseweg']},
+    biezen:{naam:'Biezen', c:[200,525], s:[42,32], n:4, basis:335, straten:['Graafseweg','Hazenkampseweg']}
   };
-  const WIJK_LABEL = { centrum: P(90,150), oost: P(28,560), zuid: P(90,640), west: P(150,560) };
 
   function drawBase(){
-    let s = `<defs>
-      <clipPath id="clipW"><rect x="0" y="0" width="${W}" height="${H}"/></clipPath>
-      <radialGradient id="hole"><stop offset="0" stop-color="#000" stop-opacity="1"/><stop offset=".55" stop-color="#000" stop-opacity="1"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
-      <mask id="fogMask" maskUnits="userSpaceOnUse" x="-400" y="-400" width="${W+800}" height="${H+800}"><rect x="-400" y="-400" width="${W+800}" height="${H+800}" fill="#fff"/><g id="holes"></g></mask>
+    const g = [];
+    g.push(`<defs>
+      <pattern id="dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r=".9" fill="var(--fogdot)"/></pattern>
+      <radialGradient id="hole"><stop offset="0" stop-color="#000"/><stop offset=".6" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+      <mask id="fogMask" maskUnits="userSpaceOnUse" x="-600" y="-600" width="${W+1200}" height="${H+1200}"><rect x="-600" y="-600" width="${W+1200}" height="${H+1200}" fill="#fff"/><g id="holes"></g></mask>
     </defs>
-    <rect class="m-land" x="-400" y="-400" width="${W+800}" height="${H+800}"/>
-    <g clip-path="url(#clipW)">
-      <g id="tints"></g>
-      <ellipse class="m-park" cx="175" cy="870" rx="135" ry="80"/>
-      <ellipse class="m-park" cx="770" cy="930" rx="70" ry="45"/>`;
-    /* ringstraten en radiale straten */
-    [125,212,297,382,470,560,650,740,830].forEach(r => s += `<path class="m-street" stroke-width="${r%2?5:7}" d="${arcPath(r,-30,210)}"/>`);
-    [-15,12,35,58,82,106,130,152,175,198].forEach(a => { const [x1,y1]=P(a,60),[x2,y2]=P(a,1300); s += `<line class="m-street" stroke-width="6" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`; });
-    for (let i=0;i<14;i++){ const a=rnd(0,180), r=rnd(240,800); const [x,y]=P(a,r); s += `<line class="m-street" stroke-width="3.5" x1="${x}" y1="${y}" x2="${x+rnd(-60,60)}" y2="${y+rnd(30,70)}"/>`; }
-    /* grachten */
-    [170,255,340,425].forEach(r => s += `<path class="m-water" stroke-width="13" d="${arcPath(r)}"/><path class="m-water-hi" stroke-width="2" d="${arcPath(r)}"/>`);
-    s += `<path class="m-water" stroke-width="10" d="M${CX} ${CY+40}L${CX} ${CY+430}"/>`;
-    /* rivier en haven */
-    s += `<path class="m-waterfill" d="M-20 40C180 70 330 135 450 112S760 50 920 92V-20H-20Z"/>
-          <path class="m-water" stroke-width="58" d="M-20 70C180 98 330 160 450 136S760 80 920 118"/>
-          <rect class="m-waterfill" x="742" y="120" width="160" height="62" rx="6"/>
-          <text class="m-label-s" x="90" y="50">De Rivier</text>
-          <text class="m-label-s" x="770" y="160">Haven</text>
-          <text class="m-label-s" x="125" y="875">Stadspark</text>`;
-    /* wijkgrenzen en labels */
-    Object.values(WIJK_GEO).forEach(d => s += `<path class="m-wijkline" stroke-width="2.5" d="${d}"/>`);
-    Object.entries(WIJK_LABEL).forEach(([k,[x,y]]) => s += `<text class="m-label" x="${x}" y="${y}" text-anchor="middle">${WIJKEN[k].naam}</text>`);
-    s += `</g>
-      <rect class="m-fog" x="-400" y="-400" width="${W+800}" height="${H+800}" mask="url(#fogMask)"/>
-      <g id="pins"></g>`;
-    svg.innerHTML = s;
+    <rect class="m-land" x="-600" y="-600" width="${W+1200}" height="${H+1200}"/>`);
+    PARKS.forEach(([cx,cy,rx,ry]) => g.push(`<ellipse class="m-park" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>`));
+    BLOCKS.forEach(([cx,cy,rx,ry,ang,cell,dens]) => {
+      const a = ang*Math.PI/180, ca = Math.cos(a), sa = Math.sin(a), n = Math.ceil(Math.max(rx,ry)*1.5/cell);
+      let r = '';
+      for (let i=-n;i<=n;i++) for (let j=-n;j<=n;j++){
+        const lx = i*cell, ly = j*cell, x = cx + lx*ca - ly*sa, y = cy + lx*sa + ly*ca;
+        if (((x-cx)/rx)**2 + ((y-cy)/ry)**2 > 1 || inPark(x,y) || inWater(x,y,6) || between(x,y) || R() > dens) continue;
+        const gap = cell > 24 ? 6 : 4.5, w = cell-gap - (R()<.25 ? rnd(0,4) : 0), h = cell-gap - (R()<.25 ? rnd(0,4) : 0);
+        r += `<rect x="${(lx-w/2).toFixed(1)}" y="${(ly-h/2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"/>`;
+      }
+      g.push(`<g class="m-block" transform="translate(${cx} ${cy}) rotate(${ang})">${r}</g>`);
+    });
+    const isl = SPIEGEL.map(p=>p.join(' ')).join(' L') + ' L' + WAAL.filter(p=>p[0]>150&&p[0]<800).reverse().map(p=>p.join(' ')).join(' L');
+    g.push(`<path class="m-park" d="M${isl}Z" opacity=".75"/>`);
+    ROADS.main.forEach(r => g.push(`<path class="m-casing" stroke-width="9" d="${smooth(r.p)}"/>`));
+    ROADS.main.forEach((r,i) => g.push(`<path class="m-road" id="rd${i}" stroke-width="7" d="${smooth(r.p)}"/>`));
+    g.push(`<circle class="m-casing" cx="400" cy="560" r="17" stroke-width="10"/><circle class="m-road" cx="400" cy="560" r="17" stroke-width="8"/>`);
+    RAIL.forEach(p => g.push(`<path class="m-rail" stroke-width="4.5" d="${smooth(p)}"/><path class="m-rail-dash" stroke-width="2" d="${smooth(p)}"/>`));
+    g.push(`<path class="m-water" stroke-width="90" d="${smooth(WAAL)}"/><path class="m-water" stroke-width="36" d="${smooth(SPIEGEL)}"/>`);
+    g.push(`<path class="m-rail" stroke-width="7" d="M250 110L258 352"/><path class="m-rail-dash" stroke-width="2.5" d="M250 110L258 352"/>`);
+    ROADS.major.forEach(r => g.push(`<path class="m-major-casing" stroke-width="12" d="${smooth(r.p)}"/>`));
+    ROADS.major.forEach(r => g.push(`<path class="m-major" stroke-width="9.5" d="${smooth(r.p)}"/>`));
+    ROADS.main.forEach((r,i) => { if (r.n) g.push(`<text class="m-street" dy="2.2"><textPath href="#rd${i}" startOffset="${r.n==='Waalkade'?'25%':'40%'}">${r.n}</textPath></text>`); });
+    g.push(`<text class="m-waterlbl" x="120" y="322">Waal</text><text class="m-waterlbl" x="905" y="186">Waal</text><text class="m-waterlbl" x="380" y="178">Spiegelwaal</text>`);
+    [['centrum',490,474],['benedenstad',392,376],['bottendaal',330,742],['oost',820,505],['lent',400,40],['hengstdal',660,800],['biezen',170,480]].forEach(([k,x,y]) => g.push(`<text class="m-dist" x="${x}" y="${y}" text-anchor="middle">${DISTRICTS[k].naam}</text>`));
+    g.push(`<text class="m-dist" x="712" y="396" text-anchor="middle" style="font-size:8px">Hunnerberg</text>`);
+    g.push(`<text class="m-poi" x="272" y="604">Station Nijmegen</text><text class="m-poi" x="566" y="336">Valkhof</text><text class="m-poi" x="372" y="590">Keizer Karelplein</text><text class="m-poi" x="304" y="424">Kronenburgerpark</text><text class="m-poi" x="140" y="908">Goffertpark</text>`);
+    g.push(`<text class="m-street" x="658" y="200" transform="rotate(-87 658 200)">Waalbrug</text><text class="m-street" x="874" y="200" transform="rotate(-85 874 200)">De Oversteek</text>`);
+    g.push(`<g id="wijkLayer"></g>`);
+    g.push(`<g mask="url(#fogMask)" style="pointer-events:none"><rect class="m-fog" x="-600" y="-600" width="${W+1200}" height="${H+1200}"/><rect class="m-fogdots" x="-600" y="-600" width="${W+1200}" height="${H+1200}" fill="url(#dots)"/></g>`);
+    $('#world').innerHTML = g.join('');
   }
 
-  const LOCK = 'M-3.6 -1h7.2v6h-7.2zM-2.2 -1v-2a2.2 2.2 0 0 1 4.4 0v2h-1.2v-2a1 1 0 0 0 -2 0v2z';
-  const CROWN = 'M-8 4l-2-9 5.5 4 4.5-7 4.5 7 5.5-4-2 9z';
-  function drawPins(){
-    const holes = svg.querySelector('#holes'), g = svg.querySelector('#pins');
-    holes.innerHTML = pubs.filter(p=>p.unlocked).map(p => `<circle data-h="${p.id}" cx="${p.x}" cy="${p.y-10}" r="${p.anim ? 0 : 78}" fill="url(#hole)"/>`).join('');
-    const order = [...pubs].sort((a,b) => a.y - b.y);
-    g.innerHTML = order.map(p => {
-      const st = fresh(p), sel = selected === p.id ? ' sel' : '';
-      const lbl = `${p.naam}, ${p.unlocked ? eur(p.prijs)+' voor een '+glasVan(p.glas).naam.toLowerCase() : 'op slot'}`;
-      if (!p.unlocked) return `<g class="pin locked${sel}" data-id="${p.id}" tabindex="0" role="button" aria-label="${lbl}" transform="translate(${p.x} ${p.y})"><circle r="11"/><path d="${LOCK}" transform="scale(1.25)"/></g>`;
-      const mine = p.baas === 'me' ? ' mine' : '';
-      return `<g class="pin${mine}${sel}" data-id="${p.id}" tabindex="0" role="button" aria-label="${lbl}" transform="translate(${p.x} ${p.y})">
-        <path class="tip" d="M-6 -4L0 4L6 -4Z" fill="${kleur[st]}"/>
-        <rect class="pill" x="-31" y="-28" width="62" height="25" rx="12.5" stroke="${kleur[st]}"/>
-        <text class="ptxt" x="0" y="-11">${eurShort(per25(p))}</text>
-        ${p.baas === 'me' ? `<path class="crown" d="${CROWN}" transform="translate(24 -29) scale(.75)"/>` : ''}
-      </g>`;
-    }).join('');
-    pubs.forEach(p => { if (p.anim) { animateHole(p); p.anim = false; } });
-  }
-  function animateHole(p){
-    const c = svg.querySelector(`[data-h="${p.id}"]`); if (!c) return;
-    if (reduce) { c.setAttribute('r', 78); return; }
-    const t0 = performance.now();
-    (function step(t){ const k = Math.min(1,(t-t0)/900), e = 1-Math.pow(1-k,3); c.setAttribute('r', (78*e).toFixed(1)); if (k<1) requestAnimationFrame(step); })(t0);
-  }
-  function drawTints(){
-    const own = wijkEigenaars('spelers');
-    svg.querySelector('#tints').innerHTML = Object.entries(WIJK_GEO).map(([k,d]) => {
-      const o = own[k]; const c = o ? TEAMS[S[o.id].team].kleur : 'transparent';
-      return `<path class="wijk-tint" d="${d}" fill="${c}"/>`;
-    }).join('');
-  }
+  /* ================= Kroegen en geschiedenis (verzonnen) ================= */
+  const GLAZEN = [{id:'fluitje',naam:'Fluitje',cl:20},{id:'vaasje',naam:'Vaasje',cl:25},{id:'glas',naam:'Glas',cl:33},{id:'pul',naam:'Pul',cl:50}];
+  const glas = id => GLAZEN.find(g => g.id === id);
+  const MERKEN = ['Heineken','Amstel','Grolsch','Brand','Bavaria','Hertog Jan'];
+  const ADJ = ['Gouden','Zwarte','Blauwe','Ouwe','Kromme','Vergulde','Rode','Stille','Dolle','Groene','Witte','Lange','Halve','Scheve','Zingende'];
+  const NOUN = ['Tap','Kat','Sluis','Haring','Kruik','Zwaan','Brug','Ton','Molen','Hoek','Pomp','Kraan','Klok','Gaper','Schuit','Kikker','Valk','Pijp','Poort'];
+  const VAST = ['Het Pomphuis','De Laatste Ronde','Proeflokaal Het Vat','Café Onder de Toren','Het Sluiswachtershuis','De Schuimkraag','Bar Fluitje','Kade 9','Het Veerhuis','Café De Tweede Ronde'];
+  const used = new Set();
+  function naam(i){ if (i%6===3 && VAST[i/6|0]) return VAST[i/6|0]; let n; do { n = (R()<.18?'Proeflokaal ':R()<.3?'Bar ':'Café ') + 'De ' + pick(ADJ) + ' ' + pick(NOUN); } while (used.has(n)); used.add(n); return n; }
 
-  /* ---------- Pannen en zoomen ---------- */
-  const vb = {x:0, y:150, w:W, h:H-150};
-  const FULL = {...vb};
-  function setVB(){ svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
-  svg.setAttribute('preserveAspectRatio','xMidYMid slice');
-  function upp(){ const r = svg.getBoundingClientRect(); return 1/Math.max(r.width/vb.w, r.height/vb.h); }
-  function clamp(){ vb.w = Math.min(Math.max(vb.w, 220), 1100); vb.h = vb.w*(FULL.h/FULL.w); vb.x = Math.min(Math.max(vb.x, -150), W - vb.w + 150); vb.y = Math.min(Math.max(vb.y, 0), H - vb.h + 120); }
-  function zoom(f, cx, cy){ cx ??= vb.x+vb.w/2; cy ??= vb.y+vb.h/2; const nw = vb.w*f, nh = vb.h*f; vb.x = cx-(cx-vb.x)*f; vb.y = cy-(cy-vb.y)*f; vb.w = nw; vb.h = nh; clamp(); setVB(); }
-  function focusPub(p){ const r = svg.getBoundingClientRect(); const s = upp(); const visW = r.width*s, visH = r.height*s; vb.x = p.x - vb.w/2 + (innerWidth>820 ? Math.min(190, visW*.22) : 0); vb.y = p.y - vb.h/2 + (innerWidth>820 ? 0 : visH*.12); clamp(); setVB(); }
-  let drag = null, moved = false;
-  svg.addEventListener('pointerdown', e => { drag = {x:e.clientX, y:e.clientY, vx:vb.x, vy:vb.y, id:e.pointerId}; moved = false; });
-  svg.addEventListener('pointermove', e => {
-    if (!drag) return;
-    const dx = e.clientX-drag.x, dy = e.clientY-drag.y;
-    if (!moved && Math.hypot(dx,dy) < 5) return;
-    if (!moved) { moved = true; svg.setPointerCapture(drag.id); svg.classList.add('dragging'); }
-    const s = upp(); vb.x = drag.vx - dx*s; vb.y = drag.vy - dy*s; clamp(); setVB();
-  });
-  const endDrag = () => { drag = null; svg.classList.remove('dragging'); };
-  svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
-  svg.addEventListener('wheel', e => { e.preventDefault(); const r = svg.getBoundingClientRect(), s = upp(); const cx = vb.x + (e.clientX - r.left - (r.width - vb.w/s)/2)*s, cy = vb.y + (e.clientY - r.top - (r.height - vb.h/s)/2)*s; zoom(e.deltaY > 0 ? 1.12 : 1/1.12, cx, cy); }, {passive:false});
-  svg.addEventListener('click', e => { if (moved) return; const g = e.target.closest('.pin'); if (g) openPub(+g.dataset.id); });
-  svg.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && e.target.closest('.pin')) { e.preventDefault(); openPub(+e.target.closest('.pin').dataset.id); } });
-  $('#zIn').onclick = () => zoom(1/1.3); $('#zOut').onclick = () => zoom(1.3);
-  $('#zAll').onclick = () => { Object.assign(vb, FULL); if (innerWidth <= 820) { vb.w = 620; vb.h = vb.w*(FULL.h/FULL.w); vb.x = 140; vb.y = 190; } clamp(); setVB(); };
-  $('#wijkToggle').onchange = e => $('#mapWrap').classList.toggle('show-wijken', e.target.checked);
-
-  /* ---------- HUD ---------- */
-  let shownPts = 0;
-  function myPts(){ return punten('me').altijd; }
-  function countUp(){
-    const target = myPts(), from = shownPts, t0 = performance.now(), el = $('#mePts');
-    if (reduce || from === target) { shownPts = target; el.textContent = nf(target); return; }
-    (function step(t){ const k = Math.min(1,(t-t0)/700); shownPts = Math.round(from + (target-from)*k); el.textContent = nf(shownPts); if (k<1) requestAnimationFrame(step); })(t0);
-  }
-  function drawHud(){
-    const n = {fresh:0, stale:0, old:0, locked:0}; pubs.forEach(p => n[fresh(p)]++);
-    const un = pubs.length - n.locked;
-    $('#cityCount').textContent = `${un} van ${pubs.length} vrijgespeeld · ${Math.round(un/pubs.length*100)}%`;
-    $('#cityBar').innerHTML = ['fresh','stale','old','locked'].map(k => `<i class="b-${k}" style="flex-grow:${n[k]}" title="${n[k]}"></i>`).join('');
-    $('#stMedian').textContent = eur(mediaan());
-    $('#stFresh').textContent = Math.round(n.fresh/un*100) + '%';
-    $('#stMine').textContent = pubs.filter(p => p.baas === 'me').length + 'x';
-    countUp();
-  }
-
-  /* ---------- Lijst ---------- */
-  const FILTERS = [
-    {id:'goedkoop', naam:'Goedkoopst', f:p=>p.unlocked, sort:(a,b)=>per25(a)-per25(b), titel:'Goedkoopste kroegen'},
-    {id:'slot', naam:'Op slot', f:p=>!p.unlocked, sort:(a,b)=>a.naam.localeCompare(b.naam), titel:'Nog vrij te spelen'},
-    {id:'herover', naam:'Heroverbaar', f:p=>fresh(p)==='old', sort:(a,b)=>b.age-a.age, titel:'Langst niet gecontroleerd'},
-    {id:'mijn', naam:'Mijn kroegen', f:p=>p.baas==='me', sort:(a,b)=>a.age-b.age, titel:'Jij bent kroegbaas'}
-  ];
-  let filter = 'goedkoop', showAll = false;
-  function drawList(){
-    $('#filters').innerHTML = FILTERS.map(f => `<button class="chip" aria-pressed="${f.id===filter}" data-f="${f.id}">${f.naam}<span class="c">${pubs.filter(f.f).length}</span></button>`).join('');
-    const F = FILTERS.find(f => f.id === filter);
-    $('#listTitle').textContent = F.titel;
-    const all = pubs.filter(F.f).sort(F.sort), rows = showAll ? all : all.slice(0, 12);
-    $('#pubList').innerHTML = (rows.length ? rows.map(p => {
-      const st = fresh(p);
-      return `<li class="pub-row${p.unlocked?'':' locked'}${selected===p.id?' sel':''}" data-id="${p.id}" tabindex="0">
-        <i class="dot d-${st}"></i>
-        <div style="min-width:0"><div class="nm">${p.naam}</div><div class="sub">${WIJKEN[p.wijk].naam} · ${p.unlocked ? (st==='old' ? `${p.age} dagen niet gecheckt` : `${p.merk}, ${glasVan(p.glas).naam.toLowerCase()} ${glasVan(p.glas).cl} cl`) : 'Speel vrij voor +50'}</div></div>
-        <div class="pr num">${p.unlocked ? eur(per25(p)) : '?'}${p.unlocked ? `<small>${eur(p.prijs)} / ${glasVan(p.glas).cl} cl</small>` : ''}</div>
-      </li>`;
-    }).join('') : `<li class="sub" style="padding:14px 6px;color:var(--muted)">Nog niets hier. Vul een prijs in bij een kroeg op slot of een heroverbare kroeg om kroegbaas te worden.</li>`)
-      + (all.length > rows.length ? `<li style="padding-top:12px"><button class="btn" style="width:100%" id="moreBtn">Toon alle ${all.length}</button></li>` : '');
-  }
-  $('#filters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { filter = b.dataset.f; showAll = false; drawList(); } });
-  $('#pubList').addEventListener('click', e => { if (e.target.closest('#moreBtn')) { showAll = true; return drawList(); } const li = e.target.closest('[data-id]'); if (li) { const p = pubs[+li.dataset.id]; openPub(p.id); focusPub(p); if (innerWidth<=820) $('#mapWrap').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'}); } });
-  $('#pubList').addEventListener('keydown', e => { if (e.key==='Enter') e.target.closest('[data-id]')?.click(); });
-
-  /* ---------- Detailkaart ---------- */
-  const sheet = $('#sheet');
-  function openPub(id){ selected = id; renderSheet(); drawPins(); drawList(); }
-  function closeSheet(){ selected = null; sheet.hidden = true; drawPins(); drawList(); }
-  function spark(p){
-    const v = p.hist.map(c => Math.round(c*25/glasVan(p.glas).cl)); const lo = Math.min(...v)-15, hi = Math.max(...v)+15;
-    const w = 320, h = 56, X = i => 6 + i*(w-40)/(v.length-1), Y = c => 6 + (h-14)*(1-(c-lo)/(hi-lo));
-    const pts = v.map((c,i) => `${X(i).toFixed(1)},${Y(c).toFixed(1)}`).join(' ');
-    return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Prijs per 25 cl over de laatste 12 maanden">
-      <line class="gd" x1="6" x2="${w-34}" y1="${h-8}" y2="${h-8}"/>
-      <polygon class="ar" points="6,${h-8} ${pts} ${X(v.length-1)},${h-8}"/>
-      <polyline class="ln" points="${pts}"/>
-      <circle class="dt" cx="${X(v.length-1)}" cy="${Y(v[v.length-1])}" r="3.5"/>
-      <text x="${w-30}" y="${Y(v[v.length-1])+4}">${eurShort(v[v.length-1])}</text>
-    </svg>`;
-  }
-  function statusPill(p){
-    if (p.status === 'bevestigd') return `<span class="status ok">&#10003; Bevestigd door ${p.conf}</span>`;
-    if (p.status === 'betwist') return `<span class="status bad">&#9888; Betwist</span>`;
-    return `<span class="status wait">&#9203; Wacht op bevestiging</span>`;
-  }
-  const leeftijd = d => d === 0 ? 'vandaag' : d === 1 ? 'gisteren' : `${d} dagen geleden`;
-  function renderSheet(){
-    const p = pubs[selected]; if (!p) return;
-    sheet.hidden = false;
-    let h = `<button class="sheet-close" aria-label="Sluiten">&times;</button>
-      <div><h2>${p.naam}</h2><div class="addr">${p.adres} · ${WIJKEN[p.wijk].naam}</div></div>`;
-    if (!p.unlocked) {
-      h += `<div class="banner lock"><b>Op slot.</b> Niemand heeft hier nog een prijs ingevuld. Wie dat als eerste doet, speelt de kroeg vrij en blijft voor altijd de ontdekker.</div>
-        <div class="actions"><button class="btn primary wide" data-act="form-unlock">Speel vrij <span class="pts">+50</span></button></div>`;
-    } else {
-      const g = glasVan(p.glas), st = fresh(p);
-      h += `<div class="price-block">
-          <div class="big-price">${eur(p.prijs)}<small>${p.merk} · ${g.naam.toLowerCase()} ${g.cl} cl</small></div>
-          <div class="norm"><b>${eur(per25(p))}</b><div>per 25 cl · stad ${eur(mediaan())}</div></div>
-        </div>
-        <div class="pills">${statusPill(p)}<span class="status"><i class="dot d-${st}"></i>Gecheckt ${leeftijd(p.age)}</span></div>`;
-      if (st === 'old') h += `<div class="banner"><b>Heroverbaar.</b> ${p.age} dagen niet gecontroleerd, dus er is geen kroegbaas. Check de prijs en de titel is van jou.</div>`;
-      h += `<div>${spark(p)}<div class="eyebrow" style="margin-top:4px">Prijs per 25 cl, laatste 12 maanden</div></div>
-        <div class="meta">
-          <div class="meta-row"><span class="lbl">Kroegbaas</span>${p.baas ? `${av(p.baas)}<b>${S[p.baas].naam}</b><span style="color:var(--muted);font-size:12px">${p.sinds === 0 ? 'sinds vandaag' : `sinds ${p.sinds} dagen`}</span>` : '<span style="color:var(--muted)">Vrij</span>'}</div>
-          <div class="meta-row"><span class="lbl">Ontdekker</span>${av(p.ontdekker)}<span>${S[p.ontdekker].naam}</span></div>
-        </div>
-        <div class="actions">
-          <button class="btn" data-act="confirm" ${p.mijnCheck ? 'disabled' : ''}>${p.mijnCheck ? 'Door jou gecheckt' : 'Klopt nog'} <span class="pts">${p.mijnCheck ? '' : (st==='old' ? '+25' : '+5')}</span></button>
-          <button class="btn primary" data-act="form-change">Prijs is anders <span class="pts">${st==='old' ? '+25' : '+30'}</span></button>
-        </div>`;
+  const pubs = [];
+  Object.entries(DISTRICTS).forEach(([k,d]) => {
+    let placed = 0, guard = 0;
+    while (placed < d.n && guard++ < 6000) {
+      const x = d.c[0] + gauss()*d.s[0], y = d.c[1] + gauss()*d.s[1];
+      if (x<20||x>980||y<20||y>980||inPark(x,y)||inWater(x,y,4)||between(x,y)) continue;
+      if (pubs.some(p => Math.hypot(p.x-x,p.y-y) < 15)) continue;
+      pubs.push({x, y, wijk:k}); placed++;
     }
-    sheet.innerHTML = h;
-  }
-  const av = id => `<span class="avatar" style="width:24px;height:24px;font-size:10px;background:${TEAMS[S[id].team].kleur}">${S[id].naam.slice(0,2).toUpperCase()}</span>`;
-
-  /* ---------- Invoerformulier ---------- */
-  let form = null;
-  function renderForm(mode){
-    const p = pubs[selected];
-    form = { mode, merk: p.merk || 'Heineken', glas: p.glas || 'vaasje', prijs: p.prijs || Math.round(mediaan()/10)*10, plaats: true, foto: false };
-    drawForm();
-  }
-  function formPts(){
-    const p = pubs[selected];
-    let base = form.mode === 'unlock' ? 50 : fresh(p) === 'old' ? 25 : 30;
-    if (form.plaats) base = Math.round(base*1.5);
-    if (form.foto) base += 5;
-    return base;
-  }
-  function drawForm(){
-    const p = pubs[selected];
-    const g = glasVan(form.glas), norm = Math.round(form.prijs*25/g.cl), med = mediaan();
-    const afwijk = Math.abs(norm - med) > 110;
-    const titel = form.mode === 'unlock' ? 'Eerste prijs invullen' : 'Nieuwe prijs melden';
-    sheet.innerHTML = `<button class="sheet-close" aria-label="Sluiten">&times;</button>
-      <div><div class="eyebrow">${titel}</div><h2>${p.naam}</h2></div>
-      <form class="form" id="priceForm">
-        <div class="field"><span>Merk</span><div class="chips" data-k="merk">${MERKEN.map(m => `<button type="button" class="chip" aria-pressed="${m===form.merk}" data-v="${m}">${m}</button>`).join('')}</div></div>
-        <div class="field"><span>Glas</span><div class="chips" data-k="glas">${GLAZEN.map(x => `<button type="button" class="chip" aria-pressed="${x.id===form.glas}" data-v="${x.id}">${x.naam} <span class="c">${x.cl} cl</span></button>`).join('')}</div></div>
-        <label class="field" for="priceIn"><span>Prijs</span>
-          <div class="stepper"><button type="button" data-step="-10" aria-label="10 cent minder">&minus;</button><input id="priceIn" inputmode="decimal" value="${eurShort(form.prijs)}" aria-label="Prijs in euro"><button type="button" data-step="10" aria-label="10 cent meer">+</button></div>
-        </label>
-        <div class="calc">Dat is <b>${eur(norm)}</b> per 25 cl. Stadsmediaan: <b>${eur(med)}</b>.</div>
-        ${afwijk ? `<div class="warn">Flink afwijkend van de stadsmediaan. Deze prijs heeft twee bevestigingen nodig.</div>` : ''}
-        <label class="toggle" for="plaatsIn"><input type="checkbox" id="plaatsIn" ${form.plaats?'checked':''}><span>Ik ben ter plaatse <small>Locatie wordt alleen bij het indienen gecontroleerd. Levert &times;1,5 op.</small></span></label>
-        <label class="file" for="fotoIn">Foto van de prijslijst (optioneel, +5)<br><input type="file" id="fotoIn" accept="image/*"></label>
-        <button class="btn primary" type="submit">${form.mode==='unlock' ? 'Speel vrij' : 'Meld prijs'} <span class="pts">+${formPts()}</span></button>
-        <p class="calc" style="margin:0">Je punten komen binnen zodra een andere speler je prijs bevestigt.</p>
-      </form>`;
-  }
-  function parsePrijs(s){ const v = parseFloat(String(s).replace(',', '.').replace(/[^\d.]/g,'')); return isFinite(v) ? Math.round(v*100) : null; }
-
-  sheet.addEventListener('click', e => {
-    if (e.target.closest('.sheet-close')) return closeSheet();
-    const chip = e.target.closest('[data-k] .chip');
-    if (chip && form) { form[chip.parentElement.dataset.k] = chip.dataset.v; return drawForm(); }
-    const st = e.target.closest('[data-step]');
-    if (st && form) { form.prijs = Math.max(50, form.prijs + +st.dataset.step); return drawForm(); }
-    const a = e.target.closest('[data-act]')?.dataset.act;
-    if (a === 'form-unlock') renderForm('unlock');
-    if (a === 'form-change') renderForm('change');
-    if (a === 'confirm') doConfirm();
   });
-  sheet.addEventListener('change', e => {
-    if (!form) return;
-    if (e.target.id === 'plaatsIn') { form.plaats = e.target.checked; drawForm(); }
-    if (e.target.id === 'fotoIn') { form.foto = e.target.files.length > 0; const sb = sheet.querySelector('[type=submit] .pts'); if (sb) sb.textContent = '+' + formPts(); }
-    if (e.target.id === 'priceIn') { const v = parsePrijs(e.target.value); if (v) { form.prijs = v; drawForm(); } }
+  pubs.forEach((p,i) => {
+    p.id = i; p.naam = naam(i);
+    const st = DISTRICTS[p.wijk].straten;
+    p.adres = (st.length ? `${pick(st)} ${rint(1,120)} · ` : '') + DISTRICTS[p.wijk].naam;
+    p.unlocked = R() < .66;
+    p.events = []; p.baas = null; p.baasSinds = 0; p.baasCheck = 0;
+    if (p.unlocked) genHistory(p);
   });
-  sheet.addEventListener('submit', e => {
-    e.preventDefault();
-    const inp = sheet.querySelector('#priceIn'); const v = parsePrijs(inp.value); if (v) form.prijs = v;
-    const p = pubs[selected], pts = formPts(), mode = form.mode, wasOld = fresh(p) === 'old';
-    const prev = p.unlocked ? per25(p) : null;
-    Object.assign(p, { merk: form.merk, glas: form.glas, prijs: form.prijs, age: 0, status:'onbevestigd', conf:1, mijnCheck: true });
-    if (mode === 'unlock') { p.unlocked = true; p.anim = true; p.ontdekker = 'me'; p.hist = Array(6).fill(form.prijs); p.sinds = 0; }
-    else { p.hist = [...p.hist.slice(1), form.prijs]; }
-    form = null;
-    toast(mode === 'unlock' ? 'Kroeg vrijgespeeld. Wacht op bevestiging.' : 'Prijs gemeld. Wacht op bevestiging.', `+${pts} straks`);
-    refresh(); renderSheet();
-    const pid = p.id;
-    setTimeout(() => {
-      const q = pubs[pid]; const by = pick(SPELERS.slice(1));
-      q.status = 'bevestigd'; q.conf = 2;
-      const wordtBaas = mode !== 'unlock' || wasOld || !q.baas;
-      if (wordtBaas) { q.baas = 'me'; q.sinds = 0; }
-      extra.me.altijd += pts; extra.me.maand += pts; extra.me.week += pts;
-      toast(`${by.naam} bevestigde je prijs bij ${q.naam}.${wordtBaas ? ' Jij bent nu kroegbaas.' : ''}`, `+${pts}`);
-      refresh(); if (selected === pid) renderSheet();
-    }, reduce ? 800 : 2600);
-  });
-  function doConfirm(){
-    const p = pubs[selected], wasOld = fresh(p) === 'old', pts = wasOld ? 25 : 5;
-    p.mijnCheck = true; p.age = 0; p.conf += 1;
-    toast(wasOld ? 'Check ingediend. Wacht op een tweede bron.' : 'Bevestiging ingediend.', `+${pts} straks`);
-    refresh(); renderSheet();
-    const pid = p.id;
-    setTimeout(() => {
-      const q = pubs[pid]; q.status = 'bevestigd';
-      if (wasOld) { q.baas = 'me'; q.sinds = 0; }
-      extra.me.altijd += pts;
-      extra.me.maand += pts; extra.me.week += pts;
-      toast(wasOld ? `Heroverd. Jij bent kroegbaas van ${q.naam}.` : 'Consensus bereikt: je bevestiging klopte.', `+${pts}`);
-      refresh(); if (selected === pid) renderSheet();
-    }, reduce ? 700 : 1800);
+  function bevVan(by){ const o = ANDEREN.filter(x => x!==by); return Array.from({length:rint(1,3)}, () => pick(o)).filter((v,i,a)=>a.indexOf(v)===i); }
+  function genHistory(p){
+    const g = R()<.5 ? GLAZEN[1] : R()<.5 ? GLAZEN[0] : R()<.6 ? GLAZEN[3] : GLAZEN[2];
+    p.glas = g.id; p.merk = pick(MERKEN);
+    const r = R(), age = r<.5 ? rint(1,29) : r<.76 ? rint(31,89) : rint(92,210);
+    const first = age + rint(25, 640);
+    let prijs = Math.round((DISTRICTS[p.wijk].basis + rnd(-50,45))*g.cl/25/10)*10 - (first>365 ? 20 : 0);
+    const by0 = pick(ANDEREN);
+    p.events.push({t:'eerst', d:first, by:by0, prijs, bev:bevVan(by0)});
+    const mids = Array.from({length:rint(0,4)}, () => rint(age+1, first-1)).filter(d => d>age && d<first).sort((a,b)=>b-a);
+    [...mids, age].forEach((d,ix,arr) => {
+      const by = pick(ANDEREN);
+      if (R() < (ix===arr.length-1 ? .3 : .35)) { const van = prijs; prijs += rint(1,4)*10; p.events.push({t:'wijziging', d, by, van, prijs, bev:bevVan(by)}); }
+      else p.events.push({t:'check', d, by, prijs});
+    });
+    p.prijs = prijs; p.age = age;
+    if (age <= 4 && R() < .5) { const last = p.events[p.events.length-1]; last.pending = true; if (last.bev) last.bev = []; }
+    deriveBaas(p);
   }
-  function toast(msg, pts){
-    const t = document.createElement('div'); t.className = 'toast';
-    t.innerHTML = `${pts ? `<span class="tp">${pts}</span>` : ''}<span>${msg}</span>`;
-    $('#toasts').appendChild(t); setTimeout(() => t.remove(), 4200);
+  function deriveBaas(p){
+    const setters = p.events.filter(e => e.t !== 'check');
+    const last = setters[setters.length-1];
+    const holder = last.by;
+    const lastAct = Math.min(...p.events.filter(e => e.by === holder).map(e => e.d));
+    p.baas = lastAct > 90 ? null : holder; p.baasSinds = last.d; p.baasCheck = lastAct;
+  }
+  const ontdekker = p => p.events[0]?.by;
+  const per25 = p => Math.round(p.prijs*25/glas(p.glas).cl);
+  const fresh = p => !p.unlocked ? 'locked' : p.age <= 30 ? 'fresh' : p.age <= 90 ? 'stale' : 'old';
+  const KLEUR = {fresh:'var(--fresh)', stale:'var(--stale)', old:'var(--old)', locked:'var(--locked)'};
+  const statusVan = p => p.events[p.events.length-1].pending ? 'wacht' : 'ok';
+  const confCount = p => { const setters = p.events.filter(e=>e.t!=='check'); const last = setters[setters.length-1]; const iLast = p.events.indexOf(last); return (last.bev?.length||0) + p.events.slice(iLast+1).filter(e=>e.t==='check' && !e.pending).length; };
+  function mediaan(){ const v = pubs.filter(p=>p.unlocked).map(per25).sort((a,b)=>a-b); const m = v.length>>1; return v.length%2 ? v[m] : Math.round((v[m-1]+v[m])/2); }
+  const afstand = p => Math.hypot(p.x-ME_LOC[0], p.y-ME_LOC[1]) * 3.1;
+  const fmtAfstand = m => m < 1000 ? `${Math.max(10, Math.round(m/10)*10)} m` : `${(m/1000).toFixed(1).replace('.',',')} km`;
+
+  /* Startpositie van "Jij": drie titels, waarvan er een bijna verloopt; de dichtstbijzijnde kroeg staat nog op slot */
+  (function seedMe(){
+    const near = pubs.filter(p=>p.wijk==='centrum').sort((a,b)=>afstand(a)-afstand(b));
+    const lockedNear = near[0]; lockedNear.unlocked = false; lockedNear.events = []; lockedNear.baas = null;
+    ME_LOC[0] = lockedNear.x + 7; ME_LOC[1] = lockedNear.y + 6;
+    const cand = pubs.filter(p => p.unlocked && p.wijk !== 'lent' && p !== lockedNear);
+    [[81,[40,12]],[22,[6]],[55,[]]].forEach(([d, later], i) => {
+      const p = cand[i*5+2];
+      p.events = p.events.filter(e => e.d > d + 3);
+      if (!p.events.length) p.events.push({t:'eerst', d:d+300, by:pick(ANDEREN), prijs:p.prijs-20, bev:[pick(ANDEREN)]});
+      const prev = p.events[p.events.length-1].prijs, van = prev === p.prijs ? p.prijs - 20 : prev;
+      p.events.push({t:'wijziging', d, by:'me', van, prijs:p.prijs, bev:bevVan('me')});
+      later.forEach(l => p.events.push({t:'check', d:l, by:pick(ANDEREN), prijs:p.prijs}));
+      p.age = Math.min(...p.events.map(e=>e.d)); deriveBaas(p);
+    });
+    pubs.filter(p => p.unlocked && p.events[0].d > 200 && p.events[0].by !== 'me').slice(3,7).forEach(p => { p.events[0].by = 'me'; p.events[0].bev = bevVan('me'); });
+  })();
+
+  /* Punten */
+  const PTS = {}; SPELERS.forEach(s => PTS[s.id] = {altijd: rint(140,760), maand: rint(40,340), week: rint(5,120)});
+  SPELERS.forEach(s => { const o = pubs.filter(p=>ontdekker(p)===s.id).length, b = pubs.filter(p=>p.baas===s.id).length; PTS[s.id].altijd += o*50 + b*30; PTS[s.id].maand += b*30; PTS[s.id].week += b*10; });
+  PTS.me = {altijd: 905, maand: 265, week: 40};
+
+  /* ================= Spelmodus (per kijker onthouden) ================= */
+  const game = { kroegbaas: store.get('kroegbaas', true), wijken: store.get('wijken', false) };
+
+  /* ================= Kaart: pannen, zoomen, spelden ================= */
+  const mapEl = $('#mapEl'), world = $('#world'), pinsEl = $('#pins');
+  const T = {k:1, tx:0, ty:0};
+  let curT = {...T}, raf = 0;
+  const SHEET_PEEK = 248;
+  function visibleRect(){
+    const w = innerWidth, h = innerHeight;
+    if (wide()) return {x:408, y:0, w:w-408, h};
+    return {x:0, y:0, w, h: h - SHEET_PEEK};
+  }
+  function fit(x0,y0,x1,y1){
+    const v = visibleRect(); const k = Math.min(v.w/(x1-x0), v.h/(y1-y0));
+    T.k = k; T.tx = v.x + (v.w - (x1-x0)*k)/2 - x0*k; T.ty = v.y + (v.h - (y1-y0)*k)/2 - y0*k; apply();
+  }
+  function apply(animate){
+    T.k = Math.max(.45, Math.min(5, T.k));
+    cancelAnimationFrame(raf);
+    if (animate && !reduce) {
+      const from = {...curT}, to = {...T}, t0 = performance.now();
+      const step = t => { const e = Math.min(1,(t-t0)/450), q = 1-Math.pow(1-e,3); curT = {k:from.k+(to.k-from.k)*q, tx:from.tx+(to.tx-from.tx)*q, ty:from.ty+(to.ty-from.ty)*q}; render(); if (e<1) raf = requestAnimationFrame(step); };
+      raf = requestAnimationFrame(step);
+    } else { curT = {...T}; render(); }
+  }
+  function render(){
+    world.setAttribute('transform', `translate(${curT.tx.toFixed(2)} ${curT.ty.toFixed(2)}) scale(${curT.k.toFixed(4)})`);
+    layoutPins();
+  }
+  function zoomAt(f, px, py){
+    const wx = (px - T.tx)/T.k, wy = (py - T.ty)/T.k;
+    T.k = Math.max(.45, Math.min(5, T.k*f)); T.tx = px - wx*T.k; T.ty = py - wy*T.k; apply();
+  }
+  function centerOn(x,y,k){
+    T.k = k || T.k;
+    const v = visibleRect(); T.tx = v.x + v.w/2 - x*T.k; T.ty = v.y + v.h*0.5 - y*T.k; apply(true);
   }
 
-  /* ---------- Ranglijst ---------- */
-  let lbWho = 'spelers', lbWhen = 'maand';
-  function wijkEigenaars(mode){
+  let selected = null;
+  const pinEls = [];
+  function buildPins(){
+    pinsEl.innerHTML = '';
+    pubs.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'pin'; b.dataset.id = p.id;
+      b.innerHTML = `<span class="pill"><i class="fd"></i><span class="pv"></span></span><span class="dotm"></span><span class="lockm">${ICON.lock}</span>`;
+      pinsEl.appendChild(b); pinEls[p.id] = b;
+    });
+    const me = document.createElement('div'); me.className = 'me-loc'; me.id = 'meLoc'; pinsEl.appendChild(me);
+  }
+  function updatePinContent(){
+    pubs.forEach(p => {
+      const b = pinEls[p.id], st = fresh(p);
+      b.classList.toggle('is-locked', !p.unlocked);
+      b.classList.toggle('mine', game.kroegbaas && p.baas === 'me');
+      b.classList.toggle('vacant', game.kroegbaas && p.unlocked && !p.baas);
+      b.classList.toggle('sel', selected === p.id);
+      b.setAttribute('aria-label', p.unlocked ? `${p.naam}, ${eur(per25(p))} per 25 centiliter` : `${p.naam}, op slot`);
+      if (p.unlocked) {
+        b.querySelector('.fd').style.background = KLEUR[st];
+        b.querySelector('.dotm').style.background = KLEUR[st];
+        b.querySelector('.pv').innerHTML = kort(per25(p)) + (game.kroegbaas && p.baas === 'me' ? ICON.crown : game.kroegbaas && !p.baas ? ICON.crownO : '');
+      } else b.querySelector('.dotm').style.background = '';
+    });
+    holes();
+  }
+  function holes(){
+    $('#holes').innerHTML = pubs.filter(p=>p.unlocked).map(p => `<circle data-h="${p.id}" cx="${p.x}" cy="${p.y}" r="${p.anim?0:46}" fill="url(#hole)"/>`).join('') + `<circle cx="${ME_LOC[0]}" cy="${ME_LOC[1]}" r="26" fill="url(#hole)"/>`;
+    pubs.forEach(p => { if (p.anim) { p.anim = false; growHole(p); } });
+  }
+  function growHole(p){
+    const c = document.querySelector(`[data-h="${p.id}"]`); if (!c) return;
+    if (reduce) return c.setAttribute('r', 46);
+    const t0 = performance.now();
+    (function s(t){ const e = Math.min(1,(t-t0)/1000), q = 1-Math.pow(1-e,3); c.setAttribute('r', (46*q).toFixed(1)); if (e<1) requestAnimationFrame(s); })(t0);
+  }
+  const prio = p => (selected===p.id?1e6:0) + (game.kroegbaas && p.baas==='me'?1e5:0) + (p.unlocked?1e4:0) + ({fresh:3,stale:2,old:1,locked:0}[fresh(p)])*1e3 - (p.unlocked ? per25(p)/10 : 0);
+  function layoutPins(){
+    const w = innerWidth, h = innerHeight, pill = curT.k >= 1.05;
+    const order = [...pubs].sort((a,b) => prio(b) - prio(a));
+    const boxes = [];
+    const hit = r => boxes.some(q => r.x < q.x+q.w && r.x+r.w > q.x && r.y < q.y+q.h && r.y+r.h > q.y);
+    order.forEach(p => {
+      const x = p.x*curT.k + curT.tx, y = p.y*curT.k + curT.ty, b = pinEls[p.id];
+      let m = 'off';
+      if (x > -60 && x < w+60 && y > -40 && y < h+40) {
+        if (p.unlocked && (pill || selected === p.id)) { const r = {x:x-32, y:y-36, w:64, h:30}; if (!hit(r) || selected === p.id) { boxes.push(r); m = 'pill'; } else m = 'dot'; }
+        else if (!p.unlocked && (pill || selected === p.id)) { const r = {x:x-13, y:y-13, w:26, h:26}; if (!hit(r) || selected === p.id) { boxes.push(r); m = 'lock'; } else m = 'dot'; }
+        else m = 'dot';
+      }
+      b.classList.remove('m-pill','m-dot','m-lock','off');
+      b.classList.add(m === 'off' ? 'off' : 'm-'+m);
+      b.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+      b.style.zIndex = selected === p.id ? 500 : m === 'pill' ? 10 + Math.round(y/10) : 1;
+    });
+    const me = $('#meLoc'); if (me) me.style.transform = `translate3d(${ME_LOC[0]*curT.k+curT.tx}px, ${ME_LOC[1]*curT.k+curT.ty}px, 0)`;
+  }
+
+  /* slepen en knijpen */
+  const ptrs = new Map(); let gesture = null, moved = false;
+  mapEl.addEventListener('pointerdown', e => {
+    ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if (ptrs.size === 1) { gesture = {x:e.clientX, y:e.clientY, tx:T.tx, ty:T.ty}; moved = false; }
+    if (ptrs.size === 2) { const [a,b] = [...ptrs.values()]; gesture = {pinch:true, d:Math.hypot(a.x-b.x,a.y-b.y)||1, k:T.k, cx:(a.x+b.x)/2, cy:(a.y+b.y)/2, tx:T.tx, ty:T.ty}; moved = true; }
+  });
+  mapEl.addEventListener('pointermove', e => {
+    if (!ptrs.has(e.pointerId) || !gesture) return;
+    ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if (gesture.pinch && ptrs.size >= 2) {
+      const [a,b] = [...ptrs.values()], d = Math.hypot(a.x-b.x,a.y-b.y), cx = (a.x+b.x)/2, cy = (a.y+b.y)/2;
+      const k = Math.max(.45, Math.min(5, gesture.k * d/gesture.d)), wx = (gesture.cx - gesture.tx)/gesture.k, wy = (gesture.cy - gesture.ty)/gesture.k;
+      T.k = k; T.tx = cx - wx*k; T.ty = cy - wy*k; apply(); return;
+    }
+    const dx = e.clientX - gesture.x, dy = e.clientY - gesture.y;
+    if (!moved && Math.hypot(dx,dy) < 6) return;
+    if (!moved) { moved = true; try { mapEl.setPointerCapture(e.pointerId); } catch {} }
+    T.tx = gesture.tx + dx; T.ty = gesture.ty + dy; apply();
+  });
+  const up = e => { ptrs.delete(e.pointerId); if (ptrs.size === 1) { const [a] = [...ptrs.values()]; gesture = {x:a.x, y:a.y, tx:T.tx, ty:T.ty}; } else if (!ptrs.size) gesture = null; };
+  mapEl.addEventListener('pointerup', up); mapEl.addEventListener('pointercancel', up);
+  mapEl.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Math.exp(-e.deltaY*0.0022), e.clientX, e.clientY); }, {passive:false});
+  mapEl.addEventListener('click', e => { if (moved) return; const b = e.target.closest('.pin'); if (b) openPub(+b.dataset.id); });
+  $('#zIn').onclick = () => { const v = visibleRect(); zoomAt(1.4, v.x+v.w/2, v.y+v.h/2); };
+  $('#zOut').onclick = () => { const v = visibleRect(); zoomAt(1/1.4, v.x+v.w/2, v.y+v.h/2); };
+  $('#btnLocate').onclick = () => centerOn(ME_LOC[0], ME_LOC[1], Math.max(T.k, 2.2));
+  $('#btnWijken').onclick = () => setGame('wijken', !game.wijken);
+
+  /* ================= Wijken-laag ================= */
+  function hull(pts){
+    pts = [...pts].sort((a,b)=>a[0]-b[0]||a[1]-b[1]); if (pts.length < 3) return pts;
+    const cr = (o,a,b) => (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+    const lo=[], hi=[];
+    for (const p of pts){ while (lo.length>=2 && cr(lo[lo.length-2],lo[lo.length-1],p)<=0) lo.pop(); lo.push(p); }
+    for (const p of [...pts].reverse()){ while (hi.length>=2 && cr(hi[hi.length-2],hi[hi.length-1],p)<=0) hi.pop(); hi.push(p); }
+    return lo.slice(0,-1).concat(hi.slice(0,-1));
+  }
+  function eigenaars(){
     const out = {};
-    Object.keys(WIJKEN).forEach(w => {
-      const tel = {}; const inW = pubs.filter(p => p.wijk === w);
-      inW.forEach(p => { if (!p.baas) return; const k = mode === 'teams' ? S[p.baas].team : p.baas; tel[k] = (tel[k]||0) + 1; });
-      const best = Object.entries(tel).sort((a,b) => b[1]-a[1])[0];
-      out[w] = best ? {id: best[0], n: best[1], tot: inW.length} : null;
-      if (out[w] && mode === 'teams') out[w].team = best[0];
+    Object.keys(DISTRICTS).forEach(w => {
+      const inW = pubs.filter(p=>p.wijk===w), tel = {};
+      inW.forEach(p => { if (p.baas) tel[p.baas] = (tel[p.baas]||0)+1; });
+      const best = Object.entries(tel).sort((a,b)=>b[1]-a[1]);
+      out[w] = {tot: inW.length, eigenaar: best[0]?.[0] || null, n: best[0]?.[1] || 0};
     });
     return out;
   }
-  function drawLeaderboard(){
-    let rows;
-    if (lbWho === 'spelers') {
-      rows = SPELERS.map(s => ({ id:s.id, naam:s.naam, sub: TEAMS[s.team].naam, kleur: TEAMS[s.team].kleur, pts: punten(s.id)[lbWhen], baas: pubs.filter(p=>p.baas===s.id).length, trust: extra[s.id].trust, me: s.id==='me' }));
-    } else {
-      rows = Object.entries(TEAMS).map(([k,t]) => { const leden = SPELERS.filter(s => s.team===k); return { id:k, naam:t.naam, sub: `${leden.length} leden`, kleur:t.kleur, pts: leden.reduce((a,s)=>a+punten(s.id)[lbWhen],0), baas: pubs.filter(p=>p.baas && S[p.baas].team===k).length, trust: Math.round(leden.reduce((a,s)=>a+extra[s.id].trust,0)/leden.length), me: S.me.team===k }; });
-    }
-    rows.sort((a,b) => b.pts - a.pts);
-    const mi = rows.findIndex(r => r.me);
-    $('#lbGoal').innerHTML = mi > 0 ? `Nog <b>${nf(rows[mi-1].pts - rows[mi].pts + 1)} punten</b> tot plek ${mi}. Een kroeg vrijspelen ter plaatse levert 75 op.` : `Je staat <b>bovenaan</b>. Hou je kroegen vers.`;
-    $('#lbList').innerHTML = rows.map((r,i) => `<li class="${r.me?'me':''}">
-      <span class="rk${i<3?' top':''}">${i+1}</span>
-      <span class="avatar" style="background:${r.kleur}">${r.naam.slice(0,2).toUpperCase()}</span>
-      <div class="who"><b>${r.naam}</b><span>${r.sub} · ${r.baas}x kroegbaas · ${r.trust}% betrouwbaar</span></div>
-      <div class="sc">${nf(r.pts)}<small>punten</small></div></li>`).join('');
-    const own = wijkEigenaars(lbWho);
-    $('#wijkGrid').innerHTML = Object.entries(WIJKEN).map(([k,w]) => {
-      const o = own[k]; const nm = o ? (lbWho==='teams' ? TEAMS[o.id].naam : S[o.id].naam) : 'Niemand';
-      const c = o ? (lbWho==='teams' ? TEAMS[o.id].kleur : TEAMS[S[o.id].team].kleur) : 'var(--locked)';
-      const pct = o ? Math.round(o.n/o.tot*100) : 0;
-      return `<div class="wijk"><div class="wn"><i class="dot" style="background:${c}"></i>${w.naam}</div><div class="wo">${nm}${o ? ` · ${o.n} van ${o.tot}` : ''}</div><div class="wb"><i style="width:${pct}%;background:${c}"></i></div></div>`;
+  function drawWijken(){
+    const own = eigenaars();
+    $('#wijkLayer').innerHTML = Object.entries(DISTRICTS).map(([k]) => {
+      const pts = hull(pubs.filter(p=>p.wijk===k).map(p=>[p.x,p.y])); if (!pts.length) return '';
+      const o = own[k].eigenaar, c = o ? S[o].kleur : 'var(--locked)';
+      const dd = pts.length > 2 ? `M${pts.map(p=>p.join(' ')).join('L')}Z` : `M${pts[0][0]} ${pts[0][1]}L${(pts[1]||pts[0]).join(' ')}`;
+      const cx = pts.reduce((a,p)=>a+p[0],0)/pts.length, cy = pts.reduce((a,p)=>a+p[1],0)/pts.length;
+      return `<path class="wijk-blob" d="${dd}" fill="${c}" stroke="${c}" stroke-width="44" stroke-linejoin="round"/><text class="wijk-lbl" x="${cx}" y="${cy+30}" text-anchor="middle" fill="${c}">${o ? (o==='me'?'JIJ':S[o].naam) : 'vrij'}</text>`;
     }).join('');
+    mapEl.classList.toggle('show-wijken', game.wijken && game.kroegbaas);
+    $('#btnWijken').setAttribute('aria-pressed', String(game.wijken && game.kroegbaas));
+    $('#btnWijken').hidden = !game.kroegbaas;
   }
-  function seg(id, set){ $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x===b)); set(b.dataset.v); drawLeaderboard(); }); }
-  seg('#lbWho', v => lbWho = v); seg('#lbWhen', v => lbWhen = v);
 
-  /* ---------- Tabs ---------- */
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-    const v = t.dataset.tab; $('#app').dataset.tab = v;
-    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x===t));
-    ['kaart','ranglijst','regels'].forEach(k => $('#view-'+k).hidden = k !== v);
-    if (v === 'ranglijst') drawLeaderboard();
-  }));
+  /* ================= Sheet met drie standen ================= */
+  const sheet = $('#sheet');
+  let detent = 'peek';
+  function sheetY(d){
+    const h = sheet.getBoundingClientRect().height || innerHeight;
+    return d === 'full' ? 0 : d === 'mid' ? Math.max(0, h - innerHeight*0.56) : Math.max(0, h - SHEET_PEEK);
+  }
+  function setDetent(d){ detent = d; if (!wide()) sheet.style.setProperty('--sy', sheetY(d)+'px'); }
+  (function dragSheet(){
+    const g = $('#grab'); let s = null;
+    g.addEventListener('pointerdown', e => { if (wide() || e.target.closest('input,button')) return; s = {y:e.clientY, y0:sheetY(detent), t:performance.now()}; sheet.classList.add('dragging'); try { g.setPointerCapture(e.pointerId); } catch {} });
+    g.addEventListener('pointermove', e => { if (!s) return; sheet.style.setProperty('--sy', Math.max(0, s.y0 + e.clientY - s.y)+'px'); });
+    const end = e => {
+      if (!s) return; sheet.classList.remove('dragging');
+      const dy = e.clientY - s.y, v = dy / Math.max(1, performance.now()-s.t), y = s.y0 + dy, ord = ['full','mid','peek'];
+      let best = ord.map(d => [d, sheetY(d)]).reduce((a,b) => Math.abs(b[1]-y) < Math.abs(a[1]-y) ? b : a)[0];
+      if (Math.abs(dy) < 6) best = detent === 'peek' ? 'mid' : detent;
+      else if (Math.abs(v) > .6) { const i = ord.indexOf(detent); best = ord[Math.max(0, Math.min(2, i + (v>0?1:-1)))]; }
+      s = null; setDetent(best);
+    };
+    g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+  })();
 
-  function refresh(){ drawPins(); drawTints(); drawHud(); drawList(); if (!$('#view-ranglijst').hidden) drawLeaderboard(); }
+  /* ================= Weergaven ================= */
+  let tab = 'kroegen', filter = 'goedkoop', showAll = false, query = '', lbWhen = 'maand', form = null;
+  const body = $('#body');
+  const FILTERS = () => [
+    {id:'goedkoop', naam:'Goedkoopst', f:p=>p.unlocked, sort:(a,b)=>per25(a)-per25(b)},
+    {id:'slot', naam:'Op slot', f:p=>!p.unlocked, sort:(a,b)=>afstand(a)-afstand(b)},
+    game.kroegbaas
+      ? {id:'vrij', naam:'Titel vrij', f:p=>p.unlocked && !p.baas, sort:(a,b)=>b.age-a.age}
+      : {id:'vrij', naam:'Verouderd', f:p=>fresh(p)==='old', sort:(a,b)=>b.age-a.age},
+    ...(game.kroegbaas ? [{id:'mijn', naam:'Mijn titels', f:p=>p.baas==='me', sort:(a,b)=>b.baasCheck-a.baasCheck}] : []),
+    {id:'dichtbij', naam:'Dichtbij', f:()=>true, sort:(a,b)=>afstand(a)-afstand(b)}
+  ];
 
-  /* ---------- Start ---------- */
+  function homeView(){
+    const n = {fresh:0, stale:0, old:0, locked:0}; pubs.forEach(p => n[fresh(p)]++);
+    const un = pubs.length - n.locked, pct = Math.round(un/pubs.length*100);
+    const near = pubs.filter(p=>!p.unlocked).sort((a,b)=>afstand(a)-afstand(b))[0];
+    const fs = FILTERS(); if (!fs.find(f=>f.id===filter)) filter = 'goedkoop';
+    const F = fs.find(f=>f.id===filter);
+    const q = query.trim().toLowerCase();
+    let rows = pubs.filter(q ? (p => (p.naam+' '+p.adres).toLowerCase().includes(q)) : F.f).sort(q ? ((a,b)=>a.naam.localeCompare(b.naam)) : F.sort);
+    const total = rows.length; if (!showAll) rows = rows.slice(0, 10);
+    return `
+      <div class="lt"><h1>Nijmegen</h1><p class="tn">${un} van ${pubs.length} kroegen vrijgespeeld · ${pct}%</p></div>
+      <div>
+        <div class="fbar" role="img" aria-label="Kroegen naar versheid van de prijs">${['fresh','stale','old','locked'].map(k=>`<i style="flex-grow:${n[k]};background:${KLEUR[k]}${k==='locked'?';opacity:.45':''}"></i>`).join('')}</div>
+        <div class="fbar-key"><span><i class="d" style="background:var(--fresh)"></i>vers ${n.fresh}</span><span><i class="d" style="background:var(--stale)"></i>30+ dagen ${n.stale}</span><span><i class="d" style="background:var(--old)"></i>90+ dagen ${n.old}</span><span><i class="d" style="background:var(--locked)"></i>op slot ${n.locked}</span></div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><b class="tn">${eur(mediaan())}</b><span>mediaan per 25 cl</span></div>
+        <div class="tile"><b class="tn">${Math.round(n.fresh/un*100)}%</b><span>prijzen vers</span></div>
+        ${game.kroegbaas ? `<div class="tile"><b class="tn">${pubs.filter(p=>p.baas==='me').length}</b><span>jouw titels</span></div>` : `<div class="tile"><b class="tn">${pubs.filter(p=>ontdekker(p)==='me').length}</b><span>door jou ontdekt</span></div>`}
+      </div>
+      ${near ? `<button class="near" data-open="${near.id}">
+        <span class="ic">${ICON.pin}</span>
+        <span><b>${near.naam}</b><span>${fmtAfstand(afstand(near))} van je af · nog op slot</span></span>
+        <span class="go">Speel vrij</span>
+      </button>` : ''}
+      <div>
+        ${q ? `<p class="cap">${total} resultaten voor “${esc(query)}”</p>` : `<div class="filters" role="group" aria-label="Filter">${fs.map(f=>`<button class="fchip" aria-pressed="${f.id===filter}" data-f="${f.id}">${f.naam}${f.id==='dichtbij'?'':` <span>${pubs.filter(f.f).length}</span>`}</button>`).join('')}</div>`}
+        <div class="grp" style="margin-top:10px">
+          ${rows.map(rowHtml).join('') || `<div class="cell"><span>Niets gevonden. Speel een kroeg vrij of kies een ander filter.</span></div>`}
+          ${total > rows.length ? `<button class="more" data-more>Toon alle ${total}</button>` : ''}
+        </div>
+      </div>
+      <p class="demo">Prototype. Kaart vereenvoudigd; kroegnamen, prijzen en spelers zijn verzonnen.</p>`;
+  }
+  function rowHtml(p){
+    const st = fresh(p);
+    let sub;
+    if (!p.unlocked) sub = `${DISTRICTS[p.wijk].naam} · ${fmtAfstand(afstand(p))} · speel vrij voor +50`;
+    else if (game.kroegbaas && p.baas === 'me') sub = `Jouw titel · verloopt over ${90-p.baasCheck} dagen`;
+    else if (game.kroegbaas && !p.baas) sub = `${DISTRICTS[p.wijk].naam} · titel vrij · ${p.age} dagen niet gecheckt`;
+    else sub = `${DISTRICTS[p.wijk].naam} · ${p.merk}, ${glas(p.glas).naam.toLowerCase()} · ${geleden(p.age)}`;
+    return `<button class="row" data-open="${p.id}">
+      <i class="d" style="background:${KLEUR[st]}"></i>
+      <span style="min-width:0"><span class="nm">${p.naam}</span><span class="sub">${sub}</span></span>
+      <span class="pr tn">${p.unlocked ? eur(per25(p)) : '?'}${p.unlocked ? `<small>${eur(p.prijs)} / ${glas(p.glas).cl} cl</small>` : '<small>op slot</small>'}</span>
+      ${ICON.chev}
+    </button>`;
+  }
+
+  function spark(p){
+    const pts = p.events.filter(e => e.t !== 'check').map(e => [e.d, Math.round(e.prijs*25/glas(p.glas).cl)]);
+    pts.push([0, per25(p)]);
+    const maxD = Math.max(365, ...pts.map(q=>q[0])), w = 320, h = 64, md = mediaan();
+    const vals = pts.map(q=>q[1]).concat(md), lo = Math.min(...vals)-15, hi = Math.max(...vals)+15;
+    const X = d => 4 + (1 - d/maxD)*(w-44), Y = c => 6 + (h-18)*(1-(c-lo)/(hi-lo));
+    let path = `M${X(pts[0][0]).toFixed(1)} ${Y(pts[0][1]).toFixed(1)}`;
+    for (let i=1;i<pts.length;i++) path += `H${X(pts[i][0]).toFixed(1)}V${Y(pts[i][1]).toFixed(1)}`;
+    const last = pts[pts.length-1];
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Prijsverloop per 25 cl, gestippeld de mediaan van de stad">
+      <line class="gd" x1="4" x2="${w-40}" y1="${h-12}" y2="${h-12}"/>
+      <line class="md" x1="4" x2="${w-40}" y1="${Y(md)}" y2="${Y(md)}"/>
+      <path class="ar" d="${path}V${h-12}H${X(pts[0][0]).toFixed(1)}Z"/>
+      <path class="ln" d="${path}"/>
+      <circle cx="${X(last[0])}" cy="${Y(last[1])}" r="3.5" fill="var(--accent)"/>
+      <text x="${w-36}" y="${Y(last[1])+3.5}">${kort(last[1])}</text>
+      ${Math.abs(Y(md)-Y(last[1])) > 10 ? `<text x="${w-36}" y="${Y(md)+3.5}">stad</text>` : ''}
+      <text x="4" y="${h-1}">${datum(maxD).slice(3)}</text><text x="${w-40}" y="${h-1}" text-anchor="end">nu</text>
+    </svg>`;
+  }
+
+  function historyHtml(p){
+    return `<ul class="tl">${[...p.events].reverse().map(e => {
+      const who = e.by === 'me' ? 'jou' : S[e.by].naam;
+      const bev = e.bev?.length ? ` · bevestigd door ${e.bev.map(b=>b==='me'?'jou':S[b].naam).join(' en ')}` : '';
+      const pend = e.pending ? ` · <span class="pend">wacht op bevestiging</span>` : '';
+      if (e.t === 'eerst') return `<li><i class="k first"></i><div><div class="what">Eerst gemeld: ${eur(e.prijs)}</div><div class="who">${datum(e.d)} door ${who}${bev}${pend}</div></div></li>`;
+      if (e.t === 'wijziging') return `<li><i class="k chg"></i><div><div class="what">Gewijzigd: <s>${eur(e.van)}</s> → ${eur(e.prijs)}</div><div class="who">${datum(e.d)} door ${who}${bev}${pend}</div></div></li>`;
+      return `<li><i class="k"></i><div><div class="what">Gecontroleerd, klopt nog</div><div class="who">${datum(e.d)} door ${who}${pend}</div></div></li>`;
+    }).join('')}</ul>`;
+  }
+
+  function baasHtml(p){
+    if (!game.kroegbaas) return '';
+    if (!p.baas) return `<div class="grp"><div class="baas"><span class="crownic vac">${ICON.crown}</span><div><div class="t">Kroegbaas</div><b>Titel vrij</b></div></div>
+      <div class="expiry">De vorige kroegbaas heeft hier meer dan 90 dagen niet zelf gecontroleerd. Wie nu als eerste checkt, krijgt de titel.</div></div>`;
+    const left = Math.max(0, 90 - p.baasCheck), col = left < 15 ? 'var(--old)' : left < 40 ? 'var(--stale)' : 'var(--fresh)', isMe = p.baas === 'me';
+    return `<div class="grp"><div class="baas"><span class="crownic">${ICON.crown}</span><div><div class="t">Kroegbaas sinds ${datum(p.baasSinds)}</div><b>${naamVan(p.baas)}</b></div>${av(p.baas, true)}</div>
+      <div class="expiry"><div class="track"><i style="width:${left/90*100}%;background:${col}"></i></div>
+      <span>${isMe ? `Je titel verloopt over <b>${left} dagen</b>. Check de prijs zelf om hem te houden.` : `Verloopt over <b>${left} dagen</b> als ${S[p.baas].naam} niet zelf checkt. Meld jij een bevestigde prijswijziging, dan is de titel meteen van jou.`}</span></div></div>`;
+  }
+
+  function detailView(p){
+    const head = `<div class="dhead"><div><h2>${p.naam}</h2><p>${p.adres} · ${fmtAfstand(afstand(p))}</p></div><button class="xbtn" data-close aria-label="Sluiten">${ICON.x}</button></div>`;
+    if (form) return head + formHtml(p);
+    if (!p.unlocked) {
+      const bonus = afstand(p) <= 75;
+      return head + `
+        <div class="grp"><div class="baas"><span class="crownic lk">${ICON.lock}</span><div><div class="t">Op slot</div><b>Nog niemand heeft hier een prijs gemeld</b></div></div>
+        <div class="expiry">Vul als eerste een prijs in. Je naam blijft voor altijd als ontdekker bij deze kroeg staan${game.kroegbaas ? ' en je wordt de eerste kroegbaas' : ''}.</div></div>
+        <div class="acts"><button class="btn pri full" data-act="unlock">Speel vrij <span class="p">+${bonus ? 75 : 50}</span></button></div>
+        ${bonus ? `<p class="calc" style="margin:-8px 4px 0">Je bent ${fmtAfstand(afstand(p))} van de kroeg, dus je krijgt de bonus voor ter plaatse (×1,5).</p>` : ''}`;
+    }
+    const g = glas(p.glas), md = mediaan(), d = per25(p) - md, st = fresh(p);
+    const mijnRecent = p.events.some(e => e.by === 'me' && e.d < 7);
+    const checkPts = game.kroegbaas && !p.baas ? 25 : 5;
+    return head + `
+      <div class="pricecard">
+        <div class="bigp tn">${eur(p.prijs)}</div>
+        <div class="cmp"><b class="tn">${eur(per25(p))}</b><span>per 25 cl</span><span class="delta" style="color:${d<=0?'var(--fresh-t)':'var(--old-t)'}">${d===0?'gelijk aan de stad':Math.abs(d)+' ct '+(d<0?'onder':'boven')+' de stad'}</span></div>
+        <div class="bigp-sub">${p.merk} · ${g.naam.toLowerCase()} ${g.cl} cl</div>
+      </div>
+      <div class="pills">${statusVan(p)==='ok' ? `<span class="st ok">✓ Bevestigd door ${confCount(p)}</span>` : `<span class="st wait">Wacht op bevestiging</span>`}<span class="st"><i class="d" style="background:${KLEUR[st]}"></i>Gecheckt ${geleden(p.age)}</span></div>
+      <div class="acts">
+        <button class="btn" data-act="check" ${mijnRecent ? 'disabled' : ''}>${mijnRecent ? 'Door jou gecheckt' : 'Klopt nog'}${mijnRecent ? '' : ` <span class="p">+${checkPts}</span>`}</button>
+        <button class="btn pri" data-act="change">Prijs is anders <span class="p">+30</span></button>
+      </div>
+      ${baasHtml(p)}
+      <div><p class="cap">Prijs per 25 cl</p><div class="grp" style="padding:10px 12px 6px">${spark(p)}</div></div>
+      <div><p class="cap">Geschiedenis</p><div class="grp">${historyHtml(p)}</div></div>`;
+  }
+
+  function formHtml(p){
+    const g = glas(form.glas), norm = Math.round(form.prijs*25/g.cl), md = mediaan(), afw = Math.abs(norm-md) > 110;
+    const dist = afstand(p), ter = dist <= 75;
+    return `<form class="form" id="pf">
+      <div class="field"><p class="cap">Merk</p><div class="opts" data-k="merk">${MERKEN.map(m=>`<button type="button" class="opt" aria-pressed="${m===form.merk}" data-v="${m}">${m}</button>`).join('')}</div></div>
+      <div class="field"><p class="cap">Glas</p><div class="opts" data-k="glas">${GLAZEN.map(x=>`<button type="button" class="opt" aria-pressed="${x.id===form.glas}" data-v="${x.id}">${x.naam}<small>${x.cl} cl</small></button>`).join('')}</div></div>
+      <div class="field"><p class="cap"><label for="pin">${form.mode==='unlock' ? 'Eerste prijs' : 'Nieuwe prijs'}</label></p>
+        <div class="stepper"><button type="button" data-step="-10" aria-label="10 cent minder">−</button><input id="pin" inputmode="decimal" value="${kort(form.prijs)}"><button type="button" data-step="10" aria-label="10 cent meer">+</button></div>
+        <div class="calc">Dat is <b class="tn">${eur(norm)}</b> per 25 cl. Mediaan in Nijmegen: <b class="tn">${eur(md)}</b>.</div>
+        ${afw ? `<div class="warn">Flink afwijkend van de mediaan. Deze prijs heeft twee bevestigingen nodig.</div>` : ''}
+      </div>
+      <div class="grp">
+        <div class="cell"><div><b>Ter plaatse</b><span>${ter ? `Je bent ${fmtAfstand(dist)} van de kroeg. Bonus ×1,5.` : `Je bent ${fmtAfstand(dist)} van de kroeg. De bonus geldt binnen 75 m.`}</span></div><input type="checkbox" class="sw" id="sw-plaats" ${ter ? 'checked' : ''} disabled aria-label="Ter plaatse"></div>
+        <div class="cell"><label class="filebtn" for="foto"><b>Foto van de prijslijst</b><span>Optioneel, +5. Versnelt de bevestiging.</span><input type="file" id="foto" accept="image/*"></label></div>
+      </div>
+      <div class="acts"><button type="button" class="btn" data-cancel>Annuleer</button><button class="btn pri" type="submit">${form.mode==='unlock'?'Speel vrij':'Meld prijs'} <span class="p">+${formPts(p)}</span></button></div>
+      <p class="calc" style="margin:-6px 4px 0">Je punten komen binnen zodra een andere speler je prijs bevestigt.</p>
+    </form>`;
+  }
+  function formPts(p){
+    let b = form.mode === 'unlock' ? 50 : 30;
+    if (afstand(p) <= 75) b = Math.round(b*1.5);
+    if (form.foto) b += 5;
+    return b;
+  }
+
+  function leaderView(){
+    const rows = SPELERS.map(s => ({id:s.id, pts:PTS[s.id][lbWhen], titels:pubs.filter(p=>p.baas===s.id).length, ontdekt:pubs.filter(p=>ontdekker(p)===s.id).length})).sort((a,b)=>b.pts-a.pts);
+    const mi = rows.findIndex(r=>r.id==='me'), own = eigenaars();
+    return `
+      <div class="lt"><h1>Ranglijst</h1><p>Nijmegen</p></div>
+      <div class="segm" style="margin-top:-6px">${['week','maand','altijd'].map(w=>`<button aria-pressed="${w===lbWhen}" data-w="${w}">${w==='altijd'?'Altijd':w==='week'?'Deze week':'Deze maand'}</button>`).join('')}</div>
+      <p class="goal">${mi>0 ? `Nog <b>${nf(rows[mi-1].pts-rows[mi].pts+1)} punten</b> tot plek ${mi}. Een kroeg vrijspelen ter plaatse levert 75 op.` : 'Je staat <b>bovenaan</b>. Houd je prijzen vers.'}</p>
+      <div class="grp">${rows.map((r,i)=>`<div class="lbr${r.id==='me'?' me':''}"><span class="rk${i<3?' top':''}">${i+1}</span>${av(r.id,true)}<div class="who"><b>${naamVan(r.id)}</b><span>${r.ontdekt} ontdekt${game.kroegbaas?` · ${r.titels} titels`:''}</span></div><span class="sc tn">${nf(r.pts)}</span></div>`).join('')}</div>
+      ${game.kroegbaas && game.wijken ? `<div><p class="cap">Wijken</p><div class="wgrid">${Object.entries(DISTRICTS).map(([k,d])=>{const o=own[k];const c=o.eigenaar?S[o.eigenaar].kleur:'var(--locked)';return `<div class="wcard"><b>${d.naam}</b><span>${o.eigenaar?`${naamVan(o.eigenaar)} · ${o.n} van ${o.tot}`:'Niemand'}</span><div class="wb"><i style="width:${o.tot?o.n/o.tot*100:0}%;background:${c}"></i></div></div>`}).join('')}</div></div>` : ''}`;
+  }
+
+  function spelView(){
+    return `
+      <div class="lt"><h1>Spel</h1><p>Zet onderdelen aan of uit en kijk wat er op de kaart verandert</p></div>
+      <div class="grp">
+        <div class="cell"><div><b>Kroegbaas-titels</b><span>Wie de laatste bevestigde prijswijziging meldt, wordt kroegbaas. Kronen op de kaart.</span></div><input type="checkbox" class="sw" id="sw-kroegbaas" ${game.kroegbaas?'checked':''} aria-label="Kroegbaas-titels"></div>
+        <div class="cell"><div><b>Wijken</b><span>Wie de meeste titels in een wijk heeft, beheerst die wijk. Werkt alleen samen met kroegbaas-titels.</span></div><input type="checkbox" class="sw" id="sw-wijken" ${game.wijken&&game.kroegbaas?'checked':''} ${game.kroegbaas?'':'disabled'} aria-label="Wijken"></div>
+      </div>
+      <div><p class="cap">Punten</p><div class="grp"><table class="pt">
+        <tr><td>Kroeg vrijspelen<small>Eerste prijs ooit. Je blijft de ontdekker.</small></td><td>+50</td></tr>
+        <tr><td>Prijswijziging melden<small>${game.kroegbaas?'Na bevestiging word je kroegbaas.':'Telt pas na bevestiging.'}</small></td><td>+30</td></tr>
+        ${game.kroegbaas?'<tr><td>Vrije titel pakken<small>De kroegbaas checkte 90 dagen niet zelf.</small></td><td>+25</td></tr>':''}
+        <tr><td>“Klopt nog”<small>Max. 1 keer per kroeg per 7 dagen.</small></td><td>+5</td></tr>
+        <tr><td>Foto van de prijslijst</td><td>+5</td></tr>
+        <tr><td>Ter plaatse<small>Binnen 75 m, via je locatie.</small></td><td>×1,5</td></tr>
+        <tr><td>Bijdrage weerlegd<small>Ook je betrouwbaarheid daalt.</small></td><td class="neg">−20</td></tr>
+      </table></div></div>
+      ${game.kroegbaas ? `<div class="prose"><p class="cap">Kroegbaas</p>
+        <p>Je wordt kroegbaas door een prijswijziging te melden die een ander bevestigt. Zolang de prijs gelijk blijft, houd je de titel.</p>
+        <p>Je verliest hem op twee manieren: iemand meldt een nieuwe, bevestigde prijswijziging, of je hebt de kroeg zelf 90 dagen niet gecontroleerd. Een check door iemand anders houdt jouw titel niet in leven.</p>
+        <p class="m">Zonder verloop blijven titels voor altijd bij spelers die allang gestopt zijn. Nu heeft elke kroegbaas een reden om terug te komen, en blijven ook kroegen met een vaste prijs vers.</p></div>` : ''}
+      <div class="prose"><p class="cap">Controle door spelers</p>
+        <p>Een prijs telt pas als een andere speler hem bevestigt. Wie vaak gelijk krijgt, bouwt betrouwbaarheid op; boven 90% is jouw bevestiging alleen al genoeg. Er is geen beheerder die elke invoer goedkeurt.</p>
+        <p class="m">Geen tokens, geen virtueel vastgoed. We belonen bijdragen, niet drinken. Alleen voor 18+.</p></div>`;
+  }
+
+  function draw(){
+    if (selected !== null) body.innerHTML = detailView(pubs[selected]);
+    else body.innerHTML = tab === 'kroegen' ? homeView() : tab === 'ranglijst' ? leaderView() : spelView();
+  }
+  let shown = 0;
+  function hud(){
+    const un = pubs.filter(p=>p.unlocked).length;
+    $('#chipCount').textContent = `${un}/${pubs.length} vrijgespeeld`;
+    $('#ringFg').setAttribute('stroke-dashoffset', (94.25*(1-un/pubs.length)).toFixed(2));
+    const to = PTS.me.altijd, from = shown, el = $('#mePts'), t0 = performance.now();
+    if (reduce || from === to) { shown = to; el.textContent = nf(to); return; }
+    (function s(t){ const e = Math.min(1,(t-t0)/700); shown = Math.round(from+(to-from)*e); el.textContent = nf(shown); if (e<1) requestAnimationFrame(s); })(t0);
+  }
+  function refreshAll(){ updatePinContent(); layoutPins(); drawWijken(); hud(); draw(); }
+
+  /* ================= Interactie ================= */
+  function openPub(id){
+    selected = id; form = null; updatePinContent(); draw(); body.scrollTop = 0;
+    if (!wide()) setDetent('mid');
+    const p = pubs[id], v = visibleRect(), k = Math.max(T.k, 1.6);
+    T.k = k; T.tx = v.x + v.w/2 - p.x*k; T.ty = (wide() ? v.h*0.5 : innerHeight*0.44*0.58) - p.y*k; apply(true);
+  }
+  function closePub(){ selected = null; form = null; updatePinContent(); layoutPins(); draw(); if (!wide()) setDetent('peek'); }
+  function setTab(t){ tab = t; selected = null; form = null; $('#tabs').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', String(x.dataset.tab===t))); updatePinContent(); layoutPins(); draw(); body.scrollTop = 0; }
+
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; setTab(b.dataset.tab); if (!wide() && detent==='peek') setDetent('mid'); });
+  $('#meBtn').onclick = () => { setTab('ranglijst'); if (!wide()) setDetent('mid'); };
+  $('#q').addEventListener('input', e => { query = e.target.value; if (tab !== 'kroegen' || selected !== null) setTab('kroegen'); else draw(); });
+  $('#q').addEventListener('focus', () => { if (!wide()) setDetent('full'); });
+
+  body.addEventListener('click', e => {
+    const t = e.target;
+    const o = t.closest('[data-open]'); if (o) return openPub(+o.dataset.open);
+    if (t.closest('[data-close]')) return closePub();
+    const f = t.closest('[data-f]'); if (f) { filter = f.dataset.f; showAll = false; return draw(); }
+    if (t.closest('[data-more]')) { showAll = true; return draw(); }
+    const w = t.closest('[data-w]'); if (w) { lbWhen = w.dataset.w; return draw(); }
+    if (t.closest('[data-cancel]')) { form = null; return draw(); }
+    const p = pubs[selected];
+    const a = t.closest('[data-act]')?.dataset.act;
+    if (a === 'unlock' || a === 'change') { form = {mode: a, merk: p.merk || 'Heineken', glas: p.glas || 'vaasje', prijs: p.prijs || Math.round(mediaan()/10)*10, foto:false}; if (!wide()) setDetent('full'); draw(); body.scrollTop = 0; return; }
+    if (a === 'check') return doCheck(p);
+    const opt = t.closest('[data-k] .opt'); if (opt && form) { form[opt.parentElement.dataset.k] = opt.dataset.v; return draw(); }
+    const st = t.closest('[data-step]'); if (st && form) { form.prijs = Math.max(50, form.prijs + +st.dataset.step); return draw(); }
+  });
+  body.addEventListener('change', e => {
+    if (e.target.id === 'sw-kroegbaas') return setGame('kroegbaas', e.target.checked);
+    if (e.target.id === 'sw-wijken') return setGame('wijken', e.target.checked);
+    if (!form) return;
+    if (e.target.id === 'foto') { form.foto = e.target.files.length > 0; const s = body.querySelector('[type=submit] .p'); if (s) s.textContent = '+' + formPts(pubs[selected]); }
+    if (e.target.id === 'pin') { const v = parse(e.target.value); if (v) { form.prijs = v; draw(); } }
+  });
+  const parse = s => { const v = parseFloat(String(s).replace(',','.').replace(/[^\d.]/g,'')); return isFinite(v) && v > 0 ? Math.round(v*100) : null; };
+  body.addEventListener('submit', e => {
+    e.preventDefault();
+    const p = pubs[selected], v = parse(body.querySelector('#pin').value); if (v) form.prijs = v;
+    const pts = formPts(p), mode = form.mode;
+    if (mode === 'change' && form.prijs === p.prijs && form.glas === p.glas) { toast('Dat is dezelfde prijs. Tik dan op “Klopt nog”.'); return; }
+    const ev = mode === 'unlock'
+      ? {t:'eerst', d:0, by:'me', prijs:form.prijs, bev:[], pending:true}
+      : {t:'wijziging', d:0, by:'me', van:p.prijs, prijs:form.prijs, bev:[], pending:true};
+    if (mode === 'unlock') { p.unlocked = true; p.anim = true; p.events = []; }
+    Object.assign(p, {merk:form.merk, glas:form.glas, prijs:form.prijs, age:0}); p.events.push(ev);
+    form = null;
+    if (mode === 'unlock') ripple(p);
+    toast(mode === 'unlock' ? `${p.naam} vrijgespeeld. Wacht op bevestiging.` : 'Prijs gemeld. Wacht op bevestiging.', `+${pts} straks`);
+    refreshAll();
+    if (!wide()) { setDetent('mid'); body.scrollTop = 0; }
+    setTimeout(() => {
+      const by = pick(ANDEREN);
+      ev.pending = false; ev.bev = [by];
+      if (game.kroegbaas) { p.baas = 'me'; p.baasSinds = 0; p.baasCheck = 0; }
+      PTS.me.altijd += pts; PTS.me.maand += pts; PTS.me.week += pts;
+      toast(`${S[by].naam} bevestigde je prijs.${game.kroegbaas ? ' Jij bent nu kroegbaas.' : ''}`, `+${pts}`);
+      refreshAll();
+    }, reduce ? 900 : 2600);
+  });
+  function doCheck(p){
+    const wasVrij = game.kroegbaas && !p.baas, wasMine = game.kroegbaas && p.baas === 'me', pts = wasVrij ? 25 : 5;
+    const ev = {t:'check', d:0, by:'me', prijs:p.prijs, pending:true};
+    p.events.push(ev); p.age = 0;
+    toast(wasVrij ? 'Check ingediend. Wacht op een tweede bron.' : wasMine ? 'Check ingediend. Na bevestiging wordt je titel verlengd.' : 'Check ingediend.', `+${pts} straks`);
+    refreshAll();
+    setTimeout(() => {
+      ev.pending = false;
+      if (wasVrij) { p.baas = 'me'; p.baasSinds = 0; }
+      if (p.baas === 'me') p.baasCheck = 0;
+      PTS.me.altijd += pts; PTS.me.maand += pts; PTS.me.week += pts;
+      toast(wasVrij ? `Titel gepakt. Jij bent kroegbaas van ${p.naam}.` : wasMine ? 'Titel verlengd: weer 90 dagen.' : 'Je check komt overeen met de rest.', `+${pts}`);
+      refreshAll();
+    }, reduce ? 800 : 1900);
+  }
+  function setGame(k, v){
+    game[k] = v; store.set(k, v);
+    if (k === 'wijken' && v && !game.kroegbaas) { game.kroegbaas = true; store.set('kroegbaas', true); }
+    refreshAll();
+  }
+  function ripple(p){
+    if (reduce) return;
+    const r = document.createElement('div'); r.className = 'ripple';
+    r.style.left = (p.x*curT.k+curT.tx)+'px'; r.style.top = (p.y*curT.k+curT.ty)+'px';
+    pinsEl.appendChild(r); setTimeout(() => r.remove(), 1200);
+  }
+  function toast(msg, pts){
+    const t = document.createElement('div'); t.className = 'toast glass';
+    t.innerHTML = `${pts?`<span class="tp">${pts}</span>`:''}<span>${msg}</span>`;
+    $('#toasts').appendChild(t); setTimeout(() => t.remove(), 4000);
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && selected !== null) closePub(); });
+
+  /* ================= Start ================= */
   drawBase();
-  if (innerWidth <= 820) { vb.w = 620; vb.h = vb.w*(FULL.h/FULL.w); vb.x = 140; vb.y = 190; }
-  clamp(); setVB();
-  refresh();
-  /* Open een heroverbare kroeg als voorbeeld, zodat het eerste beeld laat zien wat je kunt doen */
-  const start = pubs.filter(p => fresh(p)==='old').sort((a,b)=>Math.hypot(a.x-CX,a.y-400)-Math.hypot(b.x-CX,b.y-400))[0];
-  if (start && innerWidth > 820) openPub(start.id);
+  buildPins();
+  setDetent('peek');
+  refreshAll();
+  if (wide()) fit(340, 280, 700, 590); else fit(380, 320, 600, 520);
+  addEventListener('resize', () => { setDetent(detent); layoutPins(); });
 })();
 </script>
 

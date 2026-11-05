@@ -1,0 +1,148 @@
+# BPDB concept: Kroegkaart
+
+Beer Price Database (BPDB) is een door gebruikers gevulde database van bierprijzen in Nederlandse kroegen. Guindex (guindex.ie, Ierland, alleen Guinness) dient als conceptvoorbeeld. Dit document is het levende concept; de geschiedenis staat in git.
+
+Prototypes (open lokaal in een browser, geen build nodig):
+
+- [`prototype/index.html`](../prototype/index.html): v2, iPhone-eerst, Nijmegen.
+- [`prototype/v1/index.html`](../prototype/v1/index.html): v1, eerste opzet.
+
+## 0. Besluiten
+
+| Onderwerp | Besluit | Status |
+|---|---|---|
+| Kroegen vooraf op de kaart onder een mist, vrijspelen met een eerste prijs | Ja | Vast |
+| Controle | Peer-to-peer bevestiging met betrouwbaarheidsscore; geen echte blockchain, geen tokens | Vast |
+| Kroegen bevestigen zelf hun prijs | Niet in de basis; misschien later, altijd naast P2P | Later |
+| Kroegbaas-titel | Aan in het prototype, uit te zetten om te vergelijken | Proef |
+| Wijken | Uit in het prototype, aan te zetten om te vergelijken | Proef |
+| Teams | Niet in v1 | Later |
+| Geschiedenis per kroeg | Ja: eerst gemeld, wijzigingen, controles, met datum en naam | Vast |
+| Pilotstad | Nijmegen | Vast |
+| Doelgroep ontwerp | iPhone eerst; strak, licht futuristisch, kaart in de stijl van Apple Kaarten | Vast |
+| Code | Nieuw bouwen in deze repo; Guindex alleen als referentie | Vast |
+
+## 1. Wat Guindex goed doet en waar het knelt
+
+| Guindex | Probleem | BPDB |
+|---|---|---|
+| Gebruikers voegen zelf kroegen toe (`PubPendingCreate`) | Lege kaart bij de start, dubbele kroegen, typefouten | Alle kroegen vooraf geladen uit OpenStreetMap (`amenity=pub/bar/cafe`), getoond als "op slot" |
+| Elke bijdrage wacht op goedkeuring door een beheerder (`*Pending*`-tabellen) | Beheerders zijn de bottleneck | Peer-bevestiging; beheerder alleen bij geschillen en uitschieters |
+| Eén product, één maat (pint Guinness) | In NL verschillen merk en glas per kroeg | Prijs altijd met merk en volume; vergelijken via prijs per 25 cl |
+| Statistiek per gebruiker: `pubsVisited`, `originalPrices`, `currentVerifications` | Een tabel, geen spel | Zelfde signalen als punten, titels en ranglijst |
+| Bootstrap-adminthema, DataTables, Google Maps | Voelt als een beheerpaneel | Mobiel eerst, kaart als startscherm |
+
+### 1.1 Is de Guindex-code bruikbaar?
+
+Kort: als referentie wel, als basis niet. Bevindingen uit de repo:
+
+- **Django 1.11.7** (sinds april 2020 niet meer ondersteund) en Django REST Framework 3.8. Code in Python 2-stijl (`__unicode__`, `MIDDLEWARE_CLASSES`, `from django.conf.urls import url`).
+- **`django-rest-auth`** voor login: dit pakket wordt niet meer onderhouden.
+- **Frontend**: ongeveer 3.600 regels jQuery met Bootstrap 4 (sb-admin-thema), DataTables en Google Maps. Geen componenten, geen build, niet mobiel-eerst.
+- **Geen tests.**
+- **Uitrol** via autotools, een RPM-pakket en systemd-units, plus een Telegram-bot en back-ups naar Dropbox.
+- Omvang: ongeveer 4.700 regels Python (zonder migraties).
+
+Upgraden betekent: Python 2 naar 3, Django 1.11 naar 5, rest-auth vervangen, de hele frontend opnieuw. Dat is in de praktijk een herbouw, maar dan met oude aannames (handmatige goedkeuring, één product). Advies: **opnieuw beginnen in deze repo** en uit Guindex alleen overnemen:
+
+- het idee van een aparte tabel voor bijdragen naast de "huidige" prijs;
+- de statistieken (goedkoopste, gemiddelden, bijdragen per gebruiker);
+- de API-indeling (`/api/pubs`, `/api/prices`) als startpunt.
+
+### 1.2 Voorgestelde techniek (nog te kiezen)
+
+- **App**: eerst een PWA (installeerbaar op het iPhone-beginscherm, geen App Store nodig). Later eventueel native via Expo of Capacitor.
+- **Kaart**: MapLibre GL met een eigen kaartstijl in de kleuren van Apple Kaarten, op gratis vectortegels (bijv. OpenFreeMap of Protomaps). Alternatief: MapKit JS, dat is echt Apple Kaarten op het web, maar vraagt een Apple Developer-account (99 dollar per jaar) en heeft een gebruikslimiet.
+- **Backend**: Postgres met PostGIS (afstanden, wijken), bijvoorbeeld via Supabase: database, inloggen en toegangsregels in één.
+- **Kroegdata**: eenmalige import uit OpenStreetMap voor Nijmegen, daarna periodiek bijwerken.
+
+## 2. Gamification
+
+### 2.1 De mist (vast)
+
+Elke kroeg uit OpenStreetMap staat op de kaart, maar onder een stippenraster. Wie als eerste een prijs invult, speelt de kroeg vrij: de mist trekt daar weg en je naam blijft als ontdekker bij de kroeg staan. Zo zie je in één oogopslag waar nog data ontbreekt.
+
+### 2.2 Kroegbaas (proef)
+
+- **Wie**: de melder van de laatste bevestigde *prijswijziging*.
+- **Houden**: zolang de prijs gelijk blijft *en* de kroegbaas de kroeg zelf minstens eens per 90 dagen controleert.
+- **Kwijtraken**: (a) iemand anders meldt een bevestigde prijswijziging, of (b) de kroegbaas heeft 90 dagen zelf niet gecheckt. In geval (b) komt de titel vrij voor wie hem als eerste weer checkt.
+
+**Moet een kroegbaas zijn titel kwijtraken als de prijs niet verandert?** Ja, maar alleen door eigen inactiviteit, nooit doordat een ander op "klopt nog" tikt. Redenen:
+
+1. Zonder verloop blijven titels voor altijd bij spelers die allang gestopt zijn. Nieuwe spelers zien dan een kaart vol kronen van mensen die er niet meer zijn.
+2. Juist kroegen met een stabiele prijs raken zo toch gecontroleerd: de kroegbaas heeft een reden om terug te komen ("je titel verloopt over 9 dagen").
+3. Als een check door een ander de titel zou verlengen, hoeft de kroegbaas zelf niets te doen. Als een check door een ander de titel zou *afpakken*, krijg je sniping. De eigen-check-regel vermijdt beide.
+
+In het prototype kun je de titels uitzetten om te zien hoe de app zonder dit spel aanvoelt.
+
+### 2.3 Wijken (proef)
+
+Wie de meeste kroegbaas-titels in een wijk heeft, beheerst die wijk. Werkt alleen samen met kroegbaas-titels. Staat in het prototype standaard uit.
+
+### 2.4 Teams (later)
+
+Teams zijn groepen spelers die samen punten en titels verzamelen, bijvoorbeeld een studentenvereniging, sportclub of vriendengroep. Wijken worden dan door een team beheerst in plaats van door één persoon. Dit kan helpen om veel mensen tegelijk aan de slag te krijgen (Nijmegen heeft veel studentenverenigingen), maar het voegt regels toe. Daarom pas na de pilot.
+
+### 2.5 Puntentabel
+
+| Actie | Punten | Voorwaarde |
+|---|---:|---|
+| Kroeg vrijspelen (eerste prijs) | +50 | Ontdekker-badge blijft permanent |
+| Prijswijziging melden | +30 | Pas na bevestiging; maakt je kroegbaas |
+| Vrije titel pakken | +25 | Kroegbaas checkte 90 dagen niet zelf |
+| "Klopt nog" | +5 | Max. 1 keer per kroeg per 7 dagen |
+| Ter plaatse (binnen 75 m) | x1,5 | Automatisch via locatie |
+| Foto van de prijslijst | +5 | Optioneel |
+| Bijdrage weerlegd | -20 | Plus daling betrouwbaarheid |
+
+Punten worden pas uitgekeerd na bevestiging door een andere speler.
+
+### 2.6 Peer-to-peer bevestiging
+
+- Elke speler heeft een **betrouwbaarheid** (0 tot 100%), los van punten. Die stijgt als je bijdragen later door anderen bevestigd worden en daalt als ze worden weerlegd.
+- Een prijs is **bevestigd** na twee onafhankelijke bronnen, of één bron met een betrouwbaarheid boven 90%.
+- **Uitschieters** (ver van de mediaan voor dat merk en volume) hebben altijd twee bevestigingen nodig.
+- Beheerders zien alleen geschillen en meldingen.
+
+### 2.7 Wat we niet doen
+
+Geen tokens, geen virtueel vastgoed (Upland/Earth2), geen eigen blockchain. Echt geld trekt speculanten aan, valt onder MiCA en mogelijk de Kansspelautoriteit, en een onveranderlijk grootboek botst met foutcorrectie en de AVG. We belonen bijdragen, nooit drinken (Reclamecode voor Alcoholhoudende dranken). Alleen voor 18+.
+
+## 3. Geschiedenis per kroeg
+
+Elke kroeg toont een tijdlijn, nieuwste bovenaan:
+
+- **Eerst gemeld**: prijs, datum, door wie, bevestigd door wie.
+- **Gewijzigd**: oude prijs, nieuwe prijs, datum, door wie, bevestigd door wie.
+- **Gecontroleerd**: "klopt nog", datum, door wie.
+
+Daarnaast een grafiek van de prijs per 25 cl over het afgelopen jaar, met de mediaan van de stad als stippellijn. De tijdlijn komt direct uit het audit-log (zie datamodel); er is geen aparte opslag voor nodig.
+
+## 4. Ontwerp v2
+
+- **iPhone eerst.** Kaart over het hele scherm. Een glazen sheet onderin met drie standen (laag, half, vol), zoals in Kaarten op iOS. Zoekveld bovenaan in de sheet. Systeemlettertype (SF Pro) en iOS-kleuren voor groen, oranje en rood.
+- **Kaart in de stijl van Apple Kaarten.** Lichte zandkleur voor land, witte straten, gele hoofdwegen over de bruggen, blauw water, groene parken. In het donker de donkere variant. In het prototype is de kaart van Nijmegen vereenvoudigd nagetekend; in de app komt hier een echte kaart.
+- **Licht futuristisch.** De mist is een fijn stippenraster dat wegtrekt bij het vrijspelen, met een ring die uitdijt vanaf de kroeg. Verder rustig: glas, haarlijnen, geen neon of paarse verlopen.
+- **Prijsspelden** met vaste grootte, zoals in Kaarten. Ingezoomd zie je de prijs per 25 cl; uitgezoomd of bij overlap een gekleurde stip. Gouden speld met kroon is jouw titel; een lege kroon betekent dat de titel vrij is.
+- **Kleur is versheid.** Groen tot 30 dagen, oranje tot 90, rood daarna.
+- **Op groot scherm** wordt de sheet een zijbalk links.
+
+## 5. Datamodel (schets)
+
+```
+Kroeg        id, osm_id, naam, adres, lat, lon, wijk_id, open, ontdekker_id, kroegbaas_id, kroegbaas_sinds
+Gebeurtenis  id, kroeg_id, soort (eerst/wijziging/check), merk, volume_cl, prijs_cent, door_id, op, ter_plaatse, foto_url, status (wacht/bevestigd/weerlegd)
+Bevestiging  id, gebeurtenis_id, door_id, oordeel (klopt/klopt_niet), gewicht, op
+Gebruiker    id, naam, punten, betrouwbaarheid
+Punten       id, gebruiker_id, reden, punten, gebeurtenis_id, op       (audit-log; ranglijsten zijn queries hierop)
+Wijk         id, cbs_code, naam, geometrie
+```
+
+"Laatste eigen check van de kroegbaas" is een query op `Gebeurtenis` (`door_id = kroegbaas_id`), geen apart veld.
+
+## 6. Open vragen
+
+1. Welke techniek precies (zie 1.2)? Te beslissen voor de eerste sprint.
+2. Kroegbaas en wijken: na de proef met het prototype definitief aan of uit?
+3. Welke kroegsoorten tellen mee (alleen cafés en bars, of ook restaurants met een tap)?
