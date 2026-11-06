@@ -30,10 +30,15 @@ const SOORT = new Map(
 // Nooit een kroeg, ook niet als er "bar" naast staat. In Nederland is een coffeeshop een cannabiswinkel.
 const NOOIT = new Set(["cannabiswinkel", "coffeeshop", "cannabis store"]);
 
+// Is de hoofdcategorie een winkel of ijssalon, dan telt een kroegcategorie verderop niet
+// ("IJssalon, Cocktailbar"; "Restaurant, Biertuin, Bierwinkel" mag wel).
+const WINKEL = /winkel|ijssalon|bakkerij|supermarkt|slijterij|\bstore\b|\bshop\b|ice cream/;
+
 export function classificeer(categorieen, { clubs = false } = {}) {
   const cats = (categorieen ?? []).map((c) => c.toLowerCase().trim());
   if (cats.some((c) => NOOIT.has(c))) return { soort: null, zekerheid: null };
-  for (let i = 0; i < Math.min(cats.length, 3); i++) {
+  const plekken = cats.length && WINKEL.test(cats[0]) ? 1 : 3;
+  for (let i = 0; i < Math.min(cats.length, plekken); i++) {
     const soort = SOORT.get(cats[i]);
     if (!soort || (soort === "nightclub" && !clubs)) continue;
     return { soort, zekerheid: i === 0 ? "hoog" : "middel" };

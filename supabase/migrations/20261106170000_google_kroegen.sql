@@ -31,7 +31,8 @@ comment on column public.kroegen.google_place_id is 'Google Place ID (ChIJ...); 
 comment on column public.kroegen.google_gemist is 'Aantal volledige Google-runs op rij waarin deze kroeg niet voorkwam.';
 
 -- Kern van een kroegnaam om namen uit OSM en Google te vergelijken:
--- "Café De Kroeg🍺" en "De Kroeg" worden allebei "de kroeg".
+-- "Café De Kroeg🍺" en "De Kroeg" worden allebei "de kroeg". Het woord kroeg blijft staan:
+-- dat is vaak het onderscheidende deel van de naam.
 create or replace function private.kroegnaam_kern(p_naam text)
 returns text
 language sql
@@ -41,7 +42,7 @@ set search_path = ''
 as $$
   select btrim(regexp_replace(
     regexp_replace(lower(coalesce(p_naam, '')),
-      '\m(grand )?(eet|bier|brouwerij|feest|studenten|bruin )?(caf[eé]|bar|pub|kroeg)\M', ' ', 'g'),
+      '\m(eet|bier|brouwerij|feest|studenten|bruin )?(caf[eé]|bar|pub)\M', ' ', 'g'),
     '[^[:alnum:]]+', ' ', 'g'));
 $$;
 
@@ -120,15 +121,16 @@ begin
     end if;
 
     update public.kroegen k
+    -- Een veld dat in deze run ontbreekt, wist de bekende waarde niet.
     set google_place_id = r.place_id,
-        google_cid = r.cid,
-        google_categorieen = r.categorieen,
+        google_cid = coalesce(r.cid, k.google_cid),
+        google_categorieen = coalesce(nullif(r.categorieen, '{}'), k.google_categorieen),
         google_zekerheid = r.zekerheid,
-        google_beoordeling = r.beoordeling,
-        google_aantal_reviews = r.aantal_reviews,
-        telefoon = r.telefoon,
-        website = r.website,
-        openingstijden = case when jsonb_typeof(r.openingstijden) = 'object' then r.openingstijden end,
+        google_beoordeling = coalesce(r.beoordeling, k.google_beoordeling),
+        google_aantal_reviews = coalesce(r.aantal_reviews, k.google_aantal_reviews),
+        telefoon = coalesce(r.telefoon, k.telefoon),
+        website = coalesce(r.website, k.website),
+        openingstijden = coalesce(case when jsonb_typeof(r.openingstijden) = 'object' then r.openingstijden end, k.openingstijden),
         adres = coalesce(k.adres, r.adres),
         google_laatst_gezien = now(),
         google_gemist = 0,

@@ -19,6 +19,8 @@ test("geen kroegen", () => {
   assert.equal(classificeer(["Restaurant"]).soort, null);
   assert.equal(classificeer(["Koffiehuis", "Bakkerij"]).soort, null);
   assert.equal(classificeer(["Cannabiswinkel", "Koffiehuis", "Loungebar"]).soort, null);
+  assert.equal(classificeer(["IJssalon", "Cocktailbar", "Delicatessenwinkel"]).soort, null);
+  assert.equal(classificeer(["Bierwinkel", "Café"]).soort, null);
   assert.equal(classificeer([]).soort, null);
 });
 
