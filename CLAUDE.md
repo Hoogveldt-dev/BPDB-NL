@@ -7,6 +7,7 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg. Spelers spelen samen de
 - Draai na elke reeks wijzigingen `npm run check`. Na een wijziging in `supabase/migrations/` ook `npm run test:db`, en breid de test uit met de nieuwe regel.
 - Test een wijziging in de app in een browser (`python3 -m http.server 8765 --directory app`), op telefoonbreedte.
 - Commit na elke werkende stap met een duidelijke Nederlandse omschrijving.
+- `main` is de basis. Begin altijd vanaf de nieuwste `main` en lever werk op met een pull request naar `main`. Werkbranches van sessies zijn tijdelijk.
 - Wat Kjell zelf in een dashboard moet doen, staat in `ACTIES.md`. Houd dat bij.
 
 ## Belangrijke plekken
