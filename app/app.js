@@ -325,8 +325,8 @@ async function laadProfiel() {
   const uid = state.sessie?.user?.id;
   if (!uid) { state.profiel = null; return; }
   const { data } = await sb.from("ranglijst").select("*").eq("id", uid).maybeSingle();
-  const { data: p } = await sb.from("profielen").select("is_beheerder").eq("id", uid).maybeSingle();
-  state.profiel = data ? { ...data, is_beheerder: !!p?.is_beheerder } : null;
+  const { data: p } = await sb.from("profielen").select("*").eq("id", uid).maybeSingle();
+  state.profiel = data ? { ...data, is_beheerder: !!p?.is_beheerder, naam_vast: p?.naam_vast !== false } : null;
 }
 
 function hud() {
@@ -782,15 +782,24 @@ function ikView() {
         <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>${naamVeld}
         <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
       </form>`;
-    return `<h2>Doe mee</h2>${beginnen}
-      <p class="small muted">We belonen bijdragen, nooit drinken.</p>
-      <h3>Al een account?</h3>
-      ${aanbiederKnoppen()}
+    const inloggen = `${aanbiederKnoppen()}
       <div class="of">of met je e-mailadres</div>
       <form class="form" id="loginForm">
         <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(vorig.email ?? "")}" required>
-        <div class="btns"><button class="btn" type="submit">Stuur inlogcode</button></div>
+        <div class="btns"><button class="btn ${vorig.email ? "primary" : ""}" type="submit">Stuur inlogcode</button></div>
       </form>`;
+    // Heb je op dit apparaat al eens met e-mail ingelogd, dan eerst inloggen; een nieuw account met een
+    // nieuwe naam is dan bijna nooit wat je wilt.
+    if (vorig.email) {
+      return `<h2>Welkom terug</h2><p class="muted">Log in met je account. Je naam en punten staan erin.</p>
+      ${inloggen}
+      <h3>Nieuw hier?</h3>${beginnen}
+      <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
+    }
+    return `<h2>Doe mee</h2>${beginnen}
+      <p class="small muted">We belonen bijdragen, nooit drinken.</p>
+      <h3>Al een account?</h3>
+      ${inloggen}`;
   }
   const p = state.profiel;
   const koppelen = !anoniem() ? "" : `<h3>Bewaar je account</h3>
@@ -813,8 +822,9 @@ function ikView() {
       <div class="small muted" style="margin-top:8px">Deze week ${p?.week ?? 0} punten, deze maand ${p?.maand ?? 0}.</div>
     </div>
     ${koppelen}
-    <form class="form" id="naamForm"><label>Spelersnaam</label><input name="naam" minlength="2" maxlength="30" value="${esc(p?.naam ?? "")}">
-      <div class="btns"><button class="btn" type="submit">Naam opslaan</button></div></form>
+    ${p && !p.naam_vast ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
+      <div class="small muted">Je kiest je naam een keer; daarna staat hij vast.</div>
+      <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div></div>` : ""}
     <div class="btns"><button class="btn bad" data-logout>Uitloggen</button></div>`;
@@ -1020,8 +1030,9 @@ body.addEventListener("submit", async (e) => {
   }
   if (f.id === "naamForm") {
     const naam = String(new FormData(f).get("naam")).trim();
+    if (!confirm(`Wil je "${naam}" als spelersnaam? Je kunt hem daarna niet meer wijzigen.`)) return;
     const { error } = await sb.from("profielen").update({ naam }).eq("id", state.sessie.user.id);
-    if (error) return toast(error.code === "23505" ? "Die naam is al bezet" : error.message);
+    if (error) return toast(error.code === "23505" ? "Die naam is al bezet" : error.code === "P0001" ? "Je spelersnaam staat al vast" : "Opslaan lukte niet");
     toast("Naam opgeslagen");
     await laadProfiel(); draw();
   }
@@ -1056,7 +1067,11 @@ async function importeer(knop) {
   knop.disabled = true; knop.textContent = "Bezig met importeren…";
   const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeente: STAD.naam, gemeentecode: STAD.gemeentecode } });
   knop.disabled = false; knop.textContent = "Kroegen en wijken importeren";
-  if (error) return toast("Import mislukt: " + (error.message ?? ""));
+  if (error) {
+    // De functie geeft de echte reden in het antwoord ({ fout }); supabase-js zegt alleen "non-2xx status code".
+    const reden = await error.context?.json?.().then((b) => b?.fout).catch(() => null);
+    return toast("Import mislukt: " + (reden ?? "de importfunctie gaf geen antwoord"));
+  }
   toast(`${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
   vernieuw();
 }

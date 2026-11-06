@@ -88,16 +88,30 @@ check('profiel aangemaakt bij nieuwe gebruiker', namen[A] === 'Anna', JSON.strin
 check('dubbele naam krijgt een nummer', namen[C] === 'anna2', namen[C]);
 check('tekens als < en > gaan uit de naam', namen[D] === 'bDirkb', namen[D]);
 
+// Spelersnaam: een zelfgekozen naam staat vast, een automatische naam mag je een keer veranderen
+const N = '99999999-9999-9999-9999-999999999999';
+await db.exec(`insert into auth.users (id, email, raw_user_meta_data) values ('${N}', 'nina@example.nl', '{}')`);
+const n0 = await een(`select naam, naam_vast from public.profielen where id = '${N}'`);
+check('speler zonder gekozen naam heet speler en mag nog kiezen', n0?.naam === 'speler' && n0.naam_vast === false, JSON.stringify(n0));
+const nv = await een(`select naam_vast from public.profielen where id = '${A}'`);
+check('zelfgekozen naam bij aanmelden staat vast', nv?.naam_vast === true, JSON.stringify(nv));
 const r1 = await als(A, `update public.profielen set naam = 'Anna B' where id = '${A}' returning naam`);
-check('eigen naam aanpassen', r1.rows?.[0]?.naam === 'Anna B', JSON.stringify(r1));
-const r2 = await als(A, `update public.profielen set naam = 'Gekaapt' where id = '${B}' returning naam`);
+check('vaste naam wijzigen kan niet', /staat vast/.test(r1.fout ?? ''), JSON.stringify(r1));
+const r5 = await als(N, `update public.profielen set naam = 'anna' where id = '${N}'`);
+check('naam die al bezet is (andere hoofdletters) kan niet', /profielen_naam_uniek|duplicate/.test(r5.fout ?? ''), JSON.stringify(r5));
+const n2 = await als(N, `update public.profielen set naam = 'Nina' where id = '${N}' returning naam, naam_vast`);
+check('automatische naam een keer zelf kiezen', n2.rows?.[0]?.naam === 'Nina' && n2.rows[0].naam_vast === true, JSON.stringify(n2));
+const n3 = await als(N, `update public.profielen set naam = 'Nina2' where id = '${N}'`);
+check('daarna staat de naam vast', /staat vast/.test(n3.fout ?? ''), JSON.stringify(n3));
+await db.exec(`update public.profielen set naam = 'Nina B' where id = '${N}'`);
+const n4 = await een(`select naam from public.profielen where id = '${N}'`);
+check('beheerder kan in de SQL-editor een naam wijzigen', n4?.naam === 'Nina B', JSON.stringify(n4));
+const r2 = await als(B, `update public.profielen set naam = 'Gekaapt' where id = '${N}' returning naam`);
 check('naam van een ander aanpassen kan niet', r2.rows?.length === 0, JSON.stringify(r2));
 const r3 = await als(A, `update public.profielen set betrouwbaarheid = 100 where id = '${A}'`);
 check('eigen betrouwbaarheid aanpassen kan niet', !!r3.fout, JSON.stringify(r3));
 const r4 = await als(A, `update public.profielen set is_beheerder = true where id = '${A}'`);
 check('jezelf beheerder maken kan niet', !!r4.fout, JSON.stringify(r4));
-const r5 = await als(B, `update public.profielen set naam = 'anna b' where id = '${B}'`);
-check('naam die al bezet is (andere hoofdletters) kan niet', /profielen_naam_uniek|duplicate/.test(r5.fout ?? ''), JSON.stringify(r5));
 
 // ---------------------------------------------------------------------------
 // Kroegen en wijken importeren (alleen service_role)

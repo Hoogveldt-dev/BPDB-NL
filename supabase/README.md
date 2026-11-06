@@ -18,7 +18,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 
 | Tabel | Inhoud |
 |---|---|
-| `profielen` | Spelers: naam, betrouwbaarheid (0 tot 100), beheerder ja/nee. Wordt automatisch aangemaakt bij registratie. |
+| `profielen` | Spelers: naam, `naam_vast`, betrouwbaarheid (0 tot 100), beheerder ja/nee. Wordt automatisch aangemaakt bij registratie. |
 | `wijken` | CBS-wijken met hun vorm (PostGIS). |
 | `kroegen` | Kroegen uit OSM met locatie, ontdekker en de laatste bevestigde prijs. |
 | `gebeurtenissen` | Audit-log: eerste prijs, wijziging of controle, met status `wacht`, `bevestigd` of `weerlegd`. |
@@ -95,6 +95,6 @@ update public.profielen set is_beheerder = true where naam = 'JOUW_SPELERSNAAM';
 ## Beveiliging
 
 - Zet nooit de service_role-key, secret key of het databasewachtwoord in de app of in git. De publishable key in `app/config.js` is bedoeld voor de browser.
-- Alle tabellen hebben RLS. Spelers kunnen alleen hun eigen naam wijzigen.
+- Alle tabellen hebben RLS. Spelers kunnen alleen hun eigen naam kiezen, en maar een keer: wie bij het aanmelden een naam kiest, houdt die (`naam_vast`). Wie een automatische naam kreeg (`speler`, `speler2`, bijvoorbeeld via Apple of Google), kiest een keer zelf. Daarna weigert de trigger `private.naam_eenmalig()` een nieuwe naam. Een beheerder kan in de SQL Editor altijd een naam wijzigen (`update public.profielen set naam = '...' where id = '...'`).
 - De spellogica draait als `security definer` in het schema `private`, dat niet via de API bereikbaar is. Elke functie controleert zelf `auth.uid()`.
 - Foto's mogen alleen in de eigen map (`<gebruikers-id>/...`) van de bucket `prijslijsten` worden geüpload, maximaal 5 MB.
