@@ -7,6 +7,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { FotoBron } from "./bron/fotobron.mjs";
 import { Geblokkeerd } from "./bron/transport.mjs";
 import { naarMenuImport, zoekMenuprijs } from "./bron/menuprijs.mjs";
+import { maakBlad } from "./bron/contactblad.mjs";
+import { herkenOpBlad, verbruik } from "./bron/menulezer.mjs";
 
 const HULP = `Gebruik: node menufotos.mjs [opties]
 
@@ -19,6 +21,7 @@ Opties:
   --max-fotos 400           foto's per kroeg
   --max-kroegen 20          stop na zoveel kroegen
   --pauze-ms 3000           pauze tussen verzoeken aan Google (met spreiding)
+  --volledig                alle foto's bekijken, niet stoppen bij de eerste prijs
   --zichtbaar               browser zichtbaar openen
   --uit menuprijzen.json    standaard menuprijzen.json
   --naar-supabase           ook importeren (SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY nodig)
@@ -39,6 +42,7 @@ const { values: o } = parseArgs({
     "max-kroegen": { type: "string" },
     "pauze-ms": { type: "string", default: "3000" },
     zichtbaar: { type: "boolean", default: false },
+    volledig: { type: "boolean", default: false },
     uit: { type: "string", default: "menuprijzen.json" },
     "naar-supabase": { type: "boolean", default: false },
     hulp: { type: "boolean", short: "h", default: false },
@@ -62,6 +66,7 @@ async function haalBeeld(url) {
 }
 
 const bron = new FotoBron({ log: console.log, zichtbaar: o.zichtbaar, pauzeMs: Number(o["pauze-ms"]) });
+let bladPagina = null;
 const rijen = [];
 const verslag = [];
 try {
@@ -70,7 +75,9 @@ try {
     try {
       const dataId = await bron.openPlaats(k.place_id);
       const fotos = await bron.fotolijst(dataId, { maxFotos: Number(o["max-fotos"]) });
-      const r = await zoekMenuprijs(fotos, { haalBeeld, sinds: o.sinds, log: console.log });
+      bladPagina ??= await bron.browser.newPage();
+      const herken = async (miniaturen, opties) => herkenOpBlad(await maakBlad(bladPagina, miniaturen, { px: 240, kolommen: 5 }), miniaturen.length, opties);
+      const r = await zoekMenuprijs(fotos, { haalBeeld, herken, sinds: o.sinds, volledig: o.volledig, log: console.log });
       verslag.push({ place_id: k.place_id, naam: k.naam, bekeken: r.bekeken, kaarten: r.kaarten, prijs: r.prijs && naarMenuImport(k.place_id, r.prijs) });
       if (r.prijs) {
         rijen.push(naarMenuImport(k.place_id, r.prijs));
@@ -91,6 +98,7 @@ try {
   await bron.sluit();
   await writeFile(o.uit, JSON.stringify({ prijzen: rijen, verslag }, null, 2));
   console.log(`\n${rijen.length} prijzen in ${o.uit}`);
+  console.log(`Model: ${verbruik.verzoeken} verzoeken, ${verbruik.in} tokens in, ${verbruik.uit} tokens uit`);
 }
 
 if (o["naar-supabase"] && rijen.length) {

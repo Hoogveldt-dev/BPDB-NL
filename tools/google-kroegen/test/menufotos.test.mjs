@@ -103,6 +103,7 @@ test("zoekMenuprijs: kaart herkennen, EXIF-datum, nieuwste kaart wint", async ()
       assert.equal(miniaturen.length, 3); // geen video
       return [1, 2]; // volgorde: eten (2025), kaartNieuw (2024), kaartOud (2023)
     },
+    controleer: async () => true,
     lees: async (beeld, _o) => ({ bieren: [{ merk: "Jupiler", cl: 25, prijs: beeld === zonder ? 4 : 4, tap: true, pils: true }], datumOpKaart: null }),
   });
   assert.equal(r.bekeken, 3);
@@ -119,7 +120,68 @@ test("zoekMenuprijs: kaart herkennen, EXIF-datum, nieuwste kaart wint", async ()
 
 test("zoekMenuprijs: alleen foto's vanaf --sinds", async () => {
   const fotos = ontleedFotolijst(nepFotolijst([nepFoto("oud", 12, [2019, 1, 1, 1])], 1, null)).fotos;
-  const r = await zoekMenuprijs(fotos, { haalBeeld: async () => Buffer.alloc(0), herken: async () => [], lees: async () => ({ bieren: [] }), sinds: "2024-01-01" });
+  const r = await zoekMenuprijs(fotos, { haalBeeld: async () => Buffer.alloc(0), herken: async () => [], controleer: async () => true, lees: async () => ({ bieren: [] }), sinds: "2024-01-01" });
   assert.equal(r.bekeken, 0);
   assert.equal(r.prijs, null);
+});
+
+test("zoekMenuprijs: nieuwste eerst en stoppen na de eerste groep met een prijs", async () => {
+  const lijst = [];
+  for (let i = 0; i < 30; i++) lijst.push(nepFoto(`f${i}`, 12, [2020 + Math.floor(i / 10), 1 + (i % 10), 1, 1]));
+  const fotos = ontleedFotolijst(nepFotolijst(lijst, 30, null)).fotos;
+  const groepen = [];
+  const r = await zoekMenuprijs(fotos, {
+    groep: 10,
+    haalBeeld: async () => Buffer.alloc(0),
+    herken: async (miniaturen) => {
+      groepen.push(miniaturen.length);
+      return [3];
+    },
+    controleer: async () => true,
+    lees: async () => ({ bieren: [{ merk: "Heineken", cl: 25, prijs: 3.6, tap: true, pils: true }] }),
+  });
+  assert.deepEqual(groepen, [10]); // tweede en derde groep niet meer naar het model
+  assert.equal(r.bekeken, 10);
+  assert.equal(r.prijs.foto.geupload, "2022-07-01"); // vierde-nieuwste foto
+});
+
+test("zoekMenuprijs: volledig bekijkt alle groepen", async () => {
+  const lijst = [];
+  for (let i = 0; i < 25; i++) lijst.push(nepFoto(`g${i}`, 12, [2024, 1, 1 + i, 1]));
+  const fotos = ontleedFotolijst(nepFotolijst(lijst, 25, null)).fotos;
+  let aanroepen = 0;
+  await zoekMenuprijs(fotos, {
+    groep: 10, volledig: true, maxKandidaten: 10,
+    haalBeeld: async () => Buffer.alloc(0),
+    herken: async () => { aanroepen += 1; return [0]; },
+    controleer: async () => true,
+    lees: async () => ({ bieren: [{ merk: "Heineken", cl: 25, prijs: 3.6, tap: true, pils: true }] }),
+  });
+  assert.equal(aanroepen, 3);
+});
+
+test("contactblad: genummerde cellen in een raster", async () => {
+  const { bladHtml } = await import("../bron/contactblad.mjs");
+  const html = bladHtml([Buffer.from("a"), Buffer.from("b"), Buffer.from("c")], { kolommen: 2, px: 100 });
+  assert.equal((html.match(/<img /g) || []).length, 3);
+  assert.match(html, /<b>3<\/b>/);
+  assert.match(html, /repeat\(2,100px\)/);
+});
+
+test("zoekMenuprijs: wat de controle afkeurt, wordt niet gelezen", async () => {
+  const fotos = ontleedFotolijst(nepFotolijst([nepFoto("qr", 12, [2025, 1, 1, 1]), nepFoto("kaart", 12, [2024, 1, 1, 1])], 2, null)).fotos;
+  const gelezen = [];
+  const r = await zoekMenuprijs(fotos, {
+    haalBeeld: async (url) => Buffer.from(url),
+    herken: async () => [0, 1],
+    controleer: async (beeld) => !beeld.toString().includes("/qr="),
+    lees: async (beeld) => {
+      gelezen.push(beeld.toString());
+      return { bieren: [{ merk: "Heineken", cl: 25, prijs: 3.6, tap: true, pils: true }] };
+    },
+  });
+  assert.equal(r.gecontroleerd, 2);
+  assert.equal(r.gelezen, 1);
+  assert.ok(gelezen.every((u) => u.includes("/kaart=")));
+  assert.equal(r.prijs.foto.id, "kaart");
 });

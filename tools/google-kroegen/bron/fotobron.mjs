@@ -68,7 +68,7 @@ export class FotoBron {
       if (this.geblokkeerd()) throw new Geblokkeerd("Google toont een CAPTCHA");
       await wacht(500);
     }
-    throw new Error(`Plaats ${placeId} niet gevonden in Google Maps`);
+    throw new Error(`Plaats ${placeId} niet gevonden in Google Maps (pagina: ${p.url().slice(0, 120)})`);
   }
 
   /** Alle foto's van een plaats (pagina's van 10), tot maxFotos. */

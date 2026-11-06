@@ -20,12 +20,25 @@ Voordelen: de bron is de kroeg zelf, het is goedkoop en het mag. Nadeel: veel kr
 Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufoto). Sinds 6 november 2026 automatisch met `tools/google-kroegen/menufotos.mjs`:
 
 1. **Fotolijst.** De tool opent de kroeg in Google Maps in een browser en vraagt vanuit die pagina de fotolijst op (de RPC `hspqX`, die Google Maps zelf gebruikt). Per foto: ID, soort, adres van de afbeelding en uploaddatum. 10 foto's per verzoek, met pauzes.
-2. **Kaarten herkennen.** Miniaturen (256 px) gaan in groepjes van 10 naar een vision-model: welke tonen een drankkaart of prijsbord?
-3. **Datum.** Van elke kandidaat haalt de tool het origineel (`=s0`). Google laat daarin de EXIF-gegevens van de maker staan: `DateTimeOriginal` is het moment van de foto. Zonder EXIF telt de uploaddatum.
-4. **Prijs.** Een leesbare versie (1600 px) gaat naar het model, dat de bieren met maat en prijs teruggeeft. `kiesVaasje` kiest de goedkoopste pils van de tap in 25 cl; zonder maat alleen bij het woord "vaasje". Twijfel ("medium") = geen prijs.
-5. **Nieuwste kaart wint.** Per kroeg de prijs met de nieuwste datum, als rij voor `importeer_menuprijzen`.
+2. **Schiften (ruim, goedkoop).** Per 20 foto's, nieuwste upload eerst, een contactblad: miniaturen van 240 px met een nummer in een afbeelding. Het model noemt zonder na te denken de nummers waarop een kaart of krijtbord te zien is.
+3. **Controleren (streng, goedkoop).** Elke kandidaat apart op 768 px, zonder nadenken: staan er bierprijzen op die je kunt lezen? QR-bordjes, eten en sfeerfoto's vallen hier af.
+4. **Datum.** Van wat overblijft haalt de tool het origineel (`=s0`). Google laat daarin de EXIF-gegevens van de maker staan: `DateTimeOriginal` is het moment van de foto. Zonder EXIF telt de uploaddatum.
+5. **Lezen (duur, alleen als het moet).** Een leesbare versie (1600 px) gaat naar het model, nu met nadenken (zonder leest het slordig: in de proef werd €3,50 dan €2,30). `kiesVaasje` kiest de goedkoopste pils van de tap in 25 cl; zonder maat alleen bij het woord "vaasje". Twijfel ("medium") = geen prijs.
+6. **Stoppen.** Levert een groep een vaasjesprijs op, dan kijken we niet verder naar oudere foto's.
+7. **Nieuwste kaart wint.** Per kroeg de prijs met de nieuwste datum, als rij voor `importeer_menuprijzen`.
 
-Model: standaard DeepSeek (`deepseek-flash`, leest afbeeldingen), via `DEEPSEEK_API_KEY`. Elk ander model in het OpenAI-formaat kan via `MENU_MODEL_URL` en `MENU_MODEL`. Een kroeg kost een paar duizend tokens, dus fracties van een cent.
+Model: standaard DeepSeek (`deepseek-flash`, leest afbeeldingen), via `DEEPSEEK_API_KEY`. Elk ander model in het OpenAI-formaat kan via `MENU_MODEL_URL` en `MENU_MODEL`.
+
+### Wat het kost
+
+Gemeten op 6 november 2026 met dezelfde foto's:
+
+| Kroeg | Eerste versie (groepjes van 10 losse foto's, steeds nadenken) | Nu (contactblad en controle zonder nadenken) |
+|---|---|---|
+| Café Van Buren, 17 foto's, geen kaart met prijzen | ongeveer 7.300 tokens in, 4.900 uit | 1.734 in, 29 uit |
+| St Anneke, 10 foto's, een krijtbord | 4.037 in, 5.400 uit | 2.322 in, 4.237 uit (bijna alles is het lezen van het krijtbord) |
+
+Wat overblijft is het lezen van echte kaarten, en dat gebeurt nu alleen bij foto's met bierprijzen. Alle proeven van die dag samen kostten ongeveer $0,02 aan DeepSeek.
 
 Een foto van een speler werkt hetzelfde: datum uit EXIF, prijs met het model.
 
@@ -50,5 +63,7 @@ Een foto van een speler werkt hetzelfde: datum uit EXIF, prijs met het model.
 | JAN: EXIF | Werkt: bijvoorbeeld opname 4 juni 2024 bij een upload van 3 oktober 2024 |
 
 Ter controle las het model de drankkaart van Café Daen als afbeelding: Hertog Jan en Jupiler 25 cl €4,00, gelijk aan de pdf.
+
+St Anneke (St. Annastraat 55), zelfde dag: 132 foto's in Google; voordat Google een CAPTCHA toonde kwamen er 10 binnen. Het krijtbord achter de bar (foto genomen 4 juni 2013) werd gevonden en gelezen: Paulaner, witbier, Max Rosé en Omer, maar geen pils, dus terecht geen vaasjesprijs.
 
 Conclusie: Van Buren laat bestellen via een QR-code en heeft weinig kaarten op tafel. Of er tussen de andere 340 foto's een kaart met prijzen zit, laat een run vanaf een thuisverbinding zien.

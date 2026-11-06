@@ -77,6 +77,8 @@ Alle kroegen uit een eerdere run, alleen foto's van de laatste twee jaar:
 DEEPSEEK_API_KEY=<geheim> node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01
 ```
 
+Per kroeg: eerst een goedkope schifting (contactblad van 20 miniaturen) en controle (zijn er bierprijzen te lezen?), beide zonder dat het model nadenkt. Alleen foto's met bierprijzen worden echt gelezen, en na de eerste vaasjesprijs stopt de tool (`--volledig` om toch alles te bekijken). Het verbruik staat aan het eind van de run.
+
 Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `importeer_menuprijzen` naar de database. Bekijk de prijzen eerst. Draai dit vanaf een thuisverbinding: vanaf een datacenter toont Google al na een paar kroegen een CAPTCHA, en dan stopt de run.
 
 | Onderdeel | Bestand |
@@ -84,7 +86,8 @@ Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `i
 | Fotolijst lezen (RPC `hspqX`) | `bron/fotos.mjs` |
 | Fotolijst ophalen in de browser, stoppen bij CAPTCHA | `bron/fotobron.mjs` |
 | Datum uit EXIF, zonder afhankelijkheden | `bron/exif.mjs` |
-| Kaarten herkennen en lezen met een model | `bron/menulezer.mjs` |
+| Contactblad met genummerde miniaturen | `bron/contactblad.mjs` |
+| Schiften, controleren en lezen met een model | `bron/menulezer.mjs` |
 | Vaasje kiezen | `bron/vaasje.mjs` |
 | Alles samen | `bron/menuprijs.mjs`, `menufotos.mjs` |
 
