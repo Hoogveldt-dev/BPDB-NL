@@ -408,6 +408,21 @@ check('melding is weerlegd', s5s.status === 'weerlegd', JSON.stringify(s5s));
 check('weerlegde melding telt niet voor de melder', (await bijdr(E))?.bijdragen === 1, JSON.stringify(await bijdr(E)));
 check('"klopt niet" telt niet als bijdrage', (await bijdr(B))?.bijdragen === 2, JSON.stringify(await bijdr(B)));
 
+// Een melder boven 90% wordt direct bevestigd door het systeem ("klopt" zonder speler).
+// Dat telt voor de melder zelf, maar het systeem-"klopt" is voor niemand een bijdrage.
+const KT = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
+  values ('test/stam2', 'Café Vaste Gast', 'pub', 'SRID=4326;POINT(5.8810 51.8310)') returning id`)).id;
+const t1 = (await als(D, `select * from public.meld_prijs(${KT}, 'Heineken', 25, 330)`)).rows?.[0];
+const sysKlopt = await een(`select count(*)::int as n from public.bevestigingen where gebeurtenis_id = ${t1.id} and door_id is null`);
+check('melder boven 90% is direct bevestigd door het systeem', t1?.status === 'bevestigd' && sysKlopt.n === 1, JSON.stringify({ t1, sysKlopt }));
+const tb = (await als(null, `select gebruiker_id, bijdragen from public.kroeg_bijdragers where kroeg_id = ${KT}`)).rows;
+check('eigen bevestigde melding telt voor een melder boven 90%', tb?.length === 1 && tb[0].gebruiker_id === D && tb[0].bijdragen === 1, JSON.stringify(tb));
+check('systeem-klopt telt voor niemand (geen regel zonder speler)', !tb?.some((r) => r.gebruiker_id === null), JSON.stringify(tb));
+check('een bijdrage is nog geen stamgast', ((await als(null, `select 1 from public.kroeg_stamgast where kroeg_id = ${KT}`)).rows ?? []).length === 0);
+await als(D, `select * from public.meld_prijs(${KT}, 'Heineken', 25, 340)`);
+const ts = (await als(null, `select gebruiker_id, bijdragen from public.kroeg_stamgast where kroeg_id = ${KT}`)).rows;
+check('betrouwbare melder wordt zonder tweede speler stamgast met 2 eigen meldingen', ts?.length === 1 && ts[0].gebruiker_id === D && ts[0].bijdragen === 2, JSON.stringify(ts));
+
 // Zichtbaarheid en privacy
 const sv = await als(null, `select * from public.kroeg_stamgast where kroeg_id = ${KS}`);
 check('stamgast is zonder login te lezen', sv.rows?.length === 1, JSON.stringify(sv));
