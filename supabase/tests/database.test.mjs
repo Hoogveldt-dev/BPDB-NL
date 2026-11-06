@@ -365,6 +365,57 @@ const y9 = await als(A, `select public.beoordeel_aanbod(${G}, 'klopt')`);
 check('afgekeurd bier opnieuw bevestigen kan niet', /niet meer/.test(y9.fout ?? ''), JSON.stringify(y9));
 
 // ---------------------------------------------------------------------------
+// Stamkroeg (kroeg_bijdragers en kroeg_stamgast)
+// ---------------------------------------------------------------------------
+
+const KS = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
+  values ('test/stam', 'Café Stam', 'pub', 'SRID=4326;POINT(5.8800 51.8300)') returning id`)).id;
+const stam = async () => (await als(null, `select gebruiker_id, bijdragen from public.kroeg_stamgast where kroeg_id = ${KS}`)).rows?.[0];
+const bijdr = async (wie) => (await als(null, `select bijdragen, plek from public.kroeg_bijdragers where kroeg_id = ${KS} and gebruiker_id = '${wie}'`)).rows?.[0];
+
+// Anna meldt de eerste prijs, Bram bevestigt: elk een bijdrage, nog geen stamgast (drempel 2)
+const s1 = (await als(A, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 300)`)).rows?.[0];
+check('openstaande melding telt niet als bijdrage', (await bijdr(A)) === undefined, JSON.stringify(await bijdr(A)));
+await als(B, `select public.beoordeel(${s1.id}, 'klopt')`);
+check('bevestigde eigen melding telt', (await bijdr(A))?.bijdragen === 1);
+check('"klopt" op een bevestigde melding telt', (await bijdr(B))?.bijdragen === 1);
+check('een bijdrage is nog geen stamgast', (await stam()) === undefined, JSON.stringify(await stam()));
+
+// Bram meldt een wijziging, Carla bevestigt: Bram heeft er twee en is stamgast
+const s2 = (await als(B, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 310)`)).rows?.[0];
+await als(C, `select public.beoordeel(${s2.id}, 'klopt')`);
+check('Bram wordt stamgast met 2 bijdragen', (await stam())?.gebruiker_id === B && (await stam())?.bijdragen === 2, JSON.stringify(await stam()));
+check('stamgast heeft plek 1', (await bijdr(B))?.plek === 1);
+
+// Eva meldt, Anna bevestigt: gelijkspel 2-2, Bram blijft stamgast
+const s3 = (await als(E, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 320)`)).rows?.[0];
+check('open melding van Eva telt nog niet', (await bijdr(E)) === undefined, JSON.stringify(await bijdr(E)));
+await als(A, `select public.beoordeel(${s3.id}, 'klopt')`);
+check('Anna haalt Bram in op aantal', (await bijdr(A))?.bijdragen === 2);
+check('bij gelijkspel blijft Bram stamgast', (await stam())?.gebruiker_id === B, JSON.stringify(await stam()));
+
+// Anna meldt nog een keer, Carla bevestigt: Anna heeft er drie en neemt het over
+const s4 = (await als(A, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 330)`)).rows?.[0];
+await als(C, `select public.beoordeel(${s4.id}, 'klopt')`);
+check('met een meer neemt Anna het over', (await stam())?.gebruiker_id === A && (await stam())?.bijdragen === 3, JSON.stringify(await stam()));
+
+// Een weerlegde melding en een "klopt niet" tellen niet
+const s5 = (await als(E, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 340)`)).rows?.[0];
+await als(A, `select public.beoordeel(${s5.id}, 'klopt_niet')`);
+await als(B, `select public.beoordeel(${s5.id}, 'klopt_niet')`);
+const s5s = await een(`select status from public.gebeurtenissen where id = ${s5.id}`);
+check('melding is weerlegd', s5s.status === 'weerlegd', JSON.stringify(s5s));
+check('weerlegde melding telt niet voor de melder', (await bijdr(E))?.bijdragen === 1, JSON.stringify(await bijdr(E)));
+check('"klopt niet" telt niet als bijdrage', (await bijdr(B))?.bijdragen === 2, JSON.stringify(await bijdr(B)));
+
+// Zichtbaarheid en privacy
+const sv = await als(null, `select * from public.kroeg_stamgast where kroeg_id = ${KS}`);
+check('stamgast is zonder login te lezen', sv.rows?.length === 1, JSON.stringify(sv));
+check('overzicht toont geen e-mail of locatie', !Object.keys(sv.rows?.[0] ?? {}).some((k) => /mail|lat|lon|locatie/.test(k)), Object.keys(sv.rows?.[0] ?? {}).join());
+const sw = await als(A, `update public.kroeg_bijdragers set bijdragen = 99 where kroeg_id = ${KS}`);
+check('bijdragen via het overzicht aanpassen kan niet', !!sw.fout, JSON.stringify(sw));
+
+// ---------------------------------------------------------------------------
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);
