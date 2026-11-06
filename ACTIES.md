@@ -7,6 +7,17 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 1. **Standaardbranch.** GitHub, repository BPDB-NL, Settings, General, Default branch: kies `main` (nu staat `claude/bpdb-concept-design-6gjlr6` als standaard). Nieuwe sessies beginnen dan vanaf `main` en pull requests gaan vanzelf naar `main`.
 2. **Oude branches opruimen.** Alle oude branches zijn al volledig samengevoegd in `main`. Na stap 1 kunnen ze weg (Settings, General, vink **Automatically delete head branches** aan voor de toekomst).
 
+## Domein bierkoers.nl
+
+Geregistreerd bij Vimexx op 6 november 2026. Daar staan nu de nameservers van Vimexx (`dns1.p01.nsone.net` tot en met `dns3`).
+
+1. **Domein in Cloudflare.** Cloudflare, Domains, Onboard a domain: `bierkoers.nl`, plan Free. Cloudflare toont dan twee nameservers die bij jouw account horen (iets als `naam.ns.cloudflare.com`).
+2. **DNSSEC uit bij Vimexx**, als het aanstaat. Anders werkt het domein niet meer zodra de nameservers wisselen.
+3. **Nameservers bij Vimexx.** Domein `bierkoers.nl`, Nameservers wijzigen naar de twee van Cloudflare. Wachten tot Cloudflare meldt dat het domein actief is (meestal binnen een uur, soms langer).
+4. **Koppelen aan de app.** Workers & Pages, `bpdb-nl`, Custom domains: voeg `bierkoers.nl` en `www.bierkoers.nl` toe.
+5. **DNSSEC weer aan**, nu via Cloudflare (DNS, Settings), en zet de DS-record die Cloudflare geeft bij Vimexx.
+6. **Supabase-adressen bijwerken.** Authentication, URL Configuration: Site URL `https://bierkoers.nl`, en voeg `https://bierkoers.nl/**` toe aan de Redirect URLs. Laat `https://bpdb-nl.pages.dev/**` staan. Bij inloggen met Apple en Google ook het nieuwe domein toevoegen.
+
 ## Inloggen: meteen beginnen, later e-mail koppelen
 
 0. ~~**Migratie `20261106220000_betrouwbaarheid_verwachting`.**~~ Gedaan op 6 november 2026: staat op Supabase met versie `20261106220000`. Voorlopig: **Kjell is er nog niet tevreden over** (zie `docs/concept.md`, 2.6). Gecontroleerd: `pas_betrouwbaarheid_aan` gebruikt de nieuwe regel, spelers kunnen `betrouwbaarheid_na` niet zelf aanroepen, er staat nu niemand boven 90%. Security Advisor: alleen de bekende waarschuwing over gelekte wachtwoorden.
