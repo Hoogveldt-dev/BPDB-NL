@@ -6,9 +6,11 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Anonieme spelers | `migrations/20261106090000_anonieme_spelers.sql` | Meteen meespelen zonder e-mailadres; bevestigen alleen met e-mailadres |
+| Betrouwbaarheid naar verwachting | `migrations/20261106220000_betrouwbaarheid_verwachting.sql` | Voorlopig (Kjell is er nog niet tevreden over). Hoe verrassender de uitkomst, hoe groter de sprong; boven 90% pas met ervaring |
 | Bevestigen naar betrouwbaarheid | `migrations/20261106150000_bevestigen_naar_betrouwbaarheid.sql` | Melder boven 90%: een andere speler; anderen: twee. Geen automatische bevestiging meer. `kroeg_kaart` toont de wachtende prijs |
 | Extra bier | `migrations/20261106120000_extra_bier.sql` | Wat een kroeg naast de pils tapt (Guinness, witbier, ander merk), met of zonder prijs; geen punten |
 | Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
+| Inchecken | `migrations/20261106210000_inchecken.sql` | Tabel `incheckingen`, functie `inchecken`, overzicht `mijn_kroegen`: de eigen kaart van elke speler |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Google-kroegen | `migrations/20261106170000_google_kroegen.sql`, `migrations/20261106180000_google_koppeling.sql` | Place ID, categorieën en openingstijden uit Google op `kroegen`, en `importeer_google_kroegen`: koppelt Google-plaatsen aan OSM-kroegen (gelijkende naam, beste eerst) of voegt ze toe. Geen beoordelingen, telefoon of website. Aangeroepen door [`tools/google-kroegen`](../tools/google-kroegen/README.md). |
 | Menukaartprijzen | `migrations/20261106200000_menukaartprijzen.sql` | Prijzen van menukaarten (met datum) als eerste stuk geschiedenis, zonder melder. Kolom `bron` op `gebeurtenissen`, import `importeer_menuprijzen` (alleen `service_role`) |
@@ -32,8 +34,9 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `aanbod_oordelen` | "Klopt" of "klopt niet" bij extra bier, een per speler per bier. |
 | `kroeg_meldingen` | Openingstijden of "definitief gesloten" gemeld door een speler, met status `wacht`, `bevestigd` of `weerlegd`. Per kroeg en soort hoogstens een open melding. |
 | `kroegmelding_oordelen` | "Klopt" of "klopt niet" bij zo'n melding, een per speler per melding. |
+| `incheckingen` | Check-ins per speler en kroeg, hoogstens een per dag. Privé: alleen de speler zelf kan ze lezen en wissen. |
 
-Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`, `kroeg_info`, `kroeg_bijdragers` en `kroeg_stamgast`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
+Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`, `kroeg_info`, `kroeg_bijdragers`, `kroeg_stamgast` en `mijn_kroegen` (alleen de eigen check-ins). Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
 ## Spelregels in de database
 
@@ -46,6 +49,7 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 - `beoordeel_aanbod(aanbod, 'klopt' | 'klopt_niet')`: extra bier van een ander bevestigen (zet de datum van controle) of afkeuren; twee keer "klopt niet" en het verdwijnt. Je eigen extra trek je in met "klopt niet". Alleen met e-mailadres, behalve intrekken.
 - `meld_kroeg(kroeg, 'openingstijden' | 'gesloten', openingstijden)`: andere openingstijden of een definitieve sluiting melden. Openingstijden zijn per dag een lijst als `["16:00-02:00"]`; een lege lijst is gesloten. Ook zonder e-mailadres. Geen punten.
 - `beoordeel_kroegmelding(melding, 'klopt' | 'klopt_niet')`: zo'n melding van een ander bevestigen of afkeuren. Alleen met e-mailadres; je eigen melding trek je in met "klopt niet".
+- `inchecken(kroeg, lat, lon)`: inchecken in een kroeg, alleen binnen 75 m en hoogstens een keer per kroeg per dag. Een melding of "klopt nog" ter plaatse is automatisch ook een check-in (trigger op `gebeurtenissen`).
 
 | Regel | Uitwerking |
 |---|---|
@@ -54,16 +58,17 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 | Uitschieter | Meer dan 40% van de mediaan per 25 cl (vanaf 5 prijzen in de stad): altijd twee bevestigingen van anderen. |
 | Weerlegd | Twee keer "klopt niet" (of een keer van een speler boven 90%). Een weerlegde eerste prijs zet de kroeg terug onder de mist. |
 | Punten | Vrijspelen +50, wijziging +30, bevestigen +5, klopt nog +5, oude prijs (90+ dagen) controleren +15, foto +5, ter plaatse x1,5, weerlegd -20. Punten pas na bevestiging. |
-| Betrouwbaarheid | Start op 50. Bevestigde melding +2, weerlegde melding -10, juist oordeel +1, onjuist oordeel -3. |
+| Betrouwbaarheid | Voorlopig; Kjell is er nog niet tevreden over. Start op 50. Bevestigde melding +10% van wat je mist tot 100, weerlegde melding -20% van je score, juist oordeel +3% van wat je mist, onjuist oordeel -6% van je score (`private.betrouwbaarheid_na`). Boven 90% pas met minstens 20 bevestigde eigen meldingen, bevestigd door minstens 5 verschillende anderen (`private.ervaren_melder`); tot die tijd hoogstens 90. |
 | Anonieme spelers | Beginnen zonder e-mailadres en mogen prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas met een gekoppeld e-mailadres, en een anonieme melder wordt nooit zonder een andere speler bevestigd. Zo kan niemand met wegwerpaccounts zijn eigen meldingen bevestigen. Na het koppelen blijft het account met alle punten hetzelfde. |
 | Menukaartprijs | Een prijs van een menukaart staat in de geschiedenis en op de kaart (met ?), met de datum van de kaart en zonder melder. De kroeg blijft onder de mist en niemand krijgt er punten voor. Dezelfde prijs melden ("Klopt, ik ben er") kan alleen ter plaatse (binnen 75 m): de speler wordt indiener en ontdekker, daarna gelden de gewone regels (bevestiging door anderen, dan de vrijspeelpunten). Een andere prijs melden kan overal; de menukaartprijs is dan achterhaald. Over een menukaartprijs zelf kun je niet oordelen. Alleen kroegen zonder bevestigde prijs krijgen een menukaartprijs. |
 | Openingstijden | Komen uit Google. Tijden van een speler gelden meteen en Google overschrijft ze daarna niet meer. Een andere speler kan "klopt" zeggen; twee keer "klopt niet" (of intrekken) en de vorige tijden komen terug. |
 | Definitief gesloten | Pas na "klopt" van een andere speler met e-mailadres verdwijnt de kroeg van de kaart. Twee keer "klopt niet" en de melding is weerlegd. De OSM- en Google-import openen zo'n kroeg niet opnieuw (`gesloten_door_spelers`). |
 | Stamgast | Per kroeg de speler met de meeste bevestigde bijdragen (eigen meldingen plus "klopt" op meldingen die bevestigd zijn), vanaf 2. Bij gelijkspel wie de stand het eerst bereikte. Geen punten, alleen de naam bovenaan de geschiedenis. |
+| Inchecken | Binnen 75 m, een keer per kroeg per dag. Geen punten (we belonen nooit kroegbezoek). Alleen zichtbaar voor de speler zelf; wissen kan altijd. |
 
 ## Installeren op het Supabase-project
 
-Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261105220601`, 5 november 2026; `20261106090000` tot en met `20261106190000`, 6 november 2026; de Google-kroegen van Nijmegen zijn geïmporteerd), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). Voor een nieuw project:
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261105220601`, 5 november 2026; `20261106090000` tot en met `20261106190000`, 6 november 2026; de Google-kroegen van Nijmegen zijn geïmporteerd), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). De migraties `20261106210000_inchecken` en `20261106220000_betrouwbaarheid_verwachting` staan er ook in (6 november 2026). Voor een nieuw project:
 
 **1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
@@ -108,5 +113,7 @@ update public.profielen set is_beheerder = true where naam = 'JOUW_SPELERSNAAM';
 
 - Zet nooit de service_role-key, secret key of het databasewachtwoord in de app of in git. De publishable key in `app/config.js` is bedoeld voor de browser.
 - Alle tabellen hebben RLS. Spelers kunnen alleen hun eigen naam kiezen, en maar een keer: wie bij het aanmelden een naam kiest, houdt die (`naam_vast`). Wie een automatische naam kreeg (`speler`, `speler2`, bijvoorbeeld via Apple of Google), kiest een keer zelf. Daarna weigert de trigger `private.naam_eenmalig()` een nieuwe naam. Een beheerder kan in de SQL Editor altijd een naam wijzigen (`update public.profielen set naam = '...' where id = '...'`).
+- Check-ins zijn locatiegeschiedenis en dus persoonsgegevens: `incheckingen` is als enige tabel niet openbaar leesbaar, ook niet voor andere ingelogde spelers.
+- Spelers kunnen hun eigen check-ins wissen.
 - De spellogica draait als `security definer` in het schema `private`, dat niet via de API bereikbaar is. Elke functie controleert zelf `auth.uid()`.
 - Foto's mogen alleen in de eigen map (`<gebruikers-id>/...`) van de bucket `prijslijsten` worden geüpload, maximaal 5 MB.

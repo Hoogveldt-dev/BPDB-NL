@@ -17,6 +17,10 @@ Extra bier bij een kroeg (Guinness, witbier, een ander merk pils) levert nu geen
 - Dan moeten extra's wel bevestigd worden door een andere speler met e-mailadres (zoals bij de pils), anders kan iemand punten verdienen met verzonnen bier. Ook een maximum per dag of per kroeg ligt dan voor de hand.
 - Waar het moet: `private.meld_aanbod` en `private.beoordeel_aanbod` in `supabase/migrations/20261106120000_extra_bier.sql` (via een nieuwe migratie), de puntentabel in `supabase/README.md` en de test.
 
+## Betrouwbaarheid opnieuw bekijken
+
+De betrouwbaarheid verandert sinds migratie `20261106220000_betrouwbaarheid_verwachting` naar verwachting (het idee van Elo): zie [concept.md](concept.md), 2.6. Dat staat erin als voorlopige oplossing; **Kjell is er nog niet tevreden over**. Bij een nieuwe versie: nieuwe migratie met `private.betrouwbaarheid_na` en eventueel `private.ervaren_melder`, de tabel in `supabase/README.md`, paragraaf 2.6 en de test.
+
 ## Verder
 
 - **Kroegentocht** met route, afstand en kcal: [kroegentocht.md](kroegentocht.md).

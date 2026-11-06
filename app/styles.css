@@ -53,6 +53,10 @@ button { cursor: pointer; }
 .hud-pct { font: 800 17px/1 var(--f-round); }
 .hud-sub { font-size: 12px; color: var(--muted); }
 
+#modus { position: fixed; top: calc(env(safe-area-inset-top) + 66px); left: 16px; display: flex; gap: 2px; padding: 3px; border-radius: 999px; z-index: 3; }
+#modus button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); }
+#modus button[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+
 .mapbtn { position: fixed; top: calc(env(safe-area-inset-top) + 12px); right: 16px; width: 44px; height: 44px; border-radius: 12px; border: 0; display: grid; place-items: center; color: var(--blue); z-index: 3; }
 .mapbtn svg { width: 20px; height: 20px; }
 
@@ -67,7 +71,7 @@ button { cursor: pointer; }
 @media (min-width: 900px) {
   #sheet { left: 16px; right: auto; top: 16px; bottom: 16px; width: 380px; height: auto; border-radius: 18px; transform: none !important; }
   .grabber { display: none; }
-  #hud { left: 412px; }
+  #hud, #modus { left: 412px; }
 }
 
 h2 { font: 800 22px/1.2 var(--f-round); margin: 12px 0 4px; }
@@ -138,6 +142,36 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: v
 .stamgast b { font-size: 15px; }
 .stamgast .sub { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
 .stamgast .sub b { font-size: inherit; color: var(--fg); }
+
+.incheck { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.incheck .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
+.incheck.bezocht .ic { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent-text); }
+.incheck .ic svg { width: 20px; height: 20px; }
+.incheck .t { font-size: 12px; color: var(--muted); }
+.incheck .btn { grid-column: 1 / -1; }
+
+.tegels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 0; }
+.tegel { border-radius: var(--r); padding: 16px 14px; min-height: 110px; display: flex; flex-direction: column; justify-content: flex-end; font-weight: 600; }
+.tegel .getal { font: 800 36px/1 var(--f-round); }
+.tegel.goud { background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 55%, var(--surface)), var(--accent)); color: var(--accent-ink); }
+.tegel.nacht, .nacht-kaart { background: linear-gradient(160deg, #1b2a4a, #0d1424); color: #f2f2f7; border: 0; }
+.nacht-kaart .small { color: rgb(242 242 247 / .75); margin-top: 2px; }
+.wijkrij { padding: 10px 0; border-bottom: var(--hair); }
+.wijkrij:last-child { border-bottom: 0; }
+.wijkrij.leeg { color: var(--muted); }
+.verzameld { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 10px; }
+.munt { position: relative; aspect-ratio: 1; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--accent) 70%, var(--fg)); background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--accent) 45%, var(--surface)), var(--accent)); color: var(--accent-ink); font: 800 15px/1 var(--f-round); padding: 0; }
+.munt .n { position: absolute; right: -4px; bottom: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--fg); color: var(--surface); font: 700 11px/18px var(--f-ui); padding: 0 4px; }
+.statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.statgrid .card { margin: 0; }
+.stat b { display: block; font: 800 22px/1.1 var(--f-round); }
+.stat span { font-size: 13px; color: var(--muted); }
+.tocht-link { margin-bottom: 6px; }
+.ic-sm { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: color-mix(in srgb, var(--blue) 14%, transparent); color: var(--blue); flex: none; }
+.ic-sm svg { width: 18px; height: 18px; }
+.nr { width: 24px; height: 24px; border-radius: 50%; background: var(--blue); color: #fff; font: 700 13px/24px var(--f-round); text-align: center; flex: none; }
+.veld { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+.linkbtn { border: 0; background: none; color: var(--blue); padding: 0; font-weight: 600; }
 
 .timeline { list-style: none; padding: 0; margin: 0; }
 .timeline li { padding: 10px 0 10px 18px; border-left: 2px solid var(--sep); position: relative; margin-left: 5px; }

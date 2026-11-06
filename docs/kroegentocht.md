@@ -1,6 +1,6 @@
 # Concept: kroegentocht
 
-Status: idee, nog niet uitgewerkt en nog niet gebouwd. Dit stuk legt vast wat er bedacht is en welke vragen open staan.
+Status: eerste versie gebouwd (zie [concept.md](concept.md), 2.9): een tocht langs de goedkoopste kroegen of langs kroegen waar je nog niet hebt ingecheckt, met hemelsbrede afstanden. Stappen, kcal, beoordelingen en echte looproutes zijn nog niet gebouwd. Dit stuk legt vast wat er bedacht is en welke vragen open staan.
 
 ## Het idee
 

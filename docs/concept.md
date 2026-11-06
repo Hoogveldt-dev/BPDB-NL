@@ -13,6 +13,7 @@ Prototypes (open lokaal in een browser, geen build nodig):
 |---|---|---|
 | Kroegen vooraf op de kaart onder een mist, vrijspelen met een eerste prijs | Ja | Vast |
 | Controle | Peer-to-peer bevestiging met betrouwbaarheidsscore; geen echte blockchain, geen tokens | Vast |
+| Hoe de betrouwbaarheid verandert | Naar verwachting, het idee van Elo zonder tegenstander: beginners stijgen snel, een fout van iemand boven 90% kost bijna 20 punten. Boven 90% pas met ervaring (zie 2.6) | **Voorlopig: Kjell is er nog niet tevreden over** |
 | Kroegen bevestigen zelf hun prijs | Niet in de basis; misschien later, altijd naast P2P | Later |
 | Spelvorm | Samenwerken: iedereen speelt samen de hele stad vrij en houdt hem vers | Vast |
 | Ranglijst | Blijft: laat zien wie het meest bijdraagt | Vast |
@@ -23,6 +24,8 @@ Prototypes (open lokaal in een browser, geen build nodig):
 | Ander bier en andere maten | Kan iedereen toevoegen bij een kroeg ("Ook op de tap"), met of zonder prijs, en je kunt erop filteren en per maat vergelijken. Geen punten en geen bevestiging nodig; twee keer "klopt niet" haalt het weg | Vast |
 | Prijs zonder alcohol, punten voor extra bier | Later, zie [toekomstplannen.md](toekomstplannen.md) | Later |
 | Stamkroeg | Wie in een kroeg het vaakst de prijs bijwerkt of bevestigt, staat als stamgast bovenaan de geschiedenis | Vast |
+| Inchecken en Mijn kroegen | Eigen kaart per speler naast de gezamenlijke: een kroeg gaat op jouw kaart open als je er incheckt. Privé, geen punten | Vast |
+| Kroegentocht | Route langs de goedkoopste kroegen of langs kroegen waar je nog niet was; "beste" pas als er beoordelingen zijn | Eerste versie |
 | Pilotstad | Nijmegen | Vast |
 | Doelgroep ontwerp | iPhone eerst; strak, licht futuristisch, kaart in de stijl van Apple Kaarten | Vast |
 | Code | Nieuw bouwen in deze repo; Guindex alleen als referentie | Vast |
@@ -132,6 +135,18 @@ Punten worden pas uitgekeerd na bevestiging door een andere speler.
 ### 2.6 Peer-to-peer bevestiging
 
 - Elke speler heeft een **betrouwbaarheid** (0 tot 100%), los van punten. Die stijgt als je bijdragen later door anderen bevestigd worden en daalt als ze worden weerlegd.
+- **Hoe hard** (voorlopig; Kjell is er nog niet tevreden over, zie hieronder): hoe verrassender de uitkomst, hoe groter de sprong. Dat is het idee achter Elo, maar zonder tegenstander en op dezelfde schaal van 0 tot 100%.
+
+  | Uitkomst | Verandering | Bij 30% | Bij 50% | Bij 90% | Bij 95% |
+  |---|---|---:|---:|---:|---:|
+  | Melding bevestigd | +10% van wat je mist tot 100 | +7 | +5 | +1 | +0,5 |
+  | Melding weerlegd | -20% van je score | -6 | -10 | -18 | -19 |
+  | Juist oordeel | +3% van wat je mist tot 100 | +2,1 | +1,5 | +0,3 | +0,15 |
+  | Onjuist oordeel | -6% van je score | -1,8 | -3 | -5,4 | -5,7 |
+
+  Wie een fractie *p* van de tijd gelijk heeft, komt uit rond *p* / (*p* + 2(1 - *p*)): 95% goed geeft ongeveer 90%, 99% goed ongeveer 98%. Van 50 naar 90% kost ongeveer 16 goede meldingen.
+- **Ervaringsdrempel:** boven 90% kom je pas met minstens 20 bevestigde eigen meldingen, bevestigd door minstens 5 verschillende andere spelers. Tot die tijd blijft de score op 90 staan. Zo kunnen twee vrienden elkaar niet snel aan een dubbele stem helpen. Bestaande scores zijn niet omgerekend; de regel geldt vanaf de volgende melding of het volgende oordeel.
+- **Waarom voorlopig:** Kjell is er nog niet blij mee. Punten om op terug te komen: of de stappen goed voelen, of spelers met een hoge score bang worden om te melden, of de drempel van 20 en 5 klopt, en of het percentage beter iets anders kan tonen.
 - Een prijs is **bevestigd** als een andere speler hem bevestigt wanneer de melder een betrouwbaarheid boven 90% heeft, en anders als twee andere spelers hem bevestigen. Het oordeel van een speler boven 90% telt dubbel. Niemand wordt bevestigd zonder dat een andere speler ernaar gekeken heeft.
 - Een melding die nog op bevestiging wacht, wordt als meest recente prijs getoond (met een ? erachter), samen met de laatst bevestigde prijs. Het spel zelf (vrijspelen, punten, ranglijst, versheid) telt alleen bevestigde prijzen.
 - **Uitschieters** (ver van de mediaan voor dat merk en volume) hebben altijd twee bevestigingen nodig.
@@ -140,6 +155,44 @@ Punten worden pas uitgekeerd na bevestiging door een andere speler.
 ### 2.7 Wat we niet doen
 
 Geen tokens, geen virtueel vastgoed (Upland/Earth2), geen eigen blockchain. Echt geld trekt speculanten aan, valt onder MiCA en mogelijk de Kansspelautoriteit, en een onveranderlijk grootboek botst met foutcorrectie en de AVG. We belonen bijdragen, nooit drinken (Reclamecode voor Alcoholhoudende dranken). Alleen voor 18+.
+
+### 2.8 Inchecken en Mijn kroegen
+
+Naast het gezamenlijke spel heeft elke speler een **eigen kaart**: de kroegen waar je zelf bent geweest. Vergelijk het met de reisstatistieken in Polarsteps: niet wat de groep heeft vrijgespeeld, maar wat jij hebt gezien. Het woord in de app is **inchecken**.
+
+| Regel | Uitwerking |
+|---|---|
+| Hoe | In een kroeg op "Inchecken" tikken. Een prijs melden of "Klopt nog" ter plaatse telt automatisch ook als check-in |
+| Ter plaatse | Alleen binnen 75 m van de kroeg, dezelfde grens als "ter plaatse" bij melden |
+| Hoe vaak | Hoogstens een keer per kroeg per dag; elke dag telt als bezoek |
+| Punten | Geen. We belonen bijdragen, nooit kroegbezoek of drinken (Reclamecode). Zo is er ook geen reden om je locatie te vervalsen |
+| Privacy | Check-ins zijn locatiegeschiedenis. Alleen jij ziet ze; ze staan niet op de ranglijst of bij de stamgast. Je kunt ze zelf allemaal wissen |
+| Los van de mist | Inchecken speelt een kroeg niet vrij voor de groep. Op jouw kaart is de kroeg open, ook als hij in het gezamenlijke spel nog onder de mist ligt |
+
+**Op de kaart** wissel je bovenin tussen *Samen* (kleur is versheid) en *Mijn kaart* (goud waar je was, grijs waar je nog niet was). De ring toont dan hoeveel procent van de kroegen in de stad jij hebt bezocht.
+
+**Mijn kroegen** (tabblad Ik), naar het voorbeeld van Polarsteps:
+
+| Polarsteps | Kroegkaart |
+|---|---|
+| Je hebt gezien: 29 landen, 15% van de wereld | Aantal kroegen en percentage van de stad |
+| Continenten bezocht | Wijken bezocht, met per wijk bezocht/totaal |
+| Verzamelde vlaggen | Verzamelde kroegen als munten, met het aantal bezoeken |
+| Alle stats | Check-ins, wijken, gemiddelde prijs per 25 cl van jouw kroegen tegenover de stad, eerste check-in, vaste stek, goedkoopste kroeg waar je was |
+| Wanneer is je volgende avontuur? | Laatste check-in, hoeveel kroegen je nog niet hebt gezien, de dichtstbijzijnde nieuwe kroegen en een knop om een tocht te plannen |
+
+Bewust weggelaten: "verste plek van huis" (we kennen geen thuisadres en vragen het ook niet) en een teller van dagen in de kroeg.
+
+### 2.9 Kroegentocht
+
+Een speler kan een tocht plannen vanaf zijn locatie (of het centrum), langs 3 tot 6 kroegen binnen 2 km:
+
+- **Goedkoopst**: de kroegen met de laagste prijs per 25 cl.
+- **Nog niet bezocht**: de dichtstbijzijnde kroegen waar je nog niet bent ingecheckt. Zo groeit je eigen kaart.
+
+De volgorde is steeds de dichtstbijzijnde volgende kroeg; de route staat genummerd op de kaart. Afstanden zijn hemelsbreed. De planner zegt erbij: "Geniet, maar drink met mate: inchecken kan ook met een fris."
+
+Uitwerking en open vragen (stappen, kcal, looproutes): [kroegentocht.md](kroegentocht.md). Later: tochten langs de **beste** kroegen (vraagt beoordelingen, die er nog niet zijn), tochten delen met vrienden, en een echte looproute.
 
 ## 3. Geschiedenis per kroeg
 
@@ -183,6 +236,7 @@ Kroeg        id, osm_id, naam, adres, lat, lon, wijk_id, open, ontdekker_id, kro
 Gebeurtenis  id, kroeg_id, soort (eerst/wijziging/check), merk, volume_cl, prijs_cent, door_id, op, ter_plaatse, foto_url, status (wacht/bevestigd/weerlegd)
 Bevestiging  id, gebeurtenis_id, door_id, oordeel (klopt/klopt_niet), gewicht, op
 Gebruiker    id, naam, punten, betrouwbaarheid
+Inchecking   id, gebruiker_id, kroeg_id, op, dag, afstand_m, bron (inchecken/melding/controle)   (privé, een per kroeg per dag)
 Punten       id, gebruiker_id, reden, punten, gebeurtenis_id, op       (audit-log; ranglijsten zijn queries hierop)
 Wijk         id, cbs_code, naam, geometrie
 ```
@@ -195,3 +249,6 @@ Wijk         id, cbs_code, naam, geometrie
 2. Wanneer zetten we veroveringen of teams weer aan, en op basis van welk signaal (bijv. na 100% vrijgespeeld)?
 3. Welke kroegsoorten tellen mee (alleen cafés en bars, of ook restaurants met een tap)?
 4. Kroegentocht: een route langs gekozen kroegen, met afstand en kcal. Idee, nog uit te werken: [kroegentocht.md](kroegentocht.md).
+5. Wat is een "beste" kroeg voor de kroegentocht: beoordelingen door spelers, versheid van de prijs, of het aantal stamgasten?
+6. Mag een speler zijn aantal bezochte kroegen ooit openbaar maken (bijvoorbeeld op de ranglijst), en zo ja alleen met eigen toestemming?
+7. De betrouwbaarheid naar verwachting (2.6) is voorlopig; Kjell is er nog niet tevreden over. Wat moet anders?
