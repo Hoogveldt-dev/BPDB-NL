@@ -6,6 +6,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
+| Inchecken | `migrations/20261106120000_inchecken.sql` | Tabel `incheckingen`, functie `inchecken`, overzicht `mijn_kroegen`: de eigen kaart van elke speler |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 
@@ -19,8 +20,9 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `gebeurtenissen` | Audit-log: eerste prijs, wijziging of controle, met status `wacht`, `bevestigd` of `weerlegd`. |
 | `bevestigingen` | Oordelen van andere spelers over een melding (`klopt` of `klopt_niet`). |
 | `punten` | Audit-log van punten; de ranglijst is een query hierop. |
+| `incheckingen` | Check-ins per speler en kroeg, hoogstens een per dag. Privé: alleen de speler zelf kan ze lezen en wissen. |
 
-Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `kroeg_bijdragers` en `kroeg_stamgast`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
+Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `kroeg_bijdragers`, `kroeg_stamgast` en `mijn_kroegen` (alleen de eigen check-ins). Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
 ## Spelregels in de database
 
@@ -29,6 +31,7 @@ Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand
 - `meld_prijs(kroeg, merk, volume_cl, prijs_cent, lat, lon, foto_pad)`: eerste prijs (speelt de kroeg vrij) of prijswijziging. Ter plaatse = binnen 75 m.
 - `beoordeel(gebeurtenis, 'klopt' | 'klopt_niet')`: een melding van een ander bevestigen of weerleggen.
 - `klopt_nog(kroeg, lat, lon)`: de huidige prijs controleren, hoogstens een keer per kroeg per 7 dagen.
+- `inchecken(kroeg, lat, lon)`: inchecken in een kroeg, alleen binnen 75 m en hoogstens een keer per kroeg per dag. Een melding of "klopt nog" ter plaatse is automatisch ook een check-in (trigger op `gebeurtenissen`).
 
 | Regel | Uitwerking |
 |---|---|
@@ -38,10 +41,11 @@ Iedereen mag alles lezen. Schrijven gaat alleen via drie functies, zodat niemand
 | Punten | Vrijspelen +50, wijziging +30, bevestigen +5, klopt nog +5, oude prijs (90+ dagen) controleren +15, foto +5, ter plaatse x1,5, weerlegd -20. Punten pas na bevestiging. |
 | Betrouwbaarheid | Start op 50. Bevestigde melding +2, weerlegde melding -10, juist oordeel +1, onjuist oordeel -3. |
 | Stamgast | Per kroeg de speler met de meeste bevestigde bijdragen (eigen meldingen plus "klopt" op meldingen die bevestigd zijn), vanaf 2. Bij gelijkspel wie de stand het eerst bereikte. Geen punten, alleen de naam bovenaan de geschiedenis. |
+| Inchecken | Binnen 75 m, een keer per kroeg per dag. Geen punten (we belonen nooit kroegbezoek). Alleen zichtbaar voor de speler zelf; wissen kan altijd. |
 
 ## Installeren op het Supabase-project
 
-Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot` (5 november 2026): het schema staat erin (migratie `20261105180124`), de Edge Function `osm-import` draait en de Security Advisor is schoon. Ook de migratie `20261105220601_stamkroeg` staat erin (5 november 2026). Voor een nieuw project:
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot` (5 november 2026): het schema staat erin (migratie `20261105180124`), de Edge Function `osm-import` draait en de Security Advisor is schoon. Ook de migratie `20261105220601_stamkroeg` staat erin (5 november 2026). De migratie `20261106120000_inchecken` moet nog worden toegepast (`supabase db push`); tot die tijd geeft de app bij inchecken een foutmelding en blijft Mijn kroegen leeg. Voor een nieuw project:
 
 **1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
@@ -76,6 +80,7 @@ update public.profielen set is_beheerder = true where naam = 'JOUW_SPELERSNAAM';
 ## Beveiliging
 
 - Zet nooit de service_role-key, secret key of het databasewachtwoord in de app of in git. De publishable key in `app/config.js` is bedoeld voor de browser.
-- Alle tabellen hebben RLS. Spelers kunnen alleen hun eigen naam wijzigen.
+- Alle tabellen hebben RLS. Spelers kunnen alleen hun eigen naam wijzigen en hun eigen check-ins wissen.
+- Check-ins zijn locatiegeschiedenis en dus persoonsgegevens: `incheckingen` is als enige tabel niet openbaar leesbaar, ook niet voor andere ingelogde spelers.
 - De spellogica draait als `security definer` in het schema `private`, dat niet via de API bereikbaar is. Elke functie controleert zelf `auth.uid()`.
 - Foto's mogen alleen in de eigen map (`<gebruikers-id>/...`) van de bucket `prijslijsten` worden geüpload, maximaal 5 MB.

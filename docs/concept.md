@@ -20,6 +20,8 @@ Prototypes (open lokaal in een browser, geen build nodig):
 | Teams | Uitgeschakeld; uitwerking staat in prototype v1 en hieronder | Later |
 | Geschiedenis per kroeg | Ja: eerst gemeld, wijzigingen, controles, met datum en naam | Vast |
 | Stamkroeg | Wie in een kroeg het vaakst de prijs bijwerkt of bevestigt, staat als stamgast bovenaan de geschiedenis | Vast |
+| Inchecken en Mijn kroegen | Eigen kaart per speler naast de gezamenlijke: een kroeg gaat op jouw kaart open als je er incheckt. Privé, geen punten | Vast |
+| Kroegentocht | Route langs de goedkoopste kroegen of langs kroegen waar je nog niet was; "beste" pas als er beoordelingen zijn | Eerste versie |
 | Pilotstad | Nijmegen | Vast |
 | Doelgroep ontwerp | iPhone eerst; strak, licht futuristisch, kaart in de stijl van Apple Kaarten | Vast |
 | Code | Nieuw bouwen in deze repo; Guindex alleen als referentie | Vast |
@@ -133,7 +135,45 @@ Punten worden pas uitgekeerd na bevestiging door een andere speler.
 - **Uitschieters** (ver van de mediaan voor dat merk en volume) hebben altijd twee bevestigingen nodig.
 - Beheerders zien alleen geschillen en meldingen.
 
-### 2.7 Wat we niet doen
+### 2.7 Inchecken en Mijn kroegen
+
+Naast het gezamenlijke spel heeft elke speler een **eigen kaart**: de kroegen waar je zelf bent geweest. Vergelijk het met de reisstatistieken in Polarsteps: niet wat de groep heeft vrijgespeeld, maar wat jij hebt gezien. Het woord in de app is **inchecken**.
+
+| Regel | Uitwerking |
+|---|---|
+| Hoe | In een kroeg op "Inchecken" tikken. Een prijs melden of "Klopt nog" ter plaatse telt automatisch ook als check-in |
+| Ter plaatse | Alleen binnen 75 m van de kroeg, dezelfde grens als "ter plaatse" bij melden |
+| Hoe vaak | Hoogstens een keer per kroeg per dag; elke dag telt als bezoek |
+| Punten | Geen. We belonen bijdragen, nooit kroegbezoek of drinken (Reclamecode). Zo is er ook geen reden om je locatie te vervalsen |
+| Privacy | Check-ins zijn locatiegeschiedenis. Alleen jij ziet ze; ze staan niet op de ranglijst of bij de stamgast. Je kunt ze zelf allemaal wissen |
+| Los van de mist | Inchecken speelt een kroeg niet vrij voor de groep. Op jouw kaart is de kroeg open, ook als hij in het gezamenlijke spel nog onder de mist ligt |
+
+**Op de kaart** wissel je bovenin tussen *Samen* (kleur is versheid) en *Mijn kaart* (goud waar je was, grijs waar je nog niet was). De ring toont dan hoeveel procent van de kroegen in de stad jij hebt bezocht.
+
+**Mijn kroegen** (tabblad Ik), naar het voorbeeld van Polarsteps:
+
+| Polarsteps | Kroegkaart |
+|---|---|
+| Je hebt gezien: 29 landen, 15% van de wereld | Aantal kroegen en percentage van de stad |
+| Continenten bezocht | Wijken bezocht, met per wijk bezocht/totaal |
+| Verzamelde vlaggen | Verzamelde kroegen als munten, met het aantal bezoeken |
+| Alle stats | Check-ins, wijken, gemiddelde prijs per 25 cl van jouw kroegen tegenover de stad, eerste check-in, vaste stek, goedkoopste kroeg waar je was |
+| Wanneer is je volgende avontuur? | Laatste check-in, hoeveel kroegen je nog niet hebt gezien, de dichtstbijzijnde nieuwe kroegen en een knop om een tocht te plannen |
+
+Bewust weggelaten: "verste plek van huis" (we kennen geen thuisadres en vragen het ook niet) en een teller van dagen in de kroeg.
+
+### 2.8 Kroegentocht
+
+Een speler kan een tocht plannen vanaf zijn locatie (of het centrum), langs 3 tot 6 kroegen binnen 2 km:
+
+- **Goedkoopst**: de kroegen met de laagste prijs per 25 cl.
+- **Nog niet bezocht**: de dichtstbijzijnde kroegen waar je nog niet bent ingecheckt. Zo groeit je eigen kaart.
+
+De volgorde is steeds de dichtstbijzijnde volgende kroeg; de route staat genummerd op de kaart. Afstanden zijn hemelsbreed. De planner zegt erbij: "Geniet, maar drink met mate: inchecken kan ook met een fris."
+
+Later: tochten langs de **beste** kroegen (vraagt beoordelingen, die er nog niet zijn), tochten delen met vrienden, en een echte looproute.
+
+### 2.9 Wat we niet doen
 
 Geen tokens, geen virtueel vastgoed (Upland/Earth2), geen eigen blockchain. Echt geld trekt speculanten aan, valt onder MiCA en mogelijk de Kansspelautoriteit, en een onveranderlijk grootboek botst met foutcorrectie en de AVG. We belonen bijdragen, nooit drinken (Reclamecode voor Alcoholhoudende dranken). Alleen voor 18+.
 
@@ -179,6 +219,7 @@ Kroeg        id, osm_id, naam, adres, lat, lon, wijk_id, open, ontdekker_id, kro
 Gebeurtenis  id, kroeg_id, soort (eerst/wijziging/check), merk, volume_cl, prijs_cent, door_id, op, ter_plaatse, foto_url, status (wacht/bevestigd/weerlegd)
 Bevestiging  id, gebeurtenis_id, door_id, oordeel (klopt/klopt_niet), gewicht, op
 Gebruiker    id, naam, punten, betrouwbaarheid
+Inchecking   id, gebruiker_id, kroeg_id, op, dag, afstand_m, bron (inchecken/melding/controle)   (privé, een per kroeg per dag)
 Punten       id, gebruiker_id, reden, punten, gebeurtenis_id, op       (audit-log; ranglijsten zijn queries hierop)
 Wijk         id, cbs_code, naam, geometrie
 ```
@@ -190,3 +231,5 @@ Wijk         id, cbs_code, naam, geometrie
 1. Welke techniek precies (zie 1.2)? Te beslissen voor de eerste sprint.
 2. Wanneer zetten we veroveringen of teams weer aan, en op basis van welk signaal (bijv. na 100% vrijgespeeld)?
 3. Welke kroegsoorten tellen mee (alleen cafés en bars, of ook restaurants met een tap)?
+4. Wat is een "beste" kroeg voor de kroegentocht: beoordelingen door spelers, versheid van de prijs, of het aantal stamgasten?
+5. Mag een speler zijn aantal bezochte kroegen ooit openbaar maken (bijvoorbeeld op de ranglijst), en zo ja alleen met eigen toestemming?
