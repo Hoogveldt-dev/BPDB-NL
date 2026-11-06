@@ -7,7 +7,13 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
-const OVERPASS = "https://overpass-api.de/api/interpreter";
+// Overpass weigert of overbelast soms; probeer dan de volgende server.
+const OVERPASS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+];
+const USER_AGENT = "BPDB-NL kroegimport (https://bpdb-nl.pages.dev)";
 const PDOK_WIJKEN = "https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0";
 const TOEGESTANE_SOORTEN = ["pub", "bar", "biergarten", "cafe", "nightclub"];
 
@@ -33,7 +39,45 @@ type OsmElement = {
   tags?: Record<string, string>;
 };
 
+async function overpass(query: string): Promise<{ elements: OsmElement[] }> {
+  const fouten: string[] = [];
+  for (const server of OVERPASS) {
+    try {
+      const res = await fetch(server, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
+          "User-Agent": USER_AGENT,
+        },
+        body: new URLSearchParams({ data: query }),
+        signal: AbortSignal.timeout(70_000),
+      });
+      const tekst = await res.text();
+      if (!res.ok) {
+        fouten.push(`${new URL(server).host} gaf ${res.status}`);
+        console.error("Overpass", server, res.status, tekst.slice(0, 300));
+        continue;
+      }
+      return JSON.parse(tekst);
+    } catch (e) {
+      fouten.push(`${new URL(server).host}: ${(e as Error).message}`);
+      console.error("Overpass", server, e);
+    }
+  }
+  throw new Error(`OpenStreetMap niet bereikbaar (${fouten.join("; ")})`);
+}
+
 Deno.serve(async (req) => {
+  try {
+    return await importeer(req);
+  } catch (e) {
+    console.error(e);
+    return antwoord({ fout: (e as Error).message ?? "Onbekende fout" }, 502);
+  }
+});
+
+async function importeer(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return antwoord({ fout: "Alleen POST" }, 405);
 
@@ -77,8 +121,11 @@ Deno.serve(async (req) => {
     srsName: "EPSG:4326",
     filter,
   }).toString();
-  const wijkRes = await fetch(wfs);
-  if (!wijkRes.ok) return antwoord({ fout: `PDOK gaf ${wijkRes.status}` }, 502);
+  const wijkRes = await fetch(wfs, { headers: { "User-Agent": USER_AGENT } });
+  if (!wijkRes.ok) {
+    console.error("PDOK", wijkRes.status, (await wijkRes.text()).slice(0, 300));
+    return antwoord({ fout: `CBS-wijken (PDOK) gaf ${wijkRes.status}` }, 502);
+  }
   const wijkGeo = await wijkRes.json();
   // Water-wijken (bijv. de Waal) overslaan.
   wijkGeo.features = (wijkGeo.features ?? []).filter((f: any) => f.properties?.water !== "JA");
@@ -91,13 +138,7 @@ Deno.serve(async (req) => {
 area["boundary"="administrative"]["admin_level"="8"]["name"="${gemeente.replace(/"/g, "")}"]->.g;
 nwr["amenity"~"${regex}"](area.g);
 out center tags;`;
-  const osmRes = await fetch(OVERPASS, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "BPDB-NL kroegimport" },
-    body: new URLSearchParams({ data: query }),
-  });
-  if (!osmRes.ok) return antwoord({ fout: `Overpass gaf ${osmRes.status}` }, 502);
-  const osm = await osmRes.json() as { elements: OsmElement[] };
+  const osm = await overpass(query);
 
   const kroegen = osm.elements
     .map((e) => {
@@ -123,4 +164,4 @@ out center tags;`;
   if (kroegFout) return antwoord({ fout: kroegFout.message }, 500);
 
   return antwoord({ gemeente, wijken, kroegen: aantal });
-});
+}

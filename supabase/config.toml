@@ -122,7 +122,7 @@ enabled = true
 # in emails.
 site_url = "http://127.0.0.1:8765"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:8765"]
+additional_redirect_urls = ["http://localhost:8765", "https://bpdb-nl.pages.dev/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to the local API URL (http://127.0.0.1:<port>/auth/v1).
@@ -137,9 +137,10 @@ refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
-enable_anonymous_sign_ins = false
+# Nieuwe spelers beginnen anoniem en koppelen later hun e-mailadres (migratie anonieme_spelers)
+enable_anonymous_sign_ins = true
 # Allow/disallow testing manual linking of accounts
-enable_manual_linking = false
+enable_manual_linking = true
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
 minimum_password_length = 6
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
@@ -194,6 +195,23 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# Inloggen gaat met een code die je in de app typt, niet met een link.
+# Bestaande spelers krijgen "magic_link", een anonieme speler die zijn e-mailadres koppelt "email_change".
+# "confirmation" is voor wie zonder anoniem account begint. Alle drie tonen {{ .Token }}.
+# Op het echte project zet je dezelfde tekst in het dashboard (zie supabase/README.md, stap 3).
+[auth.email.template.magic_link]
+subject = "Je inlogcode voor de Kroegkaart"
+content_path = "./supabase/templates/inlogcode.html"
+
+[auth.email.template.confirmation]
+subject = "Je inlogcode voor de Kroegkaart"
+content_path = "./supabase/templates/inlogcode.html"
+
+# Een anonieme speler die zijn e-mailadres koppelt, krijgt deze mail
+[auth.email.template.email_change]
+subject = "Je code om je e-mailadres te koppelen"
+content_path = "./supabase/templates/inlogcode.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

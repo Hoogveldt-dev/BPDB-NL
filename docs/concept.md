@@ -19,6 +19,9 @@ Prototypes (open lokaal in een browser, geen build nodig):
 | Veroveringen (kroegbaas, wijkbezit) | Uitgeschakeld en uit de interface; code blijft achter een functievlag | Later |
 | Teams | Uitgeschakeld; uitwerking staat in prototype v1 en hieronder | Later |
 | Geschiedenis per kroeg | Ja: eerst gemeld, wijzigingen, controles, met datum en naam | Vast |
+| Prijs voor het spel | De goedkoopste pils van de tap in een vaasje (25 cl). Geen vaasje: het kleinste glas, omgerekend naar 25 cl en op de kaart met een ≈. Vrijspelen, punten, ranglijst en versheid draaien alleen hierom, zodat vrijspelen snel gaat | Vast |
+| Ander bier en andere maten | Kan iedereen toevoegen bij een kroeg ("Ook op de tap"), met of zonder prijs, en je kunt erop filteren en per maat vergelijken. Geen punten en geen bevestiging nodig; twee keer "klopt niet" haalt het weg | Vast |
+| Prijs zonder alcohol, punten voor extra bier | Later, zie [toekomstplannen.md](toekomstplannen.md) | Later |
 | Stamkroeg | Wie in een kroeg het vaakst de prijs bijwerkt of bevestigt, staat als stamgast bovenaan de geschiedenis | Vast |
 | Pilotstad | Nijmegen | Vast |
 | Doelgroep ontwerp | iPhone eerst; strak, licht futuristisch, kaart in de stijl van Apple Kaarten | Vast |
@@ -30,7 +33,7 @@ Prototypes (open lokaal in een browser, geen build nodig):
 |---|---|---|
 | Gebruikers voegen zelf kroegen toe (`PubPendingCreate`) | Lege kaart bij de start, dubbele kroegen, typefouten | Alle kroegen vooraf geladen uit OpenStreetMap (`amenity=pub/bar/cafe`), getoond als "op slot" |
 | Elke bijdrage wacht op goedkeuring door een beheerder (`*Pending*`-tabellen) | Beheerders zijn de bottleneck | Peer-bevestiging; beheerder alleen bij geschillen en uitschieters |
-| Eén product, één maat (pint Guinness) | In NL verschillen merk en glas per kroeg | Prijs altijd met merk en volume; vergelijken via prijs per 25 cl |
+| Eén product, één maat (pint Guinness) | In NL verschillen merk en glas per kroeg | Spel: goedkoopste pils in een vaasje (25 cl), merk en glas erbij; ander bier als extra (zie Besluiten) |
 | Statistiek per gebruiker: `pubsVisited`, `originalPrices`, `currentVerifications` | Een tabel, geen spel | Zelfde signalen als punten, titels en ranglijst |
 | Bootstrap-adminthema, DataTables, Google Maps | Voelt als een beheerpaneel | Mobiel eerst, kaart als startscherm |
 
@@ -129,7 +132,8 @@ Punten worden pas uitgekeerd na bevestiging door een andere speler.
 ### 2.6 Peer-to-peer bevestiging
 
 - Elke speler heeft een **betrouwbaarheid** (0 tot 100%), los van punten. Die stijgt als je bijdragen later door anderen bevestigd worden en daalt als ze worden weerlegd.
-- Een prijs is **bevestigd** na twee onafhankelijke bronnen, of één bron met een betrouwbaarheid boven 90%.
+- Een prijs is **bevestigd** als een andere speler hem bevestigt wanneer de melder een betrouwbaarheid boven 90% heeft, en anders als twee andere spelers hem bevestigen. Het oordeel van een speler boven 90% telt dubbel. Niemand wordt bevestigd zonder dat een andere speler ernaar gekeken heeft.
+- Een melding die nog op bevestiging wacht, wordt als meest recente prijs getoond (met een ? erachter), samen met de laatst bevestigde prijs. Het spel zelf (vrijspelen, punten, ranglijst, versheid) telt alleen bevestigde prijzen.
 - **Uitschieters** (ver van de mediaan voor dat merk en volume) hebben altijd twee bevestigingen nodig.
 - Beheerders zien alleen geschillen en meldingen.
 
@@ -190,3 +194,4 @@ Wijk         id, cbs_code, naam, geometrie
 1. Welke techniek precies (zie 1.2)? Te beslissen voor de eerste sprint.
 2. Wanneer zetten we veroveringen of teams weer aan, en op basis van welk signaal (bijv. na 100% vrijgespeeld)?
 3. Welke kroegsoorten tellen mee (alleen cafés en bars, of ook restaurants met een tap)?
+4. Kroegentocht: een route langs gekozen kroegen, met afstand en kcal. Idee, nog uit te werken: [kroegentocht.md](kroegentocht.md).
