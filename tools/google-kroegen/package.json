@@ -1,0 +1,16 @@
+{
+  "name": "bpdb-google-kroegen",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kroegen en cafés uit Google Maps ophalen en koppelen aan de BPDB-kroegkaart",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "bin": { "google-kroegen": "./cli.mjs" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "node cli.mjs"
+  },
+  "optionalDependencies": {
+    "playwright": "1.48.2"
+  }
+}
