@@ -15,15 +15,26 @@ Genoemd naar Café Daen (6 november 2026: Hertog Jan 25 cl €4,00, drankkaart v
 
 Voordelen: de bron is de kroeg zelf, het is goedkoop en het mag. Nadeel: veel kroegen zetten alleen hun eetkaart online.
 
-## JAN-methode: een foto van de kaart
+## JAN-methode: foto's van de kaart in Google Maps
 
-Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufoto).
+Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufoto). Sinds 6 november 2026 automatisch met `tools/google-kroegen/menufotos.mjs`:
 
-1. Een foto van de drankkaart: gemaakt door een speler, of een openbare foto van een bezoeker.
-2. Datum: `DateTimeOriginal` uit de EXIF-gegevens van de foto (het moment van de opname, niet van uploaden). Uitlezen kan met `identify -format '%[EXIF:DateTimeOriginal]' foto.jpg` of met Pillow. Zonder EXIF: de uploaddatum, met lagere zekerheid.
-3. Prijzen uitlezen met een vision-model. Staat er geen maat bij ("medium"), dan lagere zekerheid of overslaan.
+1. **Fotolijst.** De tool opent de kroeg in Google Maps in een browser en vraagt vanuit die pagina de fotolijst op (de RPC `hspqX`, die Google Maps zelf gebruikt). Per foto: ID, soort, adres van de afbeelding en uploaddatum. 10 foto's per verzoek, met pauzes.
+2. **Kaarten herkennen.** Miniaturen (256 px) gaan in groepjes van 10 naar een vision-model: welke tonen een drankkaart of prijsbord?
+3. **Datum.** Van elke kandidaat haalt de tool het origineel (`=s0`). Google laat daarin de EXIF-gegevens van de maker staan: `DateTimeOriginal` is het moment van de foto. Zonder EXIF telt de uploaddatum.
+4. **Prijs.** Een leesbare versie (1600 px) gaat naar het model, dat de bieren met maat en prijs teruggeeft. `kiesVaasje` kiest de goedkoopste pils van de tap in 25 cl; zonder maat alleen bij het woord "vaasje". Twijfel ("medium") = geen prijs.
+5. **Nieuwste kaart wint.** Per kroeg de prijs met de nieuwste datum, als rij voor `importeer_menuprijzen`.
 
-Beperking: foto's uit Google Maps halen we niet automatisch op. Google toont een geautomatiseerde browser geen fotogalerij, en dat omzeilen doen we niet. Een foto moet dus van een speler of van iemand die hem zelf aanlevert komen.
+Model: standaard DeepSeek (`deepseek-flash`, leest afbeeldingen), via `DEEPSEEK_API_KEY`. Elk ander model in het OpenAI-formaat kan via `MENU_MODEL_URL` en `MENU_MODEL`. Een kroeg kost een paar duizend tokens, dus fracties van een cent.
+
+Een foto van een speler werkt hetzelfde: datum uit EXIF, prijs met het model.
+
+### Spelregels voor Google
+
+- Automatisch uitlezen van Google Maps is in strijd met de gebruiksvoorwaarden van Google (zie `docs/google-maps-bronnen.md`). We doen het met mate: een kroeg tegelijk, ongeveer 3 seconden tussen verzoeken, een run per paar maanden.
+- Google stuurt bij te veel verzoeken naar een CAPTCHA. Dan stopt de run meteen en bewaart wat al gevonden is. De CAPTCHA lossen we niet op en we proberen niet opnieuw.
+- Vanaf een datacenter (zoals een cloudsessie) volgt die CAPTCHA al na een paar kroegen. Draai de tool vanaf een thuisverbinding.
+- We bewaren alleen prijs en datum, niet de foto of de naam van de maker.
 
 ## Proef: Café Van Buren (Molenstraat 89)
 
@@ -33,6 +44,11 @@ Beperking: foto's uit Google Maps halen we niet automatisch op. Google toont een
 |---|---|
 | DAEN: website cafevanburen.nl | Menu-, lunch-, vegan-, Big Green Egg- en wijnpagina's; geen bier of prijzen van drank |
 | DAEN: mediabibliotheek (zoeken op drank, bier, kaart, menu, tap, pdf, en de 40 nieuwste uploads) | Eetkaarten, wijnkaarten, pubquiz- en evenementposters; geen drankkaart |
-| JAN: foto via Google Maps | Niet automatisch op te halen (zie hierboven) |
+| JAN: fotolijst via Google Maps | 360 foto's. Na een paar verzoeken toonde Google vanuit de cloudsessie een CAPTCHA; 20 foto's binnen |
+| JAN: kaarten herkennen (DeepSeek) | 3 van de 17 foto's als mogelijke kaart aangemerkt (bordjes met een QR-code om te bestellen) |
+| JAN: kaarten lezen | Geen bierprijzen op die foto's, dus terecht geen prijs |
+| JAN: EXIF | Werkt: bijvoorbeeld opname 4 juni 2024 bij een upload van 3 oktober 2024 |
 
-Conclusie: voor Van Buren werkt alleen de JAN-methode, met een foto die iemand aanlevert. Dit is precies het geval waarvoor de knop om een kaart te fotograferen in de app nuttig zou zijn.
+Ter controle las het model de drankkaart van Café Daen als afbeelding: Hertog Jan en Jupiler 25 cl €4,00, gelijk aan de pdf.
+
+Conclusie: Van Buren laat bestellen via een QR-code en heeft weinig kaarten op tafel. Of er tussen de andere 340 foto's een kaart met prijzen zit, laat een run vanaf een thuisverbinding zien.

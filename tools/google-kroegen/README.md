@@ -63,6 +63,31 @@ Wat er niet in komt: beoordelingen, reviews, telefoon en website. Het spel gebru
 | Veldgezondheid | `bron/gezondheid.mjs` | idee van google-reviews-scraper-pro (MIT) |
 | Import en koppeling | `supabase/migrations/20261106170000_google_kroegen.sql` en `20261106180000_google_koppeling.sql` | eigen |
 
+## Menukaartprijzen uit foto's (JAN-methode)
+
+`menufotos.mjs` zoekt in de foto's van een kroeg in Google Maps naar de drankkaart en leest de vaasjesprijs, met de datum uit de EXIF-gegevens. Uitleg: [`docs/menukaartprijzen.md`](../../docs/menukaartprijzen.md). Vereist Playwright en een sleutel voor een vision-model (standaard DeepSeek).
+
+```bash
+DEEPSEEK_API_KEY=<geheim> node menufotos.mjs --place-id ChIJiXxxslwIx0cRxyRGj-BgaWw
+```
+
+Alle kroegen uit een eerdere run, alleen foto's van de laatste twee jaar:
+
+```bash
+DEEPSEEK_API_KEY=<geheim> node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01
+```
+
+Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `importeer_menuprijzen` naar de database. Bekijk de prijzen eerst. Draai dit vanaf een thuisverbinding: vanaf een datacenter toont Google al na een paar kroegen een CAPTCHA, en dan stopt de run.
+
+| Onderdeel | Bestand |
+|---|---|
+| Fotolijst lezen (RPC `hspqX`) | `bron/fotos.mjs` |
+| Fotolijst ophalen in de browser, stoppen bij CAPTCHA | `bron/fotobron.mjs` |
+| Datum uit EXIF, zonder afhankelijkheden | `bron/exif.mjs` |
+| Kaarten herkennen en lezen met een model | `bron/menulezer.mjs` |
+| Vaasje kiezen | `bron/vaasje.mjs` |
+| Alles samen | `bron/menuprijs.mjs`, `menufotos.mjs` |
+
 ## Kroeg of niet
 
 | Zekerheid | Regel | Voorbeeld |
