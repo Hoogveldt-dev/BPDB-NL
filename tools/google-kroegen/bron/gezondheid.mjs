@@ -4,7 +4,7 @@
 // georgekhananaev/google-reviews-scraper-pro (MIT).
 
 export const VERPLICHT = ["naam", "place_id", "lat", "lon", "categorieen"];
-const OPTIONEEL = ["adres", "postcode", "telefoon", "website", "beoordeling", "openingstijden"];
+const OPTIONEEL = ["adres", "postcode", "openingstijden"];
 
 export class StructuurGewijzigd extends Error {}
 

@@ -20,7 +20,7 @@ Let op: in BPDB-barcollection staan de submodules alleen in `.gitmodules`; de ve
 
 Live tegen Google Maps voor Nijmegen (6 november 2026):
 
-- Het zoek-endpoint `/search?tbm=map` geeft zonder browser JSON terug met 20 plaatsen per keer, inclusief naam, Place ID, categorieën, adres, coördinaten, beoordeling, telefoon, website en openingstijden.
+- Het zoek-endpoint `/search?tbm=map` geeft zonder browser JSON terug met 20 plaatsen per keer, inclusief naam, Place ID, categorieën, adres, coördinaten en openingstijden (ook beoordeling, telefoon en website, maar die slaan we bewust niet op).
 - **Paginering werkt** met `!8i<offset>` (0, 20, 40, ...). gosom haalt alleen de eerste 20 op; met paginering halen we per zoekpunt veel meer op en zijn minder rastercellen nodig.
 - De paden van gosom kloppen nog, met twee afwijkingen: openingstijden staan op `[203][0]`, en `[88][0]` is in zoekresultaten geen sluitstatus maar bijvoorbeeld "Honden toegestaan".
 - Google laat **definitief gesloten zaken weg** uit de zoekresultaten (in 360 resultaten in Nijmegen en Amsterdam kwam geen enkele sluitstatus voor). Sluiten leiden we daarom af uit "bij volledige runs niet meer gezien".
@@ -50,8 +50,14 @@ Waarom zo:
 1. **JSON in plaats van HTML.** De structuur van de data verandert minder vaak dan de opmaak, en is niet afhankelijk van de taal van de knoppen.
 2. **Een ontleding, twee transporten.** Als Google het directe verzoek blokkeert, doet de browser exact hetzelfde verzoek. Er is dus geen tweede, afwijkende scraper om te onderhouden.
 3. **Hard stoppen bij twijfel.** Liever geen import dan een halve: als naam, Place ID, coördinaten of categorieën bij meer dan 10% ontbreken, stopt de run met een duidelijke melding.
-4. **OSM blijft leidend.** Een Google-plaats wordt gekoppeld aan een OSM-kroeg binnen 15 m, of tot 75 m bij een gelijkende naam (trigram-vergelijking op de kern van de naam, zonder "café", "bar" en emoji). Google vult telefoon, website, openingstijden en beoordeling aan en voegt kroegen toe die in OSM ontbreken.
-5. **Voorzichtig met Google.** Een verzoek tegelijk, ongeveer 1,2 seconde pauze met spreiding, terugtrekken bij HTTP 429.
+4. **OSM blijft leidend.** Een Google-plaats wordt alleen gekoppeld aan een OSM-kroeg met een gelijkende naam: ten minste 0,35 binnen 75 m, of 0,15 binnen 25 m (trigram-vergelijking op de kern van de naam, zonder "café", "bar", lidwoorden, plaatsnaam en emoji). Alle paren worden in een keer verdeeld, beste naam eerst. Alleen afstand werkt niet: in de Molenstraat en op de Grote Markt liggen kroegen op een paar meter van elkaar. Google vult de openingstijden aan en voegt kroegen toe die in OSM ontbreken.
+5. **Alleen wat het spel gebruikt.** Place ID, categorieën en openingstijden. Geen beoordelingen of reviews (het spel gaat om de prijs, niet om sterren), geen telefoon of website.
+6. **Spelers gaan voor.** Spelers passen openingstijden aan en melden een kroeg als definitief gesloten. Een volgende Google- of OSM-run draait dat niet terug.
+7. **Voorzichtig met Google.** Een verzoek tegelijk, ongeveer 1,2 seconde pauze met spreiding, terugtrekken bij HTTP 429.
+
+## Proef met de echte kroegen van Nijmegen
+
+6 november 2026: 138 kroegen uit Google tegen de 88 OSM-kroegen in de database. 61 gekoppeld (zonder foute koppelingen), 77 nieuw, 27 OSM-kroegen niet in Google gevonden (die blijven staan).
 
 ## Spelregels en risico's
 

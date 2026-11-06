@@ -42,10 +42,10 @@ export function plaatsUitZaak(z) {
   const adresregels = lijst(pad(z, 2)).filter((r) => typeof r === "string");
   const { postcode, plaats } = postcodeEnPlaats(adresregels[1]);
   const statusRuw = [pad(z, 88, 0), pad(z, 34, 4, 4)].find((s) => typeof s === "string" && STATUS.has(s));
+  // Bewust niet: beoordeling, reviews, telefoon en website. BPDB slaat alleen op wat het spel gebruikt.
   return {
     place_id: tekst(pad(z, 78)),
     data_id: dataId,
-    cid: cidUitDataId(dataId),
     naam: schoneNaam(tekst(pad(z, 11))),
     naam_google: tekst(pad(z, 11)),
     categorieen: lijst(pad(z, 13)).filter((c) => typeof c === "string"),
@@ -54,20 +54,9 @@ export function plaatsUitZaak(z) {
     plaats,
     lat: getal(pad(z, 9, 2)),
     lon: getal(pad(z, 9, 3)),
-    beoordeling: getal(pad(z, 4, 7)),
-    aantal_reviews: getal(pad(z, 4, 8)),
-    prijsniveau: tekst(pad(z, 4, 2)),
-    telefoon: tekst(pad(z, 178, 0, 0)),
-    website: echteUrl(tekst(pad(z, 7, 0))),
     openingstijden: openingstijden(z),
     status: statusRuw ?? null,
   };
-}
-
-/** data_id is "0x<cel>:0x<cid>"; het tweede deel is de decimale CID uit maps.google.com/?cid= */
-export function cidUitDataId(dataId) {
-  const m = /^0x[0-9a-f]+:(0x[0-9a-f]+)$/i.exec(dataId ?? "");
-  return m ? BigInt(m[1]).toString() : null;
 }
 
 /** Emoji's die eigenaren aan hun naam plakken ("Café Daen🍺") eruit; de rest blijft. */
@@ -82,29 +71,46 @@ function postcodeEnPlaats(regel) {
   return m ? { postcode: m[1].replace(/\s/, " "), plaats: m[2].trim() } : { postcode: null, plaats: tekst(regel) };
 }
 
-function echteUrl(u) {
-  if (!u) return null;
-  if (u.startsWith("/url?")) {
-    const q = new URLSearchParams(u.slice(5)).get("q");
-    return q || null;
+export const DAGEN = ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"];
+
+/**
+ * Openingstijden in de vorm die de database verwacht: per dag een lijst als ["16:00-02:00"],
+ * een lege lijst is gesloten. Google schrijft "16:00–02:00", "Gesloten" of "24 uur geopend".
+ * Is iets onbekend, dan liever geen openingstijden dan verkeerde.
+ */
+export function normaliseerTijden(ruw) {
+  if (!ruw) return null;
+  const uit = {};
+  for (const [dag, waarden] of Object.entries(ruw)) {
+    const d = dag.toLowerCase();
+    if (!DAGEN.includes(d)) return null;
+    const lijst = [];
+    for (const w of waarden) {
+      const t = w.trim().toLowerCase();
+      if (t === "gesloten") continue;
+      if (/^24 uur geopend$|^open 24 hours$/.test(t)) { lijst.push("00:00-24:00"); continue; }
+      const m = /^(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})$/.exec(t);
+      if (!m) return null;
+      lijst.push(`${m[1].padStart(2, "0")}:${m[2]}-${m[3].padStart(2, "0")}:${m[4]}`);
+    }
+    uit[d] = lijst;
   }
-  return u;
+  return DAGEN.every((d) => d in uit) ? uit : null;
 }
 
 function openingstijden(z) {
   // Nieuw (2025 en later): [203][0] = [[dag, nr, datum, [[tekst, ...]], ...], ...]
   // Oud: [34][1] = [[dag, [tekst, ...]], ...]
-  const nieuw = lijst(pad(z, 203, 0));
-  const uit = {};
-  for (const d of nieuw) {
+  const ruw = {};
+  for (const d of lijst(pad(z, 203, 0))) {
     const dag = tekst(pad(d, 0));
-    if (!dag) continue;
-    uit[dag] = lijst(pad(d, 3)).map((s) => tekst(pad(s, 0))).filter(Boolean);
+    if (dag) ruw[dag] = lijst(pad(d, 3)).map((s) => tekst(pad(s, 0))).filter(Boolean);
   }
-  if (Object.keys(uit).length) return uit;
-  for (const d of lijst(pad(z, 34, 1))) {
-    const dag = tekst(pad(d, 0));
-    if (dag) uit[dag] = lijst(pad(d, 1)).map(tekst).filter(Boolean);
+  if (!Object.keys(ruw).length) {
+    for (const d of lijst(pad(z, 34, 1))) {
+      const dag = tekst(pad(d, 0));
+      if (dag) ruw[dag] = lijst(pad(d, 1)).map(tekst).filter(Boolean);
+    }
   }
-  return Object.keys(uit).length ? uit : null;
+  return Object.keys(ruw).length ? normaliseerTijden(ruw) : null;
 }

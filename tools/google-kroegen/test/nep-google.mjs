@@ -22,7 +22,7 @@ export function zaak({
   reviews = 120,
   telefoon = "+31 24 123 4567",
   website = "https://example.nl/",
-  uren = [["maandag", 1, [2026, 11, 9], [["11:00–02:00", [[11], [2]]]], 0, 1]],
+  uren = ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"].map((d, i) => [d, i + 1, [2026, 11, 9 + i], [["11:00–02:00", [[11], [2]]]], 0, 1]),
   oudeUren = null,
   status = null,
 } = {}) {

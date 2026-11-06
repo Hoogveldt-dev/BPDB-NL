@@ -24,7 +24,7 @@ Een andere gemeente, bijvoorbeeld Arnhem:
 node cli.mjs --gemeentecode GM0202
 ```
 
-Direct importeren in Supabase (eerst de migratie `20261106120000_google_kroegen` toepassen):
+Direct importeren in Supabase (eerst de migraties `20261106170000` tot en met `20261106190000` toepassen):
 
 ```bash
 SUPABASE_URL=https://<project-ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<geheim> node cli.mjs --gemeentecode GM0268 --naar-supabase
@@ -47,7 +47,10 @@ npx playwright install chromium
 1. De gemeentegrens wordt opgedeeld in cellen van 1,5 km. Alleen cellen die de grens raken tellen mee.
 2. Per cel en zoekterm (`kroeg`, `café`, `bar`, `pub`) haalt de tool pagina's van 20 resultaten op, tot een pagina niets nieuws meer oplevert.
 3. Elke plaats wordt gelezen uit de JSON die Google Maps zelf gebruikt. Alleen plaatsen binnen de gemeentegrens met een kroegcategorie blijven over, ontdubbeld op Place ID.
-4. Bij `--naar-supabase` koppelt de database ze aan bestaande kroegen of voegt ze toe.
+4. Openingstijden worden omgezet naar de vorm van de database: per dag een lijst als `["16:00-02:00"]`, een lege lijst is gesloten. Klopt er iets niet, dan liever geen openingstijden dan verkeerde.
+5. Bij `--naar-supabase` koppelt de database ze aan bestaande kroegen of voegt ze toe.
+
+Wat er niet in komt: beoordelingen, reviews, telefoon en website. Het spel gebruikt ze niet.
 
 | Onderdeel | Bestand | Herkomst |
 |---|---|---|
@@ -58,7 +61,7 @@ npx playwright install chromium
 | HTTP- en browsertransport | `bron/transport.mjs` | gosom en conor-is-my-name (MIT) |
 | Kroeg of niet | `bron/classificeer.mjs` | eigen, op basis van Nederlandse Google-categorieën |
 | Veldgezondheid | `bron/gezondheid.mjs` | idee van google-reviews-scraper-pro (MIT) |
-| Import en koppeling | `supabase/migrations/20261106120000_google_kroegen.sql` | eigen |
+| Import en koppeling | `supabase/migrations/20261106170000_google_kroegen.sql` en `20261106180000_google_koppeling.sql` | eigen |
 
 ## Kroeg of niet
 

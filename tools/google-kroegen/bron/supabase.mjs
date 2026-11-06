@@ -5,7 +5,6 @@
 export function naarImport(k) {
   return {
     place_id: k.place_id,
-    cid: k.cid,
     naam: k.naam,
     soort: k.soort,
     zekerheid: k.zekerheid,
@@ -14,10 +13,6 @@ export function naarImport(k) {
     postcode: k.postcode,
     lat: k.lat,
     lon: k.lon,
-    beoordeling: k.beoordeling,
-    aantal_reviews: k.aantal_reviews,
-    telefoon: k.telefoon,
-    website: k.website,
     openingstijden: k.openingstijden,
   };
 }
