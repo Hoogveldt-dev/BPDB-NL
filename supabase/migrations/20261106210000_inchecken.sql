@@ -1,7 +1,7 @@
 -- BPDB-NL: inchecken en Mijn kroegen
 -- Naast de gezamenlijke kaart houdt elke speler een eigen kaart bij: de kroegen waar hij
 -- zelf is geweest. Een kroeg wordt op jouw kaart ontgrendeld door in te checken.
--- Zie docs/concept.md, paragraaf 2.7 en 2.8.
+-- Zie docs/concept.md, paragraaf 2.8 en 2.9.
 --
 -- Regels:
 --   * Inchecken kan alleen ter plaatse: binnen 75 m van de kroeg (zelfde grens als bij melden).
@@ -147,4 +147,5 @@ group by i.kroeg_id;
 comment on view public.mijn_kroegen is
   'Per kroeg het aantal check-ins van de ingelogde speler, met eerste en laatste bezoek.';
 
+revoke all on public.mijn_kroegen from anon, authenticated;
 grant select on public.mijn_kroegen to authenticated;
