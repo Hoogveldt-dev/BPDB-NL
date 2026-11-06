@@ -94,6 +94,8 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: v
 .back { border: 0; background: none; color: var(--blue); padding: 8px 0; font-weight: 600; }
 .card { background: var(--surface); border-radius: var(--r); padding: 14px; margin: 10px 0; border: var(--hair); }
 .big-price { font: 800 40px/1 var(--f-round); }
+.big-price .onbevestigd { color: var(--wacht); margin-left: 4px; }
+.vorige { margin-top: 12px; padding-top: 10px; border-top: var(--hair); }
 .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
 .badge.fresh { background: color-mix(in srgb, var(--fresh) 18%, transparent); color: var(--fresh-t); }
 .badge.stale { background: color-mix(in srgb, var(--stale) 18%, transparent); color: var(--stale-t); }

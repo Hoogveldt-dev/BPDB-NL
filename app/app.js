@@ -97,6 +97,24 @@ function spelPrijs(k) {
   return (k.huidig_volume_cl === VAASJE ? "" : "≈ ") + euro(k.per25_cent);
 }
 
+// Wat de kaart en de lijst tonen: de meest recente prijs. Wacht er een melding op bevestiging,
+// dan is dat die prijs (met een ? erachter); anders de bevestigde. Het spel (vrijspelen, punten,
+// ranglijst, versheid, goedkoopste) draait alleen om de bevestigde prijs.
+function toonPrijs(k) {
+  if (k.open_prijs_cent) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
+  if (k.per25_cent) return { per25: k.per25_cent, volume: k.huidig_volume_cl, onbevestigd: false };
+  return null;
+}
+function toonPrijsTekst(k) {
+  const t = toonPrijs(k);
+  if (!t) return "";
+  return (t.volume === VAASJE ? "" : "≈ ") + euro(t.per25) + (t.onbevestigd ? "?" : "");
+}
+// "Heineken · vaasje (25 cl)" of "Grolsch · 33 cl, omgerekend € 3,00 per vaasje"
+function glasTekst(merk, volume, per25) {
+  return `${esc(merk)} · ${volume === VAASJE ? "vaasje (25 cl)" : `${volume} cl, omgerekend ${euro(per25)} per vaasje`}`;
+}
+
 const soortNaam = (code) => state.biersoorten.find((b) => b.code === code)?.naam ?? code;
 const aanbodVan = (kroegId) => state.aanbod.filter((a) => a.kroeg_id === kroegId);
 
@@ -173,7 +191,7 @@ function geojson() {
         id: k.id,
         naam: k.naam,
         versheid: k.open_melding_id && k.versheid !== "locked" && !k.huidig_prijs_cent ? "wacht" : k.versheid,
-        label: state.soort ? (soortIn(k.id)?.prijs_cent ? euro(soortIn(k.id).prijs_cent) : "") : spelPrijs(k),
+        label: state.soort ? (soortIn(k.id)?.prijs_cent ? euro(soortIn(k.id).prijs_cent) : "") : toonPrijsTekst(k),
       },
     })),
   };
@@ -372,7 +390,8 @@ function prijsKolom(k) {
     const a = soortIn(k.id);
     return a?.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : "";
   }
-  return k.per25_cent ? `<span class="price">${spelPrijs(k)}<small>per vaasje</small></span>` : "";
+  const t = toonPrijs(k);
+  return t ? `<span class="price">${toonPrijsTekst(k)}<small>${t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small></span>` : "";
 }
 
 function lijstView() {
@@ -428,8 +447,15 @@ function detailView() {
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
       <span class="badge ${v}">${VERSHEID[v]}</span>
-      ${k.huidig_prijs_cent ? `<div class="big-price" style="margin-top:10px">${euro(k.huidig_prijs_cent)}</div>
-        <div class="muted">${esc(k.huidig_merk)} · ${k.huidig_volume_cl === VAASJE ? "vaasje (25 cl)" : `${k.huidig_volume_cl} cl, omgerekend ${euro(k.per25_cent)} per vaasje`}</div>
+      ${k.open_prijs_cent ? `${v === "wacht" ? "" : ` <span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
+        <div class="big-price" style="margin-top:10px">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
+        <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
+        <div class="muted small">Gemeld ${wanneer(k.open_op)}, nog niet bevestigd</div>
+        ${k.huidig_prijs_cent ? `<div class="vorige"><span class="muted small">Vorige bevestigde prijs</span>
+          <div><b>${euro(k.huidig_prijs_cent)}</b> <span class="muted">${glasTekst(k.huidig_merk, k.huidig_volume_cl, k.per25_cent)}</span></div>
+          <div class="muted small">Laatst gecontroleerd ${wanneer(k.laatst_gecontroleerd)}</div></div>` : ""}`
+      : k.huidig_prijs_cent ? `<div class="big-price" style="margin-top:10px">${euro(k.huidig_prijs_cent)}</div>
+        <div class="muted">${glasTekst(k.huidig_merk, k.huidig_volume_cl, k.per25_cent)}</div>
         <div class="muted small">Laatst gecontroleerd ${wanneer(k.laatst_gecontroleerd)}</div>`
       : `<div class="muted" style="margin-top:8px">Nog geen bevestigde prijs.</div>`}
       ${k.ontdekker ? `<div class="small" style="margin-top:8px">Ontdekt door <b>${esc(k.ontdekker)}</b> ${wanneer(k.ontdekt_op)}</div>` : ""}
@@ -549,7 +575,7 @@ async function laadTijdlijn(id) {
     el.innerHTML = `<div><b>${esc(open.door)}</b> meldt ${euro(open.prijs_cent)} voor ${esc(open.merk)} ${open.volume_cl} cl</div>
       <div class="muted small">${wanneer(open.op)}${open.ter_plaatse ? " · ter plaatse" : ""}${open.uitschieter ? " · wijkt sterk af, twee bevestigingen nodig" : ""}</div>
       ${open.foto_pad ? `<div class="small"><a href="${fotoUrl(open.foto_pad)}" target="_blank" rel="noopener">Foto van de prijslijst</a></div>` : ""}
-      ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door een andere speler.</div>`
+      ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door andere spelers.</div>`
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
         : anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om meldingen van anderen te bevestigen of te weerleggen.</div>`
         : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}" ${state.sessie ? "" : "disabled"}>Klopt</button>

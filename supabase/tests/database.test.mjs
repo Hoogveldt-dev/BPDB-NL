@@ -21,6 +21,12 @@ const als = async (wie, q, params) => {
   try { return { rows: (await db.query(q, params)).rows }; } catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
 };
 const een = async (q, params) => (await db.query(q, params)).rows[0];
+// Laat elk van de spelers "klopt" zeggen op een melding en geef de status na het laatste oordeel terug
+const klopt = async (gid, ...spelers) => {
+  let s;
+  for (const wie of spelers) s = (await als(wie, `select public.beoordeel(${gid}, 'klopt') as s`)).rows?.[0]?.s;
+  return s;
+};
 
 await db.exec(`
   create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
@@ -165,9 +171,11 @@ const r12 = await als(B, `select * from public.meld_prijs(${K1}, 'Amstel', 25, 3
 check('tweede open melding voor dezelfde kroeg kan niet', /al een melding open/.test(r12.fout ?? ''), JSON.stringify(r12));
 const r13 = await als(A, `select public.beoordeel(${g1.id}, 'klopt')`);
 check('eigen melding beoordelen kan niet', /eigen melding/.test(r13.fout ?? ''), JSON.stringify(r13));
-const r14 = await als(B, `select public.beoordeel(${g1.id}, 'klopt') as s`);
-check('bevestigd door een ander', r14.rows?.[0]?.s === 'bevestigd', JSON.stringify(r14));
-const r15 = await als(C, `select public.beoordeel(${g1.id}, 'klopt')`);
+const r14a = await als(B, `select public.beoordeel(${g1.id}, 'klopt') as s`);
+check('melder onder 90%: een bevestiging is niet genoeg', r14a.rows?.[0]?.s === 'wacht', JSON.stringify(r14a));
+const r14 = await als(C, `select public.beoordeel(${g1.id}, 'klopt') as s`);
+check('bevestigd door twee anderen', r14.rows?.[0]?.s === 'bevestigd', JSON.stringify(r14));
+const r15 = await als(D, `select public.beoordeel(${g1.id}, 'klopt')`);
 check('afgeronde melding beoordelen kan niet', /al afgerond/.test(r15.fout ?? ''), JSON.stringify(r15));
 const k1b = await een(`select huidig_prijs_cent, huidig_merk from public.kroegen where id = ${K1}`);
 check('bevestigde prijs staat op de kroeg', k1b.huidig_prijs_cent === 320 && k1b.huidig_merk === 'Heineken', JSON.stringify(k1b));
@@ -185,7 +193,7 @@ check('dezelfde prijs nog eens melden kan niet', /staat er al/.test(m3.fout ?? '
 const m4 = await als(B, `select * from public.meld_prijs(${K1}, 'Heineken', 25, 340, null, null, '${B}/lijst.jpg')`);
 const g4 = m4.rows?.[0];
 check('prijswijziging melden', g4?.soort === 'wijziging' && g4?.vorige_prijs_cent === 320, JSON.stringify(m4));
-await als(C, `select public.beoordeel(${g4.id}, 'klopt')`);
+await klopt(g4.id, C, A);
 const pB2 = await een(`select altijd from public.ranglijst where id = '${B}'`);
 check('prijswijziging 30 + foto 5 punten', pB2.altijd === 5 + 30 + 5, JSON.stringify(pB2));
 
@@ -244,7 +252,10 @@ check('uitschieter: twee bevestigingen van anderen', r24.rows?.[0]?.s === 'beves
 
 await db.exec(`update public.profielen set betrouwbaarheid = 95 where id = '${D}'`);
 const m7 = await als(D, `select * from public.meld_prijs(${K3}, 'Heineken', 25, 330)`);
-check('melder boven 90% is direct bevestigd', m7.rows?.[0]?.status === 'bevestigd', JSON.stringify(m7));
+check('melder boven 90% wordt niet meer direct bevestigd', m7.rows?.[0]?.status === 'wacht', JSON.stringify(m7));
+check('geen systeem-klopt zonder speler', (await een(`select count(*)::int as n from public.bevestigingen where door_id is null`)).n === 0);
+const m7s = await klopt(m7.rows[0].id, E);
+check('melder boven 90%: een andere speler bevestigt', m7s === 'bevestigd', m7s);
 
 // ---------------------------------------------------------------------------
 // Kroegen in de buurt en opslag van foto's
@@ -287,14 +298,14 @@ const a2 = await als(Y, `select public.beoordeel(${ga.id}, 'klopt')`);
 check('anonieme speler kan niet bevestigen', /Koppel eerst je e-mailadres/.test(a2.fout ?? ''), JSON.stringify(a2));
 const a3 = await als(Y, `select public.beoordeel(${ga.id}, 'klopt_niet')`);
 check('anonieme speler kan niet weerleggen', /Koppel eerst je e-mailadres/.test(a3.fout ?? ''), JSON.stringify(a3));
-const a4 = await als(A, `select public.beoordeel(${ga.id}, 'klopt') as s`);
-check('speler met e-mail bevestigt melding van anonieme speler', a4.rows?.[0]?.s === 'bevestigd', JSON.stringify(a4));
+const a4 = await klopt(ga.id, A, B);
+check('twee spelers met e-mail bevestigen melding van anonieme speler', a4 === 'bevestigd', JSON.stringify(a4));
 const pZ = await een(`select altijd from public.ranglijst where id = '${Z}'`);
 check('anonieme speler krijgt punten na bevestiging', pZ.altijd === 30, JSON.stringify(pZ));
 const a5 = await als(Z, `select * from public.klopt_nog(${K1})`);
 check('anonieme speler kan geen klopt nog doen', /Koppel eerst je e-mailadres/.test(a5.fout ?? ''), JSON.stringify(a5));
 
-// Ook boven 90% betrouwbaarheid wordt een anonieme melder niet direct bevestigd
+// Ook boven 90% betrouwbaarheid wacht een anonieme melder op een andere speler
 await db.exec(`update public.profielen set betrouwbaarheid = 95 where id = '${Z}'`);
 const K5 = await id('node/5');
 const a6 = await als(Z, `select * from public.meld_prijs(${K5}, 'Heineken', 25, 330)`);
@@ -371,33 +382,31 @@ check('afgekeurd bier opnieuw bevestigen kan niet', /niet meer/.test(y9.fout ?? 
 const KS = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
   values ('test/stam', 'Café Stam', 'pub', 'SRID=4326;POINT(5.8800 51.8300)') returning id`)).id;
 const stam = async () => (await als(null, `select gebruiker_id, bijdragen from public.kroeg_stamgast where kroeg_id = ${KS}`)).rows?.[0];
+const bijdr2 = async (kroeg, wie) => (await als(null, `select bijdragen, plek from public.kroeg_bijdragers where kroeg_id = ${kroeg} and gebruiker_id = '${wie}'`)).rows?.[0];
 const bijdr = async (wie) => (await als(null, `select bijdragen, plek from public.kroeg_bijdragers where kroeg_id = ${KS} and gebruiker_id = '${wie}'`)).rows?.[0];
 
-// Anna meldt de eerste prijs, Bram bevestigt: elk een bijdrage, nog geen stamgast (drempel 2)
+// Anna meldt de eerste prijs. Een melder onder 90% heeft twee anderen nodig; tot die er zijn telt niets.
 const s1 = (await als(A, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 300)`)).rows?.[0];
-check('openstaande melding telt niet als bijdrage', (await bijdr(A)) === undefined, JSON.stringify(await bijdr(A)));
-await als(B, `select public.beoordeel(${s1.id}, 'klopt')`);
+await klopt(s1.id, B);
+check('openstaande melding telt niet als bijdrage', (await bijdr(A)) === undefined && (await bijdr(B)) === undefined, JSON.stringify([await bijdr(A), await bijdr(B)]));
+await klopt(s1.id, C);
 check('bevestigde eigen melding telt', (await bijdr(A))?.bijdragen === 1);
-check('"klopt" op een bevestigde melding telt', (await bijdr(B))?.bijdragen === 1);
+check('"klopt" op een bevestigde melding telt', (await bijdr(B))?.bijdragen === 1 && (await bijdr(C))?.bijdragen === 1);
 check('een bijdrage is nog geen stamgast', (await stam()) === undefined, JSON.stringify(await stam()));
 
-// Bram meldt een wijziging, Carla bevestigt: Bram heeft er twee en is stamgast
+// Bram meldt een wijziging, Anna en Carla bevestigen: Bram, Anna en Carla hebben er allemaal twee
 const s2 = (await als(B, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 310)`)).rows?.[0];
-await als(C, `select public.beoordeel(${s2.id}, 'klopt')`);
-check('Bram wordt stamgast met 2 bijdragen', (await stam())?.gebruiker_id === B && (await stam())?.bijdragen === 2, JSON.stringify(await stam()));
+await klopt(s2.id, C, A);
+check('bij gelijkspel wint wie de stand het eerst bereikte', (await stam())?.gebruiker_id === B && (await stam())?.bijdragen === 2, JSON.stringify(await stam()));
 check('stamgast heeft plek 1', (await bijdr(B))?.plek === 1);
+check('de anderen staan ook op 2 bijdragen', (await bijdr(A))?.bijdragen === 2 && (await bijdr(C))?.bijdragen === 2);
 
-// Eva meldt, Anna bevestigt: gelijkspel 2-2, Bram blijft stamgast
+// Eva meldt, Anna en Carla bevestigen: die twee hebben er nu drie, Anna bereikte dat het eerst
 const s3 = (await als(E, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 320)`)).rows?.[0];
 check('open melding van Eva telt nog niet', (await bijdr(E)) === undefined, JSON.stringify(await bijdr(E)));
-await als(A, `select public.beoordeel(${s3.id}, 'klopt')`);
-check('Anna haalt Bram in op aantal', (await bijdr(A))?.bijdragen === 2);
-check('bij gelijkspel blijft Bram stamgast', (await stam())?.gebruiker_id === B, JSON.stringify(await stam()));
-
-// Anna meldt nog een keer, Carla bevestigt: Anna heeft er drie en neemt het over
-const s4 = (await als(A, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 330)`)).rows?.[0];
-await als(C, `select public.beoordeel(${s4.id}, 'klopt')`);
+await klopt(s3.id, A, C);
 check('met een meer neemt Anna het over', (await stam())?.gebruiker_id === A && (await stam())?.bijdragen === 3, JSON.stringify(await stam()));
+check('Bram is nu tweede of lager', (await bijdr(B))?.plek > 1);
 
 // Een weerlegde melding en een "klopt niet" tellen niet
 const s5 = (await als(E, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 340)`)).rows?.[0];
@@ -408,20 +417,48 @@ check('melding is weerlegd', s5s.status === 'weerlegd', JSON.stringify(s5s));
 check('weerlegde melding telt niet voor de melder', (await bijdr(E))?.bijdragen === 1, JSON.stringify(await bijdr(E)));
 check('"klopt niet" telt niet als bijdrage', (await bijdr(B))?.bijdragen === 2, JSON.stringify(await bijdr(B)));
 
-// Een melder boven 90% wordt direct bevestigd door het systeem ("klopt" zonder speler).
-// Dat telt voor de melder zelf, maar het systeem-"klopt" is voor niemand een bijdrage.
+// Een melder boven 90% heeft maar een andere speler nodig. Er is nooit een bevestiging zonder speler.
 const KT = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
   values ('test/stam2', 'Café Vaste Gast', 'pub', 'SRID=4326;POINT(5.8810 51.8310)') returning id`)).id;
 const t1 = (await als(D, `select * from public.meld_prijs(${KT}, 'Heineken', 25, 330)`)).rows?.[0];
-const sysKlopt = await een(`select count(*)::int as n from public.bevestigingen where gebeurtenis_id = ${t1.id} and door_id is null`);
-check('melder boven 90% is direct bevestigd door het systeem', t1?.status === 'bevestigd' && sysKlopt.n === 1, JSON.stringify({ t1, sysKlopt }));
-const tb = (await als(null, `select gebruiker_id, bijdragen from public.kroeg_bijdragers where kroeg_id = ${KT}`)).rows;
-check('eigen bevestigde melding telt voor een melder boven 90%', tb?.length === 1 && tb[0].gebruiker_id === D && tb[0].bijdragen === 1, JSON.stringify(tb));
-check('systeem-klopt telt voor niemand (geen regel zonder speler)', !tb?.some((r) => r.gebruiker_id === null), JSON.stringify(tb));
-check('een bijdrage is nog geen stamgast', ((await als(null, `select 1 from public.kroeg_stamgast where kroeg_id = ${KT}`)).rows ?? []).length === 0);
-await als(D, `select * from public.meld_prijs(${KT}, 'Heineken', 25, 340)`);
+check('melder boven 90% wacht op een andere speler', t1?.status === 'wacht', JSON.stringify(t1));
+check('melder boven 90%: eigen open melding telt nog niet', (await bijdr2(KT, D)) === undefined);
+check('melder boven 90%: een andere speler is genoeg', (await klopt(t1.id, E)) === 'bevestigd');
+const tb = (await als(null, `select gebruiker_id, bijdragen from public.kroeg_bijdragers where kroeg_id = ${KT} order by gebruiker_id`)).rows;
+check('beide spelers hebben een bijdrage', tb?.length === 2 && tb.every((r) => r.bijdragen === 1), JSON.stringify(tb));
+check('geen bijdrage zonder speler', !tb?.some((r) => r.gebruiker_id === null), JSON.stringify(tb));
+check('geen bevestiging zonder speler in de database', (await een(`select count(*)::int as n from public.bevestigingen where door_id is null`)).n === 0);
+const t2 = (await als(D, `select * from public.meld_prijs(${KT}, 'Heineken', 25, 340)`)).rows?.[0];
+await klopt(t2.id, E);
 const ts = (await als(null, `select gebruiker_id, bijdragen from public.kroeg_stamgast where kroeg_id = ${KT}`)).rows;
-check('betrouwbare melder wordt zonder tweede speler stamgast met 2 eigen meldingen', ts?.length === 1 && ts[0].gebruiker_id === D && ts[0].bijdragen === 2, JSON.stringify(ts));
+check('stamgast door eigen meldingen, maar elke melding is door een ander bevestigd', ts?.length === 1 && ts[0].gebruiker_id === D && ts[0].bijdragen === 2, JSON.stringify(ts));
+
+// ---------------------------------------------------------------------------
+// Kaart: een nog niet bevestigde prijs naast de laatst bevestigde
+// ---------------------------------------------------------------------------
+
+const KV = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
+  values ('test/wacht', 'Café Wacht', 'pub', 'SRID=4326;POINT(5.8820 51.8320)') returning id`)).id;
+const kaart = async () => (await als(null, `select huidig_prijs_cent, open_melding_id, open_prijs_cent, open_per25_cent, open_merk, open_volume_cl
+  from public.kroeg_kaart where id = ${KV}`)).rows?.[0];
+const v0 = await kaart();
+check('zonder melding geen wachtende prijs op de kaart', v0.open_melding_id === null && v0.open_prijs_cent === null, JSON.stringify(v0));
+const v1 = (await als(A, `select * from public.meld_prijs(${KV}, 'Grolsch', 33, 396)`)).rows?.[0];
+const k1w = await kaart();
+check('onbevestigde eerste prijs staat op de kaart, nog zonder bevestigde prijs', k1w.huidig_prijs_cent === null && k1w.open_prijs_cent === 396 && k1w.open_volume_cl === 33 && k1w.open_merk === 'Grolsch', JSON.stringify(k1w));
+check('wachtende prijs is omgerekend naar 25 cl', k1w.open_per25_cent === 300, JSON.stringify(k1w));
+// Een speler boven 90% telt dubbel: een oordeel is genoeg voor een melder onder 90%
+check('oordeel van een speler boven 90% telt dubbel', (await klopt(v1.id, D)) === 'bevestigd');
+const k2w = await kaart();
+check('bevestigde prijs staat er, geen wachtende prijs meer', k2w.huidig_prijs_cent === 396 && k2w.open_melding_id === null && k2w.open_prijs_cent === null, JSON.stringify(k2w));
+const v2 = (await als(B, `select * from public.meld_prijs(${KV}, 'Grolsch', 33, 450)`)).rows?.[0];
+const k3w = await kaart();
+check('onbevestigde wijziging staat naast de laatst bevestigde prijs', k3w.huidig_prijs_cent === 396 && k3w.open_prijs_cent === 450, JSON.stringify(k3w));
+const spelStat = await een(`select count(*)::int as n from public.kroegen where huidig_prijs_cent = 450`);
+check('het spel telt de wachtende prijs niet mee', spelStat.n === 0, JSON.stringify(spelStat));
+check('anoniem kan de wachtende prijs lezen', (await als(null, `select open_prijs_cent from public.kroeg_kaart where id = ${KV}`)).rows?.[0]?.open_prijs_cent === 450);
+await klopt(v2.id, A, C);
+check('na bevestigen is de wijziging de nieuwe prijs', (await kaart()).huidig_prijs_cent === 450);
 
 // Zichtbaarheid en privacy
 const sv = await als(null, `select * from public.kroeg_stamgast where kroeg_id = ${KS}`);

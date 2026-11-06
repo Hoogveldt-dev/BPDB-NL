@@ -132,7 +132,8 @@ Punten worden pas uitgekeerd na bevestiging door een andere speler.
 ### 2.6 Peer-to-peer bevestiging
 
 - Elke speler heeft een **betrouwbaarheid** (0 tot 100%), los van punten. Die stijgt als je bijdragen later door anderen bevestigd worden en daalt als ze worden weerlegd.
-- Een prijs is **bevestigd** na twee onafhankelijke bronnen, of één bron met een betrouwbaarheid boven 90%.
+- Een prijs is **bevestigd** als een andere speler hem bevestigt wanneer de melder een betrouwbaarheid boven 90% heeft, en anders als twee andere spelers hem bevestigen. Het oordeel van een speler boven 90% telt dubbel. Niemand wordt bevestigd zonder dat een andere speler ernaar gekeken heeft.
+- Een melding die nog op bevestiging wacht, wordt als meest recente prijs getoond (met een ? erachter), samen met de laatst bevestigde prijs. Het spel zelf (vrijspelen, punten, ranglijst, versheid) telt alleen bevestigde prijzen.
 - **Uitschieters** (ver van de mediaan voor dat merk en volume) hebben altijd twee bevestigingen nodig.
 - Beheerders zien alleen geschillen en meldingen.
 

@@ -6,6 +6,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Anonieme spelers | `migrations/20261106090000_anonieme_spelers.sql` | Meteen meespelen zonder e-mailadres; bevestigen alleen met e-mailadres |
+| Bevestigen naar betrouwbaarheid | `migrations/20261106150000_bevestigen_naar_betrouwbaarheid.sql` | Melder boven 90%: een andere speler; anderen: twee. Geen automatische bevestiging meer. `kroeg_kaart` toont de wachtende prijs |
 | Extra bier | `migrations/20261106120000_extra_bier.sql` | Wat een kroeg naast de pils tapt (Guinness, witbier, ander merk), met of zonder prijs; geen punten |
 | Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
@@ -41,12 +42,13 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 
 | Regel | Uitwerking |
 |---|---|
-| Bevestigd | Melder plus een andere speler. Een melder met betrouwbaarheid boven 90% is direct bevestigd. |
+| Bevestigd | Een melder met betrouwbaarheid boven 90% heeft een andere speler nodig; alle andere melders hebben twee andere spelers nodig. Een oordeel van een speler boven 90% telt dubbel, dus een betrouwbare controleur is genoeg voor een gewone melder. Niemand wordt bevestigd zonder dat een andere speler ernaar gekeken heeft. |
+| Wachtende prijs | Een melding die nog op bevestiging wacht, wordt in de app als meest recente prijs getoond (met een ? erachter) naast de laatst bevestigde prijs. `kroeg_kaart` heeft daarvoor de kolommen `open_merk`, `open_volume_cl`, `open_prijs_cent`, `open_per25_cent` en `open_op`. Het spel (vrijspelen, punten, ranglijst, versheid, goedkoopste) telt alleen de bevestigde prijs. |
 | Uitschieter | Meer dan 40% van de mediaan per 25 cl (vanaf 5 prijzen in de stad): altijd twee bevestigingen van anderen. |
 | Weerlegd | Twee keer "klopt niet" (of een keer van een speler boven 90%). Een weerlegde eerste prijs zet de kroeg terug onder de mist. |
 | Punten | Vrijspelen +50, wijziging +30, bevestigen +5, klopt nog +5, oude prijs (90+ dagen) controleren +15, foto +5, ter plaatse x1,5, weerlegd -20. Punten pas na bevestiging. |
 | Betrouwbaarheid | Start op 50. Bevestigde melding +2, weerlegde melding -10, juist oordeel +1, onjuist oordeel -3. |
-| Anonieme spelers | Beginnen zonder e-mailadres en mogen prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas met een gekoppeld e-mailadres, en een anonieme melder wordt nooit direct bevestigd (ook niet boven 90%). Zo kan niemand met wegwerpaccounts zijn eigen meldingen bevestigen. Na het koppelen blijft het account met alle punten hetzelfde. |
+| Anonieme spelers | Beginnen zonder e-mailadres en mogen prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas met een gekoppeld e-mailadres, en een anonieme melder wordt nooit zonder een andere speler bevestigd. Zo kan niemand met wegwerpaccounts zijn eigen meldingen bevestigen. Na het koppelen blijft het account met alle punten hetzelfde. |
 | Stamgast | Per kroeg de speler met de meeste bevestigde bijdragen (eigen meldingen plus "klopt" op meldingen die bevestigd zijn), vanaf 2. Bij gelijkspel wie de stand het eerst bereikte. Geen punten, alleen de naam bovenaan de geschiedenis. |
 
 ## Installeren op het Supabase-project
