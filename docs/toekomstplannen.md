@@ -23,9 +23,9 @@ De betrouwbaarheid verandert sinds migratie `20261106220000_betrouwbaarheid_verw
 
 ## Meer beurs bij Bierkoers
 
-De app heeft al een lichtkrant, tickercodes, het koersverschil per kroeg, de Pilsindex, stijgers en dalers, een koerskaart en wijken als sectoren. Alles daarvan wordt in de app berekend uit `kroeg_tijdlijn` (`koersen()` in `app/app.js`). Ideeën voor later:
+De app heeft al een lichtkrant, tickercodes, het koersverschil per kroeg, de Pilsindex (vergeleken met twaalf maanden terug), langst prijsvast en dit jaar verhoogd, een koerskaart, wijken als sectoren en een trapje per rij. Alles daarvan wordt in de app berekend uit `kroeg_tijdlijn` (`koersen()` in `app/app.js`). Ideeën voor later:
 
-- **Koersalarm.** Volg een kroeg en krijg een melding als de koers daalt of als de index onder een bedrag zakt. Vraagt om pushmeldingen in de PWA en een tabel met gevolgde kroegen.
+- **Volglijst en koersalarm.** Volg kroegen (een eigen tabblad boven de lijst, naast Meest gemeld) en krijg een melding als een gevolgde kroeg de prijs verhoogt of als de index onder een bedrag zakt. Vraagt om pushmeldingen in de PWA en een tabel met gevolgde kroegen.
 - **Weekbericht "Slotkoersen".** Elke maandag een korte samenvatting: index, grootste stijger en daler, wijk van de week. Als kaart om te delen of als mail (eigen SMTP nodig).
 - **Index als view in de database.** Nu rekent de app de index uit. Met veel steden of veel geschiedenis is een view of een dagelijkse momentopname (`index_per_dag`) zuiniger, en dan kan de index ook in de lichtkrant van andere steden.
 - **Steden als beurzen.** Zodra er meer steden zijn: een overzicht van alle stadsindexen naast elkaar, met de goedkoopste stad bovenaan.

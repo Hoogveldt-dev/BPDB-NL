@@ -12,7 +12,8 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg, gepresenteerd als een b
 
 ## Belangrijke plekken
 - App: `app/app.js` (kaart, inloggen, melden, bevestigen, ranglijst, realtime), `app/styles.css`, `app/index.html`, service worker `app/sw.js`. Verhoog `CACHE` in `sw.js` als de app-schil verandert.
-- Koers (lichtkrant, tickercodes, koersverschil, Pilsindex, koerskaart, stijgers en dalers): alleen weergave, berekend in de app uit `kroeg_tijdlijn` (`koersen()`, `koersVan()`, `maakCodes()` in `app/app.js`). Duurder is rood met ▲, goedkoper groen met ▼, gezien door de klant. Het spel en de punten veranderen er niet door.
+- Koers (lichtkrant, tickercodes, koersverschil, Pilsindex, koerskaart, langst prijsvast): alleen weergave, berekend in de app uit `kroeg_tijdlijn` (`koersen()`, `koersVan()`, `maakCodes()` in `app/app.js`). Duurder is rood met ↗, goedkoper groen met ↘, gezien door de klant. Het spel en de punten veranderen er niet door.
+- Bierprijzen dalen bijna nooit en stijgen hooguit een keer per jaar. Ontwerp daarop: vergelijk met twaalf maanden terug (niet met dagen of weken), toon een prijsstap alleen als koersverschil als hij binnen twaalf maanden viel, en maak "vast sinds" het hoofdkenmerk. Levendigheid komt van controles ("klopt nog"), niet van prijsbewegingen.
 - Openbare instellingen: `app/config.js` (project-URL en publishable key). Zet hier nooit de service_role-key, secret key of het databasewachtwoord.
 - Database: `supabase/migrations/`, uitleg in `supabase/README.md`, test in `supabase/tests/database.test.mjs` (PGlite met PostGIS, bootst rollen, `auth.users`, `auth.uid()` en opslag na).
 - Kroegimport uit OpenStreetMap en wijken van het CBS: Edge Function `supabase/functions/osm-import/`.

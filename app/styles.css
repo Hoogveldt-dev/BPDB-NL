@@ -318,3 +318,18 @@ li.row:nth-child(-n+3) .rank { color: var(--accent-text); }
 .aanbod-knoppen { grid-column: 1 / -1; display: flex; gap: 6px; }
 .aanbod-knoppen:empty { display: none; }
 .mini { border: var(--hair); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+
+/* Trapje in een rij: de prijsgeschiedenis in het klein. Grijs als de prijs al een jaar vast is. */
+.trapje { width: 46px; height: 20px; flex: none; overflow: visible; }
+.trapje path { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linejoin: round; opacity: .7; }
+.trapje.op path { stroke: var(--op); opacity: 1; } .trapje.af path { stroke: var(--af); opacity: 1; }
+
+.duo .kop.gelijk { color: var(--muted); }
+.goedkoper { margin-top: 10px; border-color: color-mix(in srgb, var(--af) 40%, transparent); }
+.goedkoper .kop { font: 700 11px/1 var(--f-num); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; color: var(--af); }
+
+/* Puntensaldo: een groot getal, daaronder de beweging */
+.saldo .kop { font: 700 11px/1 var(--f-num); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.saldo .big-price { font-size: 48px; }
+.saldo .kv { margin-top: 14px; padding-top: 12px; border-top: var(--hair); }
+.saldo .kv b.plus { color: var(--af); }

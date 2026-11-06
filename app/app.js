@@ -107,7 +107,7 @@ const state = {
   tocht: null, // { soort: "nieuw" | "goedkoop", aantal, stops: [kroeg], start: [lon, lat], vanaf: "jij" | "centrum" }
   // Koers: prijsgeschiedenis uit kroeg_tijdlijn, punten per kroeg, de Pilsindex en tickercodes (zie koersen())
   koersRuw: [],
-  koers: { punten: new Map(), index: null },
+  koers: { punten: new Map(), index: null, recent: [] },
   codes: new Map(),
 };
 
@@ -192,7 +192,7 @@ function bezigMetTypen() {
 // ---------------------------------------------------------------------------
 
 const DAG = 86400000;
-const KOERS_TAAL = { op: "▲", af: "▼", gelijk: "=" };
+const KOERS_TAAL = { op: "↗", af: "↘", gelijk: "→" };
 const richting = (d) => (d > 0 ? "op" : d < 0 ? "af" : "gelijk");
 const bedrag = (cent) => (Math.abs(cent) / 100).toFixed(2).replace(".", ",");
 const procent = (x) => (Math.abs(x) * 100).toFixed(1).replace(".", ",") + "%";
@@ -260,61 +260,102 @@ function koersen() {
   const nu = Date.now(), stand = indexOp(nu);
   let index = null;
   if (stand) {
-    const maand = indexOp(nu - 30 * DAG);
-    // Verloop over het afgelopen jaar: een punt per maand, plus nu
+    // Bierprijzen gaan zelden omhoog, meestal een keer per jaar. Daarom vergelijkt de index met twaalf maanden terug.
+    const jaar = indexOp(nu - 365 * DAG);
+    // Verloop sinds de eerste bekende prijs (hooguit vijf jaar): een punt per maand, plus nu
     const eerste = Math.min(...[...punten.values()].map((p) => p[0].t));
-    const van = Math.max(eerste, nu - 365 * DAG);
+    const van = Math.max(eerste, nu - 5 * 365 * DAG);
     const reeks = [];
     for (let t = van; t < nu; t += 30 * DAG) { const i = indexOp(t); if (i) reeks.push({ t, v: i.v }); }
     reeks.push({ t: nu, v: stand.v });
-    index = { nu: stand.v, n: stand.n, maand: maand?.v ?? null, delta: maand ? stand.v - maand.v : null, pct: maand ? (stand.v - maand.v) / maand.v : null, reeks };
+    index = { nu: stand.v, n: stand.n, jaar: jaar?.v ?? null, delta: jaar ? stand.v - jaar.v : null, pct: jaar ? (stand.v - jaar.v) / jaar.v : null, reeks };
   }
   state.koers.index = index;
 }
 
-// Koers van een kroeg: laatste prijs, verschil met de vorige, jaarbereik
+// Koers van een kroeg. Een prijs blijft meestal lang gelijk, dus het belangrijkste is sinds wanneer.
+// vastSinds: sinds wanneer de prijs dit bedrag is. delta: de laatste stap ten opzichte van het vorige bedrag.
+// recent: die stap was in de afgelopen twaalf maanden; een oudere stap tonen we niet als koersverschil.
 function koersVan(id) {
   const p = state.koers.punten.get(id);
   if (!p?.length) return null;
-  const laatst = p[p.length - 1], vorig = p.length > 1 ? p[p.length - 2] : null;
-  const jaar = p.filter((x) => x.t > Date.now() - 365 * DAG).map((x) => x.v);
-  if (!jaar.length) jaar.push(laatst.v);
+  const nu = p[p.length - 1].v;
+  let i = p.length - 1;
+  while (i > 0 && p[i - 1].v === nu) i--;
+  const vorig = i > 0 ? p[i - 1].v : null;
+  const jaren = (Date.now() - p[0].t) / (365 * DAG);
   return {
-    nu: laatst.v, sinds: laatst.t, vorig: vorig?.v ?? null,
-    delta: vorig ? laatst.v - vorig.v : null, pct: vorig ? (laatst.v - vorig.v) / vorig.v : null,
-    laag: Math.min(...jaar), hoog: Math.max(...jaar), aantal: p.length,
+    nu, vastSinds: p[i].t, vorig, eerst: p[0],
+    delta: vorig != null ? nu - vorig : null, pct: vorig != null ? (nu - vorig) / vorig : null,
+    recent: vorig != null && p[i].t > Date.now() - 365 * DAG,
+    // Gemiddelde stijging per jaar sinds de eerste bekende prijs, pas na een jaar geschiedenis
+    perJaar: jaren >= 1 && p[0].v !== nu ? (nu / p[0].v) ** (1 / jaren) - 1 : jaren >= 1 ? 0 : null,
+    stappen: p.filter((x, j) => j > 0 && x.v !== p[j - 1].v).length,
   };
 }
 
-// Kroegen met een koersverschil, nieuwste wijziging eerst
+const maandJaar = (t) => new Date(t).toLocaleDateString("nl-NL", { month: "short", year: "numeric" }).replace(".", "");
+const maandKort = (t) => new Date(t).toLocaleDateString("nl-NL", { month: "short" }).replace(".", "");
+
+// Kroegen met een prijsstap in de afgelopen twaalf maanden, nieuwste eerst
 function bewegers() {
-  return state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c?.delta).sort((a, b) => b.c.sinds - a.c.sinds);
+  return state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c?.recent).sort((a, b) => b.c.vastSinds - a.c.vastSinds);
+}
+
+// Kroegen waarvan de prijs het langst gelijk is gebleven
+function prijsvast() {
+  return state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c).sort((a, b) => a.c.vastSinds - b.c.vastSinds);
+}
+
+// Klein trapje in een rij: alleen als de kroeg echt een prijsgeschiedenis heeft. Drie jaar breed, voor elke rij gelijk.
+function trapjeHtml(id) {
+  const p = state.koers.punten.get(id), c = koersVan(id);
+  if (!p || !c?.stappen) return "";
+  const W = 46, H = 20, nu = Date.now(), van = nu - 3 * 365 * DAG;
+  const vs = p.map((x) => x.v), lo = Math.min(...vs), hi = Math.max(...vs);
+  const X = (t) => ((Math.max(t, van) - van) / (nu - van)) * W, Y = (v) => 3 + (H - 6) * (1 - (v - lo) / (hi - lo || 1));
+  let d = `M${X(p[0].t)},${Y(p[0].v)}`;
+  for (const x of p.slice(1)) d += ` H${X(x.t)} V${Y(x.v)}`;
+  d += ` H${W}`;
+  return `<svg class="trapje ${c.recent ? richting(c.delta) : ""}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/></svg>`;
 }
 
 async function laadKoers() {
-  // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee
-  const { data, error } = await sb.from("kroeg_tijdlijn")
-    .select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
-    .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(5000);
+  // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee.
+  // Daarnaast de laatste activiteit voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen.
+  const [{ data, error }, { data: recent }] = await Promise.all([
+    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
+      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(5000),
+    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("status", "bevestigd").order("op", { ascending: false }).limit(20),
+  ]);
   if (error) { console.error(error); return; }
   state.koersRuw = data ?? [];
+  state.koers.recent = recent ?? [];
   koersen();
   lichtkrant();
   hud();
 }
 
-// Lichtkrant bovenin: de Pilsindex en de laatste koersen. Tik op een koers om de kroeg te openen.
+// Lichtkrant bovenin: de Pilsindex en wat er net gebeurde. Tik op een koers om de kroeg te openen.
 function lichtkrant() {
   const idx = state.koers.index;
   const s = state.stad;
   const items = [
-    `<span class="tk idx"><b>PILSINDEX</b>${idx ? `${euro(idx.nu)} ${deltaHtml(idx.delta, { pct: idx.pct })}` : `<span class="zacht">nog geen koers</span>`}</span>`,
+    `<span class="tk idx"><b>PILSINDEX</b>${idx ? `${euro(idx.nu)} ${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct })} <span class="zacht">12 mnd</span>` : ""}` : `<span class="zacht">nog geen koers</span>`}</span>`,
   ];
-  const recent = bewegers().slice(0, 16);
-  const nieuw = state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c && x.c.delta == null).sort((a, b) => b.c.sinds - a.c.sinds).slice(0, 8);
-  for (const { k, c } of [...recent, ...nieuw].sort((a, b) => b.c.sinds - a.c.sinds)) {
-    items.push(`<button class="tk" data-kroeg="${k.id}" aria-label="${esc(k.naam)} ${euro(c.nu)}"><b>${codeVan(k.id)}</b>${euro(c.nu)} ${c.delta != null ? deltaHtml(c.delta) : `<span class="nieuw">NIEUW</span>`}</button>`);
+  const gezien = new Set();
+  for (const g of state.koers.recent ?? []) {
+    const k = state.kroegen.find((x) => x.id === g.kroeg_id), c = koersVan(g.kroeg_id);
+    if (!k || !c || gezien.has(k.id)) continue;
+    gezien.add(k.id);
+    const wat = g.soort === "check" ? `<span class="zacht">✓ klopt nog</span>`
+      : g.soort === "eerst" ? `<span class="nieuw">NIEUW</span>`
+      : c.recent ? deltaHtml(c.delta) : "";
+    items.push(`<button class="tk" data-kroeg="${k.id}" aria-label="${esc(k.naam)} ${euro(c.nu)}"><b>${codeVan(k.id)}</b>${euro(c.nu)} ${wat}</button>`);
   }
+  // Prijzen die al lang gelijk zijn, verdienen ook een plek
+  const vast = prijsvast().filter((x) => Date.now() - x.c.vastSinds > 365 * DAG && !gezien.has(x.k.id)).slice(0, 3);
+  for (const { k, c } of vast) items.push(`<button class="tk" data-kroeg="${k.id}"><b>${codeVan(k.id)}</b>${euro(c.nu)} <span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span></button>`);
   if (s) items.push(`<span class="tk"><b>${esc(STAD.naam.toUpperCase())}</b>${s.vrijgespeeld}/${s.kroegen} <span class="zacht">vrijgespeeld</span></span>`);
   if (s && s.kroegen - s.vrijgespeeld > 0) items.push(`<span class="tk"><span class="zacht">${s.kroegen - s.vrijgespeeld} kroegen zonder koers · speel ze vrij</span></span>`);
   if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
@@ -568,7 +609,7 @@ async function laadMijn() {
   hud();
 }
 
-// Beursbord linksboven: de Pilsindex met het verschil over 30 dagen, en hoeveel van de stad vrij is.
+// Beursbord linksboven: de Pilsindex met het verschil met twaalf maanden terug, en hoeveel van de stad vrij is.
 // Op Mijn kaart: jouw index (mediaan van de kroegen waar je was) en hoeveel kroegen je hebt bezocht.
 function hud() {
   const idx = state.koers.index;
@@ -647,7 +688,7 @@ function rowHtml(k) {
   return `<li><button class="row" data-kroeg="${k.id}">
     <span class="dot ${v}"></span>
     <span class="row-main"><span class="row-title">${codeHtml(k.id)}${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
-    ${prijsKolom(k)}
+    ${state.soort ? "" : trapjeHtml(k.id)}${prijsKolom(k)}
   </button></li>`;
 }
 
@@ -658,10 +699,11 @@ function prijsKolom(k) {
   }
   const t = toonPrijs(k);
   if (!t) return "";
-  // Onder een bevestigde prijs: het koersverschil met de vorige prijs
+  // Onder een bevestigde prijs: de stap van het afgelopen jaar, of sinds wanneer de prijs al gelijk is
   const c = !t.onbevestigd ? koersVan(k.id) : null;
-  const onder = c?.delta != null
-    ? `<small class="delta ${richting(c.delta)}">${KOERS_TAAL[richting(c.delta)]} ${bedrag(c.delta)}</small>`
+  const onder = c?.recent
+    ? `<small class="delta ${richting(c.delta)}">${KOERS_TAAL[richting(c.delta)]} ${bedrag(c.delta)} · ${maandKort(c.vastSinds)}</small>`
+    : c && Date.now() - c.vastSinds > 365 * DAG ? `<small>vast sinds ${new Date(c.vastSinds).getFullYear()}</small>`
     : `<small>${vanMenukaart(k) ? "menukaart" : t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small>`;
   return `<span class="price">${toonPrijsTekst(k)}${onder}</span>`;
 }
@@ -673,8 +715,8 @@ function lijstView() {
     { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
     { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
     { id: "goedkoop", naam: "Goedkoopst", f: (k) => k.per25_cent },
-    { id: "dalers", naam: `Dalers <span class="delta af">▼</span>`, f: (k) => koersVan(k.id)?.delta < 0 },
-    { id: "stijgers", naam: `Stijgers <span class="delta op">▲</span>`, f: (k) => koersVan(k.id)?.delta > 0 },
+    { id: "prijsvast", naam: "Langst prijsvast", f: (k) => koersVan(k.id) },
+    { id: "verhoogd", naam: "Dit jaar verhoogd", f: (k) => koersVan(k.id)?.recent },
     ...(state.sessie ? [{ id: "nieuw", naam: "Nog niet bezocht", f: (k) => !state.mijn.has(k.id) }] : []),
   ];
   const f = F.find((x) => x.id === state.filter) ?? F[0];
@@ -685,13 +727,14 @@ function lijstView() {
     .filter((k) => state.soort && state.filter === "goedkoop" ? true : f.f(k))
     .filter((k) => !q || k.naam.toLowerCase().includes(q) || (k.wijk ?? "").toLowerCase().includes(q));
   if (state.filter === "goedkoop") rows.sort((a, b) => prijsVoor(a) - prijsVoor(b));
-  else if (state.filter === "dalers" || state.filter === "stijgers") rows.sort((a, b) => Math.abs(koersVan(b.id).delta) - Math.abs(koersVan(a.id).delta));
+  else if (state.filter === "prijsvast") rows.sort((a, b) => koersVan(a.id).vastSinds - koersVan(b.id).vastSinds);
+  else if (state.filter === "verhoogd") rows.sort((a, b) => koersVan(b.id).vastSinds - koersVan(a.id).vastSinds);
   else if (state.pos) rows.sort((a, b) => afstand(state.pos, [a.lon, a.lat]) - afstand(state.pos, [b.lon, b.lat]));
   const leeg = state.kroegen.length === 0
     ? `<div class="empty">Nog geen kroegen geladen.<br><span class="small">Een beheerder importeert ze via het tabblad Ik.</span></div>`
     : state.soort ? `<div class="empty">Nog geen kroeg met ${esc(soortNaam(state.soort))} gemeld.<br><span class="small">Weet je er een? Voeg het toe bij de kroeg onder "Ook op de tap".</span></div>`
-    : state.filter === "dalers" && !q ? `<div class="empty">Nog geen kroeg goedkoper geworden.<br><span class="small">Zie je een lagere prijs? Meld hem bij de kroeg.</span></div>`
-    : state.filter === "stijgers" && !q ? `<div class="empty">Nog geen kroeg duurder geworden.</div>`
+    : state.filter === "verhoogd" && !q ? `<div class="empty">Dit jaar heeft nog geen kroeg de prijs verhoogd.<br><span class="small">Of niemand heeft het nog gemeld.</span></div>`
+    : state.filter === "prijsvast" && !q ? `<div class="empty">Nog geen koersen.</div>`
     : `<div class="empty">Niets gevonden.</div>`;
   // Alleen soorten die ergens getapt worden
   const soorten = state.biersoorten.filter((b) => state.aanbod.some((a) => a.soort === b.code) || b.code === state.soort);
@@ -754,7 +797,7 @@ function detailView() {
     ${incheckHtml(k)}
     <div id="tijden"></div>
     ${aanbodBlok(k)}
-    <h3>Koers per vaasje <span class="muted">afgelopen jaar</span></h3>
+    <h3>Koersverloop <span class="muted">per vaasje</span></h3>
     <div id="spark"></div>
     <h3>Geschiedenis</h3>
     <div id="stamgast"></div>
@@ -1086,14 +1129,16 @@ function grafiekSvg(pts, { id = "g", lijn = null, kleur = "var(--accent)", tekst
 }
 
 function spark(events) {
-  const van = Date.now() - 365 * DAG;
+  // Prijzen veranderen zelden; laat daarom de hele bekende geschiedenis zien (minstens een jaar, hooguit vijf)
+  const oudste = events.length ? new Date(events[events.length - 1].op).getTime() : Date.now();
+  const van = Math.max(Date.now() - 5 * 365 * DAG, Math.min(Date.now() - 365 * DAG, oudste));
   // Bevestigde prijzen, plus prijzen van menukaarten: die laten zien wat het op die datum kostte
   const alle = events.filter((g) => (g.status === "bevestigd" || g.bron === "menukaart") && g.soort !== "check")
     .map((g) => ({ t: new Date(g.op).getTime(), v: (g.prijs_cent * 25) / g.volume_cl })).reverse();
   const binnen = alle.filter((p) => p.t > van);
   const voor = alle.filter((p) => p.t <= van).pop();
   const pts = [...(voor ? [{ t: van, v: voor.v }] : []), ...binnen];
-  if (!pts.length) return `<div class="muted small">Nog geen koers dit jaar.</div>`;
+  if (!pts.length) return `<div class="muted small">Nog geen koers.</div>`;
   pts.push({ t: Date.now(), v: pts[pts.length - 1].v });
   const lijn = (state.koers.index?.reeks ?? []).filter((p) => p.t >= pts[0].t);
   return grafiekSvg(pts, { id: "gk", lijn, lijnLabel: `index ${state.koers.index ? euro(state.koers.index.nu) : ""}` });
@@ -1114,16 +1159,20 @@ function positieHtml(k) {
     ${hi > lo ? `<div class="schaal" role="img" aria-label="${euro(c.nu)} op een schaal van ${euro(lo)} tot ${euro(hi)}, index ${euro(idx.nu)}">
       <span class="idx" style="left:${pos(idx.nu)}%"></span><span class="hier" style="left:${pos(c.nu)}%"></span></div>
     <div class="schaal-as"><span>${euro(lo)}</span><span>index ${euro(idx.nu)}</span><span>${euro(hi)}</span></div>` : ""}
-    <div class="kv"><div>Jaarlaag<b>${euro(c.laag)}</b></div><div>Jaarhoog<b>${euro(c.hoog)}</b></div><div>Koersen<b>${c.aantal}</b></div></div>
+    <div class="kv"><div>Vast sinds<b>${maandJaar(c.vastSinds)}</b></div><div>Vorige prijs<b>${c.vorig != null ? euro(c.vorig) : "onbekend"}</b></div>
+      <div>Per jaar<b>${c.perJaar == null ? "te kort" : c.perJaar === 0 ? "gelijk" : `${c.perJaar > 0 ? "+" : "−"}${procent(c.perJaar)}`}</b></div></div>
   </div>`;
 }
 
-// Verschil met de vorige koers, naast de grote prijs
+// Naast de grote prijs: de stap van het afgelopen jaar, of hoe lang de prijs al gelijk is
 function koersDelta(k) {
   const c = koersVan(k.id);
-  if (c?.delta == null) return "";
-  return `<div style="text-align:right">${deltaHtml(c.delta, { pil: true })}
-    <div class="small muted" style="margin-top:4px">${c.pct ? `${c.delta > 0 ? "+" : "−"}${procent(c.pct)} ` : ""}per vaasje</div></div>`;
+  if (!c) return "";
+  if (c.recent) return `<div style="text-align:right">${deltaHtml(c.delta, { pil: true })}
+    <div class="small muted" style="margin-top:4px">${c.delta > 0 ? "+" : "−"}${procent(c.pct)} in ${maandJaar(c.vastSinds)}</div></div>`;
+  const maanden = Math.floor((Date.now() - c.vastSinds) / (30.4 * DAG));
+  return maanden >= 2 ? `<div style="text-align:right"><span class="delta pil gelijk">→ vast</span>
+    <div class="small muted" style="margin-top:4px">al ${maanden >= 24 ? `${Math.floor(maanden / 12)} jaar` : `${maanden} maanden`}</div></div>` : "";
 }
 
 function formView() {
@@ -1162,23 +1211,24 @@ async function beursView() {
   const versPct = s.vrijgespeeld ? Math.round((s.vers / s.vrijgespeeld) * 100) : 0;
   const idx = state.koers.index;
 
-  // Stijgers en dalers van het afgelopen jaar; zijn die er nog niet, dan de laagste en hoogste koersen
-  const jaar = bewegers().filter((x) => x.c.sinds > Date.now() - 365 * DAG);
-  const dalers = jaar.filter((x) => x.c.delta < 0).sort((a, b) => a.c.delta - b.c.delta).slice(0, 3);
-  const stijgers = jaar.filter((x) => x.c.delta > 0).sort((a, b) => b.c.delta - a.c.delta).slice(0, 3);
+  // Bierprijzen dalen bijna nooit en stijgen hooguit een keer per jaar. Daarom geen stijgers en dalers,
+  // maar wie dit jaar verhoogde en wie het langst prijsvast is. Goedkoper worden is zeldzaam en krijgt een eigen plek.
+  const jaar = bewegers();
+  const verhoogd = jaar.filter((x) => x.c.delta > 0).slice(0, 3);
+  const goedkoper = jaar.filter((x) => x.c.delta < 0);
+  const vast = prijsvast().slice(0, 3);
   const metKoers = state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c).sort((a, b) => a.c.nu - b.c.nu);
-  const mover = ({ k, c }, metDelta) => `<button class="mover" data-kroeg="${k.id}">
+  const mover = ({ k, c }, onder, rechts = "") => `<button class="mover" data-kroeg="${k.id}">
       <span class="n">${esc(k.naam)}</span><span class="p">${euro(c.nu)}</span>
-      <span class="w">${codeVan(k.id)}${metDelta ? ` · ${new Date(c.sinds).toLocaleDateString("nl-NL", { day: "numeric", month: "short" }).replace(".", "")}` : ""}</span>${metDelta ? deltaHtml(c.delta) : ""}</button>`;
-  const kolom = (kop, soort, lijst, metDelta, leeg) => `<div class="card"><div class="kop ${soort}">${kop}</div>
-      ${lijst.length ? lijst.map((x) => mover(x, metDelta)).join("") : `<div class="small muted" style="padding:8px 0">${leeg}</div>`}</div>`;
-  const duo = dalers.length || stijgers.length
-    ? `<h3>Stijgers en dalers <span class="muted">afgelopen jaar</span></h3>
-      <div class="duo">${kolom("▼ Dalers", "af", dalers, true, "Nog niemand goedkoper")}${kolom("▲ Stijgers", "op", stijgers, true, "Nog niemand duurder")}</div>`
-    : metKoers.length > 1
-      ? `<h3>Laagste en hoogste koers</h3>
-      <div class="duo">${kolom("Laagst", "af", metKoers.slice(0, 3), false, "")}${kolom("Hoogst", "op", metKoers.slice(-3).reverse(), false, "")}</div>`
-      : "";
+      <span class="w">${codeVan(k.id)}${onder ? ` · ${onder}` : ""}</span>${rechts}</button>`;
+  const kolom = (kop, soort, rijen, leeg) => `<div class="card"><div class="kop ${soort}">${kop}</div>
+      ${rijen.length ? rijen.join("") : `<div class="small muted" style="padding:8px 0">${leeg}</div>`}</div>`;
+  const duo = metKoers.length
+    ? `<h3>Prijsbewegingen <span class="muted">12 maanden</span></h3>
+      <div class="duo">${kolom("→ Langst vast", "gelijk", vast.map((x) => mover(x, `sinds ${maandJaar(x.c.vastSinds)}`)), "")}${kolom("↗ Verhoogd", "op", verhoogd.map((x) => mover(x, maandKort(x.c.vastSinds), deltaHtml(x.c.delta))), "Dit jaar nog niemand")}</div>
+      ${goedkoper.length ? `<div class="card goedkoper"><div class="kop af">↘ Goedkoper geworden</div><div class="small muted">Dat gebeurt bijna nooit. Proost op deze kroegen.</div>
+        ${goedkoper.map((x) => mover(x, maandKort(x.c.vastSinds), deltaHtml(x.c.delta))).join("")}</div>` : ""}`
+    : "";
 
   // Wijken als sectoren: de mediaan per wijk naast de Pilsindex
   const sector = (w) => {
@@ -1201,13 +1251,13 @@ async function beursView() {
   body.innerHTML = `
     <div class="indexkaart">
       <div class="kop">Pilsindex ${esc(STAD.naam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
-      ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">30 dagen</span>` : ""}</div>
-        <div class="uitleg">Wat een vaasje pils in ${esc(STAD.naam)} kost: de middelste van de laatst bekende prijzen.</div>
+      ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">in 12 maanden</span>` : ""}</div>
+        <div class="uitleg">Wat een vaasje pils in ${esc(STAD.naam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
         ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", tekst: "var(--krant-fg)", as: "var(--krant-muted)", lijnLabel: "" })}</div>` : ""}`
       : `<div class="stand"><span class="big-price">€ ?</span></div>
         <div class="uitleg">Nog geen koers. Speel de eerste kroeg vrij en zet de Pilsindex op het bord.</div>`}
     </div>
-    <div class="small muted">▲ duurder · ▼ goedkoper. Rood en groen zoals jij het als klant voelt.</div>
+    <div class="small muted">↗ duurder · ↘ goedkoper · → vast. Rood en groen zoals jij het als klant voelt.</div>
     ${duo}
     <h3>Samen vrijspelen <span class="muted">${s.vrijgespeeld}/${s.kroegen}</span></h3>
     <div class="card ring-big">
@@ -1345,13 +1395,15 @@ function ikView() {
       ${aanbiederKnoppen()}`}
     </div>`;
   return `<h2>${esc(p?.naam ?? "")}</h2>
-    <div class="card">
-      <div style="display:flex;gap:16px">
-        <div><div class="big-price">${p?.altijd ?? 0}</div><div class="muted small">punten</div></div>
-        <div><div class="big-price">${p?.ontdekt ?? 0}</div><div class="muted small">ontdekt</div></div>
-        <div><div class="big-price">${Math.round(p?.betrouwbaarheid ?? 50)}%</div><div class="muted small">betrouwbaar</div></div>
+    <div class="card saldo">
+      <div class="kop">Puntensaldo</div>
+      <div class="big-price">${(p?.altijd ?? 0).toLocaleString("nl-NL")}</div>
+      <div class="kv">
+        <div>Deze week<b class="${p?.week ? "plus" : ""}">${p?.week ? `↗ +${p.week}` : "0"}</b></div>
+        <div>Deze maand<b class="${p?.maand ? "plus" : ""}">${p?.maand ? `+${p.maand}` : "0"}</b></div>
+        <div>Betrouwbaar<b>${Math.round(p?.betrouwbaarheid ?? 50)}%</b></div>
       </div>
-      <div class="small muted" style="margin-top:8px">Deze week ${p?.week ?? 0} punten, deze maand ${p?.maand ?? 0}.</div>
+      <div class="small muted" style="margin-top:10px">${p?.ontdekt ?? 0} ${(p?.ontdekt ?? 0) === 1 ? "kroeg" : "kroegen"} ontdekt. Punten krijg je voor melden en controleren, nooit voor drinken.</div>
     </div>
     ${mijnKroegenHtml()}
     ${koppelen}
