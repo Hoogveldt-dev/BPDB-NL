@@ -195,9 +195,9 @@ const k1b = await een(`select huidig_prijs_cent, huidig_merk from public.kroegen
 check('bevestigde prijs staat op de kroeg', k1b.huidig_prijs_cent === 320 && k1b.huidig_merk === 'Heineken', JSON.stringify(k1b));
 const pA = await een(`select altijd, betrouwbaarheid::float as b from public.ranglijst where id = '${A}'`);
 check('vrijspelen ter plaatse: 50 x 1,5 = 75 punten', pA.altijd === 75, JSON.stringify(pA));
-check('betrouwbaarheid melder +2', pA.b === 52, JSON.stringify(pA));
+check('bevestigde melding: +10% van wat je mist tot 100 (50 naar 55)', pA.b === 55, JSON.stringify(pA));
 const pB = await een(`select altijd, betrouwbaarheid::float as b from public.ranglijst where id = '${B}'`);
-check('bevestigen: 5 punten en betrouwbaarheid +1', pB.altijd === 5 && pB.b === 51, JSON.stringify(pB));
+check('bevestigen: 5 punten en +3% van wat je mist (50 naar 51,5)', pB.altijd === 5 && pB.b === 51.5, JSON.stringify(pB));
 
 // Prijswijziging met foto in de eigen map
 const m2 = await als(B, `select * from public.meld_prijs(${K1}, 'Heineken', 25, 340, null, null, '${A}/lijst.jpg')`);
@@ -226,7 +226,7 @@ check('twee keer "klopt niet": weerlegd', r18.rows?.[0]?.s === 'weerlegd', JSON.
 const k2 = await een(`select ontdekker_id from public.kroegen where id = ${K2}`);
 check('weerlegde eerste prijs: kroeg weer onder de mist', k2.ontdekker_id === null, JSON.stringify(k2));
 const pE = await een(`select altijd, betrouwbaarheid::float as b from public.ranglijst where id = '${E}'`);
-check('weerlegd: -20 punten en betrouwbaarheid -10', pE.altijd === -20 && pE.b === 40, JSON.stringify(pE));
+check('weerlegd: -20 punten en -20% van je score (50 naar 40)', pE.altijd === -20 && pE.b === 40, JSON.stringify(pE));
 
 // ---------------------------------------------------------------------------
 // Klopt nog
@@ -480,6 +480,49 @@ check('stamgast is zonder login te lezen', sv.rows?.length === 1, JSON.stringify
 check('overzicht toont geen e-mail of locatie', !Object.keys(sv.rows?.[0] ?? {}).some((k) => /mail|lat|lon|locatie/.test(k)), Object.keys(sv.rows?.[0] ?? {}).join());
 const sw = await als(A, `update public.kroeg_bijdragers set bijdragen = 99 where kroeg_id = ${KS}`);
 check('bijdragen via het overzicht aanpassen kan niet', !!sw.fout, JSON.stringify(sw));
+
+// ---------------------------------------------------------------------------
+// Betrouwbaarheid naar verwachting (voorlopig)
+// ---------------------------------------------------------------------------
+
+const BT = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+await db.exec(`insert into auth.users (id, email, raw_user_meta_data) values ('${BT}', 'test@example.nl', '{"naam": "Toets"}')`);
+const zet = (v) => db.exec(`update public.profielen set betrouwbaarheid = ${v} where id = '${BT}'`);
+const na = async (soort, goed) => {
+  await db.query(`select private.betrouwbaarheid_na($1, $2, $3)`, [BT, soort, goed]);
+  return Number((await een(`select betrouwbaarheid from public.profielen where id = '${BT}'`)).betrouwbaarheid);
+};
+await zet(95);
+check('fout boven 90%: -20% (95 naar 76)', (await na('melding', false)) === 76);
+await zet(30);
+check('fout van een beginner kost minder (30 naar 24)', (await na('melding', false)) === 24);
+await zet(30);
+check('goede melding van een beginner levert meer op (30 naar 37)', (await na('melding', true)) === 37);
+await zet(50);
+check('onjuist oordeel: -6% (50 naar 47)', (await na('oordeel', false)) === 47);
+await zet(50);
+let stappen = 0;
+while ((await na('melding', true)) < 90 && stappen < 100) stappen++;
+const top = Number((await een(`select betrouwbaarheid from public.profielen where id = '${BT}'`)).betrouwbaarheid);
+check('zonder ervaring blijft de score op 90 staan', top === 90 && (await na('melding', true)) === 90, `${top} na ${stappen + 1} stappen`);
+check('van 50 naar 90 kost ongeveer 16 goede meldingen', stappen + 1 >= 14 && stappen + 1 <= 17, String(stappen + 1));
+await zet(95);
+check('bestaande score boven 90 zakt niet door de drempel', (await na('melding', true)) === 95);
+check('niet ervaren: te weinig bevestigde meldingen', (await een(`select private.ervaren_melder('${BT}') as e`)).e === false);
+const r90 = await als(BT, `select private.betrouwbaarheid_na('${BT}', 'melding', true)`);
+await db.exec(`
+  with g as (
+    insert into public.gebeurtenissen (kroeg_id, soort, merk, volume_cl, prijs_cent, door_id, status, afgerond_op)
+    select ${K2}, 'wijziging', 'Heineken', 25, 300 + n, '${BT}', 'bevestigd', now() from generate_series(1, 20) n
+    returning id
+  )
+  insert into public.bevestigingen (gebeurtenis_id, door_id, oordeel)
+  select g.id, u.id, 'klopt' from g cross join (values ('${A}'::uuid), ('${B}'::uuid), ('${C}'::uuid), ('${D}'::uuid), ('${E}'::uuid)) u(id);
+`);
+check('ervaren: 20 bevestigde meldingen door 5 anderen', (await een(`select private.ervaren_melder('${BT}') as e`)).e === true);
+await zet(90);
+check('ervaren speler komt wel boven 90 (90 naar 91)', (await na('melding', true)) === 91);
+check('speler kan zijn eigen betrouwbaarheid niet ophogen', /permission denied/.test(r90.fout ?? ''), JSON.stringify(r90));
 
 // ---------------------------------------------------------------------------
 // Inchecken en Mijn kroegen
