@@ -588,6 +588,50 @@ check('spelers kunnen niet direct in meldingen schrijven', !!(await als(A, `inse
 check('anoniem zonder login kan niets melden', !!(await als(null, `select * from public.meld_kroeg(${KM}, 'gesloten')`)).fout);
 
 // ---------------------------------------------------------------------------
+// Prijzen van menukaarten (eerste stuk geschiedenis, zonder melder)
+// ---------------------------------------------------------------------------
+
+await db.query(`select private.importeer_kroegen($1, 'Menustad')`, [JSON.stringify([
+  { osm_id: 'node/951', naam: 'Stadscafé Jan', soort: 'pub', lat: 52.1, lon: 5.1 },
+  { osm_id: 'node/952', naam: 'Café Twee', soort: 'pub', lat: 52.11, lon: 5.11 },
+  { osm_id: 'node/953', naam: 'Café Drie', soort: 'pub', lat: 52.12, lon: 5.12 },
+])]);
+const MK = Object.fromEntries((await db.query(`select osm_id, id from public.kroegen where gemeente = 'Menustad'`)).rows.map((r) => [r.osm_id, r.id]));
+const menuImport = async (rijen, wie = 'service_role') => {
+  await db.exec(`set role ${wie}`);
+  try { return (await db.query(`select public.importeer_menuprijzen($1) as r`, [JSON.stringify(rijen)])).rows[0].r; }
+  catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
+};
+const mi = await menuImport([
+  { kroeg_id: MK['node/951'], merk: 'Hertog Jan', volume_cl: 25, prijs_cent: 390, datum: '2025-12-20', bron_omschrijving: 'foto op Google Maps' },
+  { kroeg_id: MK['node/952'], merk: 'Heineken', volume_cl: 25, prijs_cent: 350, datum: '2025-11-01', bron_omschrijving: 'website' },
+  { kroeg_id: MK['node/953'], merk: 'Heineken', volume_cl: 25, prijs_cent: 350, datum: '2999-01-01' },
+]);
+check('menukaartprijzen importeren; een datum in de toekomst wordt overgeslagen', mi.toegevoegd === 2 && mi.overgeslagen === 1, JSON.stringify(mi));
+check('spelers mogen geen menukaartprijzen importeren', !!(await menuImport([], 'authenticated')).fout);
+check('nog een menukaartprijs terwijl er een openstaat wordt overgeslagen', (await menuImport([{ kroeg_id: MK['node/951'], merk: 'Heineken', volume_cl: 25, prijs_cent: 300, datum: '2025-10-01' }])).overgeslagen === 1);
+const mkKaart = (await als(null, `select * from public.kroeg_kaart where id = ${MK['node/951']}`)).rows[0];
+check('menukaartprijs staat op de kaart, de kroeg blijft op slot', mkKaart.open_bron === 'menukaart' && mkKaart.open_prijs_cent === 390 && mkKaart.versheid === 'locked' && mkKaart.ontdekker_id === null, JSON.stringify(mkKaart));
+const mkTijd = (await als(null, `select * from public.kroeg_tijdlijn where kroeg_id = ${MK['node/951']}`)).rows;
+check('menukaartprijs staat in de geschiedenis met de datum van de kaart en zonder melder', mkTijd.length === 1 && mkTijd[0].bron === 'menukaart' && mkTijd[0].door_id === null && new Date(mkTijd[0].op).toISOString().startsWith('2025-12-20'), JSON.stringify(mkTijd));
+const mkG = mkTijd[0].id;
+check('over een menukaartprijs kun je niet oordelen', !!(await als(B, `select public.beoordeel(${mkG}, 'klopt')`)).fout);
+check('dezelfde prijs zonder locatie kan niet', !!(await als(A, `select * from public.meld_prijs(${MK['node/951']}, 'Hertog Jan', 25, 390)`)).fout);
+check('dezelfde prijs van ver weg kan niet', !!(await als(A, `select * from public.meld_prijs(${MK['node/951']}, 'Hertog Jan', 25, 390, 52.11, 5.1)`)).fout);
+const mkM = (await als(A, `select * from public.meld_prijs(${MK['node/951']}, 'Hertog Jan', 25, 390, 52.1002, 5.1)`)).rows?.[0];
+check('ter plaatse bevestigen maakt de speler indiener; daarna wacht het op een ander', mkM?.door_id === A && mkM?.status === 'wacht' && mkM?.soort === 'eerst' && mkM?.ter_plaatse === true, JSON.stringify(mkM));
+const mkNa = await een(`select (select status from public.gebeurtenissen where id = ${mkG}) menu, ontdekker_id, huidig_prijs_cent from public.kroegen where id = ${MK['node/951']}`);
+check('de menukaartprijs is daarmee afgerond; de speler is ontdekker, nog zonder bevestigde prijs', mkNa.menu === 'bevestigd' && mkNa.ontdekker_id === A && mkNa.huidig_prijs_cent === null, JSON.stringify(mkNa));
+check('nog geen punten voor de indiener', (await een(`select count(*)::int n from public.punten where gebeurtenis_id = ${mkM.id}`)).n === 0);
+const mkS = await klopt(mkM.id, B, C);
+const mkP = await een(`select punten from public.punten where gebeurtenis_id = ${mkM.id} and gebruiker_id = '${A}' and reden = 'vrijgespeeld'`);
+check('na bevestiging door anderen: prijs staat erop, indiener krijgt de vrijspeelpunten (ter plaatse)', mkS === 'bevestigd' && mkP?.punten === 75 && (await een(`select huidig_prijs_cent from public.kroegen where id = ${MK['node/951']}`)).huidig_prijs_cent === 390, JSON.stringify({ mkS, mkP }));
+const mkAnders = (await als(B, `select * from public.meld_prijs(${MK['node/952']}, 'Heineken', 25, 375)`)).rows?.[0];
+check('een andere prijs melden kan van overal', mkAnders?.status === 'wacht' && mkAnders?.door_id === B, JSON.stringify(mkAnders));
+check('de menukaartprijs is dan achterhaald', (await een(`select status from public.gebeurtenissen where kroeg_id = ${MK['node/952']} and bron = 'menukaart'`)).status === 'weerlegd');
+check('een menukaartprijs heeft nooit een melder', !!(await db.query(`update public.gebeurtenissen set door_id = '${A}' where bron = 'menukaart'`).then(() => null, (e) => e.message)));
+
+// ---------------------------------------------------------------------------
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);
