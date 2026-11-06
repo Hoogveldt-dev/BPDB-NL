@@ -487,12 +487,18 @@ check('bijdragen via het overzicht aanpassen kan niet', !!sw.fout, JSON.stringif
 // ---------------------------------------------------------------------------
 
 const kern = await een(`select private.kroegnaam_kern('Café De Kroeg🍺') a, private.kroegnaam_kern('De Kroeg') b, private.kroegnaam_kern('Eetcafé Daen') c`);
-check('naamkern laat café, bar en emoji weg', kern.a === 'de kroeg' && kern.b === 'de kroeg' && kern.c === 'daen', JSON.stringify(kern));
+check('naamkern laat café, bar, lidwoorden en emoji weg', kern.a === 'kroeg' && kern.b === 'kroeg' && kern.c === 'daen', JSON.stringify(kern));
+const kernPlaats = await een(`select private.kroegnaam_kern('De Bieb Nijmegen', 'Nijmegen') a, private.kroegnaam_kern('Le Café') b`);
+check('naamkern laat de plaatsnaam weg', kernPlaats.a === 'bieb', JSON.stringify(kernPlaats));
+check('blijft er niets over, dan de hele naam', kernPlaats.b === 'le café', JSON.stringify(kernPlaats));
 
 await db.query(`select private.importeer_kroegen($1, 'Googlestad')`, [JSON.stringify([
   { osm_id: 'node/901', naam: 'De Kroeg', soort: 'pub', lat: 51.84785, lon: 5.86504 },
   { osm_id: 'node/902', naam: 'Samson', soort: 'pub', lat: 51.8467, lon: 5.86216 },
   { osm_id: 'node/903', naam: 'Heel Ander Café', soort: 'pub', lat: 51.84, lon: 5.86 },
+  { osm_id: 'node/904', naam: 'Later', soort: 'pub', lat: 51.8477011, lon: 5.8641937 },
+  { osm_id: 'node/905', naam: 'Café De Deut', soort: 'pub', lat: 51.8453116, lon: 5.8643378 },
+  { osm_id: 'node/906', naam: 'Café De Opera', soort: 'pub', lat: 51.8453603, lon: 5.8644129 },
 ])]);
 const gplaats = (id, naam, lat, lon, extra = {}) => ({ place_id: id, naam, soort: 'pub', zekerheid: 'hoog', categorieen: ['Café'], lat, lon, ...extra });
 const gimport = async (kroegen, volledig, wie = 'service_role') => {
@@ -505,16 +511,23 @@ const gr1 = await gimport([
   gplaats('gB', 'Café Samson', 51.8466495, 5.8621528),
   gplaats('gC', 'Nieuwe Bar', 51.8405, 5.8601, { soort: 'bar', zekerheid: 'middel' }),
   gplaats('gX', 'Twijfel', 51.841, 5.861, { zekerheid: 'laag' }),
+  // Drukke straat: buurman op 10 m met een andere naam, en twee kroegen op 6 m van elkaar
+  gplaats('gG', 'Café Goossens', 51.8477211, 5.8642327),
+  gplaats('gD', 'Café de Deut, Speciaalbier Café', 51.8453268, 5.8643242),
+  gplaats('gO', 'Café de Opera', 51.845336, 5.86442),
 ], true);
-check('Google-import koppelt aan OSM en voegt nieuwe toe', gr1.gekoppeld_aan_osm === 2 && gr1.nieuw === 1, JSON.stringify(gr1));
+check('Google-import koppelt aan OSM en voegt nieuwe toe', gr1.gekoppeld_aan_osm === 4 && gr1.nieuw === 2, JSON.stringify(gr1));
+const druk = Object.fromEntries((await db.query(`select osm_id, google_place_id from public.kroegen where osm_id in ('node/904', 'node/905', 'node/906')`)).rows.map((r) => [r.osm_id, r.google_place_id]));
+check('buurman met een andere naam wordt niet gekoppeld', druk['node/904'] === null, JSON.stringify(druk));
+check('twee kroegen naast elkaar krijgen elk hun eigen Google-plaats', druk['node/905'] === 'gD' && druk['node/906'] === 'gO', JSON.stringify(druk));
 const gk = Object.fromEntries((await db.query(`select coalesce(osm_id, google_place_id) k, naam, google_place_id, adres, telefoon, openingstijden, open from public.kroegen where gemeente = 'Googlestad'`)).rows.map((r) => [r.k, r]));
 check('OSM-naam blijft leidend, Google vult aan', gk['node/901'].naam === 'De Kroeg' && gk['node/901'].google_place_id === 'gA' && gk['node/901'].adres === 'Grotestraat 17, 6511 VB' && gk['node/901'].telefoon === '+31 24 000 0000', JSON.stringify(gk['node/901']));
 check('kroeg op 57 m met andere naam wordt niet gekoppeld', gk['node/903'].google_place_id === null && gk.gC?.naam === 'Nieuwe Bar', JSON.stringify(gk));
 check('zekerheid laag wordt niet geimporteerd', !gk.gX);
 const gr2 = await gimport([gplaats('gA', 'Café De Kroeg', 51.8478479, 5.8650438), gplaats('gB', 'Café Samson', 51.8466495, 5.8621528)], true);
-check('tweede run werkt bij en telt de gemiste', gr2.bijgewerkt === 2 && gr2.niet_gezien === 1 && gr2.gesloten === 0, JSON.stringify(gr2));
+check('tweede run werkt bij en telt de gemiste', gr2.bijgewerkt === 2 && gr2.niet_gezien === 4 && gr2.gesloten === 0, JSON.stringify(gr2));
 const gr3 = await gimport([gplaats('gA', 'Café De Kroeg', 51.8478479, 5.8650438)], true);
-check('alleen-Google-kroeg gaat dicht na 2 gemiste volledige runs', gr3.gesloten === 1, JSON.stringify(gr3));
+check('alleen-Google-kroegen gaan dicht na 2 gemiste volledige runs', gr3.gesloten === 2, JSON.stringify(gr3));
 const gr4 = await gimport([], false);
 check('een gedeeltelijke run telt niets als gemist', gr4.niet_gezien === 0, JSON.stringify(gr4));
 const gdicht = await een(`select (select open from public.kroegen where google_place_id = 'gC') c, (select open from public.kroegen where osm_id = 'node/902') b`);
