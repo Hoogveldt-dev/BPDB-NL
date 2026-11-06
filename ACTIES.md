@@ -4,6 +4,7 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 
 ## Inloggen: meteen beginnen, later e-mail koppelen
 
+0. ~~**Menukaartprijzen.**~~ Gedaan op 6 november 2026: migratie `20261106200000_menukaartprijzen` staat op Supabase met versie `20261106200000`. Eerste menukaartprijs ingevoerd: Stadscafé Jan, Hertog Jan vaasje €3,90, kaart van 20 december 2025. Security Advisor: alleen de bekende waarschuwing over gelekte wachtwoorden.
 0. ~~**Google-kroegen, openingstijden en sluiten.**~~ Gedaan op 6 november 2026: migraties `20261106170000_google_kroegen`, `20261106180000_google_koppeling` en `20261106190000_kroeg_meldingen` staan op Supabase, met de versies gelijk aan de bestandsnamen. Daarna 138 kroegen uit Google Maps geïmporteerd: 61 gekoppeld aan een OSM-kroeg, 77 nieuw. Nijmegen heeft nu 165 open kroegen, 126 met openingstijden. Gecontroleerd: alle Place ID's en openingstijden gelijk aan de bron, elke kroeg in een wijk. Security Advisor: alleen de bekende waarschuwing over gelekte wachtwoorden.
 
 0. ~~**Nieuwe migratie `20261106150000_bevestigen_naar_betrouwbaarheid`.**~~ Gedaan op 6 november 2026: de rij staat in `supabase_migrations.schema_migrations` (versie `20261106150000`, naam `bevestigen_naar_betrouwbaarheid`). Gecontroleerd: `private.rond_af`, `private.meld_prijs` en de kolommen van `kroeg_kaart` zijn nieuw. Security Advisor: zie hieronder zodra gedraaid.
