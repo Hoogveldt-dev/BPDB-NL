@@ -1,5 +1,5 @@
 // Eenvoudige service worker: app-schil offline beschikbaar, data altijd vers van het netwerk.
-const CACHE = "kroegkaart-v9";
+const CACHE = "kroegkaart-v11";
 const SCHIL = ["./", "index.html", "styles.css", "app.js", "config.js", "icon.svg", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {

@@ -3,12 +3,13 @@
 // Wat Supabase zelf regelt (rollen, auth.users, auth.uid(), opslag) wordt hieronder nagebootst.
 import { PGlite } from '@electric-sql/pglite';
 import { postgis } from '@electric-sql/pglite-postgis';
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const MAP = join(dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
-const db = new PGlite({ extensions: { postgis } });
+const db = new PGlite({ extensions: { postgis, pg_trgm } });
 
 let ok = 0, fout = 0;
 const check = (naam, voorwaarde, extra = '') => {
@@ -480,6 +481,155 @@ check('stamgast is zonder login te lezen', sv.rows?.length === 1, JSON.stringify
 check('overzicht toont geen e-mail of locatie', !Object.keys(sv.rows?.[0] ?? {}).some((k) => /mail|lat|lon|locatie/.test(k)), Object.keys(sv.rows?.[0] ?? {}).join());
 const sw = await als(A, `update public.kroeg_bijdragers set bijdragen = 99 where kroeg_id = ${KS}`);
 check('bijdragen via het overzicht aanpassen kan niet', !!sw.fout, JSON.stringify(sw));
+
+// ---------------------------------------------------------------------------
+// Kroegen uit Google Maps (tools/google-kroegen)
+// ---------------------------------------------------------------------------
+
+const kern = await een(`select private.kroegnaam_kern('Café De Kroeg🍺') a, private.kroegnaam_kern('De Kroeg') b, private.kroegnaam_kern('Eetcafé Daen') c`);
+check('naamkern laat café, bar, lidwoorden en emoji weg', kern.a === 'kroeg' && kern.b === 'kroeg' && kern.c === 'daen', JSON.stringify(kern));
+const kernPlaats = await een(`select private.kroegnaam_kern('De Bieb Nijmegen', 'Nijmegen') a, private.kroegnaam_kern('Le Café') b`);
+check('naamkern laat de plaatsnaam weg', kernPlaats.a === 'bieb', JSON.stringify(kernPlaats));
+check('blijft er niets over, dan de hele naam', kernPlaats.b === 'le café', JSON.stringify(kernPlaats));
+
+await db.query(`select private.importeer_kroegen($1, 'Googlestad')`, [JSON.stringify([
+  { osm_id: 'node/901', naam: 'De Kroeg', soort: 'pub', lat: 51.84785, lon: 5.86504 },
+  { osm_id: 'node/902', naam: 'Samson', soort: 'pub', lat: 51.8467, lon: 5.86216 },
+  { osm_id: 'node/903', naam: 'Heel Ander Café', soort: 'pub', lat: 51.84, lon: 5.86 },
+  { osm_id: 'node/904', naam: 'Later', soort: 'pub', lat: 51.8477011, lon: 5.8641937 },
+  { osm_id: 'node/905', naam: 'Café De Deut', soort: 'pub', lat: 51.8453116, lon: 5.8643378 },
+  { osm_id: 'node/906', naam: 'Café De Opera', soort: 'pub', lat: 51.8453603, lon: 5.8644129 },
+])]);
+const WEEK = (t) => Object.fromEntries(['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'].map((d) => [d, t]));
+const gplaats = (id, naam, lat, lon, extra = {}) => ({ place_id: id, naam, soort: 'pub', zekerheid: 'hoog', categorieen: ['Café'], lat, lon, ...extra });
+const gimport = async (kroegen, volledig, wie = 'service_role') => {
+  await db.exec(`set role ${wie}`);
+  try { return (await db.query(`select public.importeer_google_kroegen($1, 'Googlestad', $2) as r`, [JSON.stringify(kroegen), volledig])).rows[0].r; }
+  catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
+};
+const gr1 = await gimport([
+  gplaats('gA', 'Café De Kroeg', 51.8478479, 5.8650438, { adres: 'Grotestraat 17', postcode: '6511 VB', beoordeling: 4, telefoon: '+31 24 000 0000', openingstijden: WEEK(['16:00-02:00']) }),
+  gplaats('gB', 'Café Samson', 51.8466495, 5.8621528),
+  gplaats('gC', 'Nieuwe Bar', 51.8405, 5.8601, { soort: 'bar', zekerheid: 'middel' }),
+  gplaats('gX', 'Twijfel', 51.841, 5.861, { zekerheid: 'laag' }),
+  // Drukke straat: buurman op 10 m met een andere naam, en twee kroegen op 6 m van elkaar
+  gplaats('gG', 'Café Goossens', 51.8477211, 5.8642327),
+  gplaats('gD', 'Café de Deut, Speciaalbier Café', 51.8453268, 5.8643242),
+  gplaats('gO', 'Café de Opera', 51.845336, 5.86442),
+], true);
+check('Google-import koppelt aan OSM en voegt nieuwe toe', gr1.gekoppeld_aan_osm === 4 && gr1.nieuw === 2, JSON.stringify(gr1));
+const druk = Object.fromEntries((await db.query(`select osm_id, google_place_id from public.kroegen where osm_id in ('node/904', 'node/905', 'node/906')`)).rows.map((r) => [r.osm_id, r.google_place_id]));
+check('buurman met een andere naam wordt niet gekoppeld', druk['node/904'] === null, JSON.stringify(druk));
+check('twee kroegen naast elkaar krijgen elk hun eigen Google-plaats', druk['node/905'] === 'gD' && druk['node/906'] === 'gO', JSON.stringify(druk));
+const gk = Object.fromEntries((await db.query(`select coalesce(osm_id, google_place_id) k, naam, google_place_id, adres, openingstijden, openingstijden_bron, open from public.kroegen where gemeente = 'Googlestad'`)).rows.map((r) => [r.k, r]));
+check('OSM-naam blijft leidend, Google vult adres en openingstijden aan', gk['node/901'].naam === 'De Kroeg' && gk['node/901'].google_place_id === 'gA' && gk['node/901'].adres === 'Grotestraat 17, 6511 VB' && gk['node/901'].openingstijden?.vrijdag?.[0] === '16:00-02:00' && gk['node/901'].openingstijden_bron === 'google', JSON.stringify(gk['node/901']));
+const kolommen = (await db.query(`select column_name from information_schema.columns where table_schema = 'public' and table_name = 'kroegen'`)).rows.map((r) => r.column_name);
+check('geen beoordeling, reviews, telefoon of website opgeslagen', !kolommen.some((c) => /beoordeling|reviews|telefoon|website|google_cid/.test(c)), kolommen.join());
+check('kroeg op 57 m met andere naam wordt niet gekoppeld', gk['node/903'].google_place_id === null && gk.gC?.naam === 'Nieuwe Bar', JSON.stringify(gk));
+check('zekerheid laag wordt niet geimporteerd', !gk.gX);
+const gr2 = await gimport([gplaats('gA', 'Café De Kroeg', 51.8478479, 5.8650438), gplaats('gB', 'Café Samson', 51.8466495, 5.8621528)], true);
+check('tweede run werkt bij en telt de gemiste', gr2.bijgewerkt === 2 && gr2.niet_gezien === 4 && gr2.gesloten === 0, JSON.stringify(gr2));
+const gr3 = await gimport([gplaats('gA', 'Café De Kroeg', 51.8478479, 5.8650438)], true);
+check('alleen-Google-kroegen gaan dicht na 2 gemiste volledige runs', gr3.gesloten === 2, JSON.stringify(gr3));
+const gr4 = await gimport([], false);
+check('een gedeeltelijke run telt niets als gemist', gr4.niet_gezien === 0, JSON.stringify(gr4));
+const gdicht = await een(`select (select open from public.kroegen where google_place_id = 'gC') c, (select open from public.kroegen where osm_id = 'node/902') b`);
+check('OSM-kroeg blijft open, daarover beslist de OSM-import', gdicht.c === false && gdicht.b === true, JSON.stringify(gdicht));
+check('spelers mogen de Google-import niet aanroepen', !!(await gimport([], false, 'authenticated')).fout);
+check('anoniem mag de Google-import niet aanroepen', !!(await gimport([], false, 'anon')).fout);
+check('een run zonder openingstijden wist de bekende niet, en ze zijn zonder login te lezen', (await als(null, `select openingstijden from public.kroeg_info where kroeg_id = (select id from public.kroegen where google_place_id = 'gA')`)).rows?.[0]?.openingstijden?.maandag?.[0] === '16:00-02:00');
+await gimport([gplaats('gA', 'Café De Kroeg', 51.8478479, 5.8650438, { openingstijden: { maandag: ['16:00–02:00'] } })], false);
+check('ongeldige openingstijden van Google worden overgeslagen', (await een(`select openingstijden from public.kroegen where google_place_id = 'gA'`)).openingstijden?.dinsdag?.[0] === '16:00-02:00');
+
+// ---------------------------------------------------------------------------
+// Openingstijden en sluitingen gemeld door spelers
+// ---------------------------------------------------------------------------
+
+const KM = (await een(`select id from public.kroegen where google_place_id = 'gA'`)).id;
+const KM2 = (await een(`select id from public.kroegen where osm_id = 'node/902'`)).id;
+const info = async (id) => (await als(null, `select * from public.kroeg_info where kroeg_id = ${id}`)).rows[0];
+const nieuweTijden = { ...WEEK(['16:00-01:00']), maandag: [], zaterdag: ['14:00-03:00'] };
+
+const fT1 = await als(A, `select * from public.meld_kroeg(${KM}, 'openingstijden', '{"maandag": ["morgen"]}')`);
+check('onzinnige openingstijden worden geweigerd', !!fT1.fout, JSON.stringify(fT1));
+const mT = (await als(Y, `select * from public.meld_kroeg(${KM}, 'openingstijden', $1)`, [JSON.stringify(nieuweTijden)])).rows?.[0];
+check('ook een anonieme speler kan openingstijden aanpassen', mT?.status === 'wacht', JSON.stringify(mT));
+let iT = await info(KM);
+check('nieuwe openingstijden gelden meteen, als bron spelers', iT.openingstijden.maandag.length === 0 && iT.openingstijden.zaterdag[0] === '14:00-03:00' && iT.openingstijden_bron === 'spelers', JSON.stringify(iT));
+check('de open melding staat in het overzicht met de naam van de melder', iT.open_meldingen?.[0]?.soort === 'openingstijden' && typeof iT.open_meldingen?.[0]?.door === 'string', JSON.stringify(iT.open_meldingen));
+check('een tweede melding terwijl er een openstaat kan niet', !!(await als(B, `select * from public.meld_kroeg(${KM}, 'openingstijden', $1)`, [JSON.stringify(WEEK(['12:00-23:00']))])).fout);
+check('anoniem mag niet oordelen over openingstijden', !!(await als(Y, `select public.beoordeel_kroegmelding(${mT.id}, 'klopt')`)).fout);
+await gimport([gplaats('gA', 'Café De Kroeg', 51.8478479, 5.8650438, { openingstijden: WEEK(['10:00-12:00']) })], false);
+check('Google overschrijft openingstijden van spelers niet', (await info(KM)).openingstijden.zaterdag[0] === '14:00-03:00');
+check('een keer klopt niet laat de tijden staan', (await als(A, `select public.beoordeel_kroegmelding(${mT.id}, 'klopt_niet') s`)).rows?.[0]?.s === 'wacht');
+check('twee keer klopt niet: weerlegd', (await als(B, `select public.beoordeel_kroegmelding(${mT.id}, 'klopt_niet') s`)).rows?.[0]?.s === 'weerlegd');
+iT = await info(KM);
+check('na weerleggen staan de vorige tijden van Google er weer', iT.openingstijden.zaterdag[0] === '16:00-02:00' && iT.openingstijden_bron === 'google' && iT.open_meldingen === null, JSON.stringify(iT));
+const mT2 = (await als(A, `select * from public.meld_kroeg(${KM}, 'openingstijden', $1)`, [JSON.stringify(nieuweTijden)])).rows?.[0];
+check('eigen melding bevestigen kan niet', !!(await als(A, `select public.beoordeel_kroegmelding(${mT2.id}, 'klopt')`)).fout);
+check('klopt van een ander bevestigt de tijden', (await als(C, `select public.beoordeel_kroegmelding(${mT2.id}, 'klopt') s`)).rows?.[0]?.s === 'bevestigd' && (await info(KM)).openingstijden_bron === 'spelers');
+
+const mG = (await als(Y, `select * from public.meld_kroeg(${KM2}, 'gesloten')`)).rows?.[0];
+check('een anonieme speler kan een sluiting melden', mG?.status === 'wacht', JSON.stringify(mG));
+check('een gemelde sluiting houdt de kroeg open tot iemand anders het bevestigt', (await een(`select open from public.kroegen where id = ${KM2}`)).open === true);
+check('de melder kan een sluiting intrekken', (await als(Y, `select public.beoordeel_kroegmelding(${mG.id}, 'klopt_niet') s`)).rows?.[0]?.s === 'weerlegd');
+const mG2 = (await als(A, `select * from public.meld_kroeg(${KM2}, 'gesloten')`)).rows?.[0];
+check('klopt van een ander: definitief gesloten', (await als(B, `select public.beoordeel_kroegmelding(${mG2.id}, 'klopt') s`)).rows?.[0]?.s === 'bevestigd');
+check('de gesloten kroeg staat niet meer op de kaart', (await een(`select open, gesloten_door_spelers from public.kroegen where id = ${KM2}`)).open === false);
+check('een gesloten kroeg nog eens melden kan niet', !!(await als(C, `select * from public.meld_kroeg(${KM2}, 'gesloten')`)).fout);
+await db.query(`select private.importeer_kroegen($1, 'Googlestad')`, [JSON.stringify([
+  { osm_id: 'node/901', naam: 'De Kroeg', soort: 'pub', lat: 51.84785, lon: 5.86504 },
+  { osm_id: 'node/902', naam: 'Samson', soort: 'pub', lat: 51.8467, lon: 5.86216 },
+])]);
+check('de OSM-import opent een door spelers gesloten kroeg niet opnieuw', (await een(`select open from public.kroegen where id = ${KM2}`)).open === false);
+await gimport([gplaats('gB', 'Café Samson', 51.8466495, 5.8621528)], false);
+check('de Google-import ook niet', (await een(`select open from public.kroegen where id = ${KM2}`)).open === false);
+check('spelers kunnen niet direct in meldingen schrijven', !!(await als(A, `insert into public.kroeg_meldingen (kroeg_id, soort) values (${KM}, 'gesloten')`)).fout);
+check('anoniem zonder login kan niets melden', !!(await als(null, `select * from public.meld_kroeg(${KM}, 'gesloten')`)).fout);
+
+// ---------------------------------------------------------------------------
+// Prijzen van menukaarten (eerste stuk geschiedenis, zonder melder)
+// ---------------------------------------------------------------------------
+
+await db.query(`select private.importeer_kroegen($1, 'Menustad')`, [JSON.stringify([
+  { osm_id: 'node/951', naam: 'Stadscafé Jan', soort: 'pub', lat: 52.1, lon: 5.1 },
+  { osm_id: 'node/952', naam: 'Café Twee', soort: 'pub', lat: 52.11, lon: 5.11 },
+  { osm_id: 'node/953', naam: 'Café Drie', soort: 'pub', lat: 52.12, lon: 5.12 },
+])]);
+const MK = Object.fromEntries((await db.query(`select osm_id, id from public.kroegen where gemeente = 'Menustad'`)).rows.map((r) => [r.osm_id, r.id]));
+const menuImport = async (rijen, wie = 'service_role') => {
+  await db.exec(`set role ${wie}`);
+  try { return (await db.query(`select public.importeer_menuprijzen($1) as r`, [JSON.stringify(rijen)])).rows[0].r; }
+  catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
+};
+const mi = await menuImport([
+  { kroeg_id: MK['node/951'], merk: 'Hertog Jan', volume_cl: 25, prijs_cent: 390, datum: '2025-12-20', bron_omschrijving: 'foto op Google Maps' },
+  { kroeg_id: MK['node/952'], merk: 'Heineken', volume_cl: 25, prijs_cent: 350, datum: '2025-11-01', bron_omschrijving: 'website' },
+  { kroeg_id: MK['node/953'], merk: 'Heineken', volume_cl: 25, prijs_cent: 350, datum: '2999-01-01' },
+]);
+check('menukaartprijzen importeren; een datum in de toekomst wordt overgeslagen', mi.toegevoegd === 2 && mi.overgeslagen === 1, JSON.stringify(mi));
+check('spelers mogen geen menukaartprijzen importeren', !!(await menuImport([], 'authenticated')).fout);
+check('nog een menukaartprijs terwijl er een openstaat wordt overgeslagen', (await menuImport([{ kroeg_id: MK['node/951'], merk: 'Heineken', volume_cl: 25, prijs_cent: 300, datum: '2025-10-01' }])).overgeslagen === 1);
+const mkKaart = (await als(null, `select * from public.kroeg_kaart where id = ${MK['node/951']}`)).rows[0];
+check('menukaartprijs staat op de kaart, de kroeg blijft op slot', mkKaart.open_bron === 'menukaart' && mkKaart.open_prijs_cent === 390 && mkKaart.versheid === 'locked' && mkKaart.ontdekker_id === null, JSON.stringify(mkKaart));
+const mkTijd = (await als(null, `select * from public.kroeg_tijdlijn where kroeg_id = ${MK['node/951']}`)).rows;
+check('menukaartprijs staat in de geschiedenis met de datum van de kaart en zonder melder', mkTijd.length === 1 && mkTijd[0].bron === 'menukaart' && mkTijd[0].door_id === null && new Date(mkTijd[0].op).toISOString().startsWith('2025-12-20'), JSON.stringify(mkTijd));
+const mkG = mkTijd[0].id;
+check('over een menukaartprijs kun je niet oordelen', !!(await als(B, `select public.beoordeel(${mkG}, 'klopt')`)).fout);
+check('dezelfde prijs zonder locatie kan niet', !!(await als(A, `select * from public.meld_prijs(${MK['node/951']}, 'Hertog Jan', 25, 390)`)).fout);
+check('dezelfde prijs van ver weg kan niet', !!(await als(A, `select * from public.meld_prijs(${MK['node/951']}, 'Hertog Jan', 25, 390, 52.11, 5.1)`)).fout);
+const mkM = (await als(A, `select * from public.meld_prijs(${MK['node/951']}, 'Hertog Jan', 25, 390, 52.1002, 5.1)`)).rows?.[0];
+check('ter plaatse bevestigen maakt de speler indiener; daarna wacht het op een ander', mkM?.door_id === A && mkM?.status === 'wacht' && mkM?.soort === 'eerst' && mkM?.ter_plaatse === true, JSON.stringify(mkM));
+const mkNa = await een(`select (select status from public.gebeurtenissen where id = ${mkG}) menu, ontdekker_id, huidig_prijs_cent from public.kroegen where id = ${MK['node/951']}`);
+check('de menukaartprijs is daarmee afgerond; de speler is ontdekker, nog zonder bevestigde prijs', mkNa.menu === 'bevestigd' && mkNa.ontdekker_id === A && mkNa.huidig_prijs_cent === null, JSON.stringify(mkNa));
+check('nog geen punten voor de indiener', (await een(`select count(*)::int n from public.punten where gebeurtenis_id = ${mkM.id}`)).n === 0);
+const mkS = await klopt(mkM.id, B, C);
+const mkP = await een(`select punten from public.punten where gebeurtenis_id = ${mkM.id} and gebruiker_id = '${A}' and reden = 'vrijgespeeld'`);
+check('na bevestiging door anderen: prijs staat erop, indiener krijgt de vrijspeelpunten (ter plaatse)', mkS === 'bevestigd' && mkP?.punten === 75 && (await een(`select huidig_prijs_cent from public.kroegen where id = ${MK['node/951']}`)).huidig_prijs_cent === 390, JSON.stringify({ mkS, mkP }));
+const mkAnders = (await als(B, `select * from public.meld_prijs(${MK['node/952']}, 'Heineken', 25, 375)`)).rows?.[0];
+check('een andere prijs melden kan van overal', mkAnders?.status === 'wacht' && mkAnders?.door_id === B, JSON.stringify(mkAnders));
+check('de menukaartprijs is dan achterhaald', (await een(`select status from public.gebeurtenissen where kroeg_id = ${MK['node/952']} and bron = 'menukaart'`)).status === 'weerlegd');
+check('een menukaartprijs heeft nooit een melder', !!(await db.query(`update public.gebeurtenissen set door_id = '${A}' where bron = 'menukaart'`).then(() => null, (e) => e.message)));
 
 // ---------------------------------------------------------------------------
 

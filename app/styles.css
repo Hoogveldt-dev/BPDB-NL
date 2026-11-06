@@ -143,6 +143,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: v
 .timeline li { padding: 10px 0 10px 18px; border-left: 2px solid var(--sep); position: relative; margin-left: 5px; }
 .timeline li::before { content: ""; position: absolute; left: -6px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--fresh); }
 .timeline li.wacht::before { background: var(--wacht); }
+.timeline li.menukaart::before { background: var(--surface); border: 2px dashed var(--muted); }
 .timeline li.weerlegd::before { background: var(--old); }
 .timeline li.check::before { background: var(--muted); }
 .timeline .t-what { font-weight: 600; }
@@ -177,6 +178,9 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: v
 .aanbod-lijst { list-style: none; margin: 0; padding: 0; }
 .aanbod { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 0; border-bottom: var(--hair); }
 .aanbod .price { font-weight: 700; }
+.tijden { list-style: none; margin: 0 0 6px; padding: 0; }
+.tijden li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: var(--hair); font-variant-numeric: tabular-nums; }
+.tijden li.vandaag { font-weight: 700; }
 .aanbod-knoppen { grid-column: 1 / -1; display: flex; gap: 6px; }
 .aanbod-knoppen:empty { display: none; }
 .mini { border: var(--hair); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }

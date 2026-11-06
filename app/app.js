@@ -89,6 +89,9 @@ const state = {
   biersoorten: [],
   soort: "",
   aanbodForm: null,
+  // Openingstijden en open meldingen van de gekozen kroeg (kroeg_info), en het invulscherm voor tijden
+  info: null,
+  tijdenForm: null,
 };
 
 // Prijs voor het spel: per vaasje; bij een ander glas omgerekend, met een ≈ ervoor
@@ -100,6 +103,10 @@ function spelPrijs(k) {
 // Wat de kaart en de lijst tonen: de meest recente prijs. Wacht er een melding op bevestiging,
 // dan is dat die prijs (met een ? erachter); anders de bevestigde. Het spel (vrijspelen, punten,
 // ranglijst, versheid, goedkoopste) draait alleen om de bevestigde prijs.
+// Een prijs van een menukaart: eerste stuk geschiedenis, zonder melder; de kroeg blijft op slot
+const vanMenukaart = (k) => k.open_bron === "menukaart";
+const datumTekst = (d) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+
 function toonPrijs(k) {
   if (k.open_prijs_cent) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
   if (k.per25_cent) return { per25: k.per25_cent, volume: k.huidig_volume_cl, onbevestigd: false };
@@ -357,20 +364,20 @@ const body = $("#body");
 
 function draw() {
   let html = "";
-  if (state.selected != null) html = state.form ? formView() : state.aanbodForm ? aanbodFormView() : detailView();
+  if (state.selected != null) html = state.form ? formView() : state.aanbodForm ? aanbodFormView() : state.tijdenForm ? tijdenFormView() : detailView();
   else if (state.tab === "kaart") html = lijstView();
   else if (state.tab === "samen") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "rang") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "ik") html = ikView();
   body.innerHTML = html;
-  if (state.selected != null && !state.form && !state.aanbodForm) laadTijdlijn(state.selected);
+  if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); }
   else if (state.selected == null && state.tab === "samen") samenView();
   else if (state.selected == null && state.tab === "rang") rangView();
   $("#tabIk").textContent = state.profiel ? state.profiel.naam.slice(0, 10) : "Ik";
 }
 
 function kroegVersheid(k) {
-  if (k.open_melding_id && !k.huidig_prijs_cent) return "wacht";
+  if (k.open_melding_id && !k.huidig_prijs_cent && !vanMenukaart(k)) return "wacht";
   return k.versheid;
 }
 
@@ -391,7 +398,7 @@ function prijsKolom(k) {
     return a?.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : "";
   }
   const t = toonPrijs(k);
-  return t ? `<span class="price">${toonPrijsTekst(k)}<small>${t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small></span>` : "";
+  return t ? `<span class="price">${toonPrijsTekst(k)}<small>${vanMenukaart(k) ? "menukaart" : t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small></span>` : "";
 }
 
 function lijstView() {
@@ -399,7 +406,7 @@ function lijstView() {
     { id: "alles", naam: "Alles", f: () => true },
     { id: "slot", naam: "Op slot", f: (k) => k.versheid === "locked" },
     { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
-    { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id },
+    { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
     { id: "goedkoop", naam: "Goedkoopst", f: (k) => k.per25_cent },
   ];
   const f = F.find((x) => x.id === state.filter) ?? F[0];
@@ -432,7 +439,12 @@ function detailView() {
   const v = kroegVersheid(k);
   const ingelogd = !!state.sessie;
   let actie = "";
-  if (k.open_melding_id) {
+  if (k.open_melding_id && vanMenukaart(k)) {
+    actie = `<div class="small" style="margin-top:8px">Ben je hier? Bevestig de prijs ter plaatse en speel de kroeg vrij zodra een andere speler het ook bevestigt.</div>
+      <div class="btns">
+      <button class="btn primary" data-menuklopt="${k.id}" ${ingelogd ? "" : "disabled"}>Klopt, ik ben er</button>
+      <button class="btn" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Prijs is anders</button></div>`;
+  } else if (k.open_melding_id) {
     actie = `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>`;
   } else if (k.versheid === "locked") {
     actie = `<div class="btns"><button class="btn primary" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Speel vrij met een prijs</button></div>`;
@@ -447,7 +459,11 @@ function detailView() {
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
       <span class="badge ${v}">${VERSHEID[v]}</span>
-      ${k.open_prijs_cent ? `${v === "wacht" ? "" : ` <span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
+      ${k.open_prijs_cent && vanMenukaart(k) ? `
+        <div class="big-price" style="margin-top:10px">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
+        <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
+        <div class="muted small">Volgens de menukaart van ${datumTekst(k.open_op)}${k.open_bron_omschrijving ? ` (${esc(k.open_bron_omschrijving)})` : ""}. Nog door niemand bevestigd.</div>`
+      : k.open_prijs_cent ? `${v === "wacht" ? "" : ` <span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
         <div class="big-price" style="margin-top:10px">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
         <div class="muted small">Gemeld ${wanneer(k.open_op)}, nog niet bevestigd</div>
@@ -462,12 +478,137 @@ function detailView() {
       ${actie}
       ${ingelogd ? "" : `<div class="small muted" style="margin-top:8px">Doe mee via het tabblad Ik. Een e-mailadres is niet nodig.</div>`}
     </div>
+    <div id="tijden"></div>
     ${aanbodBlok(k)}
     <h3>Prijs per vaasje, afgelopen jaar</h3>
     <div id="spark"></div>
     <h3>Geschiedenis</h3>
     <div id="stamgast"></div>
-    <div id="tijdlijn"><div class="muted small">Laden…</div></div>`;
+    <div id="tijdlijn"><div class="muted small">Laden…</div></div>
+    <div id="sluiting"></div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Openingstijden en sluitingen (kroeg_info, meld_kroeg, beoordeel_kroegmelding). Geen punten.
+// ---------------------------------------------------------------------------
+
+const DAGEN = ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"];
+const vandaagDag = () => DAGEN[(new Date().getDay() + 6) % 7];
+const tijdenTekst = (lijst) => (lijst.length ? lijst.join(", ") : "Gesloten").replaceAll("00:00-24:00", "Hele dag").replaceAll("-", "–");
+
+async function laadKroegInfo(id) {
+  const { data, error } = await sb.from("kroeg_info").select("*").eq("kroeg_id", id).maybeSingle();
+  // Bestaat het overzicht nog niet (migratie nog niet uitgevoerd), dan blijft de app gewoon werken
+  if (state.selected !== id || error) return;
+  state.info = data;
+  const t = $("#tijden"), sl = $("#sluiting");
+  if (t) t.innerHTML = tijdenBlok(data);
+  if (sl) sl.innerHTML = sluitingBlok(data);
+}
+
+// Knoppen bij een open melding: de melder kan intrekken, anderen met e-mailadres oordelen
+function meldingKnoppen(m) {
+  const uid = state.sessie?.user?.id;
+  if (!state.sessie) return "";
+  if (m.door_id === uid) return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Intrekken</button>`;
+  if (anoniem()) return `<div class="small muted">Koppel je e-mailadres (tabblad Ik) om dit te bevestigen.</div>`;
+  return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt">Klopt</button><button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Klopt niet</button>`;
+}
+
+function tijdenBlok(info) {
+  const tijden = info?.openingstijden;
+  const melding = (info?.open_meldingen ?? []).find((m) => m.soort === "openingstijden");
+  const vandaag = vandaagDag();
+  const bron = !tijden ? "" : melding
+    ? `Aangepast door <b>${esc(melding.door ?? "Onbekend")}</b> ${wanneer(melding.op)}${melding.klopt_niet ? " · 1 keer klopt niet" : ""}`
+    : info.openingstijden_bron === "spelers" ? `Door spelers bijgewerkt ${wanneer(info.openingstijden_op)}` : `Uit Google, ${wanneer(info.openingstijden_op)}`;
+  return `<h3>Openingstijden</h3>
+    ${tijden ? `<ul class="tijden">${DAGEN.map((d) => `<li class="${d === vandaag ? "vandaag" : ""}"><span>${d[0].toUpperCase() + d.slice(1)}</span><span>${tijdenTekst(tijden[d] ?? [])}</span></li>`).join("")}</ul>
+      <div class="small muted">${bron}</div>
+      ${melding ? `<div class="btns">${meldingKnoppen(melding)}</div>` : ""}`
+    : `<div class="small muted">Nog geen openingstijden bekend.</div>`}
+    ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${state.sessie ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
+}
+
+function sluitingBlok(info) {
+  const melding = (info?.open_meldingen ?? []).find((m) => m.soort === "gesloten");
+  if (melding) {
+    return `<div class="card">
+      <div><b>${esc(melding.door ?? "Iemand")}</b> meldt dat deze kroeg definitief gesloten is.</div>
+      <div class="small muted">Gemeld ${wanneer(melding.op)}${melding.klopt_niet ? ", 1 keer klopt niet" : ""}. Na een bevestiging door een andere speler verdwijnt de kroeg van de kaart.</div>
+      <div class="btns">${meldingKnoppen(melding)}</div></div>`;
+  }
+  return `<div class="btns"><button class="btn" data-sluiting ${state.sessie ? "" : "disabled"}>Definitief gesloten?</button></div>`;
+}
+
+function tijdenFormView() {
+  const k = state.kroegen.find((x) => x.id === state.selected);
+  const nu = state.info?.openingstijden ?? {};
+  return `<button class="back" data-cancel>‹ Annuleer</button>
+    <h2>Openingstijden</h2>
+    <div class="muted small">${esc(k.naam)}</div>
+    <form class="form" id="tijdenForm">
+      ${DAGEN.map((d) => `<label for="t-${d}">${d[0].toUpperCase() + d.slice(1)}</label>
+        <input id="t-${d}" name="${d}" value="${esc((nu[d] ?? []).join(", "))}" placeholder="Gesloten" inputmode="numeric" autocomplete="off">`).join("")}
+      <p class="small muted">Schrijf tijden als 16:00-02:00. Twee keer open op een dag: 12:00-15:00, 17:00-01:00. Laat een dag leeg als de kroeg dan dicht is.</p>
+      <div class="btns"><button class="btn primary" type="submit">Opslaan</button></div>
+      <p class="small muted">Je wijziging geldt meteen. Andere spelers kunnen hem bevestigen of afkeuren. Dit levert geen punten op.</p>
+    </form>`;
+}
+
+// "16.00 - 2.00, 17:00-01:00" wordt ["16:00-02:00", "17:00-01:00"]; null bij iets onleesbaars
+function leesTijden(tekst) {
+  const t = tekst.trim().toLowerCase();
+  if (!t || t === "gesloten" || t === "dicht") return [];
+  const uit = [];
+  for (const deel of t.split(/[,;]|\ben\b/).map((x) => x.trim()).filter(Boolean)) {
+    const m = /^(\d{1,2})(?:[:.](\d{2}))?\s*[-–]\s*(\d{1,2})(?:[:.](\d{2}))?$/.exec(deel);
+    if (!m) return null;
+    const [u1, m1, u2, m2] = [Number(m[1]), Number(m[2] ?? 0), Number(m[3]), Number(m[4] ?? 0)];
+    if (u1 > 23 || u2 > 24 || m1 > 59 || m2 > 59 || (u2 === 24 && m2 > 0)) return null;
+    const twee = (n) => String(n).padStart(2, "0");
+    uit.push(`${twee(u1)}:${twee(m1)}-${twee(u2)}:${twee(m2)}`);
+  }
+  return uit.length <= 4 ? uit : null;
+}
+
+async function verstuurTijden(form) {
+  const k = state.kroegen.find((x) => x.id === state.selected);
+  const fd = new FormData(form);
+  const tijden = {};
+  for (const d of DAGEN) {
+    const lijst = leesTijden(String(fd.get(d) ?? ""));
+    if (!lijst) return toast(`Kan de tijden van ${d} niet lezen; schrijf bijvoorbeeld 16:00-02:00`);
+    tijden[d] = lijst;
+  }
+  const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: "openingstijden", p_openingstijden: tijden });
+  knop.disabled = false;
+  if (error) return toast(error.message);
+  state.tijdenForm = null;
+  toast("Openingstijden bijgewerkt, bedankt");
+  draw();
+}
+
+async function meldGesloten() {
+  const k = state.kroegen.find((x) => x.id === state.selected);
+  if (!confirm(`Is ${k.naam} definitief gesloten? Na een bevestiging door een andere speler verdwijnt de kroeg van de kaart.`)) return;
+  const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: "gesloten" });
+  if (error) return toast(error.message);
+  toast("Gemeld; een andere speler moet het bevestigen");
+  draw();
+}
+
+async function beoordeelMelding(id, oordeel) {
+  const { data, error } = await sb.rpc("beoordeel_kroegmelding", { p_melding_id: id, p_oordeel: oordeel });
+  if (error) return toast(error.message);
+  toast(data === "bevestigd" ? "Bevestigd, bedankt" : data === "weerlegd" ? "Weggehaald" : "Genoteerd; nog een keer klopt niet en het wordt teruggedraaid");
+  // Een bevestigde sluiting haalt de kroeg van de kaart
+  if (data === "bevestigd" && (state.info?.open_meldingen ?? []).some((m) => m.id === id && m.soort === "gesloten")) {
+    await laadKroegen();
+    return sluitKroeg();
+  }
+  draw();
 }
 
 // Extra bier bij een kroeg: geen punten, wel bevestigen ("klopt") of afkeuren ("klopt niet")
@@ -607,6 +748,11 @@ function stamgastHtml(bijdragers, uid) {
 }
 
 function tijdlijnItem(g) {
+  if (g.bron === "menukaart") {
+    const st = g.status === "wacht" ? " (nog door niemand bevestigd)" : g.status === "bevestigd" ? " (klopte nog)" : " (achterhaald)";
+    return `<li class="menukaart"><div class="t-what">Menukaart: ${euro(g.prijs_cent)}${st}</div>
+      <div class="t-meta">${datumTekst(g.op)} · ${esc(g.bron_omschrijving ?? "menukaart")} · ${esc(g.merk)} ${g.volume_cl} cl</div></li>`;
+  }
   const wat = g.soort === "eerst" ? `Eerst gemeld: ${euro(g.prijs_cent)}`
     : g.soort === "wijziging" ? `Gewijzigd: ${euro(g.vorige_prijs_cent)} → ${euro(g.prijs_cent)}`
     : `Gecontroleerd: klopt nog`;
@@ -623,7 +769,8 @@ function tijdlijnItem(g) {
 
 function spark(events) {
   const jaar = Date.now() - 365 * 86400000;
-  const pts = events.filter((g) => g.status === "bevestigd" && g.soort !== "check" && new Date(g.op) > jaar)
+  // Bevestigde prijzen, plus prijzen van menukaarten: die laten zien wat het op die datum kostte
+  const pts = events.filter((g) => (g.status === "bevestigd" || g.bron === "menukaart") && g.soort !== "check" && new Date(g.op) > jaar)
     .map((g) => ({ t: new Date(g.op).getTime(), v: (g.prijs_cent * 25) / g.volume_cl })).reverse();
   if (!pts.length) return `<div class="muted small">Nog geen prijzen dit jaar.</div>`;
   pts.push({ t: Date.now(), v: pts[pts.length - 1].v });
@@ -850,7 +997,7 @@ function locatie(timeout = 8000) {
 
 function openKroeg(id) {
   state.selected = Number(id);
-  state.form = null; state.aanbodForm = null;
+  state.form = null; state.aanbodForm = null; state.tijdenForm = null; state.info = null;
   const k = state.kroegen.find((x) => x.id === state.selected);
   if (k) map.easeTo({ center: [k.lon, k.lat], zoom: Math.max(map.getZoom(), 15.5), duration: 600, padding: wide() ? { left: 400 } : { bottom: innerHeight * 0.45 } });
   kaartBijwerken();
@@ -860,12 +1007,12 @@ function openKroeg(id) {
 }
 
 function sluitKroeg() {
-  state.selected = null; state.form = null; state.aanbodForm = null;
+  state.selected = null; state.form = null; state.aanbodForm = null; state.tijdenForm = null; state.info = null;
   kaartBijwerken(); draw();
 }
 
 function setTab(t) {
-  state.tab = t; state.selected = null; state.form = null; state.aanbodForm = null;
+  state.tab = t; state.selected = null; state.form = null; state.aanbodForm = null; state.tijdenForm = null; state.info = null;
   document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === t)));
   kaartBijwerken(); draw(); body.scrollTop = 0;
   // Ik bevat formulieren; in de halve stand valt de onderkant buiten beeld
@@ -910,6 +1057,23 @@ async function verstuurPrijs(form) {
   }
 }
 
+// De prijs van de menukaart klopt nog: alleen ter plaatse. De speler wordt indiener; een andere speler bevestigt.
+async function menukaartKlopt(id, knop) {
+  const k = state.kroegen.find((x) => x.id === id);
+  knop.disabled = true; knop.textContent = "Locatie bepalen…";
+  const pos = await locatie(10000);
+  knop.disabled = false; knop.textContent = "Klopt, ik ben er";
+  if (!pos) return toast("Zet je locatie aan: een prijs van de menukaart bevestig je bij de kroeg");
+  const { error } = await sb.rpc("meld_prijs", {
+    p_kroeg_id: id, p_merk: k.open_merk, p_volume_cl: k.open_volume_cl, p_prijs_cent: k.open_prijs_cent,
+    p_lat: pos[1], p_lon: pos[0], p_foto_pad: null,
+  });
+  if (error) return toast(error.message);
+  toast("Je bent de indiener; nu nog een bevestiging van een andere speler");
+  await Promise.all([laadKroegen(), laadStad()]);
+  draw();
+}
+
 async function kloptNog(id) {
   const k = state.kroegen.find((x) => x.id === id);
   const pos = await locatie(4000);
@@ -932,14 +1096,17 @@ body.addEventListener("click", (e) => {
   if (!t) return;
   if (t.dataset.kroeg) return openKroeg(t.dataset.kroeg);
   if (t.dataset.back !== undefined) return sluitKroeg();
-  if (t.dataset.cancel !== undefined) { state.form = null; state.aanbodForm = null; return draw(); }
+  if (t.dataset.cancel !== undefined) { state.form = null; state.aanbodForm = null; state.tijdenForm = null; return draw(); }
+  if (t.dataset.tijdenform !== undefined) { state.tijdenForm = {}; return draw(); }
+  if (t.dataset.sluiting !== undefined) return meldGesloten();
+  if (t.dataset.oordeelMelding) return beoordeelMelding(Number(t.dataset.melding), t.dataset.oordeelMelding);
   if (t.dataset.aanbodform !== undefined) { state.aanbodForm = { soort: state.soort || "guinness" }; return draw(); }
   if (t.dataset.oordeelAanbod) return beoordeelAanbod(Number(t.dataset.aanbod), t.dataset.oordeelAanbod);
   if (t.dataset.filter) { state.filter = t.dataset.filter; return draw(); }
   if (t.dataset.periode) { state.periode = t.dataset.periode; return rangView(); }
   if (t.dataset.form) {
     const k = state.kroegen.find((x) => x.id === state.selected);
-    state.form = { merk: k?.huidig_merk ?? "Heineken", cl: k?.huidig_volume_cl ?? 25, prijs: "", locatie: true };
+    state.form = { merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl: k?.huidig_volume_cl ?? k?.open_volume_cl ?? 25, prijs: "", locatie: true };
     return draw();
   }
   if (t.dataset.cl) {
@@ -948,6 +1115,7 @@ body.addEventListener("click", (e) => {
     return;
   }
   if (t.dataset.klopt) return kloptNog(Number(t.dataset.klopt));
+  if (t.dataset.menuklopt) return menukaartKlopt(Number(t.dataset.menuklopt), t);
   if (t.dataset.oordeel) return beoordeel(Number(t.dataset.g), t.dataset.oordeel);
   if (t.dataset.logout !== undefined) {
     if (anoniem() && !confirm("Je speelt zonder e-mailadres. Als je uitlogt, ben je deze speler en je punten kwijt. Toch uitloggen?")) return;
@@ -995,6 +1163,7 @@ body.addEventListener("submit", async (e) => {
   const f = e.target;
   if (f.id === "prijsForm") return verstuurPrijs(f);
   if (f.id === "aanbodForm") return verstuurAanbod(f);
+  if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "startForm") {
     const naam = String(new FormData(f).get("naam")).trim();
     onthouden.schrijf({ ...onthouden.lees(), naam });
@@ -1105,6 +1274,7 @@ sb.channel("stad")
   .on("postgres_changes", { event: "UPDATE", schema: "public", table: "gebeurtenissen" }, () => vernieuw())
   .on("postgres_changes", { event: "*", schema: "public", table: "kroegen" }, () => vernieuw())
   .on("postgres_changes", { event: "*", schema: "public", table: "kroeg_aanbod" }, () => vernieuw())
+  .on("postgres_changes", { event: "*", schema: "public", table: "kroeg_meldingen" }, () => vernieuw())
   .subscribe();
 
 // ---------------------------------------------------------------------------
