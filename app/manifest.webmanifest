@@ -1,13 +1,13 @@
 {
-  "name": "BPDB Kroegkaart",
-  "short_name": "Kroegkaart",
-  "description": "Samen de bierprijzen van de stad vrijspelen en vers houden.",
+  "name": "Bierkoers",
+  "short_name": "Bierkoers",
+  "description": "De koers van een vaasje pils in jouw stad. Samen vrijgespeeld en vers gehouden.",
   "lang": "nl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f6f3ee",
-  "theme_color": "#f6f3ee",
+  "background_color": "#16130f",
+  "theme_color": "#16130f",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

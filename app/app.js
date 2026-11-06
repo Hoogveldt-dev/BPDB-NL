@@ -1,6 +1,7 @@
-// BPDB Kroegkaart: echte app op Supabase.
+// Bierkoers: echte app op Supabase.
 // Kaart (MapLibre + OpenFreeMap), inloggen, prijzen melden en bevestigen, foto's, realtime,
 // inchecken met een eigen kaart (Mijn kroegen) en een kroegentochtplanner.
+// Alles in de stijl van een beurs: lichtkrant, tickercodes, koersverschil en de Pilsindex van de stad.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm";
 import { SUPABASE_URL, SUPABASE_KEY, STAD, KAARTSTIJL } from "./config.js";
@@ -104,6 +105,10 @@ const state = {
   mijn: new Map(), // kroeg_id -> { keer, eerste, laatst } uit de view mijn_kroegen (privé)
   modus: "samen", // kaart: "samen" (gezamenlijke mist) of "mijn" (waar jij hebt ingecheckt)
   tocht: null, // { soort: "nieuw" | "goedkoop", aantal, stops: [kroeg], start: [lon, lat], vanaf: "jij" | "centrum" }
+  // Koers: prijsgeschiedenis uit kroeg_tijdlijn, punten per kroeg, de Pilsindex en tickercodes (zie koersen())
+  koersRuw: [],
+  koers: { punten: new Map(), index: null },
+  codes: new Map(),
 };
 
 // Prijs voor het spel: per vaasje; bij een ander glas omgerekend, met een ≈ ervoor
@@ -180,6 +185,147 @@ function bezigMetTypen() {
 }
 
 // ---------------------------------------------------------------------------
+// Koers: de app als beurs. Alleen weergave; het spel en de spelregels blijven zoals ze zijn.
+// Een koerspunt is een bekende prijs per vaasje op een datum: een bevestigde melding of een
+// menukaart (dezelfde punten als de koersgrafiek). De Pilsindex is de mediaan van de laatst
+// bekende prijs per vaasje van alle kroegen in de stad.
+// ---------------------------------------------------------------------------
+
+const DAG = 86400000;
+const KOERS_TAAL = { op: "▲", af: "▼", gelijk: "=" };
+const richting = (d) => (d > 0 ? "op" : d < 0 ? "af" : "gelijk");
+const bedrag = (cent) => (Math.abs(cent) / 100).toFixed(2).replace(".", ",");
+const procent = (x) => (Math.abs(x) * 100).toFixed(1).replace(".", ",") + "%";
+
+// "▼ 0,20" of "▲ 1,4%"; null als er niets te vergelijken is
+function deltaHtml(d, { pct = null, pil = false } = {}) {
+  if (d == null) return "";
+  const r = richting(d);
+  const tekst = pct != null ? procent(pct) : bedrag(d);
+  const label = r === "op" ? "duurder" : r === "af" ? "goedkoper" : "gelijk";
+  return `<span class="delta ${r}${pil ? " pil" : ""}" title="${label}">${KOERS_TAAL[r]} ${tekst}</span>`;
+}
+
+function mediaan(lijst) {
+  if (!lijst.length) return null;
+  const s = [...lijst].sort((a, b) => a - b), m = s.length >> 1;
+  return Math.round(s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2);
+}
+
+// Tickercode van vier letters per kroeg ("Café De Hemel" wordt HEME), uniek binnen de stad.
+const STOPWOORDEN = new Set(["DE", "HET", "T", "CAFE", "EETCAFE", "GRAND", "BAR", "IN", "VAN", "EN", "THE", "OP", "AAN", "BIJ", "PUB", "BRUIN"]);
+function maakCodes(kroegen) {
+  const codes = new Map(), bezet = new Set();
+  for (const k of [...kroegen].sort((a, b) => a.id - b.id)) {
+    const woorden = k.naam.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+    const kern = woorden.filter((w) => !STOPWOORDEN.has(w));
+    // Te weinig letters zonder stopwoorden ("Bar 2"), dan tellen de stopwoorden mee: BAR2
+    const w = kern.join("").length >= 4 ? kern : woorden.length ? woorden : ["KROEG"];
+    const alles = w.join("").padEnd(4, "X");
+    const kandidaten = (w.length > 1
+      ? [w[0].slice(0, 2) + w[1].slice(0, 2), w[0].slice(0, 3) + w[1][0], w[0][0] + w[1].slice(0, 3), w[0].slice(0, 4), alles.slice(0, 4)]
+      : [alles.slice(0, 4), alles[0] + alles.slice(2, 5), alles.slice(0, 2) + alles.slice(3, 5)]).filter((c) => c.length === 4);
+    let code = kandidaten.find((c) => !bezet.has(c));
+    for (let i = 2; !code; i++) { const c = alles.slice(0, 4 - String(i).length) + i; if (!bezet.has(c)) code = c; }
+    bezet.add(code); codes.set(k.id, code);
+  }
+  return codes;
+}
+const codeVan = (id) => state.codes.get(id) ?? "";
+const codeHtml = (id, groot = false) => codeVan(id) ? `<span class="code${groot ? " groot" : ""}">${codeVan(id)}</span>` : "";
+
+// Index op een moment: mediaan van de laatst bekende prijs per kroeg op of voor dat moment
+function indexOp(t) {
+  const vs = [];
+  for (const p of state.koers.punten.values()) {
+    let v = null;
+    for (const x of p) { if (x.t <= t) v = x.v; else break; }
+    if (v != null) vs.push(v);
+  }
+  return vs.length ? { v: mediaan(vs), n: vs.length } : null;
+}
+
+function koersen() {
+  const open = new Set(state.kroegen.map((k) => k.id));
+  const punten = new Map();
+  for (const g of state.koersRuw) {
+    if (open.size && !open.has(g.kroeg_id)) continue;
+    if (!(g.status === "bevestigd" || g.bron === "menukaart") || g.soort === "check" || !g.volume_cl) continue;
+    const lijst = punten.get(g.kroeg_id) ?? [];
+    lijst.push({ t: new Date(g.op).getTime(), v: Math.round((g.prijs_cent * 25) / g.volume_cl), bron: g.bron });
+    punten.set(g.kroeg_id, lijst);
+  }
+  for (const p of punten.values()) p.sort((a, b) => a.t - b.t);
+  state.koers.punten = punten;
+  const nu = Date.now(), stand = indexOp(nu);
+  let index = null;
+  if (stand) {
+    const maand = indexOp(nu - 30 * DAG);
+    // Verloop over het afgelopen jaar: een punt per maand, plus nu
+    const eerste = Math.min(...[...punten.values()].map((p) => p[0].t));
+    const van = Math.max(eerste, nu - 365 * DAG);
+    const reeks = [];
+    for (let t = van; t < nu; t += 30 * DAG) { const i = indexOp(t); if (i) reeks.push({ t, v: i.v }); }
+    reeks.push({ t: nu, v: stand.v });
+    index = { nu: stand.v, n: stand.n, maand: maand?.v ?? null, delta: maand ? stand.v - maand.v : null, pct: maand ? (stand.v - maand.v) / maand.v : null, reeks };
+  }
+  state.koers.index = index;
+}
+
+// Koers van een kroeg: laatste prijs, verschil met de vorige, jaarbereik
+function koersVan(id) {
+  const p = state.koers.punten.get(id);
+  if (!p?.length) return null;
+  const laatst = p[p.length - 1], vorig = p.length > 1 ? p[p.length - 2] : null;
+  const jaar = p.filter((x) => x.t > Date.now() - 365 * DAG).map((x) => x.v);
+  if (!jaar.length) jaar.push(laatst.v);
+  return {
+    nu: laatst.v, sinds: laatst.t, vorig: vorig?.v ?? null,
+    delta: vorig ? laatst.v - vorig.v : null, pct: vorig ? (laatst.v - vorig.v) / vorig.v : null,
+    laag: Math.min(...jaar), hoog: Math.max(...jaar), aantal: p.length,
+  };
+}
+
+// Kroegen met een koersverschil, nieuwste wijziging eerst
+function bewegers() {
+  return state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c?.delta).sort((a, b) => b.c.sinds - a.c.sinds);
+}
+
+async function laadKoers() {
+  // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee
+  const { data, error } = await sb.from("kroeg_tijdlijn")
+    .select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
+    .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(5000);
+  if (error) { console.error(error); return; }
+  state.koersRuw = data ?? [];
+  koersen();
+  lichtkrant();
+  hud();
+}
+
+// Lichtkrant bovenin: de Pilsindex en de laatste koersen. Tik op een koers om de kroeg te openen.
+function lichtkrant() {
+  const idx = state.koers.index;
+  const s = state.stad;
+  const items = [
+    `<span class="tk idx"><b>PILSINDEX</b>${idx ? `${euro(idx.nu)} ${deltaHtml(idx.delta, { pct: idx.pct })}` : `<span class="zacht">nog geen koers</span>`}</span>`,
+  ];
+  const recent = bewegers().slice(0, 16);
+  const nieuw = state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c && x.c.delta == null).sort((a, b) => b.c.sinds - a.c.sinds).slice(0, 8);
+  for (const { k, c } of [...recent, ...nieuw].sort((a, b) => b.c.sinds - a.c.sinds)) {
+    items.push(`<button class="tk" data-kroeg="${k.id}" aria-label="${esc(k.naam)} ${euro(c.nu)}"><b>${codeVan(k.id)}</b>${euro(c.nu)} ${c.delta != null ? deltaHtml(c.delta) : `<span class="nieuw">NIEUW</span>`}</button>`);
+  }
+  if (s) items.push(`<span class="tk"><b>${esc(STAD.naam.toUpperCase())}</b>${s.vrijgespeeld}/${s.kroegen} <span class="zacht">vrijgespeeld</span></span>`);
+  if (s && s.kroegen - s.vrijgespeeld > 0) items.push(`<span class="tk"><span class="zacht">${s.kroegen - s.vrijgespeeld} kroegen zonder koers · speel ze vrij</span></span>`);
+  if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
+  const een = items.join("");
+  const baan = $("#tickerBaan");
+  // Twee keer achter elkaar, zodat de lichtkrant naadloos doorloopt; de tweede is alleen decor
+  baan.innerHTML = `<div style="display:flex">${een}</div><div style="display:flex" aria-hidden="true" inert>${een}</div>`;
+  baan.style.setProperty("--duur", Math.max(25, items.length * 5) + "s");
+}
+
+// ---------------------------------------------------------------------------
 // Kaart
 // ---------------------------------------------------------------------------
 
@@ -196,7 +342,7 @@ let kaartKlaar = false;
 function kleur() {
   const cs = getComputedStyle(document.documentElement);
   const v = (n) => cs.getPropertyValue(n).trim();
-  return { fresh: v("--fresh"), stale: v("--stale"), old: v("--old"), locked: v("--locked"), wacht: v("--wacht"), accent: v("--accent"), accentInk: v("--accent-ink"), surface: v("--surface"), blue: v("--blue") };
+  return { fresh: v("--fresh"), stale: v("--stale"), old: v("--old"), locked: v("--locked"), wacht: v("--wacht"), accent: v("--accent"), accentInk: v("--accent-ink"), surface: v("--surface"), blue: v("--blue"), op: v("--op"), af: v("--af") };
 }
 
 function geojson() {
@@ -212,14 +358,25 @@ function geojson() {
         versheid: k.open_melding_id && k.versheid !== "locked" && !k.huidig_prijs_cent ? "wacht" : k.versheid,
         label: state.soort ? (soortIn(k.id)?.prijs_cent ? euro(soortIn(k.id).prijs_cent) : "") : toonPrijsTekst(k),
         bezocht: state.mijn.has(k.id),
+        per25: koersVan(k.id)?.nu ?? k.per25_cent ?? 0,
       },
     })),
   };
 }
 
-// Samen: kleur is versheid. Mijn kaart: goud waar je hebt ingecheckt, de rest grijs onder je eigen mist.
+// Samen: kleur is versheid. Koers: groen onder de Pilsindex, goud rond de index, rood erboven.
+// Mijn kaart: goud waar je hebt ingecheckt, de rest grijs onder je eigen mist.
 function cirkelStijl() {
   const c = kleur();
+  if (state.modus === "koers") {
+    const idx = state.koers.index?.nu;
+    const prijs = [">", ["get", "per25"], 0];
+    return {
+      "circle-color": ["case", prijs, idx ? ["interpolate", ["linear"], ["/", ["get", "per25"], idx], 0.85, c.af, 1, c.accent, 1.15, c.op] : c.accent, c.locked],
+      "circle-opacity": ["case", prijs, 1, 0.35],
+      "circle-stroke-color": c.surface,
+    };
+  }
   if (state.modus === "mijn") {
     return {
       "circle-color": ["case", ["get", "bezocht"], c.accent, c.locked],
@@ -282,7 +439,7 @@ function kaartLagen() {
     paint: { "text-color": "#ffffff" },
   });
   map.addLayer({
-    id: "kroeg-prijs", type: "symbol", source: "kroegen", minzoom: 14.5,
+    id: "kroeg-prijs", type: "symbol", source: "kroegen", minzoom: state.modus === "koers" ? 13.2 : 14.5,
     filter: ["!=", ["get", "label"], ""],
     layout: {
       "text-field": ["get", "label"],
@@ -314,6 +471,8 @@ function kaartBijwerken() {
   map.getSource("tocht")?.setData(tochtGeojson());
   if (map.getLayer("kroeg-halo")) map.setFilter("kroeg-halo", ["==", ["get", "id"], state.selected ?? -1]);
   if (map.getLayer("kroeg-cirkel")) for (const [k, v] of Object.entries(cirkelStijl())) map.setPaintProperty("kroeg-cirkel", k, v);
+  // In de koersstand staan de prijzen al eerder op de kaart
+  if (map.getLayer("kroeg-prijs")) map.setLayerZoomRange("kroeg-prijs", state.modus === "koers" ? 13.2 : 14.5, 24);
 }
 
 // ---------------------------------------------------------------------------
@@ -379,13 +538,17 @@ async function laadKroegen() {
   const { data, error } = await sb.from("kroeg_kaart").select("*").eq("gemeente", STAD.naam).eq("open", true).order("naam");
   if (error) { console.error(error); toast("Kroegen laden mislukt"); return; }
   state.kroegen = data;
+  state.codes = maakCodes(data);
+  koersen();
   kaartBijwerken();
+  lichtkrant();
 }
 
 async function laadStad() {
   const { data } = await sb.from("stad_voortgang").select("*").eq("gemeente", STAD.naam).maybeSingle();
   state.stad = data;
   hud();
+  lichtkrant();
 }
 
 async function laadProfiel() {
@@ -405,29 +568,38 @@ async function laadMijn() {
   hud();
 }
 
+// Beursbord linksboven: de Pilsindex met het verschil over 30 dagen, en hoeveel van de stad vrij is.
+// Op Mijn kaart: jouw index (mediaan van de kroegen waar je was) en hoeveel kroegen je hebt bezocht.
 function hud() {
+  const idx = state.koers.index;
   if (state.modus === "mijn") {
-    const totaal = state.kroegen.length, n = state.kroegen.filter((k) => state.mijn.has(k.id)).length;
-    zetRing(totaal ? Math.round((n / totaal) * 100) : 0, `${n} van ${totaal} kroegen bezocht`);
+    const totaal = state.kroegen.length, mijn = state.kroegen.filter((k) => state.mijn.has(k.id));
+    const eigen = mediaan(mijn.map((k) => koersVan(k.id)?.nu).filter(Boolean));
+    zetRing(totaal ? Math.round((mijn.length / totaal) * 100) : 0, `${mijn.length} van ${totaal} kroegen bezocht`,
+      "Jouw index", eigen, eigen && idx ? eigen - idx.nu : null);
     return;
   }
   const s = state.stad;
   const pct = s && s.kroegen ? Math.round((s.vrijgespeeld / s.kroegen) * 100) : 0;
-  zetRing(pct, `${STAD.naam} vrijgespeeld`);
+  zetRing(pct, `${STAD.naam} vrijgespeeld`, "Pilsindex", idx?.nu, idx?.delta, idx?.pct);
 }
 
-function zetRing(pct, sub) {
+function zetRing(pct, sub, label, koers, delta, deltaPct) {
   const C = 2 * Math.PI * 15;
   const ring = $("#hudRing");
   ring.style.strokeDasharray = C;
   ring.style.strokeDashoffset = C * (1 - pct / 100);
   $("#hudPct").textContent = pct + "%";
   $("#hudSub").textContent = sub;
+  $("#hudLabel").textContent = label;
+  $("#hudKoers").textContent = koers ? euro(koers) : "geen koers";
+  $("#hudDelta").outerHTML = `<span id="hudDelta">${delta != null && delta !== 0 ? deltaHtml(delta, deltaPct != null ? { pct: deltaPct } : {}) : ""}</span>`;
 }
 
 function setModus(m) {
   state.modus = m;
   document.querySelectorAll("#modus button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.modus === m)));
+  $("#legenda").hidden = m !== "koers";
   kaartBijwerken();
   hud();
   if (m === "mijn" && !state.sessie) toast("Log in via Ik om je eigen kaart te zien");
@@ -437,7 +609,7 @@ let vernieuwTimer;
 function vernieuw() {
   clearTimeout(vernieuwTimer);
   vernieuwTimer = setTimeout(async () => {
-    await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbod(), laadMijn()]);
+    await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbod(), laadMijn(), laadKoers()]);
     if (!bezigMetTypen()) draw();
   }, 400);
 }
@@ -453,12 +625,12 @@ function draw() {
   if (state.selected != null) html = state.form ? formView() : state.aanbodForm ? aanbodFormView() : state.tijdenForm ? tijdenFormView() : detailView();
   else if (state.tocht) html = tochtView();
   else if (state.tab === "kaart") html = lijstView();
-  else if (state.tab === "samen") html = '<div class="empty">Laden…</div>';
+  else if (state.tab === "beurs") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "rang") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "ik") html = ikView();
   body.innerHTML = html;
   if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); }
-  else if (state.selected == null && state.tab === "samen") samenView();
+  else if (state.selected == null && state.tab === "beurs") beursView();
   else if (state.selected == null && state.tab === "rang") rangView();
   $("#tabIk").textContent = state.profiel ? state.profiel.naam.slice(0, 10) : "Ik";
 }
@@ -474,7 +646,7 @@ function rowHtml(k) {
   const sub = [k.wijk, d != null ? meters(d) : null, VERSHEID[v], state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
   return `<li><button class="row" data-kroeg="${k.id}">
     <span class="dot ${v}"></span>
-    <span class="row-main"><span class="row-title">${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
+    <span class="row-main"><span class="row-title">${codeHtml(k.id)}${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
     ${prijsKolom(k)}
   </button></li>`;
 }
@@ -485,7 +657,13 @@ function prijsKolom(k) {
     return a?.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : "";
   }
   const t = toonPrijs(k);
-  return t ? `<span class="price">${toonPrijsTekst(k)}<small>${vanMenukaart(k) ? "menukaart" : t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small></span>` : "";
+  if (!t) return "";
+  // Onder een bevestigde prijs: het koersverschil met de vorige prijs
+  const c = !t.onbevestigd ? koersVan(k.id) : null;
+  const onder = c?.delta != null
+    ? `<small class="delta ${richting(c.delta)}">${KOERS_TAAL[richting(c.delta)]} ${bedrag(c.delta)}</small>`
+    : `<small>${vanMenukaart(k) ? "menukaart" : t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small>`;
+  return `<span class="price">${toonPrijsTekst(k)}${onder}</span>`;
 }
 
 function lijstView() {
@@ -495,6 +673,8 @@ function lijstView() {
     { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
     { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
     { id: "goedkoop", naam: "Goedkoopst", f: (k) => k.per25_cent },
+    { id: "dalers", naam: `Dalers <span class="delta af">▼</span>`, f: (k) => koersVan(k.id)?.delta < 0 },
+    { id: "stijgers", naam: `Stijgers <span class="delta op">▲</span>`, f: (k) => koersVan(k.id)?.delta > 0 },
     ...(state.sessie ? [{ id: "nieuw", naam: "Nog niet bezocht", f: (k) => !state.mijn.has(k.id) }] : []),
   ];
   const f = F.find((x) => x.id === state.filter) ?? F[0];
@@ -505,10 +685,13 @@ function lijstView() {
     .filter((k) => state.soort && state.filter === "goedkoop" ? true : f.f(k))
     .filter((k) => !q || k.naam.toLowerCase().includes(q) || (k.wijk ?? "").toLowerCase().includes(q));
   if (state.filter === "goedkoop") rows.sort((a, b) => prijsVoor(a) - prijsVoor(b));
+  else if (state.filter === "dalers" || state.filter === "stijgers") rows.sort((a, b) => Math.abs(koersVan(b.id).delta) - Math.abs(koersVan(a.id).delta));
   else if (state.pos) rows.sort((a, b) => afstand(state.pos, [a.lon, a.lat]) - afstand(state.pos, [b.lon, b.lat]));
   const leeg = state.kroegen.length === 0
     ? `<div class="empty">Nog geen kroegen geladen.<br><span class="small">Een beheerder importeert ze via het tabblad Ik.</span></div>`
     : state.soort ? `<div class="empty">Nog geen kroeg met ${esc(soortNaam(state.soort))} gemeld.<br><span class="small">Weet je er een? Voeg het toe bij de kroeg onder "Ook op de tap".</span></div>`
+    : state.filter === "dalers" && !q ? `<div class="empty">Nog geen kroeg goedkoper geworden.<br><span class="small">Zie je een lagere prijs? Meld hem bij de kroeg.</span></div>`
+    : state.filter === "stijgers" && !q ? `<div class="empty">Nog geen kroeg duurder geworden.</div>`
     : `<div class="empty">Niets gevonden.</div>`;
   // Alleen soorten die ergens getapt worden
   const soorten = state.biersoorten.filter((b) => state.aanbod.some((a) => a.soort === b.code) || b.code === state.soort);
@@ -544,25 +727,26 @@ function detailView() {
       ${anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om prijzen te controleren.</div>` : ""}`;
   }
   return `<button class="back" data-back>‹ Terug</button>
+    <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
     <h2>${esc(k.naam)}</h2>
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
-      <span class="badge ${v}">${VERSHEID[v]}</span>
       ${k.open_prijs_cent && vanMenukaart(k) ? `
-        <div class="big-price" style="margin-top:10px">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
+        <div class="big-price">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
         <div class="muted small">Volgens de menukaart van ${datumTekst(k.open_op)}${k.open_bron_omschrijving ? ` (${esc(k.open_bron_omschrijving)})` : ""}. Nog door niemand bevestigd.</div>`
-      : k.open_prijs_cent ? `${v === "wacht" ? "" : ` <span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
-        <div class="big-price" style="margin-top:10px">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
+      : k.open_prijs_cent ? `${v === "wacht" ? "" : `<span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
+        <div class="big-price"${v === "wacht" ? "" : ` style="margin-top:10px"`}>${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
         <div class="muted small">Gemeld ${wanneer(k.open_op)}, nog niet bevestigd</div>
         ${k.huidig_prijs_cent ? `<div class="vorige"><span class="muted small">Vorige bevestigde prijs</span>
           <div><b>${euro(k.huidig_prijs_cent)}</b> <span class="muted">${glasTekst(k.huidig_merk, k.huidig_volume_cl, k.per25_cent)}</span></div>
           <div class="muted small">Laatst gecontroleerd ${wanneer(k.laatst_gecontroleerd)}</div></div>` : ""}`
-      : k.huidig_prijs_cent ? `<div class="big-price" style="margin-top:10px">${euro(k.huidig_prijs_cent)}</div>
+      : k.huidig_prijs_cent ? `<div class="koersregel" style="margin-top:0"><div class="big-price">${euro(k.huidig_prijs_cent)}</div>${koersDelta(k)}</div>
         <div class="muted">${glasTekst(k.huidig_merk, k.huidig_volume_cl, k.per25_cent)}</div>
-        <div class="muted small">Laatst gecontroleerd ${wanneer(k.laatst_gecontroleerd)}</div>`
-      : `<div class="muted" style="margin-top:8px">Nog geen bevestigde prijs.</div>`}
+        <div class="muted small">Laatst gecontroleerd ${wanneer(k.laatst_gecontroleerd)}</div>
+        ${positieHtml(k)}`
+      : `<div class="big-price muted">€ ?</div><div class="muted" style="margin-top:6px">Nog geen koers. Speel deze kroeg vrij met de prijs van een vaasje.</div>`}
       ${k.ontdekker ? `<div class="small" style="margin-top:8px">Ontdekt door <b>${esc(k.ontdekker)}</b> ${wanneer(k.ontdekt_op)}</div>` : ""}
       ${actie}
       ${ingelogd ? "" : `<div class="small muted" style="margin-top:8px">Doe mee via het tabblad Ik. Een e-mailadres is niet nodig.</div>`}
@@ -570,7 +754,7 @@ function detailView() {
     ${incheckHtml(k)}
     <div id="tijden"></div>
     ${aanbodBlok(k)}
-    <h3>Prijs per vaasje, afgelopen jaar</h3>
+    <h3>Koers per vaasje <span class="muted">afgelopen jaar</span></h3>
     <div id="spark"></div>
     <h3>Geschiedenis</h3>
     <div id="stamgast"></div>
@@ -873,24 +1057,73 @@ function tijdlijnItem(g) {
     ${g.foto_pad ? `<div class="t-meta"><a href="${fotoUrl(g.foto_pad)}" target="_blank" rel="noopener">Foto</a></div>` : ""}</li>`;
 }
 
-function spark(events) {
-  const jaar = Date.now() - 365 * 86400000;
-  // Bevestigde prijzen, plus prijzen van menukaarten: die laten zien wat het op die datum kostte
-  const pts = events.filter((g) => (g.status === "bevestigd" || g.bron === "menukaart") && g.soort !== "check" && new Date(g.op) > jaar)
-    .map((g) => ({ t: new Date(g.op).getTime(), v: (g.prijs_cent * 25) / g.volume_cl })).reverse();
-  if (!pts.length) return `<div class="muted small">Nog geen prijzen dit jaar.</div>`;
-  pts.push({ t: Date.now(), v: pts[pts.length - 1].v });
-  const med = state.stad?.mediaan_per25_cent;
-  const vals = pts.map((p) => p.v).concat(med ? [med] : []);
-  const lo = Math.min(...vals) * 0.92, hi = Math.max(...vals) * 1.08;
-  const W = 320, H = 80, X = (t) => 4 + ((t - jaar) / (Date.now() - jaar)) * (W - 50), Y = (v) => 6 + (H - 18) * (1 - (v - lo) / (hi - lo || 1));
+// Koersgrafiek: trapjes per prijs, met een vlak eronder en de Pilsindex als stippellijn.
+// pts: [{ t, v }] oplopend in tijd; het laatste punt is nu.
+function grafiekSvg(pts, { id = "g", lijn = null, kleur = "var(--accent)", tekst = "var(--fg)", as = "var(--muted)", lijnLabel = "index" } = {}) {
+  const W = 320, H = 96, R = 56, nu = Date.now(), van = pts[0].t;
+  const vals = pts.map((p) => p.v).concat(lijn ? lijn.map((p) => p.v) : []);
+  const lo = Math.min(...vals) * 0.95, hi = Math.max(...vals) * 1.05;
+  const X = (t) => 2 + ((Math.max(t, van) - van) / (nu - van || 1)) * (W - R);
+  const Y = (v) => 6 + (H - 26) * (1 - (v - lo) / (hi - lo || 1));
   let d = `M${X(pts[0].t)},${Y(pts[0].v)}`;
   for (let i = 1; i < pts.length; i++) d += ` H${X(pts[i].t)} V${Y(pts[i].v)}`;
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Prijsverloop">
-    ${med ? `<line x1="4" x2="${W - 50}" y1="${Y(med)}" y2="${Y(med)}" stroke="var(--muted)" stroke-dasharray="3 3"/><text x="6" y="${Y(med) - 4}" font-size="10" fill="var(--muted)">mediaan ${euro(med)}</text>` : ""}
-    <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-    <text x="${W - 46}" y="${Y(pts[pts.length - 1].v) + 4}" font-size="11" font-weight="700" fill="var(--fg)">${euro(Math.round(pts[pts.length - 1].v))}</text>
+  d += ` H${X(nu)}`;
+  const vlak = `${d} V${H - 20} H${X(pts[0].t)} Z`;
+  const laatst = pts[pts.length - 1].v;
+  const maand = (t) => new Date(t).toLocaleDateString("nl-NL", { month: "short", year: "2-digit" }).replace(".", "");
+  const lijnPad = lijn?.length > 1 ? lijn.map((p, i) => `${i ? "L" : "M"}${X(p.t)},${Y(p.v)}`).join(" ") : "";
+  return `<svg class="grafiek" viewBox="0 0 ${W} ${H}" role="img" aria-label="Koersverloop, nu ${euro(laatst)}">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${kleur}" stop-opacity=".38"/><stop offset="1" stop-color="${kleur}" stop-opacity="0"/></linearGradient></defs>
+    <line x1="2" x2="${W - R}" y1="${H - 20}" y2="${H - 20}" stroke="${as}" stroke-opacity=".4"/>
+    <path d="${vlak}" fill="url(#${id})"/>
+    ${lijnPad ? `<path d="${lijnPad}" fill="none" stroke="${as}" stroke-width="1.2" stroke-dasharray="3 3"/>${lijnLabel ? `<text x="4" y="${Y(lijn[0].v) - 4}" font-size="9.5" fill="${as}">${lijnLabel}</text>` : ""}` : ""}
+    <path d="${d}" fill="none" stroke="${kleur}" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="${X(nu)}" cy="${Y(laatst)}" r="3.5" fill="${kleur}"/>
+    <text x="${W - R + 8}" y="${Y(laatst) + 4}" font-size="12" font-weight="700" fill="${tekst}">${euro(laatst)}</text>
+    <text x="2" y="${H - 6}" font-size="9.5" fill="${as}">${maand(van)}</text>
+    <text x="${W - R}" y="${H - 6}" font-size="9.5" fill="${as}" text-anchor="end">nu</text>
   </svg>`;
+}
+
+function spark(events) {
+  const van = Date.now() - 365 * DAG;
+  // Bevestigde prijzen, plus prijzen van menukaarten: die laten zien wat het op die datum kostte
+  const alle = events.filter((g) => (g.status === "bevestigd" || g.bron === "menukaart") && g.soort !== "check")
+    .map((g) => ({ t: new Date(g.op).getTime(), v: (g.prijs_cent * 25) / g.volume_cl })).reverse();
+  const binnen = alle.filter((p) => p.t > van);
+  const voor = alle.filter((p) => p.t <= van).pop();
+  const pts = [...(voor ? [{ t: van, v: voor.v }] : []), ...binnen];
+  if (!pts.length) return `<div class="muted small">Nog geen koers dit jaar.</div>`;
+  pts.push({ t: Date.now(), v: pts[pts.length - 1].v });
+  const lijn = (state.koers.index?.reeks ?? []).filter((p) => p.t >= pts[0].t);
+  return grafiekSvg(pts, { id: "gk", lijn, lijnLabel: `index ${state.koers.index ? euro(state.koers.index.nu) : ""}` });
+}
+
+// Waar staat deze kroeg in de stad? Verschil met de Pilsindex, plek en jaarbereik.
+function positieHtml(k) {
+  const c = koersVan(k.id), idx = state.koers.index;
+  if (!c || !idx) return "";
+  const alle = [...state.koers.punten.keys()].map((id) => koersVan(id).nu);
+  const lo = Math.min(...alle), hi = Math.max(...alle);
+  const pos = (v) => (hi > lo ? ((v - lo) / (hi - lo)) * 100 : 50);
+  const verschil = c.nu - idx.nu;
+  const plek = alle.filter((v) => v < c.nu).length + 1;
+  const tekst = verschil === 0 ? "Precies op de Pilsindex" : `${euro(Math.abs(verschil))} ${verschil < 0 ? "onder" : "boven"} de Pilsindex`;
+  return `<div class="positie">
+    <div class="t"><b>${tekst}</b><span class="muted">${plek === 1 ? "goedkoopste" : `${plek}e goedkoopste`} van ${alle.length}</span></div>
+    ${hi > lo ? `<div class="schaal" role="img" aria-label="${euro(c.nu)} op een schaal van ${euro(lo)} tot ${euro(hi)}, index ${euro(idx.nu)}">
+      <span class="idx" style="left:${pos(idx.nu)}%"></span><span class="hier" style="left:${pos(c.nu)}%"></span></div>
+    <div class="schaal-as"><span>${euro(lo)}</span><span>index ${euro(idx.nu)}</span><span>${euro(hi)}</span></div>` : ""}
+    <div class="kv"><div>Jaarlaag<b>${euro(c.laag)}</b></div><div>Jaarhoog<b>${euro(c.hoog)}</b></div><div>Koersen<b>${c.aantal}</b></div></div>
+  </div>`;
+}
+
+// Verschil met de vorige koers, naast de grote prijs
+function koersDelta(k) {
+  const c = koersVan(k.id);
+  if (c?.delta == null) return "";
+  return `<div style="text-align:right">${deltaHtml(c.delta, { pil: true })}
+    <div class="small muted" style="margin-top:4px">${c.pct ? `${c.delta > 0 ? "+" : "−"}${procent(c.pct)} ` : ""}per vaasje</div></div>`;
 }
 
 function formView() {
@@ -916,18 +1149,67 @@ function formView() {
     </form>`;
 }
 
-async function samenView() {
+async function beursView() {
   const [{ data: wijken }, { data: recent }] = await Promise.all([
     sb.from("wijk_voortgang").select("*").eq("gemeente", STAD.naam).order("naam"),
-    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent").order("op", { ascending: false }).limit(15),
+    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").order("op", { ascending: false }).limit(15),
   ]);
-  if (state.tab !== "samen" || state.selected != null) return;
+  if (state.tab !== "beurs" || state.selected != null) return;
   const s = state.stad ?? { kroegen: 0, vrijgespeeld: 0, vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
   const pct = s.kroegen ? Math.round((s.vrijgespeeld / s.kroegen) * 100) : 0;
   const MS = [25, 50, 75, 100], next = MS.find((m) => m > pct), nodig = next ? Math.ceil((next / 100) * s.kroegen) - s.vrijgespeeld : 0;
   const C = 2 * Math.PI * 42;
   const versPct = s.vrijgespeeld ? Math.round((s.vers / s.vrijgespeeld) * 100) : 0;
+  const idx = state.koers.index;
+
+  // Stijgers en dalers van het afgelopen jaar; zijn die er nog niet, dan de laagste en hoogste koersen
+  const jaar = bewegers().filter((x) => x.c.sinds > Date.now() - 365 * DAG);
+  const dalers = jaar.filter((x) => x.c.delta < 0).sort((a, b) => a.c.delta - b.c.delta).slice(0, 3);
+  const stijgers = jaar.filter((x) => x.c.delta > 0).sort((a, b) => b.c.delta - a.c.delta).slice(0, 3);
+  const metKoers = state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c).sort((a, b) => a.c.nu - b.c.nu);
+  const mover = ({ k, c }, metDelta) => `<button class="mover" data-kroeg="${k.id}">
+      <span class="n">${esc(k.naam)}</span><span class="p">${euro(c.nu)}</span>
+      <span class="w">${codeVan(k.id)}${metDelta ? ` · ${new Date(c.sinds).toLocaleDateString("nl-NL", { day: "numeric", month: "short" }).replace(".", "")}` : ""}</span>${metDelta ? deltaHtml(c.delta) : ""}</button>`;
+  const kolom = (kop, soort, lijst, metDelta, leeg) => `<div class="card"><div class="kop ${soort}">${kop}</div>
+      ${lijst.length ? lijst.map((x) => mover(x, metDelta)).join("") : `<div class="small muted" style="padding:8px 0">${leeg}</div>`}</div>`;
+  const duo = dalers.length || stijgers.length
+    ? `<h3>Stijgers en dalers <span class="muted">afgelopen jaar</span></h3>
+      <div class="duo">${kolom("▼ Dalers", "af", dalers, true, "Nog niemand goedkoper")}${kolom("▲ Stijgers", "op", stijgers, true, "Nog niemand duurder")}</div>`
+    : metKoers.length > 1
+      ? `<h3>Laagste en hoogste koers</h3>
+      <div class="duo">${kolom("Laagst", "af", metKoers.slice(0, 3), false, "")}${kolom("Hoogst", "op", metKoers.slice(-3).reverse(), false, "")}</div>`
+      : "";
+
+  // Wijken als sectoren: de mediaan per wijk naast de Pilsindex
+  const sector = (w) => {
+    const m = mediaan(state.kroegen.filter((k) => k.wijk === w.naam).map((k) => koersVan(k.id)?.nu).filter(Boolean));
+    return `<div class="sector">
+      <div class="t"><b>${esc(w.naam)}</b><span>${m ? `<span class="price">${euro(m)}</span>` : `<span class="small muted">geen koers</span>`}</span></div>
+      <div class="t small muted"><span>${w.vrijgespeeld} van ${w.kroegen} vrijgespeeld</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
+      <div class="bar"><span style="width:${(w.vrijgespeeld / w.kroegen) * 100}%"></span></div></div>`;
+  };
+
+  const melding = (g) => {
+    const per25 = g.volume_cl ? Math.round((g.prijs_cent * 25) / g.volume_cl) : null;
+    const verschil = g.soort === "wijziging" && g.vorige_prijs_cent != null ? g.prijs_cent - g.vorige_prijs_cent : null;
+    return `<li><button class="row" data-kroeg="${g.kroeg_id}">
+      <span class="row-main"><span class="row-title">${codeHtml(g.kroeg_id)}${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "speelde" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}${g.soort === "eerst" ? " vrij" : ""}</span>
+      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span>
+      ${g.soort !== "check" && per25 ? `<span class="price">${euro(g.prijs_cent)}${verschil ? `<small class="delta ${richting(verschil)}">${KOERS_TAAL[richting(verschil)]} ${bedrag(verschil)}</small>` : `<small>${g.volume_cl} cl</small>`}</span>` : ""}</button></li>`;
+  };
+
   body.innerHTML = `
+    <div class="indexkaart">
+      <div class="kop">Pilsindex ${esc(STAD.naam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
+      ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">30 dagen</span>` : ""}</div>
+        <div class="uitleg">Wat een vaasje pils in ${esc(STAD.naam)} kost: de middelste van de laatst bekende prijzen.</div>
+        ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", tekst: "var(--krant-fg)", as: "var(--krant-muted)", lijnLabel: "" })}</div>` : ""}`
+      : `<div class="stand"><span class="big-price">€ ?</span></div>
+        <div class="uitleg">Nog geen koers. Speel de eerste kroeg vrij en zet de Pilsindex op het bord.</div>`}
+    </div>
+    <div class="small muted">▲ duurder · ▼ goedkoper. Rood en groen zoals jij het als klant voelt.</div>
+    ${duo}
+    <h3>Samen vrijspelen <span class="muted">${s.vrijgespeeld}/${s.kroegen}</span></h3>
     <div class="card ring-big">
       <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="ring-bg"/><circle cx="50" cy="50" r="42" class="ring-fg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct / 100)}"/></svg>
       <div><div class="pct">${pct}%</div><div>${STAD.naam} samen vrijgespeeld</div>
@@ -936,20 +1218,16 @@ async function samenView() {
     <div class="milestones">${MS.map((m) => `<span class="${pct >= m ? "done" : ""}">${m}%</span>`).join("")}</div>
     <h3>Deze week, met z'n allen</h3>
     <div class="card">
-      <div><b>${s.bijdragen_week}</b> van ${WEEKDOEL} bijdragen <span class="muted small">· ${s.spelers_week} spelers</span></div>
+      <div><b class="num">${s.bijdragen_week}</b> van ${WEEKDOEL} bijdragen <span class="muted small">· ${s.spelers_week} spelers</span></div>
       <div class="bar"><span style="width:${Math.min(100, (s.bijdragen_week / WEEKDOEL) * 100)}%"></span></div>
-      <div style="margin-top:12px"><b>${s.oud}</b> oude prijzen (90+ dagen) om te controleren <span class="muted small">· +15 per controle</span></div>
-      <div style="margin-top:12px"><b>${versPct}%</b> van de prijzen is vers</div>
+      <div style="margin-top:12px"><b class="num">${s.oud}</b> oude koersen (90+ dagen) om te controleren <span class="muted small">· +15 per controle</span></div>
+      <div style="margin-top:12px"><b class="num">${versPct}%</b> van de koersen is vers</div>
       <div class="bar fresh"><span style="width:${versPct}%"></span></div>
     </div>
-    <h3>Per wijk</h3>
-    ${(wijken ?? []).length ? (wijken ?? []).map((w) => `<div class="card" style="padding:10px 14px">
-      <div style="display:flex;justify-content:space-between"><b>${esc(w.naam)}</b><span class="small muted">${w.vrijgespeeld}/${w.kroegen}</span></div>
-      <div class="bar"><span style="width:${(w.vrijgespeeld / w.kroegen) * 100}%"></span></div></div>`).join("") : `<div class="muted small">Nog geen wijken geladen.</div>`}
-    <h3>Recent in de stad</h3>
-    ${(recent ?? []).length ? `<ul class="list">${recent.map((g) => `<li><button class="row" data-kroeg="${g.kroeg_id}">
-      <span class="row-main"><span class="row-title">${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "speelde" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}${g.soort === "eerst" ? " vrij" : ""}</span>
-      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span></button></li>`).join("")}</ul>` : `<div class="muted small">Nog geen activiteit.</div>`}`;
+    <h3>Sectoren <span class="muted">per wijk</span></h3>
+    ${(wijken ?? []).length ? `<div class="card" style="padding:4px 14px">${(wijken ?? []).map(sector).join("")}</div>` : `<div class="muted small">Nog geen wijken geladen.</div>`}
+    <h3>Laatste meldingen</h3>
+    ${(recent ?? []).length ? `<ul class="list">${recent.map(melding).join("")}</ul>` : `<div class="muted small">Nog geen activiteit.</div>`}`;
 }
 
 async function rangView() {
@@ -958,7 +1236,8 @@ async function rangView() {
   if (state.tab !== "rang" || state.selected != null) return;
   const uid = state.sessie?.user?.id;
   const P = [["week", "Week"], ["maand", "Maand"], ["altijd", "Altijd"]];
-  body.innerHTML = `<div class="chips">${P.map(([id, n]) => `<button class="chip" data-periode="${id}" aria-pressed="${id === kolom}">${n}</button>`).join("")}</div>
+  body.innerHTML = `<h2>Koersmakers</h2><p class="muted small" style="margin-top:0">Wie de koers van ${esc(STAD.naam)} het best bijhoudt. Punten voor melden en controleren, nooit voor drinken.</p>
+    <div class="chips">${P.map(([id, n]) => `<button class="chip" data-periode="${id}" aria-pressed="${id === kolom}">${n}</button>`).join("")}</div>
     ${(data ?? []).length ? `<ul class="list">${data.map((r, i) => `<li class="row ${r.id === uid ? "me" : ""}">
       <span class="rank">${i + 1}</span>
       <span class="row-main"><span class="row-title">${esc(r.naam)}</span><span class="row-sub">${r.ontdekt} ontdekt · betrouwbaarheid ${Math.round(r.betrouwbaarheid)}%</span></span>
@@ -1112,8 +1391,9 @@ function mijnKroegenHtml() {
   const vaste = [...mijn].sort((a, b) => b.keer - a.keer || new Date(b.laatst) - new Date(a.laatst))[0];
   const metPrijs = mijn.filter((k) => k.per25_cent);
   const goedkoopst = [...metPrijs].sort((a, b) => a.per25_cent - b.per25_cent)[0];
-  const gem = metPrijs.length ? Math.round(metPrijs.reduce((n, k) => n + k.per25_cent, 0) / metPrijs.length) : null;
-  const med = state.stad?.mediaan_per25_cent;
+  // Jouw index: de mediaan van de kroegen waar je was, naast de Pilsindex van de stad
+  const eigenIndex = mediaan(mijn.map((k) => koersVan(k.id)?.nu).filter(Boolean));
+  const pilsindex = state.koers.index?.nu;
   const eerste = mijn.reduce((a, k) => (!a || k.eerste < a ? k.eerste : a), null);
   const laatst = mijn.reduce((a, k) => (!a || k.laatst > a ? k.laatst : a), null);
   const sindsDagen = dagen(laatst);
@@ -1142,7 +1422,7 @@ function mijnKroegenHtml() {
     <div class="statgrid">
       <div class="card stat"><b>${checkins}</b><span>check-ins</span></div>
       <div class="card stat"><b>${wijkenBezocht}</b><span>${wijkenBezocht === 1 ? "wijk" : "wijken"}</span></div>
-      ${gem ? `<div class="card stat"><b>${euro(gem)}</b><span>gemiddeld per vaasje${med ? `, stad ${euro(med)}` : ""}</span></div>` : ""}
+      ${eigenIndex ? `<div class="card stat"><b>${euro(eigenIndex)}</b><span>jouw index${pilsindex ? `, ${deltaHtml(eigenIndex - pilsindex)} t.o.v. de stad` : ""}</span></div>` : ""}
       <div class="card stat"><b>${eerste ? new Date(eerste).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : ""}</b><span>eerste check-in</span></div>
     </div>
     ${vaste && vaste.keer > 1 ? `<button class="row" data-kroeg="${vaste.id}"><span class="row-main"><span class="row-sub">Vaste stek</span><span class="row-title">${esc(vaste.naam)}</span></span><span class="price">${vaste.keer}<small>keer</small></span></button>` : ""}
@@ -1188,7 +1468,7 @@ function tochtView() {
   const rijen = t.stops.map((k, i) => {
     const d = afstand(vorige, [k.lon, k.lat]); totaal += d; vorige = [k.lon, k.lat];
     return `<li><button class="row" data-kroeg="${k.id}"><span class="nr">${i + 1}</span>
-      <span class="row-main"><span class="row-title">${esc(k.naam)}</span><span class="row-sub">${meters(d)}${k.wijk ? ` · ${esc(k.wijk)}` : ""}${state.mijn.has(k.id) ? " · bezocht" : state.sessie ? " · nieuw voor jou" : ""}</span></span>
+      <span class="row-main"><span class="row-title">${codeHtml(k.id)}${esc(k.naam)}</span><span class="row-sub">${meters(d)}${k.wijk ? ` · ${esc(k.wijk)}` : ""}${state.mijn.has(k.id) ? " · bezocht" : state.sessie ? " · nieuw voor jou" : ""}</span></span>
       ${k.per25_cent ? `<span class="price">${spelPrijs(k)}<small>per vaasje</small></span>` : ""}</button></li>`;
   }).join("");
   return `<button class="back" data-tocht-sluit>‹ Terug</button>
@@ -1523,6 +1803,8 @@ $("#tabs").addEventListener("click", (e) => {
   setTab(b.dataset.tab);
 });
 $("#modus").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setModus(b.dataset.modus); });
+$("#ticker").addEventListener("click", (e) => { const b = e.target.closest("[data-kroeg]"); if (b) openKroeg(b.dataset.kroeg); });
+$("#hud").addEventListener("click", () => { setTab(state.modus === "mijn" ? "ik" : "beurs"); if (!wide() && sheet.dataset.detent === "peek") setDetent("half"); });
 $("#locate").addEventListener("click", async () => {
   const pos = await locatie();
   if (!pos) return toast("Locatie niet beschikbaar");
@@ -1581,7 +1863,8 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   }
   const { data } = await sb.auth.getSession();
   state.sessie = data.session;
-  await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbieders(), laadAanbod(), laadMijn()]);
+  await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers()]);
+  koersen(); lichtkrant(); hud(); kaartBijwerken();
   draw();
   setDetent("half");
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

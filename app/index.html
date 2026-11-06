@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BPDB Kroegkaart</title>
-<meta name="description" content="Samen de bierprijzen van de stad vrijspelen en vers houden.">
+<title>Bierkoers</title>
+<meta name="description" content="De koers van een vaasje pils in jouw stad. Samen vrijgespeeld en vers gehouden.">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bierkoers">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1e2023" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#16130f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -18,14 +18,26 @@
 <body>
 <div id="map" aria-label="Kaart met kroegen"></div>
 
-<div id="hud" class="glass" aria-live="polite">
-  <div class="hud-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="ring-bg"/><circle cx="18" cy="18" r="15" class="ring-fg" id="hudRing"/></svg></div>
-  <div><div class="hud-pct" id="hudPct">0%</div><div class="hud-sub" id="hudSub">vrijgespeeld</div></div>
+<!-- Lichtkrant: de laatste koersen van de stad, zoals op een beurs -->
+<div id="ticker" aria-label="Lichtkrant met de laatste koersen">
+  <div class="ticker-raam"><div class="ticker-baan" id="tickerBaan"></div></div>
 </div>
+
+<button id="hud" class="glass" aria-live="polite" aria-label="Naar de beurs">
+  <span class="hud-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="ring-bg"/><circle cx="18" cy="18" r="15" class="ring-fg" id="hudRing"/></svg><span class="hud-pct" id="hudPct">0%</span></span>
+  <span class="hud-tekst">
+    <span class="hud-koers"><span class="hud-label" id="hudLabel">Pilsindex</span> <b id="hudKoers">…</b> <span class="delta" id="hudDelta"></span></span>
+    <span class="hud-sub" id="hudSub">vrijgespeeld</span>
+  </span>
+</button>
 
 <div id="modus" class="glass" role="group" aria-label="Welke kaart">
   <button data-modus="samen" aria-pressed="true">Samen</button>
+  <button data-modus="koers" aria-pressed="false">Koers</button>
   <button data-modus="mijn" aria-pressed="false">Mijn kaart</button>
+</div>
+<div id="legenda" class="glass" hidden>
+  <span><i class="lg af"></i>goedkoper</span><span><i class="lg idx"></i>index</span><span><i class="lg op"></i>duurder</span>
 </div>
 
 <button id="locate" class="glass mapbtn" aria-label="Naar mijn locatie">
@@ -36,7 +48,7 @@
   <div class="grabber" id="grabber" aria-hidden="true"></div>
   <nav id="tabs" role="tablist">
     <button data-tab="kaart" aria-pressed="true">Kaart</button>
-    <button data-tab="samen" aria-pressed="false">Samen</button>
+    <button data-tab="beurs" aria-pressed="false">Beurs</button>
     <button data-tab="rang" aria-pressed="false">Ranglijst</button>
     <button data-tab="ik" aria-pressed="false" id="tabIk">Ik</button>
   </nav>

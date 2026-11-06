@@ -21,6 +21,17 @@ Extra bier bij een kroeg (Guinness, witbier, een ander merk pils) levert nu geen
 
 De betrouwbaarheid verandert sinds migratie `20261106220000_betrouwbaarheid_verwachting` naar verwachting (het idee van Elo): zie [concept.md](concept.md), 2.6. Dat staat erin als voorlopige oplossing; **Kjell is er nog niet tevreden over**. Bij een nieuwe versie: nieuwe migratie met `private.betrouwbaarheid_na` en eventueel `private.ervaren_melder`, de tabel in `supabase/README.md`, paragraaf 2.6 en de test.
 
+## Meer beurs bij Bierkoers
+
+De app heeft al een lichtkrant, tickercodes, het koersverschil per kroeg, de Pilsindex, stijgers en dalers, een koerskaart en wijken als sectoren. Alles daarvan wordt in de app berekend uit `kroeg_tijdlijn` (`koersen()` in `app/app.js`). Ideeën voor later:
+
+- **Koersalarm.** Volg een kroeg en krijg een melding als de koers daalt of als de index onder een bedrag zakt. Vraagt om pushmeldingen in de PWA en een tabel met gevolgde kroegen.
+- **Weekbericht "Slotkoersen".** Elke maandag een korte samenvatting: index, grootste stijger en daler, wijk van de week. Als kaart om te delen of als mail (eigen SMTP nodig).
+- **Index als view in de database.** Nu rekent de app de index uit. Met veel steden of veel geschiedenis is een view of een dagelijkse momentopname (`index_per_dag`) zuiniger, en dan kan de index ook in de lichtkrant van andere steden.
+- **Steden als beurzen.** Zodra er meer steden zijn: een overzicht van alle stadsindexen naast elkaar, met de goedkoopste stad bovenaan.
+- **Happy hour als koersdip.** Tijdelijke lagere prijzen tonen als dip in de grafiek. Vraagt om tijden bij een prijs; eerst kijken of spelers dat willen melden.
+- Waarom nog niet: eerst moeten er genoeg echte koersen zijn. Met een handvol prijzen zegt een index weinig.
+
 ## Verder
 
 - **Kroegentocht** met route, afstand en kcal: [kroegentocht.md](kroegentocht.md).
