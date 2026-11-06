@@ -1,16 +1,19 @@
-# BPDB-NL (Kroegkaart)
+# BPDB-NL (Bierkoers)
 
-Door gebruikers gevulde kaart met bierprijzen per kroeg. Spelers spelen samen de stad vrij en houden de prijzen vers. Pilotstad Nijmegen. De app is een PWA zonder build (`app/`), de backend draait op Supabase (`supabase/`). Besluiten en spelregels: `docs/concept.md`.
+Door gebruikers gevulde kaart met bierprijzen per kroeg, gepresenteerd als een beurs (bierkoers.nl). Spelers spelen samen de stad vrij en houden de prijzen vers. Pilotstad Nijmegen. De app is een PWA zonder build (`app/`), de backend draait op Supabase (`supabase/`). Besluiten en spelregels: `docs/concept.md`.
 
 ## Werkwijze
 - Alle teksten in de app en in de documentatie in het Nederlands. Gebruik nooit gedachtestreepjes (het lange streepje).
 - Draai na elke reeks wijzigingen `npm run check`. Na een wijziging in `supabase/migrations/` ook `npm run test:db`, en breid de test uit met de nieuwe regel.
 - Test een wijziging in de app in een browser (`python3 -m http.server 8765 --directory app`), op telefoonbreedte.
 - Commit na elke werkende stap met een duidelijke Nederlandse omschrijving.
+- `main` is de basis. Begin altijd vanaf de nieuwste `main` en lever werk op met een pull request naar `main`. Werkbranches van sessies zijn tijdelijk.
 - Wat Kjell zelf in een dashboard moet doen, staat in `ACTIES.md`. Houd dat bij.
 
 ## Belangrijke plekken
 - App: `app/app.js` (kaart, inloggen, melden, bevestigen, ranglijst, realtime), `app/styles.css`, `app/index.html`, service worker `app/sw.js`. Verhoog `CACHE` in `sw.js` als de app-schil verandert.
+- Koers (lichtkrant, tickercodes, koersverschil, Pilsindex, koerskaart, langst prijsvast): alleen weergave, berekend in de app uit `kroeg_tijdlijn` (`koersen()`, `koersVan()`, `maakCodes()` in `app/app.js`). Duurder is rood met ↗, goedkoper groen met ↘, gezien door de klant. Het spel en de punten veranderen er niet door.
+- Bierprijzen dalen bijna nooit en stijgen hooguit een keer per jaar. Ontwerp daarop: vergelijk met twaalf maanden terug (niet met dagen of weken), toon een prijsstap alleen als koersverschil als hij binnen twaalf maanden viel, en maak "vast sinds" het hoofdkenmerk. Levendigheid komt van controles ("klopt nog"), niet van prijsbewegingen.
 - Openbare instellingen: `app/config.js` (project-URL en publishable key). Zet hier nooit de service_role-key, secret key of het databasewachtwoord.
 - Database: `supabase/migrations/`, uitleg in `supabase/README.md`, test in `supabase/tests/database.test.mjs` (PGlite met PostGIS, bootst rollen, `auth.users`, `auth.uid()` en opslag na).
 - Kroegimport uit OpenStreetMap en wijken van het CBS: Edge Function `supabase/functions/osm-import/`.
