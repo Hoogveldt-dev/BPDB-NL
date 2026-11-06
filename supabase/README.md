@@ -61,7 +61,7 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 
 ## Installeren op het Supabase-project
 
-Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261105220601`, 5 november 2026; `20261106090000` en `20261106120000`, 6 november 2026), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). Voor een nieuw project:
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261105220601`, 5 november 2026; `20261106090000` tot en met `20261106190000`, 6 november 2026; de Google-kroegen van Nijmegen zijn geïmporteerd), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). Voor een nieuw project:
 
 **1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
