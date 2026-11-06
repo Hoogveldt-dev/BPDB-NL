@@ -7,6 +7,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
+| Google-kroegen | `migrations/20261106120000_google_kroegen.sql` | Google-kolommen op `kroegen` en `importeer_google_kroegen`: koppelt Google-plaatsen aan OSM-kroegen of voegt ze toe. Aangeroepen door [`tools/google-kroegen`](../tools/google-kroegen/README.md). **Nog niet toegepast op het project.** |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 
 ## Datamodel
@@ -70,6 +71,8 @@ update public.profielen set is_beheerder = true where naam = 'JOUW_SPELERSNAAM';
 ```
 
 **5. Kroegen importeren.** Ga in de app naar Ik → Beheer → "Kroegen en wijken importeren". Dit haalt de kroegen (`amenity=pub|bar|biergarten`) van Nijmegen uit OpenStreetMap en de 9 CBS-wijken. Je kunt dit later opnieuw doen; bestaande kroegen en hun geschiedenis blijven behouden.
+
+**5b. Kroegen uit Google Maps aanvullen (optioneel).** Pas eerst de migratie `20261106120000_google_kroegen` toe. Draai daarna lokaal `tools/google-kroegen` met `--naar-supabase` (zie de README daar). Telefoon, website, openingstijden en beoordeling komen bij de bestaande OSM-kroegen; kroegen die in OSM ontbreken worden toegevoegd. Een kroeg die alleen uit Google komt gaat dicht na 2 volledige runs waarin hij niet meer voorkomt.
 
 **6. Controleren.** Dashboard → Advisors → Security Advisor moet schoon zijn. Waarschuwingen over de PostGIS-tabel `spatial_ref_sys` kun je negeren.
 

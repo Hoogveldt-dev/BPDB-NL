@@ -9,6 +9,7 @@ Beer Price Database voor Nederland: een door gebruikers gevulde kaart met bierpr
 - [`prototype/v1/index.html`](prototype/v1/index.html): eerste prototype.
 - [`app/`](app/): de echte app (PWA) op Supabase: kaart van Nijmegen met kroegen uit OpenStreetMap, inloggen, prijzen melden en bevestigen, foto's, ranglijst en live updates.
 - [`supabase/`](supabase/README.md): databaseschema, spelregels, Edge Function voor de kroegimport en installatiestappen.
+- [`tools/google-kroegen/`](tools/google-kroegen/README.md): haalt cafés en kroegen uit Google Maps en koppelt ze aan de kroegen uit OSM. Waarom en hoe: [`docs/google-maps-bronnen.md`](docs/google-maps-bronnen.md).
 
 Alle data in de prototypes is verzonnen. De kaart van Nijmegen is vereenvoudigd nagetekend.
 
