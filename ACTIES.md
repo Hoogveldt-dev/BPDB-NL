@@ -26,6 +26,11 @@ De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze v
 2. **Apple:** lidmaatschap Apple Developer Program, Services ID en sleutel, geheime sleutel in Supabase, Apple aanzetten. De geheime sleutel verloopt na hoogstens 6 maanden.
 3. **Privacyverklaring:** Google vraagt om een link. BPDB heeft er nog geen.
 
+## Menukaartprijzen uit Google-foto's
+
+1. **Run vanaf thuis.** Op je eigen computer, in `tools/google-kroegen`: `npm install`, `npx playwright install chromium`, dan `DEEPSEEK_API_KEY=<sleutel> node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01`. Eerst `node cli.mjs --gemeentecode GM0268` voor dat bestand. Bekijk `menuprijzen.json` en importeer met `--naar-supabase` (met `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY`, nooit in git). Vanuit een cloudsessie toont Google al na een paar kroegen een CAPTCHA.
+2. **DeepSeek-tegoed.** Er staat $0,05 op. Dat is genoeg voor een proef; voor heel Nijmegen ruim een paar dollar opwaarderen. Maak ook een nieuwe sleutel aan: de oude stond in een chat.
+
 ## Later
 
 - **Captcha.** Supabase raadt een captcha aan bij anonieme accounts (Cloudflare Turnstile). Zet die pas aan in Supabase als de app hem meestuurt; anders werken beginnen en inloggen niet meer.
