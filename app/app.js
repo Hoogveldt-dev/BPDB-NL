@@ -245,27 +245,41 @@ function setDetent(d) {
   $("#body").style.paddingBottom = `calc(env(safe-area-inset-bottom) + 24px + ${Math.max(0, y)}px)`;
 }
 (function sleep() {
-  let startY = 0, startT = 0, dragging = false;
+  // Slepen kan aan het streepje en aan de tabbladen. Op een tabblad begint slepen pas na 8 px beweging,
+  // zodat een gewone tik nog steeds het tabblad kiest.
+  let startY = 0, startT = 0, wacht = false, dragging = false, geenKlik = false;
   const grip = (e) => e.target.closest("#grabber, #tabs");
   sheet.addEventListener("pointerdown", (e) => {
-    if (wide() || !grip(e) || e.target.closest("button")) return;
-    dragging = true; startY = e.clientY;
+    if (wide() || !grip(e)) return;
+    wacht = true; dragging = false; startY = e.clientY;
     startT = parseFloat(getComputedStyle(sheet).getPropertyValue("--sy")) || 0;
-    sheet.classList.add("dragging"); sheet.setPointerCapture(e.pointerId);
   });
   sheet.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
+    if (!wacht) return;
+    if (!dragging) {
+      if (Math.abs(e.clientY - startY) < 8) return;
+      dragging = true;
+      sheet.classList.add("dragging"); sheet.setPointerCapture(e.pointerId);
+    }
     sheet.style.setProperty("--sy", Math.max(0, startT + e.clientY - startY) + "px");
   });
-  sheet.addEventListener("pointerup", (e) => {
+  const los = (e) => {
+    if (!wacht) return;
+    wacht = false;
     if (!dragging) return;
-    dragging = false; sheet.classList.remove("dragging");
+    dragging = false; geenKlik = true; sheet.classList.remove("dragging");
     const dy = e.clientY - startY, d = sheet.dataset.detent;
     const order = ["full", "half", "peek"], i = order.indexOf(d);
     if (dy < -50) setDetent(order[Math.max(0, i - 1)]);
     else if (dy > 50) setDetent(order[Math.min(2, i + 1)]);
     else setDetent(d);
-  });
+  };
+  sheet.addEventListener("pointerup", los);
+  sheet.addEventListener("pointercancel", los);
+  // Na slepen telt het loslaten niet als tik op een tabblad
+  sheet.addEventListener("click", (e) => {
+    if (geenKlik) { geenKlik = false; e.stopPropagation(); e.preventDefault(); }
+  }, true);
   $("#grabber").addEventListener("click", () => setDetent(sheet.dataset.detent === "full" ? "half" : "full"));
   addEventListener("resize", () => setDetent(sheet.dataset.detent));
 })();
@@ -881,7 +895,10 @@ body.addEventListener("click", (e) => {
 
 // Wie iets gaat invullen, krijgt het hele blad te zien
 body.addEventListener("focusin", (e) => {
-  if (!wide() && e.target.matches("input, select, textarea") && !e.target.matches("[data-zoek]")) setDetent("full");
+  if (wide() || !e.target.matches("input, select, textarea")) return;
+  if (!e.target.matches("[data-zoek]")) setDetent("full");
+  // Wacht tot het blad open is en het toetsenbord staat, en zet het veld dan midden in beeld
+  setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 400);
 });
 
 body.addEventListener("change", (e) => {
@@ -988,7 +1005,13 @@ async function importeer(knop) {
   vernieuw();
 }
 
-$("#tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setTab(b.dataset.tab); });
+$("#tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  // Nog eens op het open tabblad: blad helemaal open, of terug naar half
+  if (b.dataset.tab === state.tab && state.selected == null && !wide()) return setDetent(sheet.dataset.detent === "full" ? "half" : "full");
+  setTab(b.dataset.tab);
+});
 $("#locate").addEventListener("click", async () => {
   const pos = await locatie();
   if (!pos) return toast("Locatie niet beschikbaar");
