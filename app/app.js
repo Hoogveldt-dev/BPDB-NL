@@ -46,6 +46,8 @@ const GLAZEN = [{ naam: "Vaasje", cl: 25 }, { naam: "Fluitje", cl: 20 }, { naam:
 const VAASJE = 25;
 const MERKEN = ["Heineken", "Amstel", "Grolsch", "Brand", "Bavaria", "Hertog Jan", "Jupiler", "Gulpener"];
 const WEEKDOEL = 12;
+const STAMGAST_MIN = 2; // gelijk aan de drempel in de view kroeg_stamgast
+const ICON_GLAS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h10v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M16 8h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M9 9v8M12.5 9v8"/></svg>`;
 
 function toast(msg, pts) {
   const t = $("#toast");
@@ -438,6 +440,7 @@ function detailView() {
     <h3>Prijs per vaasje, afgelopen jaar</h3>
     <div id="spark"></div>
     <h3>Geschiedenis</h3>
+    <div id="stamgast"></div>
     <div id="tijdlijn"><div class="muted small">Laden…</div></div>`;
 }
 
@@ -528,10 +531,16 @@ async function laadAanbod() {
 }
 
 async function laadTijdlijn(id) {
-  const { data, error } = await sb.from("kroeg_tijdlijn").select("*").eq("kroeg_id", id).order("op", { ascending: false }).limit(60);
+  const uid = state.sessie?.user?.id;
+  let bijdragersQuery = sb.from("kroeg_bijdragers").select("gebruiker_id,naam,bijdragen,plek").eq("kroeg_id", id);
+  bijdragersQuery = uid ? bijdragersQuery.or(`plek.eq.1,gebruiker_id.eq.${uid}`) : bijdragersQuery.eq("plek", 1);
+  const [{ data, error }, { data: bijdragers, error: bijdragersFout }] = await Promise.all([
+    sb.from("kroeg_tijdlijn").select("*").eq("kroeg_id", id).order("op", { ascending: false }).limit(60),
+    bijdragersQuery,
+  ]);
   if (state.selected !== id) return;
   if (error) { $("#tijdlijn").innerHTML = `<div class="muted small">Laden mislukt.</div>`; return; }
-  const uid = state.sessie?.user?.id;
+  $("#stamgast").innerHTML = data.length && !bijdragersFout ? stamgastHtml(bijdragers ?? [], uid) : "";
   const open = data.find((g) => g.status === "wacht");
   const el = $("#openMelding");
   if (el && open) {
@@ -548,6 +557,27 @@ async function laadTijdlijn(id) {
   }
   $("#tijdlijn").innerHTML = data.length ? `<ul class="timeline">${data.map(tijdlijnItem).join("")}</ul>` : `<div class="muted small">Nog niets gebeurd.</div>`;
   $("#spark").innerHTML = spark(data);
+}
+
+// Stamgast: wie hier het vaakst de prijs heeft bijgewerkt of bevestigd (zie view kroeg_stamgast).
+function stamgastHtml(bijdragers, uid) {
+  const eerste = bijdragers.find((b) => b.plek === 1);
+  const stam = eerste && eerste.bijdragen >= STAMGAST_MIN ? eerste : null;
+  const mijn = uid ? bijdragers.find((b) => b.gebruiker_id === uid)?.bijdragen ?? 0 : 0;
+  const keer = (n) => (n === 1 ? "1 keer" : `${n} keer`);
+  const bijdr = (n) => (n === 1 ? "1 bijdrage" : `${n} bijdragen`);
+  let sub = "";
+  if (stam && stam.gebruiker_id === uid) sub = "Dit is jouw stamkroeg. Blijf de prijs bijhouden om dat zo te houden.";
+  else if (stam && uid) sub = `Jij: ${keer(mijn)}. Nog <b>${bijdr(stam.bijdragen - mijn + 1)}</b> om stamgast te worden.`;
+  else if (!stam && uid) sub = `Nog <b>${bijdr(Math.max(1, STAMGAST_MIN - mijn))}</b> en jouw naam staat hier.`;
+  else if (!stam) sub = `Wie hier minstens ${STAMGAST_MIN} keer de prijs bijwerkt of bevestigt, wordt stamgast.`;
+  return `<div class="card stamgast ${stam ? "" : "vrij"}">
+    <span class="ic">${ICON_GLAS}</span>
+    <div>${stam
+      ? `<div class="t">Stamgast</div><b>${esc(stam.naam)}</b><div class="t">${keer(stam.bijdragen)} bijgewerkt of bevestigd</div>`
+      : `<div class="t">Stamgast</div><b>Nog niemand</b>`}</div>
+    ${sub ? `<div class="sub">${sub}</div>` : ""}
+  </div>`;
 }
 
 function tijdlijnItem(g) {

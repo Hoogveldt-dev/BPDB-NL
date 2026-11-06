@@ -22,6 +22,7 @@ Prototypes (open lokaal in een browser, geen build nodig):
 | Prijs voor het spel | De goedkoopste pils van de tap in een vaasje (25 cl). Geen vaasje: het kleinste glas, omgerekend naar 25 cl en op de kaart met een ≈. Vrijspelen, punten, ranglijst en versheid draaien alleen hierom, zodat vrijspelen snel gaat | Vast |
 | Ander bier en andere maten | Kan iedereen toevoegen bij een kroeg ("Ook op de tap"), met of zonder prijs, en je kunt erop filteren en per maat vergelijken. Geen punten en geen bevestiging nodig; twee keer "klopt niet" haalt het weg | Vast |
 | Prijs zonder alcohol, punten voor extra bier | Later, zie [toekomstplannen.md](toekomstplannen.md) | Later |
+| Stamkroeg | Wie in een kroeg het vaakst de prijs bijwerkt of bevestigt, staat als stamgast bovenaan de geschiedenis | Vast |
 | Pilotstad | Nijmegen | Vast |
 | Doelgroep ontwerp | iPhone eerst; strak, licht futuristisch, kaart in de stijl van Apple Kaarten | Vast |
 | Code | Nieuw bouwen in deze repo; Guindex alleen als referentie | Vast |
@@ -148,6 +149,22 @@ Elke kroeg toont een tijdlijn, nieuwste bovenaan:
 - **Gecontroleerd**: "klopt nog", datum, door wie.
 
 Daarnaast een grafiek van de prijs per 25 cl over het afgelopen jaar, met de mediaan van de stad als stippellijn. De tijdlijn komt direct uit het audit-log (zie datamodel); er is geen aparte opslag voor nodig.
+
+### 3.1 Stamkroeg
+
+Bovenaan de geschiedenis staat de **stamgast**: de speler die in deze kroeg het vaakst de gegevens heeft bijgewerkt of bevestigd. Zo is een kroeg niet alleen van wie hem ontdekte, maar ook van wie hem bijhoudt. Het past bij samenwerken: je wint de titel door de prijs vers te houden, niet door iemand te verdrijven.
+
+| Regel | Uitwerking |
+|---|---|
+| Wat telt | Eigen meldingen die bevestigd zijn (eerst gemeld, gewijzigd, "klopt nog") en jouw "klopt" op een melding van een ander die daarna bevestigd is |
+| Wat niet telt | Openstaande en weerlegde meldingen, en "klopt" op een melding die weerlegd werd |
+| Drempel | Stamgast vanaf 2 bijdragen; een enkele melding maakt nog geen vaste gast |
+| Gelijkspel | Wie de stand het eerst bereikte, blijft stamgast; inhalen kan alleen met een bijdrage meer |
+| Wat je ziet | Naam en aantal bijdragen van de stamgast. Ben jij het niet, dan zie je hoeveel bijdragen je nog nodig hebt. Is er nog niemand, dan zie je hoe je de eerste wordt |
+
+"Klopt nog" kan hoogstens een keer per week per kroeg, en meldingen tellen pas na bevestiging door een ander. Stamgast word je dus door er echt vaker te komen, niet door snel achter elkaar te tikken. De titel levert geen punten op; hij is erkenning.
+
+In de database is dit de view `kroeg_stamgast` (op basis van `kroeg_bijdragers`), een query op `gebeurtenissen` en `bevestigingen` zonder aparte opslag.
 
 ## 4. Ontwerp v2
 

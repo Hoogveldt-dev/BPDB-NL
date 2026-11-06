@@ -7,6 +7,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Anonieme spelers | `migrations/20261106090000_anonieme_spelers.sql` | Meteen meespelen zonder e-mailadres; bevestigen alleen met e-mailadres |
 | Extra bier | `migrations/20261106120000_extra_bier.sql` | Wat een kroeg naast de pils tapt (Guinness, witbier, ander merk), met of zonder prijs; geen punten |
+| Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
@@ -26,7 +27,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `kroeg_aanbod` | Extra bier per kroeg: soort, merk, glas en prijs (beide optioneel), met status `actief`, `vervangen` of `weg`. Een nieuwe prijs vervangt de oude; niets wordt verwijderd. |
 | `aanbod_oordelen` | "Klopt" of "klopt niet" bij extra bier, een per speler per bier. |
 
-Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
+Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`, `kroeg_bijdragers` en `kroeg_stamgast`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
 ## Spelregels in de database
 
@@ -46,10 +47,11 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 | Punten | Vrijspelen +50, wijziging +30, bevestigen +5, klopt nog +5, oude prijs (90+ dagen) controleren +15, foto +5, ter plaatse x1,5, weerlegd -20. Punten pas na bevestiging. |
 | Betrouwbaarheid | Start op 50. Bevestigde melding +2, weerlegde melding -10, juist oordeel +1, onjuist oordeel -3. |
 | Anonieme spelers | Beginnen zonder e-mailadres en mogen prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas met een gekoppeld e-mailadres, en een anonieme melder wordt nooit direct bevestigd (ook niet boven 90%). Zo kan niemand met wegwerpaccounts zijn eigen meldingen bevestigen. Na het koppelen blijft het account met alle punten hetzelfde. |
+| Stamgast | Per kroeg de speler met de meeste bevestigde bijdragen (eigen meldingen plus "klopt" op meldingen die bevestigd zijn), vanaf 2. Bij gelijkspel wie de stand het eerst bereikte. Geen punten, alleen de naam bovenaan de geschiedenis. |
 
 ## Installeren op het Supabase-project
 
-Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261106090000` en `20261106120000`, 6 november 2026), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). Voor een nieuw project:
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261105220601`, 5 november 2026; `20261106090000` en `20261106120000`, 6 november 2026), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). Voor een nieuw project:
 
 **1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
