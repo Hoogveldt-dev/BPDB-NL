@@ -21,6 +21,7 @@ Prototypes (open lokaal in een browser, geen build nodig):
 | Geschiedenis per kroeg | Ja: eerst gemeld, wijzigingen, controles, met datum en naam | Vast |
 | Stamkroeg | Wie in een kroeg het vaakst de prijs bijwerkt of bevestigt, staat als stamgast bovenaan de geschiedenis | Vast |
 | Pilotstad | Nijmegen | Vast |
+| Prijs per kroeg | Het goedkoopste bier op de kaart, met merk en glas. Geen obscure huismerken. Vergelijken per 25 cl | Vast |
 | Doelgroep ontwerp | iPhone eerst; strak, licht futuristisch, kaart in de stijl van Apple Kaarten | Vast |
 | Code | Nieuw bouwen in deze repo; Guindex alleen als referentie | Vast |
 
@@ -30,7 +31,7 @@ Prototypes (open lokaal in een browser, geen build nodig):
 |---|---|---|
 | Gebruikers voegen zelf kroegen toe (`PubPendingCreate`) | Lege kaart bij de start, dubbele kroegen, typefouten | Alle kroegen vooraf geladen uit OpenStreetMap (`amenity=pub/bar/cafe`), getoond als "op slot" |
 | Elke bijdrage wacht op goedkeuring door een beheerder (`*Pending*`-tabellen) | Beheerders zijn de bottleneck | Peer-bevestiging; beheerder alleen bij geschillen en uitschieters |
-| Eén product, één maat (pint Guinness) | In NL verschillen merk en glas per kroeg | Prijs altijd met merk en volume; vergelijken via prijs per 25 cl |
+| Eén product, één maat (pint Guinness) | In NL verschillen merk en glas per kroeg | Het goedkoopste bier op de kaart (merk verschilt per kroeg), vergelijken per 25 cl |
 | Statistiek per gebruiker: `pubsVisited`, `originalPrices`, `currentVerifications` | Een tabel, geen spel | Zelfde signalen als punten, titels en ranglijst |
 | Bootstrap-adminthema, DataTables, Google Maps | Voelt als een beheerpaneel | Mobiel eerst, kaart als startscherm |
 

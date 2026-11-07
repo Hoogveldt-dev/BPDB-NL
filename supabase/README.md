@@ -6,6 +6,8 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 |---|---|---|
 | Schema en spelregels | `migrations/20261105180124_kroegkaart_schema.sql` | Tabellen, toegangsregels (RLS), punten, peer-bevestiging, overzichten, realtime, opslag voor foto's |
 | Stamkroeg | `migrations/20261105220601_stamkroeg.sql` | Overzichten `kroeg_bijdragers` en `kroeg_stamgast`: wie per kroeg het vaakst bijwerkt of bevestigt |
+| Terugmeldingen | `migrations/20261107103100_terugmeldingen.sql` | Kroeg klopt niet (dicht, verkeerde plek, dubbel). Geen prijswijziging |
+| Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account |
 | Kroegimport | `functions/osm-import/index.ts` | Edge Function: kroegen uit OpenStreetMap, wijken van het CBS (PDOK) |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 
@@ -19,6 +21,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `gebeurtenissen` | Audit-log: eerste prijs, wijziging of controle, met status `wacht`, `bevestigd` of `weerlegd`. |
 | `bevestigingen` | Oordelen van andere spelers over een melding (`klopt` of `klopt_niet`). |
 | `punten` | Audit-log van punten; de ranglijst is een query hierop. |
+| `terugmeldingen` | Melding dat een kroeg dicht is, op de verkeerde plek staat of dubbel is. |
 
 Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `kroeg_bijdragers` en `kroeg_stamgast`. Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
@@ -59,7 +62,10 @@ Of plak de migratie in de SQL Editor van het dashboard.
 
 ```bash
 supabase functions deploy osm-import
+supabase functions deploy account-verwijderen
 ```
+
+De migratie `20261107103100_terugmeldingen` hoort mee met `supabase db push`. Zonder die migratie faalt "Klopt deze kroeg niet?" in de app. Zonder de functie `account-verwijderen` faalt account verwijderen.
 
 **3. Inloggen instellen.** Dashboard → Authentication → URL Configuration: zet de Site URL op het adres waar de app draait (bijvoorbeeld je GitHub Pages-adres) en voeg dat adres toe aan de Redirect URLs. Voor lokaal testen: `http://localhost:8765`.
 

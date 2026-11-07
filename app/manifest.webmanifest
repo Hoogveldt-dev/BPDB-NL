@@ -1,7 +1,7 @@
 {
   "name": "BPDB Kroegkaart",
-  "short_name": "Kroegkaart",
-  "description": "Samen de bierprijzen van de stad vrijspelen en vers houden.",
+  "short_name": "BPDB",
+  "description": "Wat kost het goedkoopste biertje? Samen de prijzen van de stad vullen en vers houden.",
   "lang": "nl",
   "start_url": "./",
   "scope": "./",
@@ -9,6 +9,8 @@
   "background_color": "#f6f3ee",
   "theme_color": "#f6f3ee",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

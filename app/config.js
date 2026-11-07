@@ -12,6 +12,6 @@ export const STAD = {
 };
 
 export const KAARTSTIJL = {
-  licht: "https://tiles.openfreemap.org/styles/positron",
+  licht: "https://tiles.openfreemap.org/styles/liberty",
   donker: "https://tiles.openfreemap.org/styles/dark",
 };

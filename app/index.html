@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BPDB Kroegkaart</title>
-<meta name="description" content="Samen de bierprijzen van de stad vrijspelen en vers houden.">
+<meta name="description" content="Wat kost het goedkoopste biertje? Samen de prijzen van Nijmegen vullen en vers houden.">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1e2023" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -20,7 +20,14 @@
 
 <div id="hud" class="glass" aria-live="polite">
   <div class="hud-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="ring-bg"/><circle cx="18" cy="18" r="15" class="ring-fg" id="hudRing"/></svg></div>
-  <div><div class="hud-pct" id="hudPct">0%</div><div class="hud-sub" id="hudSub">vrijgespeeld</div></div>
+  <div><div class="hud-pct" id="hudPct">0%</div><div class="hud-sub" id="hudSub">van de kroegen</div></div>
+</div>
+
+<div id="legend" class="glass" aria-hidden="true">
+  <span><i class="dot fresh"></i>Vers</span>
+  <span><i class="dot stale"></i>Wordt oud</span>
+  <span><i class="dot old"></i>90+ dagen</span>
+  <span><i class="dot locked"></i>Op slot</span>
 </div>
 
 <button id="locate" class="glass mapbtn" aria-label="Naar mijn locatie">
@@ -28,17 +35,50 @@
 </button>
 
 <section id="sheet" class="glass" data-detent="half">
-  <div class="grabber" id="grabber" aria-hidden="true"></div>
-  <nav id="tabs" role="tablist">
-    <button data-tab="kaart" aria-pressed="true">Kaart</button>
-    <button data-tab="samen" aria-pressed="false">Samen</button>
-    <button data-tab="rang" aria-pressed="false">Ranglijst</button>
-    <button data-tab="ik" aria-pressed="false" id="tabIk">Ik</button>
-  </nav>
-  <div id="body"></div>
+  <div class="sheet-head">
+    <div class="grabber" id="grabber" aria-hidden="true"></div>
+    <nav id="tabs" role="tablist">
+      <button data-tab="kaart" aria-pressed="true">Kaart</button>
+      <button data-tab="samen" aria-pressed="false">Samen</button>
+      <button data-tab="rang" aria-pressed="false" aria-label="Ranglijst">Top</button>
+      <button data-tab="ik" aria-pressed="false" id="tabIk">Ik</button>
+    </nav>
+  </div>
+  <div id="body"><div class="empty">Kroegen laden…</div></div>
 </section>
 
 <div id="toast" role="status" aria-live="polite"></div>
+
+<div id="modal" hidden>
+  <div class="modal-card glass" role="dialog" aria-modal="true" aria-labelledby="modalText">
+    <p id="modalText"></p>
+    <div class="btns">
+      <button type="button" class="btn" id="modalNee">Annuleer</button>
+      <button type="button" class="btn bad" id="modalJa">Doorgaan</button>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox" hidden>
+  <button type="button" class="lightbox-back" id="lightboxSluit" aria-label="Sluit foto">Sluit</button>
+  <img id="lightboxImg" alt="Foto van de prijslijst">
+</div>
+
+<div id="intro" class="intro" hidden>
+  <div class="intro-card glass" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <h2 id="introTitle">Wat kost het goedkoopste biertje?</h2>
+    <p>BPDB is de kaart van Nijmegen die jullie samen vullen. Per kroeg telt het goedkoopste bier op de kaart, welk gewoon merk dat ook is.</p>
+    <ul class="legend-inline">
+      <li><i class="dot fresh"></i> Vers, gecontroleerd in de laatste 30 dagen</li>
+      <li><i class="dot stale"></i> Wordt oud, tussen 30 en 90 dagen</li>
+      <li><i class="dot old"></i> Oud, 90 dagen of langer. Controleren levert extra punten op</li>
+      <li><i class="dot locked"></i> Op slot: nog geen prijs. De eerste melding speelt de kroeg vrij</li>
+      <li><i class="dot wacht"></i> Wacht op een andere speler</li>
+    </ul>
+    <p class="small muted">Op de kaart staat de prijs per 25 cl, zodat een fluitje en een pul vergelijkbaar zijn. In de lijst zie je ook het glas en het merk.</p>
+    <button type="button" class="btn primary" id="introOk">Naar de kaart</button>
+  </div>
+</div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script type="module" src="app.js"></script>
