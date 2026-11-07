@@ -728,6 +728,25 @@ check('de menukaartprijs is dan achterhaald', (await een(`select status from pub
 check('een menukaartprijs heeft nooit een melder', !!(await db.query(`update public.gebeurtenissen set door_id = '${A}' where bron = 'menukaart'`).then(() => null, (e) => e.message)));
 
 // ---------------------------------------------------------------------------
+// Teksten van de app, aan te passen door een beheerder
+// ---------------------------------------------------------------------------
+
+await db.query(`update public.profielen set is_beheerder = true where id = '${E}'`);
+check('een gewone speler kan geen tekst aanpassen', !!(await als(A, `select * from public.zet_tekst('Doe mee', 'Speel mee')`)).fout);
+check('zonder login ook niet', !!(await als(null, `select * from public.zet_tekst('Doe mee', 'Speel mee')`)).fout);
+const tk1 = (await als(E, `select * from public.zet_tekst('  Doe mee  ', '  Speel mee  ')`)).rows?.[0];
+check('een beheerder kan een tekst aanpassen; spaties eromheen vallen weg', tk1?.sleutel === 'Doe mee' && tk1?.tekst === 'Speel mee' && tk1?.door_id === E, JSON.stringify(tk1));
+check('iedereen kan de teksten lezen', (await als(null, `select tekst from public.app_teksten where sleutel = 'Doe mee'`)).rows?.[0]?.tekst === 'Speel mee');
+check('nog eens aanpassen overschrijft', (await als(E, `select tekst from public.zet_tekst('Doe mee', 'Kom erbij')`)).rows?.[0]?.tekst === 'Kom erbij');
+check('een tekst met # voor een getal kan', (await als(E, `select tekst from public.zet_tekst('# kroegen', '# cafés')`)).rows?.[0]?.tekst === '# cafés');
+await als(E, `select * from public.zet_tekst('Doe mee', '')`);
+check('een lege tekst zet de standaardtekst terug', !(await een(`select 1 as x from public.app_teksten where sleutel = 'Doe mee'`)));
+await als(E, `select * from public.zet_tekst('# kroegen', '# kroegen')`);
+check('de standaardtekst zelf opslaan haalt de eigen tekst ook weg', !(await een(`select 1 as x from public.app_teksten where sleutel = '# kroegen'`)));
+check('spelers kunnen niet direct in de teksten schrijven', !!(await als(A, `insert into public.app_teksten (sleutel, tekst) values ('x', 'y')`)).fout);
+check('ook een beheerder niet direct', !!(await als(E, `insert into public.app_teksten (sleutel, tekst) values ('x', 'y')`)).fout);
+
+// ---------------------------------------------------------------------------
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);

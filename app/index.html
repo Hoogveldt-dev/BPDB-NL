@@ -43,6 +43,10 @@
 <button id="locate" class="glass mapbtn" aria-label="Naar mijn locatie">
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3 3 10.5l7.2 2.3L12.5 20z"/></svg>
 </button>
+<!-- Guinness-stand: een extraatje naast het pilsspel -->
+<button id="guinness" class="glass mapbtn" aria-pressed="false" aria-label="Guinness-stand">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10l-1.2 16.2A2 2 0 0 1 13.8 21h-3.6a2 2 0 0 1-2-1.8z"/><path d="M7.3 7h9.4" /><path d="M7.4 7h9.2l-.3 4H7.7z" fill="currentColor" stroke="none" opacity=".25"/></svg>
+</button>
 
 <section id="sheet" class="glass" data-detent="half">
   <div class="grabber" id="grabber" aria-hidden="true"></div>
@@ -65,6 +69,28 @@
       <button type="button" class="btn bad" id="modalJa">Doorgaan</button>
     </div>
   </div>
+</div>
+
+<!-- Teksten aanpassen (alleen voor beheerders) -->
+<div id="tekstBalk" hidden>
+  <span id="tekstUitleg">Tik op een tekst om hem aan te passen</span>
+  <button type="button" class="btn" id="tekstPauze" aria-pressed="false">Even bladeren</button>
+  <button type="button" class="btn primary" id="tekstKlaar">Klaar</button>
+</div>
+<div id="tekstEditor" class="laag" hidden>
+  <form class="laag-kaart glass form" id="tekstForm" role="dialog" aria-modal="true" aria-labelledby="tekstTitel">
+    <h2 id="tekstTitel">Tekst aanpassen</h2>
+    <label>Standaardtekst</label>
+    <p class="tekst-standaard" id="tekstStandaard"></p>
+    <label for="tekstNieuw">Jouw tekst</label>
+    <textarea id="tekstNieuw" rows="4" maxlength="2000"></textarea>
+    <p class="small muted">Een # staat voor een getal dat de app zelf invult, zoals een prijs of een aantal. Laat het veld leeg om de standaardtekst terug te zetten. De tekst verandert overal waar hij staat.</p>
+    <div class="btns">
+      <button type="button" class="btn" id="tekstAnnuleer">Annuleer</button>
+      <button type="button" class="btn" id="tekstStandaardKnop">Standaard terug</button>
+      <button type="submit" class="btn primary">Opslaan</button>
+    </div>
+  </form>
 </div>
 
 <div id="lightbox" hidden>
