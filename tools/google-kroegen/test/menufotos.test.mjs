@@ -185,3 +185,51 @@ test("zoekMenuprijs: wat de controle afkeurt, wordt niet gelezen", async () => {
   assert.ok(gelezen.every((u) => u.includes("/kaart=")));
   assert.equal(r.prijs.foto.id, "kaart");
 });
+
+test("zoekMenuprijs: zonder ja van de tweede mening gaat de prijs naar twijfels", async () => {
+  const zonder = readFileSync(new URL("./zonder-exif.jpg", import.meta.url));
+  const fotos = ontleedFotolijst(nepFotolijst([nepFoto("kaart", 12, [2025, 3, 1, 1])], 1, null)).fotos;
+  const lees = async () => ({ bieren: [{ merk: "Heineken", cl: 25, prijs: 3.6, tap: true, pils: true }], datumOpKaart: null });
+  const nee = await zoekMenuprijs(fotos, {
+    haalBeeld: async () => zonder, herken: async () => [0], controleer: async () => true, lees,
+    bevestig: async () => ({ klopt: false, prijsOpKaart: 3.9 }),
+  });
+  assert.equal(nee.prijs, null);
+  assert.equal(nee.twijfels.length, 1);
+  assert.equal(nee.twijfels[0].prijs_cent, 360);
+  assert.equal(nee.twijfels[0].tweedePrijs, 3.9);
+  const ja = await zoekMenuprijs(fotos, {
+    haalBeeld: async () => zonder, herken: async () => [0], controleer: async () => true, lees,
+    bevestig: async () => ({ klopt: true, prijsOpKaart: 3.6 }),
+  });
+  assert.equal(ja.prijs.prijs_cent, 360);
+  assert.equal(ja.twijfels.length, 0);
+});
+
+test("lokale modellen: geen sleutel, geen instelling voor nadenken, temperatuur 0, en een tweede mening die op de prijs let", async () => {
+  const { LOKAAL, bevestigVaasje, herkenLos } = await import("../bron/menulezer.mjs");
+  const verzoeken = [];
+  const echt = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const body = JSON.parse(init.body);
+    verzoeken.push({ url, body });
+    const vraag = body.messages[0].content.at(-1).text;
+    const antwoord = vraag.includes('"kaart"') ? { kaart: verzoeken.length === 1 } : { klopt: true, prijs_op_kaart: 3.9 };
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(antwoord) } }] }), { status: 200 });
+  };
+  try {
+    const beeld = Buffer.from("x");
+    assert.deepEqual(await herkenLos([beeld, beeld], { model: LOKAAL.kijker }), [0]);
+    assert.equal(verzoeken.length, 2, "elke foto apart");
+    assert.match(verzoeken[0].url, /localhost:11434\/v1\/chat\/completions$/);
+    assert.equal(verzoeken[0].body.model, "llama3.2-vision:11b");
+    assert.equal(verzoeken[0].body.temperature, 0);
+    assert.equal(verzoeken[0].body.thinking, undefined);
+    assert.equal(verzoeken[0].body.reasoning_effort, undefined);
+    // Het tweede model ziet een andere prijs dan gekozen: geen bevestiging
+    const r = await bevestigVaasje(beeld, { merk: "Heineken", prijs_cent: 360 }, { model: LOKAAL.kijker });
+    assert.deepEqual(r, { klopt: false, prijsOpKaart: 3.9 });
+  } finally {
+    globalThis.fetch = echt;
+  }
+});
