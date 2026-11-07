@@ -626,7 +626,7 @@ function geojson() {
 function cirkelStijl() {
   const c = kleur();
   if (guinnessAan()) {
-    return { "circle-color": c.accent, "circle-opacity": 1, "circle-stroke-color": c.surface };
+    return { "circle-color": c.accent, "circle-opacity": 1, "circle-stroke-color": "#ffffff" };
   }
   if (state.modus === "koers") {
     const idx = state.koers.index?.nu;
@@ -634,7 +634,7 @@ function cirkelStijl() {
     return {
       "circle-color": ["case", prijs, idx ? ["interpolate", ["linear"], ["/", ["get", "per25"], idx], 0.85, c.af, 1, c.accent, 1.15, c.op] : c.accent, c.locked],
       "circle-opacity": ["case", prijs, 1, 0.35],
-      "circle-stroke-color": c.surface,
+      "circle-stroke-color": "#ffffff",
     };
   }
   if (state.modus === "mijn") {
@@ -647,7 +647,7 @@ function cirkelStijl() {
   return {
     "circle-color": ["match", ["get", "versheid"], "fresh", c.fresh, "stale", c.stale, "old", c.old, "wacht", c.wacht, c.locked],
     "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0.45, 1],
-    "circle-stroke-color": c.surface,
+    "circle-stroke-color": ["case", ["==", ["get", "versheid"], "locked"], c.surface, "#ffffff"],
   };
 }
 
@@ -677,11 +677,19 @@ function kaartLagen() {
     filter: ["==", ["get", "id"], -1],
     paint: { "circle-radius": 16, "circle-color": c.accent, "circle-opacity": 0.35 },
   });
+  // Een zachte schaduw onder elke kroeg, zoals de punten in Kaarten
+  map.addLayer({
+    id: "kroeg-schaduw", type: "circle", source: "kroegen",
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 6, 14, 9, 16, 12, 18, 14],
+      "circle-color": "#000", "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0, 0.22], "circle-blur": 0.7, "circle-translate": [0, 1],
+    },
+  });
   map.addLayer({
     id: "kroeg-cirkel", type: "circle", source: "kroegen",
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 4.5, 14, 7, 16, 9.5, 18, 11],
-      "circle-stroke-width": 2,
+      "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 11, 1.5, 15, 2.5],
       ...cirkelStijl(),
     },
   });
@@ -795,7 +803,7 @@ const mist = (() => {
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, doek.width, doek.height);
     ctx.fillStyle = kleuren.waas; ctx.fillRect(0, 0, doek.width, doek.height);
-    ctx.fillStyle = patroon; ctx.fillRect(0, 0, doek.width, doek.height);
+    if (kleuren.stip && kleuren.stip !== "transparent") { ctx.fillStyle = patroon; ctx.fillRect(0, 0, doek.width, doek.height); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = "destination-out";
     const lat = map.getCenter().lat * Math.PI / 180;
@@ -1053,10 +1061,11 @@ function kroegVersheid(k) {
 function rowHtml(k) {
   const v = kroegVersheid(k);
   const d = state.pos ? Math.round(afstand(state.pos, [k.lon, k.lat])) : null;
-  const sub = [k.wijk, d != null ? meters(d) : null, VERSHEID[v], state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
+  // Zoals in Aandelen: naam vet, daaronder de tickercode en de rest in grijs
+  const sub = [codeVan(k.id), k.wijk, d != null ? meters(d) : null, VERSHEID[v], state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
   return `<li><button class="row" data-kroeg="${k.id}">
     <span class="dot ${v}"></span>
-    <span class="row-main"><span class="row-title">${codeHtml(k.id)}${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
+    <span class="row-main"><span class="row-title">${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
     ${state.soort ? "" : trapjeHtml(k.id)}${prijsKolom(k)}
   </button></li>`;
 }
@@ -1713,7 +1722,7 @@ async function beursView() {
       <div class="kop">Pilsindex ${esc(STAD.naam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
       ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">in 12 maanden</span>` : ""}</div>
         <div class="uitleg">Wat een vaasje pils in ${esc(STAD.naam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
-        ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", tekst: "var(--krant-fg)", as: "var(--krant-muted)", lijnLabel: "" })}</div>` : ""}`
+        ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", lijnLabel: "", kleur: idx.delta > 0 ? "var(--op)" : idx.delta < 0 ? "var(--af)" : "var(--accent)" })}</div>` : ""}`
       : `<div class="stand"><span class="big-price">€ ?</span></div>
         <div class="uitleg">Nog geen koers. Speel de eerste kroeg vrij en zet de Pilsindex op het bord.</div>`}
     </div>
