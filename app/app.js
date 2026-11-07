@@ -183,8 +183,9 @@ function spelPrijs(k) {
 const vanMenukaart = (k) => k.open_bron === "menukaart";
 const datumTekst = (d) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
 
+// Een menukaartprijs telt niet mee op de kaart of in de lijst; alleen het kroegscherm noemt hem.
 function toonPrijs(k) {
-  if (k.open_prijs_cent) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
+  if (k.open_prijs_cent && !vanMenukaart(k)) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
   if (k.per25_cent) return { per25: k.per25_cent, volume: k.huidig_volume_cl, onbevestigd: false };
   return null;
 }
@@ -245,9 +246,10 @@ function bezigMetTypen() {
 
 // ---------------------------------------------------------------------------
 // Koers: de app als beurs. Alleen weergave; het spel en de spelregels blijven zoals ze zijn.
-// Een koerspunt is een bekende prijs per vaasje op een datum: een bevestigde melding of een
-// menukaart (dezelfde punten als de koersgrafiek). De Pilsindex is de mediaan van de laatst
-// bekende prijs per vaasje van alle kroegen in de stad.
+// Een koerspunt is een door spelers gemelde en bevestigde prijs per vaasje op een datum.
+// Prijzen die we zelf van oude menukaarten halen, tellen nergens mee: niet in de koers, de
+// Pilsindex, de lichtkrant of de meldingen. Ze staan alleen bij de kroeg zelf, als hint.
+// De Pilsindex is de mediaan van de laatst bekende prijs per vaasje van alle kroegen in de stad.
 // ---------------------------------------------------------------------------
 
 const DAG = 86400000;
@@ -309,7 +311,7 @@ function koersen() {
   const punten = new Map();
   for (const g of state.koersRuw) {
     if (open.size && !open.has(g.kroeg_id)) continue;
-    if (!(g.status === "bevestigd" || g.bron === "menukaart") || g.soort === "check" || !g.volume_cl) continue;
+    if (g.status !== "bevestigd" || g.bron === "menukaart" || g.soort === "check" || !g.volume_cl) continue;
     const lijst = punten.get(g.kroeg_id) ?? [];
     lijst.push({ t: new Date(g.op).getTime(), v: Math.round((g.prijs_cent * 25) / g.volume_cl), bron: g.bron });
     punten.set(g.kroeg_id, lijst);
@@ -380,12 +382,12 @@ function trapjeHtml(id) {
 }
 
 async function laadKoers() {
-  // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee.
-  // Daarnaast de laatste activiteit voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen.
+  // Alleen prijzen van spelers. Daarnaast de laatste activiteit voor de lichtkrant: controles komen
+  // veel vaker voor dan prijswijzigingen.
   const [{ data, error }, { data: recent }] = await Promise.all([
     sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
-      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(5000),
-    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("status", "bevestigd").order("op", { ascending: false }).limit(20),
+      .neq("soort", "check").eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: true }).limit(5000),
+    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: false }).limit(20),
   ]);
   if (error) { console.error(error); return; }
   state.koersRuw = data ?? [];
@@ -904,7 +906,7 @@ function prijsKolom(k) {
   const onder = c?.recent
     ? `<small class="delta ${richting(c.delta)}">${KOERS_TAAL[richting(c.delta)]} ${bedrag(c.delta)} · ${maandKort(c.vastSinds)}</small>`
     : c && Date.now() - c.vastSinds > 365 * DAG ? `<small>vast sinds ${new Date(c.vastSinds).getFullYear()}</small>`
-    : `<small>${vanMenukaart(k) ? "menukaart" : t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small>`;
+    : `<small>${t.onbevestigd ? "nog niet bevestigd" : "per vaasje"}</small>`;
   return `<span class="price">${toonPrijsTekst(k)}${onder}</span>`;
 }
 
@@ -1381,8 +1383,8 @@ function spark(events) {
   // Prijzen veranderen zelden; laat daarom de hele bekende geschiedenis zien (minstens een jaar, hooguit vijf)
   const oudste = events.length ? new Date(events[events.length - 1].op).getTime() : Date.now();
   const van = Math.max(Date.now() - 5 * 365 * DAG, Math.min(Date.now() - 365 * DAG, oudste));
-  // Bevestigde prijzen, plus prijzen van menukaarten: die laten zien wat het op die datum kostte
-  const alle = events.filter((g) => (g.status === "bevestigd" || g.bron === "menukaart") && g.soort !== "check")
+  // Alleen bevestigde prijzen van spelers; een menukaart staat wel in de geschiedenis eronder
+  const alle = events.filter((g) => g.status === "bevestigd" && g.bron !== "menukaart" && g.soort !== "check")
     .map((g) => ({ t: new Date(g.op).getTime(), v: (g.prijs_cent * 25) / g.volume_cl })).reverse();
   const binnen = alle.filter((p) => p.t > van);
   const voor = alle.filter((p) => p.t <= van).pop();
@@ -1501,7 +1503,7 @@ async function verkleinFoto(file) {
 async function beursView() {
   const [{ data: wijken }, { data: recent }] = await Promise.all([
     sb.from("wijk_voortgang").select("*").eq("gemeente", STAD.naam).order("naam"),
-    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").order("op", { ascending: false }).limit(15),
+    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").order("op", { ascending: false }).limit(15),
   ]);
   if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
   const s = state.stad ?? { kroegen: 0, vrijgespeeld: 0, vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
