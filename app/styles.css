@@ -12,6 +12,8 @@
   --op: #cf3a2c; --af: #138a4a; --gelijk: var(--muted);
   --krant: #16130f; --krant-fg: #f3ece0; --krant-muted: #a79c8c; --krant-op: #ff7a6b; --krant-af: #4be08f;
   --shadow: 0 10px 34px rgb(40 25 5 / .16), 0 1px 3px rgb(40 25 5 / .08);
+  /* Mist over de kaart: waas met een stippenraster */
+  --mist: rgb(244 239 230 / .6); --mist-stip: rgb(110 88 55 / .32);
   --hair: .5px solid var(--sep);
   --f-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --f-kop: ui-serif, "New York", "Iowan Old Style", Georgia, "Times New Roman", serif;
@@ -31,6 +33,7 @@
     --locked: #5d5f62; --wacht: #0a84ff; --blue: #4aa3ff;
     --op: #ff6b5e; --af: #3ddc84;
     --shadow: 0 10px 34px rgb(0 0 0 / .5), 0 1px 3px rgb(0 0 0 / .3);
+    --mist: rgb(16 18 20 / .58); --mist-stip: rgb(255 240 210 / .13);
     color-scheme: dark;
   }
 }
@@ -43,6 +46,7 @@
   --locked: #5d5f62; --wacht: #0a84ff; --blue: #4aa3ff;
   --op: #ff6b5e; --af: #3ddc84;
   --shadow: 0 10px 34px rgb(0 0 0 / .5), 0 1px 3px rgb(0 0 0 / .3);
+  --mist: rgb(16 18 20 / .58); --mist-stip: rgb(255 240 210 / .13);
   color-scheme: dark;
 }
 
@@ -180,8 +184,9 @@ h3 .muted { font-weight: 600; letter-spacing: .04em; }
 .btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .btn { flex: 1; border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 700; background: var(--surface-2); min-width: 120px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); }
-.btn.good { background: var(--fresh); color: #fff; }
-.btn.bad { background: var(--old); color: #fff; }
+.btn.good { background: #14803c; color: #fff; }
+.btn.bad { background: #c42318; color: #fff; }
+.btn.stil { background: transparent; color: var(--muted); font-weight: 600; }
 .btn:disabled { opacity: .5; cursor: default; }
 
 /* Inloggen met Apple of Google; met een slotje zolang het in Supabase nog niet aanstaat */
@@ -333,3 +338,55 @@ li.row:nth-child(-n+3) .rank { color: var(--accent-text); }
 .saldo .big-price { font-size: 48px; }
 .saldo .kv { margin-top: 14px; padding-top: 12px; border-top: var(--hair); }
 .saldo .kv b.plus { color: var(--af); }
+
+/* Mist en vrijspelen */
+.mist { position: absolute; left: 0; top: 0; pointer-events: none; }
+.kring { position: fixed; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 18px var(--accent); pointer-events: none; z-index: 5; animation: kring .9s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes kring { to { transform: scale(11); opacity: 0; } }
+.kroeg-tip .maplibregl-popup-content { font: 600 13px/1.3 var(--f-ui); padding: 7px 9px; border-radius: 9px; background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+.kroeg-tip .maplibregl-popup-tip { border-top-color: var(--surface); border-bottom-color: var(--surface); }
+.kroeg-tip .code { font-size: 9.5px; }
+
+/* Vensters: vraag, uitleg en foto */
+.laag { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgb(0 0 0 / .4); }
+.laag[hidden], #lightbox[hidden] { display: none; }
+.laag-kaart { width: min(420px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; border-radius: 20px; padding: 18px 16px 16px; }
+.laag-kaart p:first-child { margin-top: 0; }
+.laag-kaart h2 { margin-top: 4px; }
+.intro-kop { font: 800 11px/1 var(--f-num); letter-spacing: .16em; color: var(--accent-text); }
+.uitleg-lijst { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 9px; font-size: 14px; }
+.uitleg-lijst li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; }
+.uitleg-lijst .dot { margin-top: 3px; }
+.mist-voorbeeld { width: 16px; height: 16px; border-radius: 4px; margin-top: 1px; background: radial-gradient(circle, var(--mist-stip) 1.2px, transparent 1.6px) 0 0 / 5px 5px, var(--mist); border: var(--hair); }
+#lightbox { position: fixed; inset: 0; z-index: 21; display: grid; place-items: center; padding: 16px; background: rgb(0 0 0 / .9); }
+#lightbox img { max-width: min(960px, 100%); max-height: calc(100dvh - 90px); border-radius: 8px; }
+.lightbox-sluit { position: absolute; top: calc(env(safe-area-inset-top) + 12px); right: 12px; color: #fff; background: rgb(255 255 255 / .18); border: 0; border-radius: 999px; padding: 9px 16px; font-weight: 700; }
+
+/* Formulieren */
+.foto-voorbeeld[hidden] { display: none; }
+.foto-voorbeeld { display: block; width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px; margin-top: 8px; }
+.waarschuwing { color: var(--stale-t); font-weight: 600; }
+.klopt-niet { margin: 14px 0 6px; }
+.klopt-niet summary { cursor: pointer; color: var(--blue); font-weight: 600; padding: 6px 0; }
+.klopt-niet .seg { flex-direction: column; gap: 6px; margin-top: 6px; }
+.keuze { display: flex !important; gap: 8px; align-items: center; margin: 0 !important; color: var(--fg) !important; font-size: 14px !important; padding: 9px 12px; border: var(--hair); border-radius: 10px; background: var(--surface); }
+.keuze input { width: auto !important; }
+.toelichting { margin: 6px 0; font-style: italic; }
+
+/* Lijst en beurs */
+.hint { margin: 0 0 8px; }
+.telling { margin: 2px 0 0; }
+button.sector { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: var(--hair); padding: 10px 0; color: inherit; }
+button.sector:last-child { border-bottom: 0; }
+.regels div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: var(--hair); font-size: 14px; }
+.regels div:last-child { border-bottom: 0; }
+.regels b { font-family: var(--f-num); white-space: nowrap; }
+
+/* Toegankelijkheid */
+:focus-visible { outline: 2.5px solid var(--blue); outline-offset: 2px; }
+button:focus:not(:focus-visible) { outline: none; }
+#toast { border-radius: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  #sheet, .ring-fg { transition: none !important; }
+  .kring { display: none; }
+}

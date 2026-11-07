@@ -377,3 +377,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.osm-import]
 enabled = true
 verify_jwt = true
+
+[functions.account-verwijderen]
+enabled = true
+verify_jwt = true

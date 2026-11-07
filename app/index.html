@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#16130f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -56,6 +56,39 @@
 </section>
 
 <div id="toast" role="status" aria-live="polite"></div>
+
+<div id="modal" class="laag" hidden>
+  <div class="laag-kaart glass" role="dialog" aria-modal="true" aria-labelledby="modalText">
+    <p id="modalText"></p>
+    <div class="btns">
+      <button type="button" class="btn" id="modalNee">Annuleer</button>
+      <button type="button" class="btn bad" id="modalJa">Doorgaan</button>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox" hidden>
+  <button type="button" class="lightbox-sluit" id="lightboxSluit">Sluit</button>
+  <img id="lightboxImg" alt="Foto van de prijslijst">
+</div>
+
+<!-- Uitleg bij het eerste bezoek; later terug te vinden onder Ik -->
+<div id="intro" class="laag" hidden>
+  <div class="laag-kaart glass" role="dialog" aria-modal="true" aria-labelledby="introTitel">
+    <div class="intro-kop">BIERKOERS</div>
+    <h2 id="introTitel">Wat kost een vaasje pils?</h2>
+    <p>Samen houden we bij wat de goedkoopste pils van de tap kost in elke kroeg van de stad. Schenkt een kroeg geen vaasje, dan rekenen we om naar 25 cl.</p>
+    <ul class="uitleg-lijst">
+      <li><i class="mist-voorbeeld"></i>Mist: hier weet nog niemand de prijs. Meld hem en je speelt de kroeg vrij.</li>
+      <li><i class="dot fresh"></i>Vers: in de laatste 30 dagen gecontroleerd</li>
+      <li><i class="dot stale"></i>Wordt oud: 30 tot 90 dagen</li>
+      <li><i class="dot old"></i>Oud: 90 dagen of langer. Controleren levert extra punten op</li>
+      <li><i class="dot wacht"></i>Wacht op een andere speler</li>
+    </ul>
+    <p class="small muted">Bierprijzen veranderen zelden. De Pilsindex bovenin is de middelste prijs van de stad, vergeleken met een jaar terug. We belonen bijdragen, nooit drinken. Alleen voor 18 jaar en ouder.</p>
+    <div class="btns"><button type="button" class="btn primary" id="introOk">Naar de kaart</button></div>
+  </div>
+</div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script type="module" src="app.js"></script>

@@ -60,8 +60,60 @@ function toast(msg, pts) {
   t.innerHTML = esc(msg) + (pts ? `<span class="pts">${pts > 0 ? "+" : ""}${pts}</span>` : "");
   t.classList.add("show");
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => t.classList.remove("show"), 3200);
+  // Een lange melding blijft langer staan, zodat je hem kunt uitlezen
+  toast.t = setTimeout(() => t.classList.remove("show"), String(msg).length > 70 ? 5200 : 3200);
 }
+
+// Fouten uit de database en de functies in gewone taal. De spelregels melden al in het Nederlands;
+// technische meldingen van Supabase of het netwerk vertalen we, of we geven een algemene zin.
+async function leesFout(fout) {
+  let m = String(fout?.message ?? fout ?? "");
+  const ctx = fout?.context;
+  if (ctx && typeof ctx.clone === "function") {
+    try {
+      const j = await ctx.clone().json();
+      if (j?.fout) return j.fout;
+      if (typeof j?.message === "string") m = j.message;
+    } catch { /* geen JSON in het antwoord */ }
+  }
+  if (fout?.code === "23505") return "Dit bestaat al.";
+  if (/failed to fetch|networkerror|load failed|network request/i.test(m)) return "Geen verbinding. Controleer je internet en probeer het opnieuw.";
+  if (/jwt|token.*expired|not authenticated|invalid claim/i.test(m)) return "Je sessie is verlopen. Ververs de pagina en probeer het opnieuw.";
+  if (/permission denied|row-level security/i.test(m)) return "Dat mag je hier niet doen.";
+  if (/violates check constraint|invalid input/i.test(m)) return "Deze invoer klopt niet. Kijk hem nog even na.";
+  if (/non-2xx|edge function|unexpected|\b(could not|failed|error|the)\b/i.test(m)) return "Er ging iets mis. Probeer het later opnieuw.";
+  return m || "Er ging iets mis. Probeer het opnieuw.";
+}
+
+// Vraag om bevestiging in een eigen venster (geen confirm() van de browser: die blokkeert en past niet in de PWA).
+function vraag(tekst, ja = "Doorgaan", { gevaar = true } = {}) {
+  return new Promise((resolve) => {
+    const m = $("#modal"), knopJa = $("#modalJa"), knopNee = $("#modalNee");
+    $("#modalText").textContent = tekst;
+    knopJa.textContent = ja;
+    knopJa.className = `btn ${gevaar ? "bad" : "primary"}`;
+    m.hidden = false;
+    knopNee.focus();
+    const klaar = (v) => {
+      m.hidden = true;
+      knopJa.onclick = knopNee.onclick = m.onkeydown = null;
+      resolve(v);
+    };
+    knopJa.onclick = () => klaar(true);
+    knopNee.onclick = () => klaar(false);
+    m.onkeydown = (e) => { if (e.key === "Escape") klaar(false); };
+  });
+}
+
+// Foto van een prijslijst binnen de app tonen; een nieuw tabblad is in een PWA onhandig
+function openFoto(url) {
+  $("#lightboxImg").src = url;
+  $("#lightbox").hidden = false;
+  $("#lightboxSluit").focus();
+}
+
+// Betrouwbaarheid in woorden: zonder punten ben je nieuw, niet onbetrouwbaar
+const betrouwTekst = (r) => !r || (r.altijd ?? 0) === 0 ? "nieuw, nog weinig bevestigd" : `betrouwbaarheid ${Math.round(r.betrouwbaarheid)}%`;
 
 const meters = (d) => d < 1000 ? `${Math.round(d)} m` : `${(d / 1000).toFixed(1).replace(".", ",")} km`;
 const keer = (n) => (n === 1 ? "1 keer" : `${n} keer`);
@@ -106,6 +158,13 @@ const state = {
   modus: "samen", // kaart: "samen" (gezamenlijke mist) of "mijn" (waar jij hebt ingecheckt)
   tocht: null, // { soort: "nieuw" | "goedkoop", aantal, stops: [kroeg], start: [lon, lat], vanaf: "jij" | "centrum" }
   // Koers: prijsgeschiedenis uit kroeg_tijdlijn, punten per kroeg, de Pilsindex en tickercodes (zie koersen())
+  // Lijst: alleen kroegen in beeld, een gekozen wijk (vanuit Beurs) en hoeveel rijen er staan
+  pagina: null, // "regels": de spelregels
+  inBeeld: false,
+  wijk: null,
+  limiet: 40,
+  // Kroeg waar je naartoe teruggaat na het inloggen
+  terugNaar: null,
   koersRuw: [],
   koers: { punten: new Map(), index: null, recent: [] },
   codes: new Map(),
@@ -461,10 +520,16 @@ function kaartLagen() {
   map.addLayer({
     id: "kroeg-cirkel", type: "circle", source: "kroegen",
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 3.5, 15, 7, 17, 9],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 4.5, 14, 7, 16, 9.5, 18, 11],
       "circle-stroke-width": 2,
       ...cirkelStijl(),
     },
+  });
+  // Je eigen locatie, zodra je die hebt gedeeld
+  map.addSource("ik", { type: "geojson", data: ikGeojson() });
+  map.addLayer({
+    id: "ik-stip", type: "circle", source: "ik",
+    paint: { "circle-radius": 7, "circle-color": c.blue, "circle-stroke-width": 3, "circle-stroke-color": "#ffffff" },
   });
   map.addLayer({
     id: "tocht-start", type: "circle", source: "tocht", filter: ["has", "start"],
@@ -491,9 +556,140 @@ function kaartLagen() {
     },
     paint: { "text-color": donker.matches ? "#f2f2f7" : "#1c1c1e", "text-halo-color": c.surface, "text-halo-width": 1.6 },
   });
-  map.on("click", "kroeg-cirkel", (e) => openKroeg(e.features[0].properties.id));
-  map.on("mouseenter", "kroeg-cirkel", () => (map.getCanvas().style.cursor = "pointer"));
-  map.on("mouseleave", "kroeg-cirkel", () => (map.getCanvas().style.cursor = ""));
+  // Onzichtbare, grotere tikplek per kroeg: een stip van 9 px is met een duim lastig te raken
+  map.addLayer({
+    id: "kroeg-tik", type: "circle", source: "kroegen",
+    paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 12, 15, 20, 18, 24], "circle-color": "#000", "circle-opacity": 0.01 },
+  });
+}
+
+const ikGeojson = () => ({ type: "FeatureCollection", features: state.pos ? [{ type: "Feature", geometry: { type: "Point", coordinates: state.pos }, properties: {} }] : [] });
+
+// Tikken: bij overlappende tikplekken de kroeg die het dichtst bij de vinger ligt.
+// De handlers horen bij de laag-id en blijven dus werken na een wissel van licht naar donker.
+map.on("click", "kroeg-tik", (e) => {
+  let beste = null, d = Infinity;
+  for (const f of e.features ?? []) {
+    const p = map.project(f.geometry.coordinates), dd = (p.x - e.point.x) ** 2 + (p.y - e.point.y) ** 2;
+    if (dd < d) { d = dd; beste = f; }
+  }
+  if (beste) openKroeg(beste.properties.id);
+});
+const muisTip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 14, className: "kroeg-tip", maxWidth: "260px" });
+map.on("mouseenter", "kroeg-tik", () => (map.getCanvas().style.cursor = "pointer"));
+map.on("mouseleave", "kroeg-tik", () => { map.getCanvas().style.cursor = ""; muisTip.remove(); });
+// Alleen met een muis: naam en prijs als je over een kroeg beweegt
+map.on("mousemove", "kroeg-tik", (e) => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  const f = e.features?.[0], k = f && state.kroegen.find((x) => x.id === f.properties.id);
+  if (!k) return;
+  const prijs = toonPrijsTekst(k);
+  muisTip.setLngLat(f.geometry.coordinates)
+    .setHTML(`<b>${codeHtml(k.id)}${esc(k.naam)}</b><span class="muted"> ${prijs ? esc(prijs) : "op slot"}</span>`).addTo(map);
+});
+
+// ---------------------------------------------------------------------------
+// Mist: een stippenraster over de kaart, met een open plek rond elke kroeg met een prijs.
+// Samen: open waar de kroeg is vrijgespeeld. Koers: waar een koers bekend is. Mijn kaart: waar jij hebt ingecheckt.
+// Getekend op een eigen canvas boven de kaart, dus de kaart zelf blijft gewoon te bedienen.
+// ---------------------------------------------------------------------------
+
+const MIST_M = 110; // straal van een open plek in meters
+const mist = (() => {
+  const doek = document.createElement("canvas");
+  doek.className = "mist";
+  doek.setAttribute("aria-hidden", "true");
+  map.getCanvasContainer().appendChild(doek);
+  const ctx = doek.getContext("2d");
+  const groei = new Map(); // kroeg_id -> begin van de animatie
+  let kleuren = null, patroon = null;
+  const rustig = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function lees() {
+    const cs = getComputedStyle(document.documentElement);
+    kleuren = { waas: cs.getPropertyValue("--mist").trim(), stip: cs.getPropertyValue("--mist-stip").trim() };
+    const dpr = devicePixelRatio || 1, n = Math.round(12 * dpr);
+    const tegel = document.createElement("canvas");
+    tegel.width = tegel.height = n;
+    const t = tegel.getContext("2d");
+    t.fillStyle = kleuren.stip;
+    t.beginPath(); t.arc(n / 2, n / 2, 1.1 * dpr, 0, Math.PI * 2); t.fill();
+    patroon = ctx.createPattern(tegel, "repeat");
+  }
+
+  function open(k) {
+    if (state.modus === "mijn") return state.mijn.has(k.id);
+    if (state.modus === "koers") return !!koersVan(k.id);
+    return k.versheid !== "locked";
+  }
+
+  function teken() {
+    if (!kleuren) lees();
+    const dpr = devicePixelRatio || 1, el = map.getCanvas(), w = el.clientWidth, h = el.clientHeight;
+    if (doek.width !== Math.round(w * dpr) || doek.height !== Math.round(h * dpr)) {
+      doek.width = Math.round(w * dpr); doek.height = Math.round(h * dpr);
+      doek.style.width = w + "px"; doek.style.height = h + "px";
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.clearRect(0, 0, doek.width, doek.height);
+    ctx.fillStyle = kleuren.waas; ctx.fillRect(0, 0, doek.width, doek.height);
+    ctx.fillStyle = patroon; ctx.fillRect(0, 0, doek.width, doek.height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = "destination-out";
+    const lat = map.getCenter().lat * Math.PI / 180;
+    const mPerPx = (40075016.686 * Math.cos(lat)) / (512 * 2 ** map.getZoom());
+    const R = Math.max(16, MIST_M / mPerPx), nu = performance.now();
+    let bezig = false;
+    for (const k of state.kroegen) {
+      if (!open(k) && !groei.has(k.id)) continue;
+      const p = map.project([k.lon, k.lat]);
+      if (p.x < -R || p.y < -R || p.x > w + R || p.y > h + R) continue;
+      let f = 1;
+      const t0 = groei.get(k.id);
+      if (t0 != null) {
+        const x = Math.min(1, (nu - t0) / 1100);
+        f = 1 - (1 - x) ** 3;
+        if (x < 1) bezig = true; else groei.delete(k.id);
+      }
+      const r = R * f;
+      if (r < 1) continue;
+      const g = ctx.createRadialGradient(p.x, p.y, r * 0.45, p.x, p.y, r);
+      g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    // Waar je zelf staat, kun je ook zien
+    if (state.pos) {
+      const p = map.project(state.pos), r = R * 0.7;
+      const g = ctx.createRadialGradient(p.x, p.y, r * 0.3, p.x, p.y, r);
+      g.addColorStop(0, "rgba(0,0,0,.9)"); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    if (bezig) map.triggerRepaint();
+  }
+
+  map.on("render", teken);
+  donker.addEventListener("change", () => { kleuren = null; map.triggerRepaint(); });
+  return {
+    bij: () => map.triggerRepaint(),
+    // De mist trekt weg rond deze kroeg: de open plek groeit vanuit het midden
+    vier(id) { if (!rustig()) { groei.set(id, performance.now()); map.triggerRepaint(); } },
+  };
+})();
+
+// Vrijgespeeld: een gouden kring dijt uit en de mist trekt weg rond de kroeg
+function vierVrij(k) {
+  if (!k || !kaartKlaar) return;
+  mist.vier(k.id);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const p = map.project([k.lon, k.lat]), r = map.getContainer().getBoundingClientRect();
+  const kring = document.createElement("div");
+  kring.className = "kring";
+  kring.style.left = r.left + p.x + "px";
+  kring.style.top = r.top + p.y + "px";
+  document.body.appendChild(kring);
+  kring.addEventListener("animationend", () => kring.remove());
 }
 
 map.on("load", () => {
@@ -510,6 +706,8 @@ function kaartBijwerken() {
   const src = map.getSource("kroegen");
   if (src) src.setData(geojson());
   map.getSource("tocht")?.setData(tochtGeojson());
+  map.getSource("ik")?.setData(ikGeojson());
+  mist.bij();
   if (map.getLayer("kroeg-halo")) map.setFilter("kroeg-halo", ["==", ["get", "id"], state.selected ?? -1]);
   if (map.getLayer("kroeg-cirkel")) for (const [k, v] of Object.entries(cirkelStijl())) map.setPaintProperty("kroeg-cirkel", k, v);
   // In de koersstand staan de prijzen al eerder op de kaart
@@ -664,6 +862,7 @@ const body = $("#body");
 function draw() {
   let html = "";
   if (state.selected != null) html = state.form ? formView() : state.aanbodForm ? aanbodFormView() : state.tijdenForm ? tijdenFormView() : detailView();
+  else if (state.pagina === "regels") html = regelsView();
   else if (state.tocht) html = tochtView();
   else if (state.tab === "kaart") html = lijstView();
   else if (state.tab === "beurs") html = '<div class="empty">Laden…</div>';
@@ -671,8 +870,9 @@ function draw() {
   else if (state.tab === "ik") html = ikView();
   body.innerHTML = html;
   if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); }
-  else if (state.selected == null && state.tab === "beurs") beursView();
-  else if (state.selected == null && state.tab === "rang") rangView();
+  else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
+  else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
+  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) laadBeheerMeldingen();
   $("#tabIk").textContent = state.profiel ? state.profiel.naam.slice(0, 10) : "Ik";
 }
 
@@ -723,9 +923,12 @@ function lijstView() {
   const q = state.zoek.trim().toLowerCase();
   // Met een soort gekozen: "Goedkoopst" sorteert op de prijs van die soort; kroegen zonder prijs ervan achteraan
   const prijsVoor = (k) => state.soort ? (soortIn(k.id)?.prijs_cent ?? Infinity) : k.per25_cent;
+  const b = state.inBeeld && kaartKlaar ? map.getBounds() : null;
   let rows = zichtbareKroegen()
     .filter((k) => state.soort && state.filter === "goedkoop" ? true : f.f(k))
-    .filter((k) => !q || k.naam.toLowerCase().includes(q) || (k.wijk ?? "").toLowerCase().includes(q));
+    .filter((k) => !state.wijk || k.wijk === state.wijk)
+    .filter((k) => !b || (k.lon >= b.getWest() && k.lon <= b.getEast() && k.lat >= b.getSouth() && k.lat <= b.getNorth()))
+    .filter((k) => !q || [k.naam, k.wijk, k.adres].some((x) => (x ?? "").toLowerCase().includes(q)));
   if (state.filter === "goedkoop") rows.sort((a, b) => prijsVoor(a) - prijsVoor(b));
   else if (state.filter === "prijsvast") rows.sort((a, b) => koersVan(a.id).vastSinds - koersVan(b.id).vastSinds);
   else if (state.filter === "verhoogd") rows.sort((a, b) => koersVan(b.id).vastSinds - koersVan(a.id).vastSinds);
@@ -735,18 +938,41 @@ function lijstView() {
     : state.soort ? `<div class="empty">Nog geen kroeg met ${esc(soortNaam(state.soort))} gemeld.<br><span class="small">Weet je er een? Voeg het toe bij de kroeg onder "Ook op de tap".</span></div>`
     : state.filter === "verhoogd" && !q ? `<div class="empty">Dit jaar heeft nog geen kroeg de prijs verhoogd.<br><span class="small">Of niemand heeft het nog gemeld.</span></div>`
     : state.filter === "prijsvast" && !q ? `<div class="empty">Nog geen koersen.</div>`
-    : `<div class="empty">Niets gevonden.</div>`;
+    : state.inBeeld ? `<div class="empty">Geen kroegen in beeld.<br><span class="small">Schuif of zoom de kaart, of zet "In beeld" uit.</span></div>`
+    : `<div class="empty">Niets gevonden.<br><span class="small">Probeer een andere zoekterm of een ander filter.</span></div>`;
   // Alleen soorten die ergens getapt worden
   const soorten = state.biersoorten.filter((b) => state.aanbod.some((a) => a.soort === b.code) || b.code === state.soort);
-  return `<input class="search" type="search" placeholder="Zoek een kroeg of wijk" value="${esc(state.zoek)}" data-zoek>
+  const hint = !state.pos && !["goedkoop", "prijsvast", "verhoogd"].includes(state.filter)
+    ? `<p class="small muted hint">Op naam gesorteerd. <button type="button" class="linkbtn" data-locatie-lijst>Gebruik mijn locatie</button> en de dichtstbijzijnde kroeg staat bovenaan.</p>` : "";
+  const meer = rows.length - state.limiet;
+  return `<input class="search" type="search" placeholder="Zoek een kroeg, wijk of straat" value="${esc(state.zoek)}" data-zoek>
     <button class="row tocht-link" data-tocht-open><span class="ic-sm">${ICON_ROUTE}</span><span class="row-main"><span class="row-title">Plan een kroegentocht</span><span class="row-sub">Langs de goedkoopste kroegen of waar je nog niet was</span></span><span class="muted">›</span></button>
-    <div class="chips">${F.map((x) => `<button class="chip" data-filter="${x.id}" aria-pressed="${x.id === f.id}">${x.naam}</button>`).join("")}</div>
+    <div class="chips">${state.wijk ? `<button class="chip" data-wis-wijk aria-pressed="true" aria-label="Filter ${esc(state.wijk)} wissen">${esc(state.wijk)} ✕</button>` : ""}<button class="chip" data-in-beeld aria-pressed="${state.inBeeld}">In beeld</button>${F.map((x) => `<button class="chip" data-filter="${x.id}" aria-pressed="${x.id === f.id}">${x.naam}</button>`).join("")}</div>
     ${soorten.length ? `<select class="soortkeuze" data-soort aria-label="Filter op bier dat getapt wordt">
       <option value="">Op de tap: alle kroegen</option>
       ${soorten.map((b) => `<option value="${b.code}" ${b.code === state.soort ? "selected" : ""}>Op de tap: ${esc(b.naam)}</option>`).join("")}
     </select>` : ""}
-    ${rows.length ? `<ul class="list">${rows.slice(0, 150).map(rowHtml).join("")}</ul>` : leeg}`;
+    ${hint}
+    ${rows.length ? `<div class="small muted telling">${rows.length === 1 ? "1 kroeg" : `${rows.length} kroegen`}</div><ul class="list">${rows.slice(0, state.limiet).map(rowHtml).join("")}</ul>
+      ${meer > 0 ? `<div class="btns"><button type="button" class="btn" data-meer>Toon er nog ${Math.min(40, meer)} van ${meer}</button></div>` : ""}` : leeg}`;
 }
+
+// Vanuit Beurs een wijk aantikken: de lijst toont alleen die wijk en de kaart zoomt erop in
+function kiesWijk(naam) {
+  // De wijk vervangt "In beeld": anders valt de wijk buiten beeld zolang de kaart nog schuift
+  state.wijk = naam; state.filter = "alles"; state.limiet = 40; state.inBeeld = false;
+  setTab("kaart");
+  const ks = state.kroegen.filter((k) => k.wijk === naam);
+  if (ks.length && kaartKlaar) {
+    const b = ks.reduce((bb, k) => bb.extend([k.lon, k.lat]), new maplibregl.LngLatBounds([ks[0].lon, ks[0].lat], [ks[0].lon, ks[0].lat]));
+    map.fitBounds(b, { padding: wide() ? { left: 440, top: 80, bottom: 40, right: 40 } : { top: 140, bottom: innerHeight * 0.5, left: 30, right: 30 }, maxZoom: 15.5, duration: 700 });
+  }
+}
+
+// Met "In beeld" volgt de lijst de kaart
+map.on("moveend", () => {
+  if (state.inBeeld && state.tab === "kaart" && state.selected == null && !state.tocht && !bezigMetTypen()) draw();
+});
 
 function detailView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
@@ -754,7 +980,11 @@ function detailView() {
   const v = kroegVersheid(k);
   const ingelogd = !!state.sessie;
   let actie = "";
-  if (k.open_melding_id && vanMenukaart(k)) {
+  if (!ingelogd) {
+    // Niet ingelogd: geen grijze knoppen, maar meteen een weg naar meedoen. Daarna kom je hier terug.
+    actie = `<div class="btns"><button class="btn primary" data-doe-mee>${k.versheid === "locked" ? "Doe mee en speel deze kroeg vrij" : "Doe mee en houd de prijs bij"}</button></div>
+      <div class="small muted" style="margin-top:8px">Je begint meteen, zonder e-mailadres of wachtwoord. Daarna kom je terug bij deze kroeg.</div>`;
+  } else if (k.open_melding_id && vanMenukaart(k)) {
     actie = `<div class="small" style="margin-top:8px">Ben je hier? Bevestig de prijs ter plaatse en speel de kroeg vrij zodra een andere speler het ook bevestigt.</div>
       <div class="btns">
       <button class="btn primary" data-menuklopt="${k.id}" ${ingelogd ? "" : "disabled"}>Klopt, ik ben er</button>
@@ -792,7 +1022,6 @@ function detailView() {
       : `<div class="big-price muted">€ ?</div><div class="muted" style="margin-top:6px">Nog geen koers. Speel deze kroeg vrij met de prijs van een vaasje.</div>`}
       ${k.ontdekker ? `<div class="small" style="margin-top:8px">Ontdekt door <b>${esc(k.ontdekker)}</b> ${wanneer(k.ontdekt_op)}</div>` : ""}
       ${actie}
-      ${ingelogd ? "" : `<div class="small muted" style="margin-top:8px">Doe mee via het tabblad Ik. Een e-mailadres is niet nodig.</div>`}
     </div>
     ${incheckHtml(k)}
     <div id="tijden"></div>
@@ -847,15 +1076,30 @@ function tijdenBlok(info) {
     ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${state.sessie ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
 }
 
+// Klopt deze kroeg niet? Open meldingen bovenaan; daaronder een klein formulier voor een nieuwe melding.
+const KROEGMELDING = {
+  gesloten: { knop: "Definitief gesloten", wat: "meldt dat deze kroeg definitief gesloten is.", gevolg: "Na een bevestiging door een andere speler verdwijnt de kroeg van de kaart." },
+  verkeerde_plek: { knop: "Staat op de verkeerde plek", wat: "meldt dat deze kroeg op de verkeerde plek op de kaart staat.", gevolg: "Na een bevestiging verplaatst een beheerder hem." },
+  dubbel: { knop: "Staat er dubbel op", wat: "meldt dat deze kroeg dubbel op de kaart staat.", gevolg: "Na een bevestiging door een andere speler verdwijnt deze van de kaart. De andere blijft staan." },
+};
 function sluitingBlok(info) {
-  const melding = (info?.open_meldingen ?? []).find((m) => m.soort === "gesloten");
-  if (melding) {
-    return `<div class="card">
-      <div><b>${esc(melding.door ?? "Iemand")}</b> meldt dat deze kroeg definitief gesloten is.</div>
-      <div class="small muted">Gemeld ${wanneer(melding.op)}${melding.klopt_niet ? ", 1 keer klopt niet" : ""}. Na een bevestiging door een andere speler verdwijnt de kroeg van de kaart.</div>
-      <div class="btns">${meldingKnoppen(melding)}</div></div>`;
-  }
-  return `<div class="btns"><button class="btn" data-sluiting ${state.sessie ? "" : "disabled"}>Definitief gesloten?</button></div>`;
+  const open = (info?.open_meldingen ?? []).filter((m) => KROEGMELDING[m.soort]);
+  const kaarten = open.map((m) => `<div class="card">
+      <div><b>${esc(m.door ?? "Iemand")}</b> ${KROEGMELDING[m.soort].wat}</div>
+      ${m.toelichting ? `<div class="toelichting">"${esc(m.toelichting)}"</div>` : ""}
+      <div class="small muted">Gemeld ${wanneer(m.op)}${m.klopt_niet ? ", 1 keer klopt niet" : ""}. ${KROEGMELDING[m.soort].gevolg}</div>
+      <div class="btns">${meldingKnoppen(m)}</div></div>`).join("");
+  const vrij = Object.keys(KROEGMELDING).filter((soort) => !open.some((m) => m.soort === soort));
+  const formulier = !state.sessie || !vrij.length ? "" : `<details class="klopt-niet">
+      <summary>Klopt deze kroeg niet?</summary>
+      <form class="form" id="kroegmeldingForm">
+        <div class="seg">${vrij.map((soort, i) => `<label class="keuze"><input type="radio" name="soort" value="${soort}" ${i ? "" : "checked"}> ${KROEGMELDING[soort].knop}</label>`).join("")}</div>
+        <label for="kmToelichting">Toelichting (optioneel)</label>
+        <input id="kmToelichting" name="toelichting" maxlength="280" placeholder="Bijvoorbeeld: zit aan de overkant, of: zelfde als Café De Fuik">
+        <div class="btns"><button class="btn" type="submit">Melden</button></div>
+        <p class="small muted">Geen punten. Een andere speler met e-mailadres bevestigt het. De prijs zelf pas je hierboven aan.</p>
+      </form></details>`;
+  return kaarten + formulier;
 }
 
 function tijdenFormView() {
@@ -901,27 +1145,32 @@ async function verstuurTijden(form) {
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
   const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: "openingstijden", p_openingstijden: tijden });
   knop.disabled = false;
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   state.tijdenForm = null;
   toast("Openingstijden bijgewerkt, bedankt");
   draw();
 }
 
-async function meldGesloten() {
+async function verstuurKroegmelding(form) {
   const k = state.kroegen.find((x) => x.id === state.selected);
-  if (!confirm(`Is ${k.naam} definitief gesloten? Na een bevestiging door een andere speler verdwijnt de kroeg van de kaart.`)) return;
-  const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: "gesloten" });
-  if (error) return toast(error.message);
+  const fd = new FormData(form);
+  const soort = String(fd.get("soort")), toelichting = String(fd.get("toelichting") ?? "").trim();
+  if (toelichting && toelichting.length < 2) return toast("Maak de toelichting iets langer, of laat hem leeg");
+  if (soort !== "verkeerde_plek" && !(await vraag(`${KROEGMELDING[soort].knop}: ${k.naam}? ${KROEGMELDING[soort].gevolg}`, "Melden"))) return;
+  const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: soort, p_toelichting: toelichting || null });
+  knop.disabled = false;
+  if (error) return toast(await leesFout(error));
   toast("Gemeld; een andere speler moet het bevestigen");
   draw();
 }
 
 async function beoordeelMelding(id, oordeel) {
   const { data, error } = await sb.rpc("beoordeel_kroegmelding", { p_melding_id: id, p_oordeel: oordeel });
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   toast(data === "bevestigd" ? "Bevestigd, bedankt" : data === "weerlegd" ? "Weggehaald" : "Genoteerd; nog een keer klopt niet en het wordt teruggedraaid");
-  // Een bevestigde sluiting haalt de kroeg van de kaart
-  if (data === "bevestigd" && (state.info?.open_meldingen ?? []).some((m) => m.id === id && m.soort === "gesloten")) {
+  // Een bevestigde sluiting of dubbele kroeg haalt de kroeg van de kaart
+  if (data === "bevestigd" && (state.info?.open_meldingen ?? []).some((m) => m.id === id && (m.soort === "gesloten" || m.soort === "dubbel"))) {
     await laadKroegen();
     return sluitKroeg();
   }
@@ -1004,7 +1253,7 @@ async function verstuurAanbod(form) {
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
   const { error } = await sb.rpc("meld_aanbod", { p_kroeg_id: k.id, p_soort: String(fd.get("soort")), p_merk: merk || null, p_volume_cl: cl, p_prijs_cent: prijs });
   knop.disabled = false;
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   state.aanbodForm = null;
   toast("Toegevoegd, bedankt");
   await laadAanbod();
@@ -1013,7 +1262,7 @@ async function verstuurAanbod(form) {
 
 async function beoordeelAanbod(id, oordeel) {
   const { data, error } = await sb.rpc("beoordeel_aanbod", { p_aanbod_id: id, p_oordeel: oordeel });
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   toast(data === "weg" ? "Weggehaald" : oordeel === "klopt" ? "Bedankt voor het controleren" : "Genoteerd; nog een keer klopt niet en het verdwijnt");
   await laadAanbod();
   draw();
@@ -1049,7 +1298,7 @@ async function laadTijdlijn(id) {
     const al = state.profiel && [...open.bevestigd_door, ...open.weerlegd_door].includes(state.profiel.naam);
     el.innerHTML = `<div><b>${esc(open.door)}</b> meldt ${euro(open.prijs_cent)} voor ${esc(open.merk)} ${open.volume_cl} cl</div>
       <div class="muted small">${wanneer(open.op)}${open.ter_plaatse ? " · ter plaatse" : ""}${open.uitschieter ? " · wijkt sterk af, twee bevestigingen nodig" : ""}</div>
-      ${open.foto_pad ? `<div class="small"><a href="${fotoUrl(open.foto_pad)}" target="_blank" rel="noopener">Foto van de prijslijst</a></div>` : ""}
+      ${open.foto_pad ? `<div class="small"><button type="button" class="linkbtn" data-foto="${esc(fotoUrl(open.foto_pad))}">Foto van de prijslijst</button></div>` : ""}
       ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door andere spelers.</div>`
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
         : anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om meldingen van anderen te bevestigen of te weerleggen.</div>`
@@ -1097,7 +1346,7 @@ function tijdlijnItem(g) {
   if (g.ter_plaatse) meta.push("ter plaatse");
   return `<li class="${g.soort === "check" ? "check" : g.status}"><div class="t-what">${wat}${status}</div>
     <div class="t-meta">${meta.join(" · ")}</div>
-    ${g.foto_pad ? `<div class="t-meta"><a href="${fotoUrl(g.foto_pad)}" target="_blank" rel="noopener">Foto</a></div>` : ""}</li>`;
+    ${g.foto_pad ? `<div class="t-meta"><button type="button" class="linkbtn" data-foto="${esc(fotoUrl(g.foto_pad))}">Foto van de prijslijst</button></div>` : ""}</li>`;
 }
 
 // Koersgrafiek: trapjes per prijs, met een vlak eronder en de Pilsindex als stippellijn.
@@ -1187,15 +1436,66 @@ function formView() {
       <select name="merk">${MERKEN.map((m) => `<option ${m === f.merk ? "selected" : ""}>${m}</option>`).join("")}<option value="_anders" ${MERKEN.includes(f.merk) ? "" : "selected"}>Anders…</option></select>
       <input name="merkAnders" placeholder="Ander merk" style="margin-top:6px;${MERKEN.includes(f.merk) ? "display:none" : ""}" value="${MERKEN.includes(f.merk) ? "" : esc(f.merk)}">
       <label>Glas</label>
-      <div class="seg">${GLAZEN.map((g) => `<button type="button" data-cl="${g.cl}" aria-pressed="${g.cl === f.cl}">${g.naam}<br><span class="small muted">${g.cl} cl</span></button>`).join("")}</div>
-      <label>Prijs in euro</label>
+      <div class="seg">${GLAZEN.map((g) => `<button type="button" data-cl="${g.cl}" aria-pressed="${!f.clAnders && g.cl === f.cl}">${g.naam}<br><span class="small muted">${g.cl} cl</span></button>`).join("")}
+        <button type="button" data-cl="anders" aria-pressed="${!!f.clAnders}">Ander glas<br><span class="small muted">zelf invullen</span></button></div>
+      <input name="clAnders" type="number" min="15" max="100" inputmode="numeric" placeholder="Inhoud in cl, bijvoorbeeld 28" style="margin-top:6px" ${f.clAnders ? "" : "hidden"} value="${f.clAnders ? esc(f.cl) : ""}">
+      <label>Prijs van dat glas, in euro</label>
       <input name="prijs" inputmode="decimal" placeholder="3,50" required value="${esc(f.prijs ?? "")}">
-      <label>Foto van de prijslijst (optioneel, +5)</label>
+      <p class="small muted" id="prijsVoorbeeld" aria-live="polite">Vul de prijs in. Je ziet meteen wat dat per vaasje is.</p>
+      <label>Foto van de prijslijst (optioneel, +5 na bevestiging)</label>
       <input name="foto" type="file" accept="image/*" capture="environment">
-      <label class="check"><input type="checkbox" name="locatie" ${f.locatie ? "checked" : ""}> Mijn locatie meesturen (ter plaatse: x1,5 punten)</label>
+      <img class="foto-voorbeeld" id="fotoVoorbeeld" alt="Voorbeeld van je foto" hidden>
+      <label class="check"><input type="checkbox" name="locatie" ${f.locatie ? "checked" : ""}> Ik ben in deze kroeg. Binnen ${INCHECK_M} m tellen de punten 1,5 keer. We bewaren alleen de afstand tot de kroeg.</label>
       <div class="btns"><button class="btn primary" type="submit" id="verstuur">Versturen</button></div>
       <p class="small muted">Punten krijg je zodra een andere speler je melding bevestigt.</p>
     </form>`;
+}
+
+// Het gekozen glas in cl; bij "Ander glas" wat de speler invult (15 tot 100 cl, net als de database)
+function gekozenCl() {
+  if (!state.form) return null;
+  if (!state.form.clAnders) return state.form.cl;
+  const n = Math.round(Number(body.querySelector("[name=clAnders]")?.value));
+  return n >= 15 && n <= 100 ? n : null;
+}
+
+// Onder de prijs: wat het per vaasje is, naast de Pilsindex, en of het een uitschieter wordt
+function prijsVoorbeeld() {
+  const el = $("#prijsVoorbeeld"), form = $("#prijsForm");
+  if (!el || !form) return;
+  const prijs = Math.round(parseFloat(String(new FormData(form).get("prijs") ?? "").replace(",", ".")) * 100);
+  const cl = gekozenCl();
+  if (!Number.isFinite(prijs) || prijs <= 0 || !cl) {
+    el.className = "small muted";
+    el.textContent = cl ? "Vul de prijs in. Je ziet meteen wat dat per vaasje is." : "Vul de inhoud van het glas in, tussen 15 en 100 cl.";
+    return;
+  }
+  const per25 = Math.round((prijs * 25) / cl), idx = state.koers.index?.nu;
+  // Zelfde grens als de database: meer dan 40% van de mediaan, vanaf 5 prijzen in de stad
+  const med = state.stad?.mediaan_per25_cent, genoeg = state.koers.punten.size >= 5;
+  const uitschieter = med && genoeg && Math.abs(per25 - med) > med * 0.4;
+  el.className = uitschieter ? "small waarschuwing" : "small muted";
+  el.textContent = (cl === VAASJE ? `${euro(prijs)} voor een vaasje.` : `${euro(prijs)} voor ${cl} cl is ${euro(per25)} per vaasje.`)
+    + (idx ? ` De Pilsindex is ${euro(idx)}.` : "")
+    + (uitschieter ? " Dit wijkt sterk af van de stad: twee andere spelers moeten het bevestigen." : "");
+}
+
+// Een foto van de telefoon is vaak 4 tot 12 MB. Verklein hem naar hoogstens 1600 px als JPEG: sneller en zuiniger.
+async function verkleinFoto(file) {
+  if (!file?.type?.startsWith("image/") || /heic|heif/i.test(file.type)) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const schaal = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(bmp.width * schaal));
+    c.height = Math.max(1, Math.round(bmp.height * schaal));
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    bmp.close?.();
+    const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.82));
+    return blob && blob.size < file.size ? new File([blob], "prijslijst.jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
 }
 
 async function beursView() {
@@ -1203,7 +1503,7 @@ async function beursView() {
     sb.from("wijk_voortgang").select("*").eq("gemeente", STAD.naam).order("naam"),
     sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").order("op", { ascending: false }).limit(15),
   ]);
-  if (state.tab !== "beurs" || state.selected != null) return;
+  if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
   const s = state.stad ?? { kroegen: 0, vrijgespeeld: 0, vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
   const pct = s.kroegen ? Math.round((s.vrijgespeeld / s.kroegen) * 100) : 0;
   const MS = [25, 50, 75, 100], next = MS.find((m) => m > pct), nodig = next ? Math.ceil((next / 100) * s.kroegen) - s.vrijgespeeld : 0;
@@ -1233,10 +1533,10 @@ async function beursView() {
   // Wijken als sectoren: de mediaan per wijk naast de Pilsindex
   const sector = (w) => {
     const m = mediaan(state.kroegen.filter((k) => k.wijk === w.naam).map((k) => koersVan(k.id)?.nu).filter(Boolean));
-    return `<div class="sector">
+    return `<button type="button" class="sector" data-wijk="${esc(w.naam)}" aria-label="${esc(w.naam)} op de kaart tonen">
       <div class="t"><b>${esc(w.naam)}</b><span>${m ? `<span class="price">${euro(m)}</span>` : `<span class="small muted">geen koers</span>`}</span></div>
       <div class="t small muted"><span>${w.vrijgespeeld} van ${w.kroegen} vrijgespeeld</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
-      <div class="bar"><span style="width:${(w.vrijgespeeld / w.kroegen) * 100}%"></span></div></div>`;
+      <div class="bar"><span style="width:${w.kroegen ? (w.vrijgespeeld / w.kroegen) * 100 : 0}%"></span></div></button>`;
   };
 
   const melding = (g) => {
@@ -1274,7 +1574,7 @@ async function beursView() {
       <div style="margin-top:12px"><b class="num">${versPct}%</b> van de koersen is vers</div>
       <div class="bar fresh"><span style="width:${versPct}%"></span></div>
     </div>
-    <h3>Sectoren <span class="muted">per wijk</span></h3>
+    <h3>Sectoren <span class="muted">tik voor de kaart</span></h3>
     ${(wijken ?? []).length ? `<div class="card" style="padding:4px 14px">${(wijken ?? []).map(sector).join("")}</div>` : `<div class="muted small">Nog geen wijken geladen.</div>`}
     <h3>Laatste meldingen</h3>
     ${(recent ?? []).length ? `<ul class="list">${recent.map(melding).join("")}</ul>` : `<div class="muted small">Nog geen activiteit.</div>`}`;
@@ -1283,14 +1583,14 @@ async function beursView() {
 async function rangView() {
   const kolom = state.periode;
   const { data } = await sb.from("ranglijst").select("*").gt(kolom, 0).order(kolom, { ascending: false }).limit(50);
-  if (state.tab !== "rang" || state.selected != null) return;
+  if (state.tab !== "rang" || state.selected != null || state.pagina) return;
   const uid = state.sessie?.user?.id;
   const P = [["week", "Week"], ["maand", "Maand"], ["altijd", "Altijd"]];
-  body.innerHTML = `<h2>Koersmakers</h2><p class="muted small" style="margin-top:0">Wie de koers van ${esc(STAD.naam)} het best bijhoudt. Punten voor melden en controleren, nooit voor drinken.</p>
+  body.innerHTML = `<h2>Koersmakers</h2><p class="muted small" style="margin-top:0">Wie de koers van ${esc(STAD.naam)} het best bijhoudt. Punten voor melden en controleren, nooit voor drinken. <button type="button" class="linkbtn" data-regels>Hoe punten werken</button></p>
     <div class="chips">${P.map(([id, n]) => `<button class="chip" data-periode="${id}" aria-pressed="${id === kolom}">${n}</button>`).join("")}</div>
     ${(data ?? []).length ? `<ul class="list">${data.map((r, i) => `<li class="row ${r.id === uid ? "me" : ""}">
       <span class="rank">${i + 1}</span>
-      <span class="row-main"><span class="row-title">${esc(r.naam)}</span><span class="row-sub">${r.ontdekt} ontdekt · betrouwbaarheid ${Math.round(r.betrouwbaarheid)}%</span></span>
+      <span class="row-main"><span class="row-title">${esc(r.naam)}</span><span class="row-sub">${r.ontdekt} ontdekt · ${esc(betrouwTekst(r))}</span></span>
       <span class="price">${r[kolom]}<small>punten</small></span></li>`).join("")}</ul>` : `<div class="empty">Nog niemand heeft punten in deze periode.</div>`}`;
 }
 
@@ -1378,8 +1678,10 @@ function ikView() {
       <h3>Nieuw hier?</h3>${beginnen}
       <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
     }
-    return `<h2>Doe mee</h2>${beginnen}
+    const terug = state.terugNaar != null ? state.kroegen.find((k) => k.id === state.terugNaar) : null;
+    return `<h2>Doe mee</h2>${terug ? `<p class="small">Daarna ga je terug naar <b>${esc(terug.naam)}</b>.</p>` : ""}${beginnen}
       <p class="small muted">We belonen bijdragen, nooit drinken.</p>
+      <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
       <h3>Al een account?</h3>
       ${inloggen}`;
   }
@@ -1401,7 +1703,7 @@ function ikView() {
       <div class="kv">
         <div>Deze week<b class="${p?.week ? "plus" : ""}">${p?.week ? `↗ +${p.week}` : "0"}</b></div>
         <div>Deze maand<b class="${p?.maand ? "plus" : ""}">${p?.maand ? `+${p.maand}` : "0"}</b></div>
-        <div>Betrouwbaar<b>${Math.round(p?.betrouwbaarheid ?? 50)}%</b></div>
+        <div>Betrouwbaar<b>${(p?.altijd ?? 0) === 0 ? "nieuw" : `${Math.round(p?.betrouwbaarheid ?? 50)}%`}</b></div>
       </div>
       <div class="small muted" style="margin-top:10px">${p?.ontdekt ?? 0} ${(p?.ontdekt ?? 0) === 1 ? "kroeg" : "kroegen"} ontdekt. Punten krijg je voor melden en controleren, nooit voor drinken.</div>
     </div>
@@ -1410,10 +1712,82 @@ function ikView() {
     ${p && !p.naam_vast ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
       <div class="small muted">Je kiest je naam een keer; daarna staat hij vast.</div>
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
+    <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
-      <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div></div>` : ""}
-    <div class="btns"><button class="btn bad" data-logout>Uitloggen</button></div>`;
+      <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
+      <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>` : ""}
+    <h3>Jouw gegevens</h3>
+    <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
+      Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken. Alleen voor 18 jaar en ouder.</p>
+    <div class="btns"><button class="btn" data-logout>Uitloggen</button><button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
 }
+
+// Spelregels in het kort; de uitwerking staat in supabase/README.md
+function regelsView() {
+  return `<button class="back" data-sluit-pagina>‹ Terug</button>
+    <h2>Spelregels</h2>
+    <p>Per kroeg houden we de <b>goedkoopste pils van de tap</b> bij, in een vaasje (25 cl). Schenkt een kroeg geen vaasje, dan meld je het kleinste glas en rekenen we om.</p>
+    <h3>Punten</h3>
+    <div class="card regels">
+      <div><span>Kroeg vrijspelen (eerste prijs)</span><b>+50</b></div>
+      <div><span>Nieuwe prijs melden</span><b>+30</b></div>
+      <div><span>Melding van een ander bevestigen</span><b>+5</b></div>
+      <div><span>Klopt nog</span><b>+5</b></div>
+      <div><span>Prijs van 90 dagen of ouder controleren</span><b>+15</b></div>
+      <div><span>Foto van de prijslijst</span><b>+5</b></div>
+      <div><span>Binnen ${INCHECK_M} m van de kroeg</span><b>×1,5</b></div>
+      <div><span>Je melding wordt weerlegd</span><b>−20</b></div>
+    </div>
+    <p class="small muted">Punten voor een melding krijg je pas als andere spelers hem bevestigen. Meestal zijn dat er twee; bij een melder met een betrouwbaarheid boven 90% is een genoeg. Wijkt een prijs meer dan 40% af van de stad, dan zijn er altijd twee nodig. Twee keer "klopt niet" en de melding is weerlegd.</p>
+    <h3>Zonder e-mailadres</h3>
+    <p class="small muted">Je kunt meteen beginnen en prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas als je een e-mailadres koppelt. Je punten blijven dan bewaard.</p>
+    <h3>Geen punten</h3>
+    <p class="small muted">Extra bier, openingstijden, een gesloten, verplaatste of dubbele kroeg melden en inchecken leveren geen punten op. We belonen bijdragen, nooit drinken.</p>`;
+}
+
+// Meldingen over kroegen die niet kloppen, voor de beheerder: verkeerde plek, dubbel en gesloten
+async function laadBeheerMeldingen() {
+  const { data, error } = await sb.from("kroeg_meldingen").select("id,kroeg_id,soort,status,toelichting,op")
+    .in("soort", ["verkeerde_plek", "dubbel", "gesloten"]).neq("status", "weerlegd").order("op", { ascending: false }).limit(30);
+  const el = $("#beheerMeldingen");
+  if (!el) return;
+  if (error) { el.textContent = "Meldingen laden lukte niet."; return; }
+  if (!data.length) { el.textContent = "Geen meldingen over kroegen."; return; }
+  el.innerHTML = `<ul class="list">${data.map((m) => {
+    const k = state.kroegen.find((x) => x.id === m.kroeg_id);
+    return `<li><button class="row" ${k ? `data-kroeg="${k.id}"` : "disabled"}><span class="row-main">
+      <span class="row-title">${esc(k?.naam ?? `Kroeg ${m.kroeg_id} (niet meer op de kaart)`)}</span>
+      <span class="row-sub">${esc(KROEGMELDING[m.soort].knop)} · ${m.status === "bevestigd" ? "bevestigd" : "wacht"} · ${wanneer(m.op)}${m.toelichting ? ` · "${esc(m.toelichting)}"` : ""}</span></span></button></li>`;
+  }).join("")}</ul>`;
+}
+
+// Account verwijderen via de Edge Function account-verwijderen. Prijzen en meldingen blijven, zonder naam.
+async function verwijderAccount(knop) {
+  if (!(await vraag("Je account verwijderen? Je naam, punten en check-ins zijn dan weg. Prijzen die je hebt gemeld blijven staan, zonder naam. Dit kun je niet terugdraaien.", "Verwijderen"))) return;
+  knop.disabled = true;
+  const { error } = await sb.functions.invoke("account-verwijderen", { method: "POST" });
+  if (error) { knop.disabled = false; return toast(await leesFout(error)); }
+  onthouden.schrijf({});
+  await sb.auth.signOut({ scope: "local" });
+  toast("Je account is verwijderd");
+}
+
+// Uitleg bij het eerste bezoek. Onthouden of je hem al zag, mag mislukken (privévenster).
+const INTRO = "bierkoers-uitleg-v1";
+function toonUitleg() {
+  $("#intro").hidden = false;
+  $("#introOk").focus();
+}
+$("#introOk").addEventListener("click", () => {
+  $("#intro").hidden = true;
+  try { localStorage.setItem(INTRO, "gezien"); } catch { /* geen opslag */ }
+});
+$("#lightboxSluit").addEventListener("click", () => { $("#lightbox").hidden = true; $("#lightboxImg").removeAttribute("src"); });
+addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("#lightbox").hidden) $("#lightboxSluit").click();
+  else if (!$("#intro").hidden) $("#introOk").click();
+});
 
 // Mijn kroegen: persoonlijk overzicht van waar je hebt ingecheckt, los van het gezamenlijke spel.
 function mijnKroegenHtml() {
@@ -1550,7 +1924,7 @@ function locatie(timeout = 8000) {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null);
     navigator.geolocation.getCurrentPosition(
-      (p) => { state.pos = [p.coords.longitude, p.coords.latitude]; resolve(state.pos); },
+      (p) => { state.pos = [p.coords.longitude, p.coords.latitude]; map.getSource("ik")?.setData(ikGeojson()); mist.bij(); resolve(state.pos); },
       () => resolve(null),
       { enableHighAccuracy: true, timeout, maximumAge: 30000 });
   });
@@ -1573,6 +1947,8 @@ function sluitKroeg() {
 }
 
 function setTab(t) {
+  if (t !== "ik") state.terugNaar = null;
+  state.pagina = null;
   state.tab = t; state.selected = null; state.form = null; state.aanbodForm = null; state.tijdenForm = null; state.info = null; state.tocht = null;
   document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === t)));
   kaartBijwerken(); draw(); body.scrollTop = 0;
@@ -1586,34 +1962,40 @@ async function verstuurPrijs(form) {
   const fd = new FormData(form);
   const merk = fd.get("merk") === "_anders" ? String(fd.get("merkAnders") ?? "").trim() : String(fd.get("merk"));
   const prijs = Math.round(parseFloat(String(fd.get("prijs")).replace(",", ".")) * 100);
+  const cl = gekozenCl();
   if (!merk || merk.length < 2) return toast("Vul een merk in");
+  if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl");
   if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in");
   const knop = $("#verstuur"); knop.disabled = true; knop.textContent = "Bezig…";
   try {
     let pos = null;
     if (fd.get("locatie")) pos = await locatie();
     let foto_pad = null;
-    const file = fd.get("foto");
-    if (file && file.size) {
-      if (file.size > 5 * 1024 * 1024) throw new Error("Foto is groter dan 5 MB");
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const ruw = fd.get("foto");
+    if (ruw && ruw.size) {
+      knop.textContent = "Foto verkleinen…";
+      const file = await verkleinFoto(ruw);
+      knop.textContent = "Bezig…";
+      if (file.size > 5 * 1024 * 1024) throw new Error("De foto is groter dan 5 MB. Kies een kleinere.");
+      const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
       foto_pad = `${state.sessie.user.id}/${k.id}-${Date.now()}.${ext}`;
       const { error } = await sb.storage.from("prijslijsten").upload(foto_pad, file, { contentType: file.type, upsert: false });
       if (error) throw error;
     }
     const { data, error } = await sb.rpc("meld_prijs", {
-      p_kroeg_id: k.id, p_merk: merk, p_volume_cl: state.form.cl, p_prijs_cent: prijs,
+      p_kroeg_id: k.id, p_merk: merk, p_volume_cl: cl, p_prijs_cent: prijs,
       p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null, p_foto_pad: foto_pad,
     });
     if (error) throw error;
     state.form = null;
     if (data.status === "bevestigd") toast(k.versheid === "locked" ? `${k.naam} vrijgespeeld!` : "Prijs bijgewerkt", data.soort === "eerst" ? 50 : 30);
-    else if (data.soort === "eerst") toast(`${k.naam} vrijgespeeld! Wacht op bevestiging`);
-    else toast("Gemeld, wacht op bevestiging");
+    else if (data.soort === "eerst") toast(`${k.naam} vrijgespeeld! Punten volgen na bevestiging`);
+    else toast("Gemeld. Punten volgen na bevestiging");
     await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
+    if (data.soort === "eerst") vierVrij(k);
     draw();
   } catch (e) {
-    toast(e.message || "Versturen mislukt");
+    toast(await leesFout(e));
     knop.disabled = false; knop.textContent = "Versturen";
   }
 }
@@ -1629,17 +2011,27 @@ async function menukaartKlopt(id, knop) {
     p_kroeg_id: id, p_merk: k.open_merk, p_volume_cl: k.open_volume_cl, p_prijs_cent: k.open_prijs_cent,
     p_lat: pos[1], p_lon: pos[0], p_foto_pad: null,
   });
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   toast("Je bent de indiener; nu nog een bevestiging van een andere speler");
   await Promise.all([laadKroegen(), laadStad()]);
+  vierVrij(k);
   draw();
+}
+
+// Locatie alleen als de speler die al heeft toegestaan: "Klopt nog" mag geen toestemmingsvenster openen
+async function locatieAlsToegestaan() {
+  try {
+    const p = await navigator.permissions?.query({ name: "geolocation" });
+    if (p?.state === "granted") return await locatie(4000);
+  } catch { /* oude browser: geen vraag stellen */ }
+  return state.pos;
 }
 
 async function kloptNog(id) {
   const k = state.kroegen.find((x) => x.id === id);
-  const pos = await locatie(4000);
+  const pos = await locatieAlsToegestaan();
   const { error } = await sb.rpc("klopt_nog", { p_kroeg_id: id, p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null });
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   toast("Bedankt voor het controleren", dagen(k.laatst_gecontroleerd) >= 90 ? 15 : 5);
   vernieuw();
 }
@@ -1651,16 +2043,16 @@ async function inchecken(id, knop) {
   if (!pos) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return toast("Zet je locatie aan om in te checken"); }
   const nieuw = !state.mijn.has(id);
   const { error } = await sb.rpc("inchecken", { p_kroeg_id: id, p_lat: pos[1], p_lon: pos[0] });
-  if (error) { toast(error.message); await laadMijn(); return draw(); }
+  if (error) { toast(await leesFout(error)); await laadMijn(); return draw(); }
   toast(nieuw ? `Ingecheckt! ${k.naam} staat nu op jouw kaart` : `Ingecheckt bij ${k.naam}`);
   await laadMijn();
   draw();
 }
 
 async function wisMijn() {
-  if (!confirm("Al je check-ins wissen? Je eigen kaart begint dan weer leeg. Je punten en meldingen blijven.")) return;
+  if (!(await vraag("Al je check-ins wissen? Je eigen kaart begint dan weer leeg. Je punten en meldingen blijven.", "Wissen"))) return;
   const { error } = await sb.from("incheckingen").delete().eq("gebruiker_id", state.sessie.user.id);
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   toast("Je check-ins zijn gewist");
   await laadMijn();
   draw();
@@ -1675,8 +2067,9 @@ function toonTochtOpKaart() {
 }
 
 async function beoordeel(g, oordeel) {
+  if (oordeel === "klopt_niet" && !(await vraag("Klopt deze prijs niet? Wordt de melding weerlegd, dan verliest de melder 20 punten. Weet je de juiste prijs, meld die dan daarna.", "Klopt niet"))) return;
   const { data, error } = await sb.rpc("beoordeel", { p_gebeurtenis: g, p_oordeel: oordeel });
-  if (error) return toast(error.message);
+  if (error) return toast(await leesFout(error));
   toast(data === "bevestigd" ? "Bevestigd, de prijs staat erop" : data === "weerlegd" ? "Weerlegd" : "Oordeel opgeslagen", data === "wacht" ? null : 5);
   vernieuw();
 }
@@ -1689,21 +2082,32 @@ body.addEventListener("click", (e) => {
   if (t.dataset.back !== undefined) return sluitKroeg();
   if (t.dataset.cancel !== undefined) { state.form = null; state.aanbodForm = null; state.tijdenForm = null; return draw(); }
   if (t.dataset.tijdenform !== undefined) { state.tijdenForm = {}; return draw(); }
-  if (t.dataset.sluiting !== undefined) return meldGesloten();
+  if (t.dataset.doeMee !== undefined) { state.terugNaar = state.selected; return setTab("ik"); }
   if (t.dataset.oordeelMelding) return beoordeelMelding(Number(t.dataset.melding), t.dataset.oordeelMelding);
   if (t.dataset.aanbodform !== undefined) { state.aanbodForm = { soort: state.soort || "guinness" }; return draw(); }
   if (t.dataset.oordeelAanbod) return beoordeelAanbod(Number(t.dataset.aanbod), t.dataset.oordeelAanbod);
-  if (t.dataset.filter) { state.filter = t.dataset.filter; return draw(); }
+  if (t.dataset.filter) { state.filter = t.dataset.filter; state.limiet = 40; return draw(); }
+  if (t.dataset.inBeeld !== undefined) { state.inBeeld = !state.inBeeld; state.limiet = 40; return draw(); }
+  if (t.dataset.wisWijk !== undefined) { state.wijk = null; state.limiet = 40; return draw(); }
+  if (t.dataset.wijk) return kiesWijk(t.dataset.wijk);
+  if (t.dataset.meer !== undefined) { state.limiet += 40; return draw(); }
+  if (t.dataset.locatieLijst !== undefined) return locatie().then((pos) => { if (!pos) toast("Locatie niet beschikbaar. Sta hem toe in de instellingen van je browser."); draw(); });
   if (t.dataset.periode) { state.periode = t.dataset.periode; return rangView(); }
   if (t.dataset.form) {
     const k = state.kroegen.find((x) => x.id === state.selected);
-    state.form = { merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl: k?.huidig_volume_cl ?? k?.open_volume_cl ?? 25, prijs: "", locatie: true };
+    const cl = k?.huidig_volume_cl ?? k?.open_volume_cl ?? VAASJE;
+    // Locatie staat standaard uit: je deelt hem alleen als je echt in de kroeg bent
+    state.form = { merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl, clAnders: !GLAZEN.some((g) => g.cl === cl), prijs: "", locatie: false };
     return draw();
   }
   if (t.dataset.cl && state.form) {
-    state.form.cl = Number(t.dataset.cl);
-    document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
-    return;
+    state.form.clAnders = t.dataset.cl === "anders";
+    if (!state.form.clAnders) state.form.cl = Number(t.dataset.cl);
+    t.closest(".seg").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
+    const veld = body.querySelector("[name=clAnders]");
+    veld.hidden = !state.form.clAnders;
+    if (state.form.clAnders) veld.focus();
+    return prijsVoorbeeld();
   }
   if (t.dataset.klopt) return kloptNog(Number(t.dataset.klopt));
   if (t.dataset.menuklopt) return menukaartKlopt(Number(t.dataset.menuklopt), t);
@@ -1720,13 +2124,19 @@ body.addEventListener("click", (e) => {
   }
   if (t.dataset.oordeel) return beoordeel(Number(t.dataset.g), t.dataset.oordeel);
   if (t.dataset.logout !== undefined) {
-    if (anoniem() && !confirm("Je speelt zonder e-mailadres. Als je uitlogt, ben je deze speler en je punten kwijt. Toch uitloggen?")) return;
-    return sb.auth.signOut();
+    if (!anoniem()) return sb.auth.signOut();
+    return vraag("Je speelt zonder e-mailadres. Als je uitlogt, ben je deze speler en je punten kwijt. Toch uitloggen?", "Uitloggen")
+      .then((ja) => ja && sb.auth.signOut());
   }
+  if (t.dataset.verwijder !== undefined) return verwijderAccount(t);
   if (t.dataset.nieuwecode !== undefined) return stuurCode(state.inlog.email, state.inlog.soort, t, state.inlog.naam);
   if (t.dataset.aanbieder) return inloggenMet(t.dataset.aanbieder, t);
   if (t.dataset.anderadres !== undefined) { state.inlog = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
+  if (t.dataset.foto) return openFoto(t.dataset.foto);
+  if (t.dataset.uitleg !== undefined) return toonUitleg();
+  if (t.dataset.regels !== undefined) { state.pagina = "regels"; draw(); body.scrollTop = 0; return; }
+  if (t.dataset.sluitPagina !== undefined) { state.pagina = null; return draw(); }
 });
 
 // Wie iets gaat invullen, krijgt het hele blad te zien
@@ -1738,6 +2148,13 @@ body.addEventListener("focusin", (e) => {
 });
 
 body.addEventListener("change", (e) => {
+  if (e.target.name === "foto" && e.target.closest("#prijsForm")) {
+    const img = $("#fotoVoorbeeld"), file = e.target.files?.[0];
+    if (img.src) URL.revokeObjectURL(img.src);
+    img.hidden = !file;
+    if (file) img.src = URL.createObjectURL(file);
+    return;
+  }
   if (e.target.matches("[data-soort]")) {
     state.soort = e.target.value;
     if (state.soort && state.filter !== "goedkoop") state.filter = "alles";
@@ -1749,11 +2166,13 @@ body.addEventListener("change", (e) => {
 body.addEventListener("input", (e) => {
   if (e.target.matches("[data-zoek]")) {
     state.zoek = e.target.value;
+    state.limiet = 40;
     const pos = e.target.selectionStart;
     draw();
     const inp = body.querySelector("[data-zoek]");
     inp.focus(); inp.setSelectionRange(pos, pos);
   }
+  if ((e.target.name === "prijs" || e.target.name === "clAnders") && e.target.closest("#prijsForm")) prijsVoorbeeld();
   if (e.target.name === "merk" && e.target.closest("#prijsForm")) {
     const anders = body.querySelector("[name=merkAnders]");
     anders.style.display = e.target.value === "_anders" ? "" : "none";
@@ -1766,6 +2185,7 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "prijsForm") return verstuurPrijs(f);
   if (f.id === "aanbodForm") return verstuurAanbod(f);
   if (f.id === "tijdenForm") return verstuurTijden(f);
+  if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
   if (f.id === "startForm") {
     const naam = String(new FormData(f).get("naam")).trim();
     onthouden.schrijf({ ...onthouden.lees(), naam });
@@ -1801,7 +2221,7 @@ body.addEventListener("submit", async (e) => {
   }
   if (f.id === "naamForm") {
     const naam = String(new FormData(f).get("naam")).trim();
-    if (!confirm(`Wil je "${naam}" als spelersnaam? Je kunt hem daarna niet meer wijzigen.`)) return;
+    if (!(await vraag(`Wil je "${naam}" als spelersnaam? Je kunt hem daarna niet meer wijzigen.`, "Naam vastzetten", { gevaar: false }))) return;
     const { error } = await sb.from("profielen").update({ naam }).eq("id", state.sessie.user.id);
     if (error) return toast(error.code === "23505" ? "Die naam is al bezet" : error.code === "P0001" ? "Je spelersnaam staat al vast" : "Opslaan lukte niet");
     toast("Naam opgeslagen");
@@ -1872,7 +2292,9 @@ sb.channel("stad")
   .on("postgres_changes", { event: "INSERT", schema: "public", table: "gebeurtenissen" }, (p) => {
     if (p.new.door_id !== state.sessie?.user?.id) {
       const k = state.kroegen.find((x) => x.id === p.new.kroeg_id);
-      if (k) toast(p.new.soort === "check" ? `${k.naam} is net gecontroleerd` : `Nieuwe prijs bij ${k.naam}`);
+      if (k) toast(p.new.soort === "check" ? `${k.naam} is net gecontroleerd` : p.new.soort === "eerst" ? `${k.naam} is net vrijgespeeld` : `Nieuwe prijs bij ${k.naam}`);
+      // Een ander speelt een kroeg vrij: ook bij jou trekt de mist daar weg
+      if (k && p.new.soort === "eerst") vierVrij(k);
     }
     vernieuw();
   })
@@ -1895,6 +2317,13 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.
   setTimeout(async () => {
     await Promise.all([laadProfiel(), laadMijn()]);
+    // Kwam de speler via "Doe mee" bij een kroeg? Dan terug naar die kroeg.
+    if (sessie && gebeurtenis === "SIGNED_IN" && state.terugNaar != null) {
+      const id = state.terugNaar;
+      state.terugNaar = null;
+      setTab("kaart");
+      return openKroeg(id);
+    }
     if (!bezigMetTypen()) draw();
   }, 0);
 });
@@ -1919,5 +2348,6 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   koersen(); lichtkrant(); hud(); kaartBijwerken();
   draw();
   setDetent("half");
+  try { if (!localStorage.getItem(INTRO) && !urlFout) toonUitleg(); } catch { /* geen opslag: geen uitleg forceren */ }
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

@@ -15,6 +15,8 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Google-kroegen | `migrations/20261106170000_google_kroegen.sql`, `migrations/20261106180000_google_koppeling.sql` | Place ID, categorieën en openingstijden uit Google op `kroegen`, en `importeer_google_kroegen`: koppelt Google-plaatsen aan OSM-kroegen (gelijkende naam, beste eerst) of voegt ze toe. Geen beoordelingen, telefoon of website. Aangeroepen door [`tools/google-kroegen`](../tools/google-kroegen/README.md). |
 | Menukaartprijzen | `migrations/20261106200000_menukaartprijzen.sql` | Prijzen van menukaarten (met datum) als eerste stuk geschiedenis, zonder melder. Kolom `bron` op `gebeurtenissen`, import `importeer_menuprijzen` (alleen `service_role`) |
 | Openingstijden en sluiten | `migrations/20261106190000_kroeg_meldingen.sql` | Spelers passen openingstijden aan of melden een kroeg als definitief gesloten; geen punten. Overzicht `kroeg_info` |
+| Klopt deze kroeg niet? | `migrations/20261107120000_kroeg_klopt_niet.sql` | Ook verkeerde plek en dubbel melden, met een korte toelichting. Een bevestigde dubbele kroeg verdwijnt van de kaart; een verkeerde plek verplaatst een beheerder |
+| Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account. Meldingen en prijzen blijven staan zonder naam |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
 | Tests | `tests/database.test.mjs` | Alle migraties en spelregels in een Postgres in het geheugen (PGlite met PostGIS). Draai `npm install` en daarna `npm run test:db`. |
@@ -47,7 +49,7 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 - `klopt_nog(kroeg, lat, lon)`: de huidige prijs controleren, hoogstens een keer per kroeg per 7 dagen.
 - `meld_aanbod(kroeg, soort, merk, volume_cl, prijs_cent)`: extra bier toevoegen of een nieuwe prijs ervan melden. Merk, glas en prijs zijn optioneel; bij een prijs hoort een glas. Geen punten.
 - `beoordeel_aanbod(aanbod, 'klopt' | 'klopt_niet')`: extra bier van een ander bevestigen (zet de datum van controle) of afkeuren; twee keer "klopt niet" en het verdwijnt. Je eigen extra trek je in met "klopt niet". Alleen met e-mailadres, behalve intrekken.
-- `meld_kroeg(kroeg, 'openingstijden' | 'gesloten', openingstijden)`: andere openingstijden of een definitieve sluiting melden. Openingstijden zijn per dag een lijst als `["16:00-02:00"]`; een lege lijst is gesloten. Ook zonder e-mailadres. Geen punten.
+- `meld_kroeg(kroeg, 'openingstijden' | 'gesloten' | 'verkeerde_plek' | 'dubbel', openingstijden, toelichting)`: andere openingstijden, een definitieve sluiting, een verkeerde plek op de kaart of een dubbele kroeg melden. Openingstijden zijn per dag een lijst als `["16:00-02:00"]`; een lege lijst is gesloten. De toelichting (hoogstens 280 tekens) hoort niet bij openingstijden. Ook zonder e-mailadres. Geen punten. Een gesloten of dubbele kroeg verdwijnt na "klopt" van een andere speler met e-mailadres van de kaart.
 - `beoordeel_kroegmelding(melding, 'klopt' | 'klopt_niet')`: zo'n melding van een ander bevestigen of afkeuren. Alleen met e-mailadres; je eigen melding trek je in met "klopt niet".
 - `inchecken(kroeg, lat, lon)`: inchecken in een kroeg, alleen binnen 75 m en hoogstens een keer per kroeg per dag. Een melding of "klopt nog" ter plaatse is automatisch ook een check-in (trigger op `gebeurtenissen`).
 
@@ -63,12 +65,13 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 | Menukaartprijs | Een prijs van een menukaart staat in de geschiedenis en op de kaart (met ?), met de datum van de kaart en zonder melder. De kroeg blijft onder de mist en niemand krijgt er punten voor. Dezelfde prijs melden ("Klopt, ik ben er") kan alleen ter plaatse (binnen 75 m): de speler wordt indiener en ontdekker, daarna gelden de gewone regels (bevestiging door anderen, dan de vrijspeelpunten). Een andere prijs melden kan overal; de menukaartprijs is dan achterhaald. Over een menukaartprijs zelf kun je niet oordelen. Alleen kroegen zonder bevestigde prijs krijgen een menukaartprijs. |
 | Openingstijden | Komen uit Google. Tijden van een speler gelden meteen en Google overschrijft ze daarna niet meer. Een andere speler kan "klopt" zeggen; twee keer "klopt niet" (of intrekken) en de vorige tijden komen terug. |
 | Definitief gesloten | Pas na "klopt" van een andere speler met e-mailadres verdwijnt de kroeg van de kaart. Twee keer "klopt niet" en de melding is weerlegd. De OSM- en Google-import openen zo'n kroeg niet opnieuw (`gesloten_door_spelers`). |
+| Verkeerde plek en dubbel | Ook zonder e-mailadres te melden, met een korte toelichting. Een verkeerde plek blijft staan tot een beheerder hem verplaatst. Een dubbele kroeg verdwijnt na "klopt" van een andere speler met e-mailadres van de kaart; de imports zetten hem niet terug. |
 | Stamgast | Per kroeg de speler met de meeste bevestigde bijdragen (eigen meldingen plus "klopt" op meldingen die bevestigd zijn), vanaf 2. Bij gelijkspel wie de stand het eerst bereikte. Geen punten, alleen de naam bovenaan de geschiedenis. |
 | Inchecken | Binnen 75 m, een keer per kroeg per dag. Geen punten (we belonen nooit kroegbezoek). Alleen zichtbaar voor de speler zelf; wissen kan altijd. |
 
 ## Installeren op het Supabase-project
 
-Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261105220601`, 5 november 2026; `20261106090000` tot en met `20261106190000`, 6 november 2026; de Google-kroegen van Nijmegen zijn geïmporteerd), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). De migraties `20261106210000_inchecken` en `20261106220000_betrouwbaarheid_verwachting` staan er ook in (6 november 2026). Voor een nieuw project:
+Stap 1 en 2 zijn al gedaan op project `yzaootlrhxzyxtvacrot`: het schema staat erin (migratie `20261105180124`, 5 november 2026; `20261105220601`, 5 november 2026; `20261106090000` tot en met `20261106190000`, 6 november 2026; de Google-kroegen van Nijmegen zijn geïmporteerd), de Edge Function `osm-import` draait en de Security Advisor is schoon op een waarschuwing over gelekte wachtwoorden na (BPDB gebruikt geen wachtwoorden). De migraties `20261106210000_inchecken` en `20261106220000_betrouwbaarheid_verwachting` staan er ook in (6 november 2026). Op 7 november 2026 kwamen `20261107120000_kroeg_klopt_niet` en de Edge Function `account-verwijderen` erbij. Voor een nieuw project:
 
 **1. Schema toepassen.** Vanuit de hoofdmap van de repo:
 
@@ -86,6 +89,7 @@ Of plak de migratie in de SQL Editor van het dashboard.
 
 ```bash
 supabase functions deploy osm-import
+supabase functions deploy account-verwijderen
 ```
 
 **3. Inloggen instellen.** Nieuwe spelers beginnen anoniem, zonder e-mailadres. Wie zijn punten wil bewaren of prijzen van anderen wil bevestigen, koppelt later een e-mailadres. Bestaande spelers loggen in met een code van 6 cijfers die ze per mail krijgen en in de app typen. Een link gebruiken we niet meer: die werkt maar een keer, gaat stuk als een virusscanner van het mailprogramma hem eerst opent, en opent op een iPhone in Safari in plaats van in de app op het beginscherm. In het dashboard, onder Authentication:

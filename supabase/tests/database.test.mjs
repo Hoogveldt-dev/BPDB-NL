@@ -667,6 +667,22 @@ check('de Google-import ook niet', (await een(`select open from public.kroegen w
 check('spelers kunnen niet direct in meldingen schrijven', !!(await als(A, `insert into public.kroeg_meldingen (kroeg_id, soort) values (${KM}, 'gesloten')`)).fout);
 check('anoniem zonder login kan niets melden', !!(await als(null, `select * from public.meld_kroeg(${KM}, 'gesloten')`)).fout);
 
+// Klopt deze kroeg niet? Verkeerde plek en dubbel
+const mP = (await als(Y, `select * from public.meld_kroeg(${KM}, 'verkeerde_plek', null, '  zit aan de overkant  ')`)).rows?.[0];
+check('ook een anonieme speler kan een verkeerde plek melden, met toelichting', mP?.status === 'wacht' && mP?.toelichting === 'zit aan de overkant', JSON.stringify(mP));
+check('de toelichting staat in het overzicht', (await info(KM)).open_meldingen?.some((m) => m.soort === 'verkeerde_plek' && m.toelichting === 'zit aan de overkant'));
+check('bij openingstijden hoort geen toelichting', !!(await als(B, `select * from public.meld_kroeg(${KM}, 'openingstijden', $1, 'hallo')`, [JSON.stringify(WEEK(['11:00-23:00']))])).fout);
+check('een toelichting van meer dan 280 tekens kan niet', !!(await als(B, `select * from public.meld_kroeg(${KM}, 'dubbel', null, $1)`, ['x'.repeat(281)])).fout);
+check('klopt op een verkeerde plek laat de kroeg op de kaart', (await als(A, `select public.beoordeel_kroegmelding(${mP.id}, 'klopt') s`)).rows?.[0]?.s === 'bevestigd'
+  && (await een(`select open from public.kroegen where id = ${KM}`)).open === true);
+const mD = (await als(Y, `select * from public.meld_kroeg(${KM}, 'dubbel', null, 'zelfde als Samson')`)).rows?.[0];
+check('een dubbele kroeg melden kan, ook zonder e-mailadres', mD?.status === 'wacht', JSON.stringify(mD));
+check('een dubbele kroeg blijft staan tot een ander het bevestigt', (await een(`select open from public.kroegen where id = ${KM}`)).open === true);
+check('anoniem mag niet oordelen over een dubbele kroeg', !!(await als(Y, `select public.beoordeel_kroegmelding(${mD.id}, 'klopt')`)).fout);
+check('klopt van een ander: de dubbele kroeg verdwijnt van de kaart', (await als(B, `select public.beoordeel_kroegmelding(${mD.id}, 'klopt') s`)).rows?.[0]?.s === 'bevestigd'
+  && (await een(`select open, gesloten_door_spelers from public.kroegen where id = ${KM}`)).gesloten_door_spelers === true);
+check('anoniem zonder login kan geen dubbele kroeg melden', !!(await als(null, `select * from public.meld_kroeg(${KM2}, 'dubbel')`)).fout);
+
 // ---------------------------------------------------------------------------
 // Prijzen van menukaarten (eerste stuk geschiedenis, zonder melder)
 // ---------------------------------------------------------------------------
