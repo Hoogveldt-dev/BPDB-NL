@@ -11,6 +11,16 @@ export const STANDAARD_MODEL = {
   sleutel: process.env.DEEPSEEK_API_KEY || "proxy-injected",
 };
 
+// Lokale modellen op je eigen computer, via Ollama of LM Studio (beide spreken het OpenAI-formaat).
+// Geen sleutel en geen limiet. Zie docs/lokale-vision.md.
+//   lezer   Qwen2.5-VL 7B Instruct: leest kleine tekst en cijfers op kaarten het best.
+//   kijker  Llama 3.2 11B Vision Instruct: ziet goed wat er op een foto staat; tweede mening.
+const LOKAAL_URL = process.env.LOKAAL_URL || "http://localhost:11434/v1";
+export const LOKAAL = {
+  lezer: { url: LOKAAL_URL, model: process.env.LOKAAL_LEZER || "qwen2.5vl:7b", sleutel: "lokaal", lokaal: true },
+  kijker: { url: LOKAAL_URL, model: process.env.LOKAAL_KIJKER || "llama3.2-vision:11b", sleutel: "lokaal", lokaal: true },
+};
+
 const HERKEN = `Je ziet genummerde foto's van een café (nummer 1 is de eerste afbeelding).
 Welke foto's tonen een drankkaart, menukaart of prijsbord waarop prijzen van bier leesbaar kunnen zijn?
 Niet: eten, interieur, mensen, glazen zonder kaart, een QR-code zonder prijzen.
@@ -53,10 +63,12 @@ async function vraag(afbeeldingen, tekst, { model = STANDAARD_MODEL, maxTokens =
     body: JSON.stringify({
       model: model.model,
       max_tokens: maxTokens,
-      ...(denken ? { reasoning_effort: "low" } : { thinking: { type: "disabled" } }),
+      // Lokale modellen kennen geen instelling voor nadenken; daar vragen we om een vast antwoord (temperatuur 0)
+      ...(model.lokaal ? { temperature: 0 } : denken ? { reasoning_effort: "low" } : { thinking: { type: "disabled" } }),
       messages: [{ role: "user", content }],
     }),
-    signal: AbortSignal.timeout(180000),
+    // Een lokaal model op een gewone videokaart kan per foto een halve minuut of meer nodig hebben
+    signal: AbortSignal.timeout(model.lokaal ? 600000 : 180000),
   });
   const body = await res.text();
   if (!res.ok) throw new Error(`Model gaf HTTP ${res.status}: ${body.slice(0, 300)}`);
@@ -100,4 +112,29 @@ export async function leesKaart(foto, opties) {
   const antwoord = await vraag([foto], LEES, opties);
   if (!antwoord || antwoord.leesbaar === false) return { bieren: [], datumOpKaart: null };
   return { bieren: Array.isArray(antwoord.bieren) ? antwoord.bieren : [], datumOpKaart: antwoord.datum_op_kaart || null };
+}
+
+const LOS = `Is op deze foto van een café een drankkaart, menukaart, prijslijst of krijtbord met prijzen te zien, ook als die klein in beeld is?
+Niet: alleen eten, glazen, flessen, mensen of een QR-code. Antwoord alleen met JSON: {"kaart": true/false}`;
+
+/** Schiften per foto in plaats van op een contactblad. Lokaal kost een foto niets, en kleine modellen
+ * lezen de nummers op een contactblad niet goed. Geeft de indexen van de foto's met een kaart. */
+export async function herkenLos(miniaturen, opties) {
+  const treffers = [];
+  for (const [i, m] of miniaturen.entries()) {
+    const antwoord = await vraag([m], LOS, { ...opties, denken: false, maxTokens: 50 });
+    if (antwoord?.kaart === true) treffers.push(i);
+  }
+  return treffers;
+}
+
+const BEVESTIG = (v) => `Dit is een kaart van een Nederlands café. Staat hierop pils van de tap (zoals ${v.merk}) in 25 cl (een vaasje) voor € ${(v.prijs_cent / 100).toFixed(2).replace(".", ",")}?
+Kijk alleen naar wat er staat. Antwoord alleen met JSON: {"klopt": true/false, "prijs_op_kaart": getal of null}`;
+
+/** Tweede mening van een ander model over de gekozen vaasjesprijs. Zonder duidelijk "ja" geen prijs. */
+export async function bevestigVaasje(foto, vaasje, opties) {
+  const antwoord = await vraag([foto], BEVESTIG(vaasje), { ...opties, denken: false, maxTokens: 100 });
+  const gezien = Number(antwoord?.prijs_op_kaart);
+  const zelfdePrijs = !Number.isFinite(gezien) || gezien <= 0 || Math.round(gezien * 100) === vaasje.prijs_cent;
+  return { klopt: antwoord?.klopt === true && zelfdePrijs, prijsOpKaart: Number.isFinite(gezien) && gezien > 0 ? gezien : null };
 }

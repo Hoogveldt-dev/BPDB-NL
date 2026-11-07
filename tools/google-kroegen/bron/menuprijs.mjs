@@ -9,6 +9,8 @@
 //    (opname) van het origineel, anders de uploaddatum.
 // 5. kiesVaasje: goedkoopste pils van de tap, 25 cl.
 // 6. Zodra een groep een vaasjesprijs oplevert, stoppen we. Met volledig: true niet.
+// 7. Optioneel een tweede mening (bevestig): een ander model kijkt of de gekozen prijs echt op de
+//    kaart staat. Zegt het geen duidelijk ja, dan gaat de prijs naar twijfels en niet naar de uitkomst.
 //
 // Gemeten bij Cafe Van Buren en St Anneke (november 2026): schiften en controleren
 // kosten samen ongeveer 1.000 tokens in en 20 uit per foto die door de schifting
@@ -25,6 +27,7 @@ export async function zoekMenuprijs(fotos, {
   herken = herkenMenus,
   controleer = heeftBierprijzen,
   lees = leesKaart,
+  bevestig = null,
   sinds = null,
   groep = 20,
   maxKandidaten = 6,
@@ -40,6 +43,7 @@ export async function zoekMenuprijs(fotos, {
   let gelezen = 0;
   let gecontroleerd = 0;
   const uitkomsten = [];
+  const twijfels = [];
   for (let i = 0; i < kandidaatFotos.length && gelezen < maxKandidaten; i += groep) {
     const deel = kandidaatFotos.slice(i, i + groep);
     const miniaturen = await Promise.all(deel.map((f) => haalBeeld(miniatuur(f.url))));
@@ -58,12 +62,23 @@ export async function zoekMenuprijs(fotos, {
       const vaasje = kiesVaasje(bieren);
       const datum = opname || f.geupload;
       log(`    kaart ${f.id.slice(-8)}: ${bieren.length} bieren, ${vaasje ? `${vaasje.merk} ${(vaasje.prijs_cent / 100).toFixed(2)}` : "geen vaasje"}, ${opname ? `opname ${opname}` : `geupload ${f.geupload}`}`);
-      if (vaasje && datum) uitkomsten.push({ ...vaasje, datum, datumBron: opname ? "opname" : "upload", datumOpKaart, foto: f });
+      if (!vaasje || !datum) continue;
+      const uitkomst = { ...vaasje, datum, datumBron: opname ? "opname" : "upload", datumOpKaart, foto: f };
+      if (bevestig) {
+        const tweede = await bevestig(await haalBeeld(leesbaar(f.url)), vaasje, { log });
+        if (!tweede.klopt) {
+          log(`    tweede mening: klopt niet${tweede.prijsOpKaart ? ` (ziet ${tweede.prijsOpKaart})` : ""}; naar twijfels`);
+          twijfels.push({ ...uitkomst, tweedePrijs: tweede.prijsOpKaart });
+          continue;
+        }
+        log("    tweede mening: klopt");
+      }
+      uitkomsten.push(uitkomst);
     }
     if (uitkomsten.length && !volledig) break;
   }
   uitkomsten.sort((a, b) => b.datum.localeCompare(a.datum) || a.prijs_cent - b.prijs_cent);
-  return { prijs: uitkomsten[0] || null, bekeken, kaarten, gecontroleerd, gelezen, uitkomsten };
+  return { prijs: uitkomsten[0] || null, bekeken, kaarten, gecontroleerd, gelezen, uitkomsten, twijfels };
 }
 
 /** Een rij voor importeer_menuprijzen. */

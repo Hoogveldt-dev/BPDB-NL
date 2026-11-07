@@ -1,6 +1,6 @@
 # Menukaartprijzen: de JAN-methode en de DAEN-methode
 
-Menukaartprijzen vullen de prijsgeschiedenis voordat een speler een kroeg bezoekt. Ze verschijnen met het mist-effect tot een speler ter plaatse "Klopt, ik ben er" zegt; die speler wordt indiener, en daarna gelden de gewone regels (bevestiging door een andere speler). Invoer gaat altijd via `importeer_menuprijzen` (alleen `service_role`), met kroeg, merk, volume, prijs, datum en een omschrijving van de bron.
+Menukaartprijzen vullen de prijsgeschiedenis voordat een speler een kroeg bezoekt. Ze tellen mee in de koers en de Pilsindex, maar zijn geen melding: ze staan niet in "Laatste meldingen" en niet in de activiteit van de lichtkrant. Ze verschijnen met het mist-effect tot een speler ter plaatse "Klopt, ik ben er" zegt; die speler wordt indiener, en daarna gelden de gewone regels (bevestiging door een andere speler). Invoer gaat altijd via `importeer_menuprijzen` (alleen `service_role`), met kroeg, merk, volume, prijs, datum en een omschrijving van de bron.
 
 Het spel gebruikt alleen de goedkoopste pils van de tap in een vaasje (25 cl). Andere maten en bieren laten we voor nu liggen.
 
@@ -27,7 +27,7 @@ Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufot
 6. **Stoppen.** Levert een groep een vaasjesprijs op, dan kijken we niet verder naar oudere foto's.
 7. **Nieuwste kaart wint.** Per kroeg de prijs met de nieuwste datum, als rij voor `importeer_menuprijzen`.
 
-Model: standaard DeepSeek (`deepseek-flash`, leest afbeeldingen), via `DEEPSEEK_API_KEY`. Elk ander model in het OpenAI-formaat kan via `MENU_MODEL_URL` en `MENU_MODEL`.
+Model: standaard DeepSeek (`deepseek-flash`, leest afbeeldingen), via `DEEPSEEK_API_KEY`. Elk ander model in het OpenAI-formaat kan via `MENU_MODEL_URL` en `MENU_MODEL`. Met `--lokaal` draaien Qwen2.5-VL en Llama 3.2 Vision op de eigen computer, zonder kosten of limiet, met een tweede mening per prijs: zie `docs/lokale-vision.md`.
 
 ### Wat het kost
 

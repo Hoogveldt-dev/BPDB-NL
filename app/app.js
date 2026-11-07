@@ -112,6 +112,142 @@ function openFoto(url) {
   $("#lightboxSluit").focus();
 }
 
+// ---------------------------------------------------------------------------
+// Teksten: een beheerder kan elke zichtbare tekst in de app herschrijven (tabel app_teksten, functie zet_tekst).
+// De sleutel is de standaardtekst met elk getal als #. Een MutationObserver vervangt elke tekst die
+// verschijnt; zo hoeft de code van de app niet te veranderen. Bij het invullen wordt # weer het getal.
+// ---------------------------------------------------------------------------
+
+const teksten = (() => {
+  const eigen = new Map(); // sleutel -> eigen tekst
+  const bron = new WeakMap(); // tekstnode of [element, attribuut] -> standaardtekst
+  const gezet = new WeakMap(); // wat wij er zelf in zetten, om eigen wijzigingen te herkennen
+  const NIET = "script, style, #tekstEditor, #tekstBalk, [data-geen-teksten]";
+  const sleutelVan = (t) => t.trim().replace(/\s+/g, " ").replace(/\d+/g, "#");
+  const telt = (t) => /\p{L}/u.test(t); // alleen teksten met letters; prijzen en getallen alleen niet
+  const vul = (sjabloon, origineel) => {
+    const getallen = origineel.match(/\d+/g) ?? [];
+    let i = 0;
+    return sjabloon.replace(/#/g, () => getallen[i++] ?? "#");
+  };
+  let bewerken = false, pauze = false;
+
+  function standaard(node) {
+    const nu = node.nodeValue;
+    if (gezet.get(node) === nu && bron.has(node)) return bron.get(node);
+    bron.set(node, nu);
+    return nu;
+  }
+  function tekstNode(node) {
+    if (!node.nodeValue || !node.nodeValue.trim() || node.parentElement?.closest(NIET)) return;
+    const orig = standaard(node);
+    if (!telt(orig)) return;
+    const eigenTekst = eigen.get(sleutelVan(orig));
+    const doel = eigenTekst == null ? orig : orig.match(/^\s*/)[0] + vul(eigenTekst, orig) + orig.match(/\s*$/)[0];
+    if (node.nodeValue !== doel) { gezet.set(node, doel); node.nodeValue = doel; }
+  }
+  function placeholder(el) {
+    if (el.closest(NIET)) return;
+    let orig = el.dataset.standaardPlaceholder;
+    if (orig == null || el.getAttribute("placeholder") !== el.dataset.gezetPlaceholder) {
+      orig = el.getAttribute("placeholder") ?? "";
+      el.dataset.standaardPlaceholder = orig;
+    }
+    const eigenTekst = eigen.get(sleutelVan(orig));
+    const doel = eigenTekst == null ? orig : vul(eigenTekst, orig);
+    el.dataset.gezetPlaceholder = doel;
+    if (el.getAttribute("placeholder") !== doel) el.setAttribute("placeholder", doel);
+  }
+  function loop(wortel) {
+    if (wortel.nodeType === Node.TEXT_NODE) return tekstNode(wortel);
+    if (wortel.nodeType !== Node.ELEMENT_NODE) return;
+    const w = document.createTreeWalker(wortel, NodeFilter.SHOW_TEXT);
+    while (w.nextNode()) tekstNode(w.currentNode);
+    if (wortel.matches?.("[placeholder]")) placeholder(wortel);
+    wortel.querySelectorAll?.("[placeholder]").forEach(placeholder);
+  }
+  new MutationObserver((lijst) => {
+    if (!eigen.size) return;
+    for (const m of lijst) {
+      if (m.type === "characterData") tekstNode(m.target);
+      else if (m.type === "attributes") placeholder(m.target);
+      else m.addedNodes.forEach(loop);
+    }
+  }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder"] });
+
+  async function laad() {
+    const { data, error } = await sb.from("app_teksten").select("sleutel,tekst");
+    if (error) return; // tabel nog niet live: standaardteksten
+    eigen.clear();
+    for (const r of data ?? []) eigen.set(r.sleutel, r.tekst);
+    loop(document.body);
+  }
+
+  // Bewerkstand: tik op een tekst en pas hem aan
+  let doel = null; // { sleutel, standaard }
+  function zetBewerken(aan) {
+    bewerken = aan; pauze = false;
+    document.documentElement.dataset.teksten = aan ? "bewerken" : "";
+    $("#tekstBalk").hidden = !aan;
+    $("#tekstPauze").setAttribute("aria-pressed", "false");
+    $("#tekstPauze").textContent = "Even bladeren";
+    $("#tekstUitleg").textContent = "Tik op een tekst om hem aan te passen";
+  }
+  // Even bladeren: tikken werkt weer gewoon, zodat je naar een ander scherm kunt
+  $("#tekstPauze").addEventListener("click", () => {
+    pauze = !pauze;
+    document.documentElement.dataset.teksten = pauze ? "pauze" : "bewerken";
+    $("#tekstPauze").setAttribute("aria-pressed", String(pauze));
+    $("#tekstPauze").textContent = pauze ? "Verder aanpassen" : "Even bladeren";
+    $("#tekstUitleg").textContent = pauze ? "Ga naar het scherm met de tekst" : "Tik op een tekst om hem aan te passen";
+  });
+  function nodeOnder(e) {
+    const r = document.caretRangeFromPoint?.(e.clientX, e.clientY);
+    const p = document.caretPositionFromPoint?.(e.clientX, e.clientY);
+    const n = r?.startContainer ?? p?.offsetNode;
+    if (n?.nodeType === Node.TEXT_NODE && n.nodeValue.trim()) return n;
+    const w = document.createTreeWalker(e.target, NodeFilter.SHOW_TEXT);
+    while (w.nextNode()) if (w.currentNode.nodeValue.trim()) return w.currentNode;
+    return null;
+  }
+  document.addEventListener("click", (e) => {
+    if (!bewerken || pauze || e.target.closest("#tekstBalk, #tekstEditor")) return;
+    e.preventDefault(); e.stopPropagation();
+    let orig = null;
+    if (e.target.matches("input[placeholder], textarea[placeholder]")) orig = e.target.dataset.standaardPlaceholder ?? e.target.getAttribute("placeholder");
+    else {
+      const n = nodeOnder(e);
+      if (n) orig = bron.get(n) ?? n.nodeValue;
+    }
+    if (!orig || !telt(orig)) return toast("Hier staat geen tekst om aan te passen");
+    doel = { sleutel: sleutelVan(orig), standaard: orig.trim() };
+    $("#tekstStandaard").textContent = doel.sleutel;
+    $("#tekstNieuw").value = eigen.get(doel.sleutel) ?? doel.sleutel;
+    $("#tekstEditor").hidden = false;
+    $("#tekstNieuw").focus();
+  }, true);
+  async function bewaar(tekst) {
+    const { error } = await sb.rpc("zet_tekst", { p_sleutel: doel.sleutel, p_tekst: tekst });
+    if (error) return toast(await leesFout(error));
+    const schoon = tekst.trim();
+    if (!schoon || schoon === doel.sleutel) eigen.delete(doel.sleutel); else eigen.set(doel.sleutel, schoon);
+    $("#tekstEditor").hidden = true;
+    loop(document.body);
+    toast(eigen.has(doel.sleutel) ? "Tekst aangepast" : "Standaardtekst staat er weer");
+  }
+  $("#tekstForm").addEventListener("submit", (e) => { e.preventDefault(); bewaar($("#tekstNieuw").value); });
+  $("#tekstStandaardKnop").addEventListener("click", () => bewaar(""));
+  $("#tekstAnnuleer").addEventListener("click", () => { $("#tekstEditor").hidden = true; });
+  $("#tekstKlaar").addEventListener("click", () => zetBewerken(false));
+
+  return {
+    laad, zetBewerken,
+    lijst: () => [...eigen.entries()],
+    // Een eigen tekst weghalen vanuit het overzicht in Beheer
+    async wis(sleutel) { doel = { sleutel, standaard: sleutel }; await bewaar(""); },
+  };
+})();
+
 // Betrouwbaarheid in woorden: zonder punten ben je nieuw, niet onbetrouwbaar
 const betrouwTekst = (r) => !r || (r.altijd ?? 0) === 0 ? "nieuw, nog weinig bevestigd" : `betrouwbaarheid ${Math.round(r.betrouwbaarheid)}%`;
 
@@ -199,6 +335,25 @@ function glasTekst(merk, volume, per25) {
 }
 
 const soortNaam = (code) => state.biersoorten.find((b) => b.code === code)?.naam ?? code;
+
+// Voorlopig is pils het enige spel. Ander bier staat uit, met een uitzondering: Guinness, als extraatje.
+// In de Guinness-stand (state.soort = "guinness") kleurt de app groen, staan alleen kroegen met Guinness op
+// de kaart en is de Guinnessprijs de prijs die je ziet. Geen punten, net als ander extra bier.
+const GUINNESS = "guinness";
+const PINT = 50; // Guinness vergelijken we per pint van 50 cl
+const guinnessAan = () => state.soort === GUINNESS;
+const perPint = (a) => (a?.prijs_cent && a.volume_cl ? Math.round((a.prijs_cent * PINT) / a.volume_cl) : null);
+function setGuinness(aan) {
+  state.soort = aan ? GUINNESS : "";
+  document.documentElement.dataset.bier = aan ? GUINNESS : "pils";
+  $("#guinness").setAttribute("aria-pressed", String(aan));
+  if (aan && !["alles", "goedkoop"].includes(state.filter)) state.filter = "alles";
+  state.limiet = 40;
+  // Kleuren van de kaart en de mist lezen de nieuwe tinten opnieuw in
+  mist.thema();
+  kaartBijwerken(); hud(); draw();
+  if (aan && !zichtbareKroegen().length) toast("Nog geen kroeg met Guinness gemeld. Weet je er een? Meld het bij de kroeg.");
+}
 const aanbodVan = (kroegId) => state.aanbod.filter((a) => a.kroeg_id === kroegId);
 
 // Bij een filter op soort: het goedkoopste bier van die soort in deze kroeg (met prijs), anders het eerste
@@ -247,7 +402,9 @@ function bezigMetTypen() {
 // Koers: de app als beurs. Alleen weergave; het spel en de spelregels blijven zoals ze zijn.
 // Een koerspunt is een bekende prijs per vaasje op een datum: een bevestigde melding of een
 // menukaart (dezelfde punten als de koersgrafiek). De Pilsindex is de mediaan van de laatst
-// bekende prijs per vaasje van alle kroegen in de stad.
+// bekende prijs per vaasje van alle kroegen in de stad. Menukaarten zijn basisdata die we zelf
+// invoeren: ze tellen mee in de koers, maar zijn geen melding (niet in "Laatste meldingen" en
+// niet in de activiteit van de lichtkrant).
 // ---------------------------------------------------------------------------
 
 const DAG = 86400000;
@@ -381,11 +538,11 @@ function trapjeHtml(id) {
 
 async function laadKoers() {
   // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee.
-  // Daarnaast de laatste activiteit voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen.
+  // Daarnaast de laatste activiteit van spelers voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen.
   const [{ data, error }, { data: recent }] = await Promise.all([
     sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
       .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(5000),
-    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("status", "bevestigd").order("op", { ascending: false }).limit(20),
+    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: false }).limit(20),
   ]);
   if (error) { console.error(error); return; }
   state.koersRuw = data ?? [];
@@ -456,7 +613,7 @@ function geojson() {
         id: k.id,
         naam: k.naam,
         versheid: k.open_melding_id && k.versheid !== "locked" && !k.huidig_prijs_cent ? "wacht" : k.versheid,
-        label: state.soort ? (soortIn(k.id)?.prijs_cent ? euro(soortIn(k.id).prijs_cent) : "") : toonPrijsTekst(k),
+        label: state.soort ? (soortIn(k.id)?.prijs_cent ? euro(soortIn(k.id).prijs_cent) : "?") : toonPrijsTekst(k),
         bezocht: state.mijn.has(k.id),
         per25: koersVan(k.id)?.nu ?? k.per25_cent ?? 0,
       },
@@ -468,13 +625,16 @@ function geojson() {
 // Mijn kaart: goud waar je hebt ingecheckt, de rest grijs onder je eigen mist.
 function cirkelStijl() {
   const c = kleur();
+  if (guinnessAan()) {
+    return { "circle-color": c.accent, "circle-opacity": 1, "circle-stroke-color": "#ffffff" };
+  }
   if (state.modus === "koers") {
     const idx = state.koers.index?.nu;
     const prijs = [">", ["get", "per25"], 0];
     return {
       "circle-color": ["case", prijs, idx ? ["interpolate", ["linear"], ["/", ["get", "per25"], idx], 0.85, c.af, 1, c.accent, 1.15, c.op] : c.accent, c.locked],
       "circle-opacity": ["case", prijs, 1, 0.35],
-      "circle-stroke-color": c.surface,
+      "circle-stroke-color": "#ffffff",
     };
   }
   if (state.modus === "mijn") {
@@ -487,7 +647,7 @@ function cirkelStijl() {
   return {
     "circle-color": ["match", ["get", "versheid"], "fresh", c.fresh, "stale", c.stale, "old", c.old, "wacht", c.wacht, c.locked],
     "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0.45, 1],
-    "circle-stroke-color": c.surface,
+    "circle-stroke-color": ["case", ["==", ["get", "versheid"], "locked"], c.surface, "#ffffff"],
   };
 }
 
@@ -517,11 +677,19 @@ function kaartLagen() {
     filter: ["==", ["get", "id"], -1],
     paint: { "circle-radius": 16, "circle-color": c.accent, "circle-opacity": 0.35 },
   });
+  // Een zachte schaduw onder elke kroeg, zoals de punten in Kaarten
+  map.addLayer({
+    id: "kroeg-schaduw", type: "circle", source: "kroegen",
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 6, 14, 9, 16, 12, 18, 14],
+      "circle-color": "#000", "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0, 0.22], "circle-blur": 0.7, "circle-translate": [0, 1],
+    },
+  });
   map.addLayer({
     id: "kroeg-cirkel", type: "circle", source: "kroegen",
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 4.5, 14, 7, 16, 9.5, 18, 11],
-      "circle-stroke-width": 2,
+      "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 11, 1.5, 15, 2.5],
       ...cirkelStijl(),
     },
   });
@@ -618,6 +786,7 @@ const mist = (() => {
   }
 
   function open(k) {
+    if (guinnessAan()) return !!soortIn(k.id);
     if (state.modus === "mijn") return state.mijn.has(k.id);
     if (state.modus === "koers") return !!koersVan(k.id);
     return k.versheid !== "locked";
@@ -634,7 +803,7 @@ const mist = (() => {
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, doek.width, doek.height);
     ctx.fillStyle = kleuren.waas; ctx.fillRect(0, 0, doek.width, doek.height);
-    ctx.fillStyle = patroon; ctx.fillRect(0, 0, doek.width, doek.height);
+    if (kleuren.stip && kleuren.stip !== "transparent") { ctx.fillStyle = patroon; ctx.fillRect(0, 0, doek.width, doek.height); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = "destination-out";
     const lat = map.getCenter().lat * Math.PI / 180;
@@ -672,6 +841,7 @@ const mist = (() => {
   map.on("render", teken);
   donker.addEventListener("change", () => { kleuren = null; map.triggerRepaint(); });
   return {
+    thema() { kleuren = null; map.triggerRepaint(); },
     bij: () => map.triggerRepaint(),
     // De mist trekt weg rond deze kroeg: de open plek groeit vanuit het midden
     vier(id) { if (!rustig()) { groei.set(id, performance.now()); map.triggerRepaint(); } },
@@ -811,6 +981,13 @@ async function laadMijn() {
 // Op Mijn kaart: jouw index (mediaan van de kroegen waar je was) en hoeveel kroegen je hebt bezocht.
 function hud() {
   const idx = state.koers.index;
+  if (guinnessAan()) {
+    const met = state.kroegen.filter((k) => soortIn(k.id));
+    const pint = mediaan(met.map((k) => perPint(soortIn(k.id))).filter(Boolean));
+    zetRing(state.kroegen.length ? Math.round((met.length / state.kroegen.length) * 100) : 0,
+      `${met.length} ${met.length === 1 ? "kroeg schenkt" : "kroegen schenken"} Guinness`, "Guinness, pint", pint, null);
+    return;
+  }
   if (state.modus === "mijn") {
     const totaal = state.kroegen.length, mijn = state.kroegen.filter((k) => state.mijn.has(k.id));
     const eigen = mediaan(mijn.map((k) => koersVan(k.id)?.nu).filter(Boolean));
@@ -884,10 +1061,11 @@ function kroegVersheid(k) {
 function rowHtml(k) {
   const v = kroegVersheid(k);
   const d = state.pos ? Math.round(afstand(state.pos, [k.lon, k.lat])) : null;
-  const sub = [k.wijk, d != null ? meters(d) : null, VERSHEID[v], state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
+  // Zoals in Aandelen: naam vet, daaronder de tickercode en de rest in grijs
+  const sub = [codeVan(k.id), k.wijk, d != null ? meters(d) : null, VERSHEID[v], state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
   return `<li><button class="row" data-kroeg="${k.id}">
     <span class="dot ${v}"></span>
-    <span class="row-main"><span class="row-title">${codeHtml(k.id)}${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
+    <span class="row-main"><span class="row-title">${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
     ${state.soort ? "" : trapjeHtml(k.id)}${prijsKolom(k)}
   </button></li>`;
 }
@@ -895,7 +1073,7 @@ function rowHtml(k) {
 function prijsKolom(k) {
   if (state.soort) {
     const a = soortIn(k.id);
-    return a?.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : "";
+    return a?.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl === PINT ? "pint" : `${a.volume_cl} cl`}</small></span>` : `<span class="small muted">prijs?</span>`;
   }
   const t = toonPrijs(k);
   if (!t) return "";
@@ -922,36 +1100,31 @@ function lijstView() {
   const f = F.find((x) => x.id === state.filter) ?? F[0];
   const q = state.zoek.trim().toLowerCase();
   // Met een soort gekozen: "Goedkoopst" sorteert op de prijs van die soort; kroegen zonder prijs ervan achteraan
-  const prijsVoor = (k) => state.soort ? (soortIn(k.id)?.prijs_cent ?? Infinity) : k.per25_cent;
+  const prijsVoor = (k) => state.soort ? (perPint(soortIn(k.id)) ?? Infinity) : k.per25_cent;
   const b = state.inBeeld && kaartKlaar ? map.getBounds() : null;
   let rows = zichtbareKroegen()
     .filter((k) => state.soort && state.filter === "goedkoop" ? true : f.f(k))
     .filter((k) => !state.wijk || k.wijk === state.wijk)
     .filter((k) => !b || (k.lon >= b.getWest() && k.lon <= b.getEast() && k.lat >= b.getSouth() && k.lat <= b.getNorth()))
     .filter((k) => !q || [k.naam, k.wijk, k.adres].some((x) => (x ?? "").toLowerCase().includes(q)));
-  if (state.filter === "goedkoop") rows.sort((a, b) => prijsVoor(a) - prijsVoor(b));
+  if (state.filter === "goedkoop" || (guinnessAan() && !state.pos)) rows.sort((a, b) => prijsVoor(a) - prijsVoor(b));
   else if (state.filter === "prijsvast") rows.sort((a, b) => koersVan(a.id).vastSinds - koersVan(b.id).vastSinds);
   else if (state.filter === "verhoogd") rows.sort((a, b) => koersVan(b.id).vastSinds - koersVan(a.id).vastSinds);
   else if (state.pos) rows.sort((a, b) => afstand(state.pos, [a.lon, a.lat]) - afstand(state.pos, [b.lon, b.lat]));
   const leeg = state.kroegen.length === 0
     ? `<div class="empty">Nog geen kroegen geladen.<br><span class="small">Een beheerder importeert ze via het tabblad Ik.</span></div>`
-    : state.soort ? `<div class="empty">Nog geen kroeg met ${esc(soortNaam(state.soort))} gemeld.<br><span class="small">Weet je er een? Voeg het toe bij de kroeg onder "Ook op de tap".</span></div>`
+    : state.soort ? `<div class="empty">Nog geen kroeg met Guinness gemeld.<br><span class="small">Weet je er een? Meld het bij de kroeg onder "Guinness".</span></div>`
     : state.filter === "verhoogd" && !q ? `<div class="empty">Dit jaar heeft nog geen kroeg de prijs verhoogd.<br><span class="small">Of niemand heeft het nog gemeld.</span></div>`
     : state.filter === "prijsvast" && !q ? `<div class="empty">Nog geen koersen.</div>`
     : state.inBeeld ? `<div class="empty">Geen kroegen in beeld.<br><span class="small">Schuif of zoom de kaart, of zet "In beeld" uit.</span></div>`
     : `<div class="empty">Niets gevonden.<br><span class="small">Probeer een andere zoekterm of een ander filter.</span></div>`;
-  // Alleen soorten die ergens getapt worden
-  const soorten = state.biersoorten.filter((b) => state.aanbod.some((a) => a.soort === b.code) || b.code === state.soort);
   const hint = !state.pos && !["goedkoop", "prijsvast", "verhoogd"].includes(state.filter)
     ? `<p class="small muted hint">Op naam gesorteerd. <button type="button" class="linkbtn" data-locatie-lijst>Gebruik mijn locatie</button> en de dichtstbijzijnde kroeg staat bovenaan.</p>` : "";
   const meer = rows.length - state.limiet;
   return `<input class="search" type="search" placeholder="Zoek een kroeg, wijk of straat" value="${esc(state.zoek)}" data-zoek>
     <button class="row tocht-link" data-tocht-open><span class="ic-sm">${ICON_ROUTE}</span><span class="row-main"><span class="row-title">Plan een kroegentocht</span><span class="row-sub">Langs de goedkoopste kroegen of waar je nog niet was</span></span><span class="muted">›</span></button>
     <div class="chips">${state.wijk ? `<button class="chip" data-wis-wijk aria-pressed="true" aria-label="Filter ${esc(state.wijk)} wissen">${esc(state.wijk)} ✕</button>` : ""}<button class="chip" data-in-beeld aria-pressed="${state.inBeeld}">In beeld</button>${F.map((x) => `<button class="chip" data-filter="${x.id}" aria-pressed="${x.id === f.id}">${x.naam}</button>`).join("")}</div>
-    ${soorten.length ? `<select class="soortkeuze" data-soort aria-label="Filter op bier dat getapt wordt">
-      <option value="">Op de tap: alle kroegen</option>
-      ${soorten.map((b) => `<option value="${b.code}" ${b.code === state.soort ? "selected" : ""}>Op de tap: ${esc(b.naam)}</option>`).join("")}
-    </select>` : ""}
+    ${guinnessAan() ? `<p class="small guinness-uitleg">Guinness-stand: alleen kroegen met Guinness, goedkoopste pint eerst. <button type="button" class="linkbtn" data-guinness-uit>Terug naar pils</button></p>` : ""}
     ${hint}
     ${rows.length ? `<div class="small muted telling">${rows.length === 1 ? "1 kroeg" : `${rows.length} kroegen`}</div><ul class="list">${rows.slice(0, state.limiet).map(rowHtml).join("")}</ul>
       ${meer > 0 ? `<div class="btns"><button type="button" class="btn" data-meer>Toon er nog ${Math.min(40, meer)} van ${meer}</button></div>` : ""}` : leeg}`;
@@ -1194,47 +1367,42 @@ function incheckHtml(k) {
   </div>`;
 }
 
-// Extra bier bij een kroeg: geen punten, wel bevestigen ("klopt") of afkeuren ("klopt niet")
+// Guinness bij een kroeg: het enige extra bier in de app. Geen punten, wel bevestigen ("klopt") of afkeuren ("klopt niet").
 function aanbodBlok(k) {
-  const lijst = aanbodVan(k.id).sort((a, b) => a.volgorde - b.volgorde || (a.prijs_cent ?? 1e9) - (b.prijs_cent ?? 1e9));
+  const a = aanbodVan(k.id).find((x) => x.soort === GUINNESS);
   const uid = state.sessie?.user?.id;
-  const item = (a) => {
-    const eigen = a.door_id === uid;
-    const wat = [a.merk && a.merk !== a.soort_naam ? a.merk : null, a.volume_cl ? `${a.volume_cl} cl` : null].filter(Boolean).join(" · ");
-    const knoppen = !state.sessie ? ""
-      : eigen ? `<button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt_niet">Intrekken</button>`
-      : anoniem() ? ""
-      : `<button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt">Klopt</button><button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt_niet">Klopt niet</button>`;
-    return `<li class="aanbod">
-      <div class="aanbod-main"><b>${esc(a.soort_naam)}</b>${wat ? ` <span class="muted">${esc(wat)}</span>` : ""}
+  const knoppen = !a || !state.sessie ? ""
+    : a.door_id === uid ? `<button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt_niet">Intrekken</button>`
+    : anoniem() ? ""
+    : `<button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt">Klopt</button><button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt_niet">Klopt niet</button>`;
+  return `<h3>Guinness</h3>
+    ${a ? `<div class="aanbod">
+      <div class="aanbod-main"><b>Guinness van de tap</b>${a.volume_cl ? ` <span class="muted">${a.volume_cl === PINT ? "pint" : `${a.volume_cl} cl`}</span>` : ""}
         <div class="small muted">${esc(a.door ?? "Onbekend")}, ${wanneer(a.gecontroleerd_op ?? a.op)}${a.klopt_niet ? " · 1 keer klopt niet" : ""}</div></div>
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}</span>` : `<span class="small muted">prijs?</span>`}
       <div class="aanbod-knoppen">${knoppen}</div>
-    </li>`;
-  };
-  return `<h3>Ook op de tap</h3>
-    ${lijst.length ? `<ul class="aanbod-lijst">${lijst.map(item).join("")}</ul>` : `<div class="small muted">Nog niets gemeld naast de pils.</div>`}
-    <div class="btns"><button class="btn" data-aanbodform ${state.sessie ? "" : "disabled"}>Bier toevoegen</button></div>
-    <p class="small muted">Extra bier telt niet mee voor het spel en levert geen punten op, maar helpt anderen een kroeg te vinden.</p>`;
+    </div>
+    ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${state.sessie ? "" : "disabled"}>Prijs van een pint melden</button></div>`}`
+    : `<div class="small muted">Nog niet bekend of ze hier Guinness tappen.</div>
+    ${state.sessie ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
 }
 
 function aanbodFormView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
   const f = state.aanbodForm;
+  const GLAS = [[PINT, "Pint", "50 cl"], [25, "Halve pint", "25 cl"], [0, "Ander glas", "zelf invullen"]];
   return `<button class="back" data-cancel>‹ Annuleer</button>
-    <h2>Bier toevoegen</h2>
+    <h2>Guinness</h2>
     <div class="muted small">${esc(k.naam)}</div>
     <form class="form" id="aanbodForm">
-      <label>Soort</label>
-      <select name="soort" required>${state.biersoorten.map((b) => `<option value="${b.code}" ${b.code === f.soort ? "selected" : ""}>${esc(b.naam)}</option>`).join("")}</select>
-      <label>Merk (optioneel)</label>
-      <input name="merk" maxlength="40" placeholder="Bijvoorbeeld Hertog Jan of La Chouffe">
-      <label>Glas in cl (optioneel)</label>
-      <input name="cl" inputmode="numeric" placeholder="Bijvoorbeeld 33, of 50 voor een pint">
+      <input type="hidden" name="soort" value="${GUINNESS}">
+      <label>Glas</label>
+      <div class="seg">${GLAS.map(([cl, naam, sub]) => `<button type="button" data-glas-guinness="${cl || "anders"}" aria-pressed="${(f.cl ?? 0) === cl}">${naam}<br><span class="small muted">${sub}</span></button>`).join("")}</div>
+      <input name="cl" inputmode="numeric" placeholder="Inhoud in cl, bijvoorbeeld 57" style="margin-top:6px" ${f.cl ? "hidden" : ""}>
       <label>Prijs in euro (optioneel)</label>
-      <input name="prijs" inputmode="decimal" placeholder="5,50">
-      <div class="btns"><button class="btn primary" type="submit">Toevoegen</button></div>
-      <p class="small muted">Weet je de prijs niet, voeg het bier dan toch toe: dan kunnen anderen op deze soort zoeken.</p>
+      <input name="prijs" inputmode="decimal" placeholder="6,50">
+      <div class="btns"><button class="btn primary" type="submit">Opslaan</button></div>
+      <p class="small muted">Weet je de prijs niet, meld dan toch dat ze Guinness hebben: dan staat de kroeg in de Guinness-stand. Guinness levert geen punten op.</p>
     </form>`;
 }
 
@@ -1242,7 +1410,7 @@ async function verstuurAanbod(form) {
   const k = state.kroegen.find((x) => x.id === state.selected);
   const fd = new FormData(form);
   const merk = String(fd.get("merk") ?? "").trim();
-  const clTekst = String(fd.get("cl") ?? "").trim();
+  const clTekst = state.aanbodForm?.cl ? String(state.aanbodForm.cl) : String(fd.get("cl") ?? "").trim();
   const prijsTekst = String(fd.get("prijs") ?? "").trim();
   const cl = clTekst ? Math.round(Number(clTekst.replace(",", "."))) : null;
   const prijs = prijsTekst ? Math.round(parseFloat(prijsTekst.replace(",", ".")) * 100) : null;
@@ -1255,7 +1423,7 @@ async function verstuurAanbod(form) {
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
   state.aanbodForm = null;
-  toast("Toegevoegd, bedankt");
+  toast("Opgeslagen, bedankt");
   await laadAanbod();
   draw();
 }
@@ -1275,7 +1443,8 @@ async function laadAanbod() {
   ]);
   // Bestaat de tabel nog niet (migratie nog niet uitgevoerd), dan blijft de app gewoon werken zonder extra's
   if (error) return;
-  state.aanbod = aanbod ?? [];
+  // Voorlopig alleen Guinness; ander extra bier blijft in de database maar staat niet in de app
+  state.aanbod = (aanbod ?? []).filter((a) => a.soort === GUINNESS);
   state.biersoorten = soorten.data ?? [];
   kaartBijwerken();
 }
@@ -1501,7 +1670,7 @@ async function verkleinFoto(file) {
 async function beursView() {
   const [{ data: wijken }, { data: recent }] = await Promise.all([
     sb.from("wijk_voortgang").select("*").eq("gemeente", STAD.naam).order("naam"),
-    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").order("op", { ascending: false }).limit(15),
+    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").order("op", { ascending: false }).limit(15),
   ]);
   if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
   const s = state.stad ?? { kroegen: 0, vrijgespeeld: 0, vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
@@ -1553,7 +1722,7 @@ async function beursView() {
       <div class="kop">Pilsindex ${esc(STAD.naam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
       ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">in 12 maanden</span>` : ""}</div>
         <div class="uitleg">Wat een vaasje pils in ${esc(STAD.naam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
-        ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", tekst: "var(--krant-fg)", as: "var(--krant-muted)", lijnLabel: "" })}</div>` : ""}`
+        ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", lijnLabel: "", kleur: idx.delta > 0 ? "var(--op)" : idx.delta < 0 ? "var(--af)" : "var(--accent)" })}</div>` : ""}`
       : `<div class="stand"><span class="big-price">€ ?</span></div>
         <div class="uitleg">Nog geen koers. Speel de eerste kroeg vrij en zet de Pilsindex op het bord.</div>`}
     </div>
@@ -1715,7 +1884,11 @@ function ikView() {
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
-      <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>` : ""}
+      <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
+      <h3>Teksten</h3><div class="card"><div class="small muted">Pas elke tekst in de app aan. Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen.</div>
+      <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
+      ${teksten.lijst().length ? `<ul class="list eigen-teksten" data-geen-teksten>${teksten.lijst().map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
+        <button type="button" class="mini" data-tekst-wis="${esc(sleutel)}">Standaard</button></li>`).join("")}</ul>` : `<div class="small muted" style="margin-top:8px">Nog geen eigen teksten.</div>`}</div>` : ""}
     <h3>Jouw gegevens</h3>
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
       Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken. Alleen voor 18 jaar en ouder.</p>
@@ -2084,7 +2257,16 @@ body.addEventListener("click", (e) => {
   if (t.dataset.tijdenform !== undefined) { state.tijdenForm = {}; return draw(); }
   if (t.dataset.doeMee !== undefined) { state.terugNaar = state.selected; return setTab("ik"); }
   if (t.dataset.oordeelMelding) return beoordeelMelding(Number(t.dataset.melding), t.dataset.oordeelMelding);
-  if (t.dataset.aanbodform !== undefined) { state.aanbodForm = { soort: state.soort || "guinness" }; return draw(); }
+  if (t.dataset.aanbodform !== undefined) { state.aanbodForm = { soort: GUINNESS, cl: PINT }; return draw(); }
+  if (t.dataset.guinnessUit !== undefined) return setGuinness(false);
+  if (t.dataset.glasGuinness && state.aanbodForm) {
+    state.aanbodForm.cl = Number(t.dataset.glasGuinness) || null;
+    t.closest(".seg").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
+    const veld = body.querySelector("[name=cl]");
+    veld.hidden = !!state.aanbodForm.cl;
+    if (!state.aanbodForm.cl) veld.focus();
+    return;
+  }
   if (t.dataset.oordeelAanbod) return beoordeelAanbod(Number(t.dataset.aanbod), t.dataset.oordeelAanbod);
   if (t.dataset.filter) { state.filter = t.dataset.filter; state.limiet = 40; return draw(); }
   if (t.dataset.inBeeld !== undefined) { state.inBeeld = !state.inBeeld; state.limiet = 40; return draw(); }
@@ -2134,6 +2316,8 @@ body.addEventListener("click", (e) => {
   if (t.dataset.anderadres !== undefined) { state.inlog = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
   if (t.dataset.foto) return openFoto(t.dataset.foto);
+  if (t.dataset.tekstenBewerken !== undefined) { teksten.zetBewerken(true); return toast("Tik op een tekst om hem aan te passen"); }
+  if (t.dataset.tekstWis !== undefined) return teksten.wis(t.dataset.tekstWis).then(() => draw());
   if (t.dataset.uitleg !== undefined) return toonUitleg();
   if (t.dataset.regels !== undefined) { state.pagina = "regels"; draw(); body.scrollTop = 0; return; }
   if (t.dataset.sluitPagina !== undefined) { state.pagina = null; return draw(); }
@@ -2154,12 +2338,6 @@ body.addEventListener("change", (e) => {
     img.hidden = !file;
     if (file) img.src = URL.createObjectURL(file);
     return;
-  }
-  if (e.target.matches("[data-soort]")) {
-    state.soort = e.target.value;
-    if (state.soort && state.filter !== "goedkoop") state.filter = "alles";
-    kaartBijwerken();
-    draw();
   }
 });
 
@@ -2274,6 +2452,7 @@ $("#tabs").addEventListener("click", (e) => {
   if (b.dataset.tab === state.tab && state.selected == null && !wide()) return setDetent(sheet.dataset.detent === "full" ? "half" : "full");
   setTab(b.dataset.tab);
 });
+$("#guinness").addEventListener("click", () => setGuinness(!guinnessAan()));
 $("#modus").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setModus(b.dataset.modus); });
 $("#ticker").addEventListener("click", (e) => { const b = e.target.closest("[data-kroeg]"); if (b) openKroeg(b.dataset.kroeg); });
 $("#hud").addEventListener("click", () => { setTab(state.modus === "mijn" ? "ik" : "beurs"); if (!wide() && sheet.dataset.detent === "peek") setDetent("half"); });
@@ -2344,7 +2523,7 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   }
   const { data } = await sb.auth.getSession();
   state.sessie = data.session;
-  await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers()]);
+  await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
   koersen(); lichtkrant(); hud(); kaartBijwerken();
   draw();
   setDetent("half");

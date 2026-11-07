@@ -16,6 +16,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Menukaartprijzen | `migrations/20261106200000_menukaartprijzen.sql` | Prijzen van menukaarten (met datum) als eerste stuk geschiedenis, zonder melder. Kolom `bron` op `gebeurtenissen`, import `importeer_menuprijzen` (alleen `service_role`) |
 | Openingstijden en sluiten | `migrations/20261106190000_kroeg_meldingen.sql` | Spelers passen openingstijden aan of melden een kroeg als definitief gesloten; geen punten. Overzicht `kroeg_info` |
 | Klopt deze kroeg niet? | `migrations/20261107120000_kroeg_klopt_niet.sql` | Ook verkeerde plek en dubbel melden, met een korte toelichting. Een bevestigde dubbele kroeg verdwijnt van de kaart; een verkeerde plek verplaatst een beheerder |
+| Teksten | `migrations/20261107150000_app_teksten.sql` | Tabel `app_teksten` en functie `zet_tekst`: een beheerder herschrijft elke tekst in de app. Sleutel is de standaardtekst met getallen als `#` |
 | Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account. Meldingen en prijzen blijven staan zonder naam |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
