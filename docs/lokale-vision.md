@@ -2,7 +2,7 @@
 
 Kjell heeft twee vision-modellen op zijn eigen computer: **Qwen2.5-VL 7B Instruct** en **Llama 3.2 11B Vision Instruct**. Ze kosten niets per foto en hebben geen limiet. Daarmee kunnen we alle foto's van alle kroegen doorzoeken in plaats van een handvol per kroeg.
 
-Waar dit voor is: de JAN-methode (`docs/menukaartprijzen.md`), dus menukaartfoto's in Google Maps vinden, lezen en dateren. De uitkomst blijft een **menukaartprijs**: een hint bij de kroeg, met de mist erover. Menukaartprijzen tellen nergens mee: niet in de koers, de Pilsindex, de lichtkrant of de meldingen. Alleen prijzen van spelers tellen.
+Waar dit voor is: de JAN-methode (`docs/menukaartprijzen.md`), dus menukaartfoto's in Google Maps vinden, lezen en dateren. De uitkomst blijft een **menukaartprijs**: een hint bij de kroeg, met de mist erover. Menukaartprijzen tellen mee in de koers en de Pilsindex, maar zijn geen melding: ze staan niet in "Laatste meldingen" en niet in de activiteit van de lichtkrant.
 
 ## Wie doet wat
 
