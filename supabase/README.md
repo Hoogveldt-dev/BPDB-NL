@@ -15,6 +15,8 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Google-kroegen | `migrations/20261106170000_google_kroegen.sql`, `migrations/20261106180000_google_koppeling.sql` | Place ID, categorieën en openingstijden uit Google op `kroegen`, en `importeer_google_kroegen`: koppelt Google-plaatsen aan OSM-kroegen (gelijkende naam, beste eerst) of voegt ze toe. Geen beoordelingen, telefoon of website. Aangeroepen door [`tools/google-kroegen`](../tools/google-kroegen/README.md). |
 | Menukaartprijzen | `migrations/20261106200000_menukaartprijzen.sql` | Prijzen van menukaarten (met datum) als eerste stuk geschiedenis, zonder melder. Kolom `bron` op `gebeurtenissen`, import `importeer_menuprijzen` (alleen `service_role`) |
 | Openingstijden en sluiten | `migrations/20261106190000_kroeg_meldingen.sql` | Spelers passen openingstijden aan of melden een kroeg als definitief gesloten; geen punten. Overzicht `kroeg_info` |
+| Klopt deze kroeg niet? | `migrations/20261107120000_kroeg_klopt_niet.sql` | Ook verkeerde plek en dubbel melden, met een korte toelichting. Een bevestigde dubbele kroeg verdwijnt van de kaart; een verkeerde plek verplaatst een beheerder |
+| Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account. Meldingen en prijzen blijven staan zonder naam |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
 | Tests | `tests/database.test.mjs` | Alle migraties en spelregels in een Postgres in het geheugen (PGlite met PostGIS). Draai `npm install` en daarna `npm run test:db`. |
@@ -47,7 +49,7 @@ De prijs voor het spel is de goedkoopste pils van de tap in een vaasje (25 cl). 
 - `klopt_nog(kroeg, lat, lon)`: de huidige prijs controleren, hoogstens een keer per kroeg per 7 dagen.
 - `meld_aanbod(kroeg, soort, merk, volume_cl, prijs_cent)`: extra bier toevoegen of een nieuwe prijs ervan melden. Merk, glas en prijs zijn optioneel; bij een prijs hoort een glas. Geen punten.
 - `beoordeel_aanbod(aanbod, 'klopt' | 'klopt_niet')`: extra bier van een ander bevestigen (zet de datum van controle) of afkeuren; twee keer "klopt niet" en het verdwijnt. Je eigen extra trek je in met "klopt niet". Alleen met e-mailadres, behalve intrekken.
-- `meld_kroeg(kroeg, 'openingstijden' | 'gesloten', openingstijden)`: andere openingstijden of een definitieve sluiting melden. Openingstijden zijn per dag een lijst als `["16:00-02:00"]`; een lege lijst is gesloten. Ook zonder e-mailadres. Geen punten.
+- `meld_kroeg(kroeg, 'openingstijden' | 'gesloten' | 'verkeerde_plek' | 'dubbel', openingstijden, toelichting)`: andere openingstijden, een definitieve sluiting, een verkeerde plek op de kaart of een dubbele kroeg melden. Openingstijden zijn per dag een lijst als `["16:00-02:00"]`; een lege lijst is gesloten. De toelichting (hoogstens 280 tekens) hoort niet bij openingstijden. Ook zonder e-mailadres. Geen punten. Een gesloten of dubbele kroeg verdwijnt na "klopt" van een andere speler met e-mailadres van de kaart.
 - `beoordeel_kroegmelding(melding, 'klopt' | 'klopt_niet')`: zo'n melding van een ander bevestigen of afkeuren. Alleen met e-mailadres; je eigen melding trek je in met "klopt niet".
 - `inchecken(kroeg, lat, lon)`: inchecken in een kroeg, alleen binnen 75 m en hoogstens een keer per kroeg per dag. Een melding of "klopt nog" ter plaatse is automatisch ook een check-in (trigger op `gebeurtenissen`).
 
@@ -86,6 +88,7 @@ Of plak de migratie in de SQL Editor van het dashboard.
 
 ```bash
 supabase functions deploy osm-import
+supabase functions deploy account-verwijderen
 ```
 
 **3. Inloggen instellen.** Nieuwe spelers beginnen anoniem, zonder e-mailadres. Wie zijn punten wil bewaren of prijzen van anderen wil bevestigen, koppelt later een e-mailadres. Bestaande spelers loggen in met een code van 6 cijfers die ze per mail krijgen en in de app typen. Een link gebruiken we niet meer: die werkt maar een keer, gaat stuk als een virusscanner van het mailprogramma hem eerst opent, en opent op een iPhone in Safari in plaats van in de app op het beginscherm. In het dashboard, onder Authentication:
