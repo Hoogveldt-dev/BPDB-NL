@@ -90,6 +90,7 @@ Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `i
 | Schiften, controleren en lezen met een model | `bron/menulezer.mjs` |
 | Vaasje kiezen | `bron/vaasje.mjs` |
 | Alles samen | `bron/menuprijs.mjs`, `menufotos.mjs` |
+| Testset en meten per stap | `testset/` (zie `testset/README.md`) |
 
 ## Kroeg of niet
 
