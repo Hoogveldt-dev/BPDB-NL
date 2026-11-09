@@ -5,7 +5,7 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 ## GitHub: main als standaardbranch
 
 1. **Standaardbranch.** GitHub, repository BPDB-NL, Settings, General, Default branch: kies `main` (nu staat `claude/bpdb-concept-design-6gjlr6` als standaard). Nieuwe sessies beginnen dan vanaf `main` en pull requests gaan vanzelf naar `main`.
-2. **Oude branches opruimen.** Alle oude branches zijn al volledig samengevoegd in `main`. Na stap 1 kunnen ze weg (Settings, General, vink **Automatically delete head branches** aan voor de toekomst).
+2. **Oude branches opruimen.** De lijst met per branch of hij al in `main` zit, staat in de pull request "Menukaartpijplijn 5". Na stap 1 kunnen de branches die al in `main` zitten weg (Settings, General, vink **Automatically delete head branches** aan voor de toekomst).
 
 ## Domein bierkoers.nl
 
@@ -54,6 +54,10 @@ Zie `tools/google-kroegen/testset/README.md`. Alles op je eigen computer, vanaf 
 4. **Ophalen en meten.** `node testset/haal-fotos.mjs`, daarna `node testset/meet.mjs`.
 5. **OCR meten.** `npm install` in `tools/google-kroegen` (zet tesseract.js en jpeg-js erbij, geen losse installatie nodig). Kijk in de uitslag van `meet.mjs` naar de regel `ocr`: staat `gemist` op 0, dan kan `--ocr filter` de standaard worden; anders blijft het `volgorde`.
 6. **LM Studio.** Server aan op poort 1235 (Developer), Just-in-time loading aan. Draai de vier vergelijkingen uit `docs/lokale-vision.md` (Meten) en zet de uitslag in de tabel daar; Claude past daarna de standaard aan als een ander model beter is.
+
+## Onderzoek: categorie Menu in Google Maps
+
+Met de hand in Chrome, zie `docs/menukaartprijzen.md` (Onderzoek: alleen de categorie Menu ophalen): vergelijk het verzoek `hspqX` bij Alle en bij Menu voor twee kroegen en zet het verschil in dat document. Een cloudsessie kan dit niet.
 
 ## Nakijken van menukaartprijzen
 

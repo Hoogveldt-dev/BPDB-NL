@@ -65,6 +65,45 @@ Een foto van een speler werkt hetzelfde: datum uit EXIF, prijs met het model.
 - Vanaf een datacenter (zoals een cloudsessie) volgt die CAPTCHA al na een paar kroegen. Draai de tool vanaf een thuisverbinding.
 - We bewaren alleen prijs en datum, niet de foto of de naam van de maker.
 
+## Onderzoek: alleen de categorie Menu ophalen
+
+Het fototabblad van een kroeg in Google Maps heeft een categorie **Menu**. Als het verzoek `hspqX` (zie `tools/google-kroegen/bron/fotos.mjs`) een parameter heeft voor die categorie, kunnen we eerst alleen de menufoto's ophalen en de volledige fotolijst alleen als terugval gebruiken. Dat scheelt verzoeken aan Google en foto's voor de modellen.
+
+### Wat er geprobeerd is
+
+9 november 2026, vanuit een cloudsessie van Claude: **niets live**. Google Maps aansturen vanuit die sessie werd geweigerd, en vanaf een datacenter volgt toch snel een CAPTCHA (zie hierboven). Er is dus geen verzoek naar Google gegaan, en `--alleen-menu` is niet gebouwd.
+
+Wat de code al laat zien. Het verzoek dat we nu sturen (`fotolijstVerzoek` in `bron/fotos.mjs`) heeft deze delen:
+
+| Deel van de argumenten | Wat we denken dat het is |
+|---|---|
+| `[dataId, null, ..., 0]` | de plaats |
+| `[null, 20, token, null, 1]` | pagina: aantal en token voor de volgende pagina |
+| `[KOLOMMEN, 1]` | welke velden per foto terugkomen |
+| `[[[[[[2]]], [195, 195], 20]]]` | onbekend; mogelijk het filter of de soort weergave (de `[2]` is een kandidaat voor de categorie) |
+| `[null, 1, null, 1]` | onbekend |
+
+Een categorie zit waarschijnlijk in een van de twee onbekende delen, maar dat is een vermoeden en geen meting.
+
+### Zo zoekt Kjell het uit (thuis, met de hand)
+
+Volg de spelregels: hooguit twee of drie kroegen, ruime pauzes, bij een CAPTCHA stoppen.
+
+1. Open in Chrome een kroeg met veel foto's in Google Maps (bijvoorbeeld St. Anneke) en open de ontwikkelaarshulpmiddelen (F12), tabblad Network. Typ `hspqX` in het filter.
+2. Klik op de foto's van de kroeg en dan op **Alle**. Klik op het nieuwe verzoek, tabblad Payload, en kopieer de waarde van `f.req`.
+3. Klik op **Menu** en kopieer weer `f.req`. Kopieer ook het begin van het antwoord (tabblad Response): daarin staat het aantal foto's.
+4. Maak de twee leesbaar, elk in een eigen bestand, en vergelijk ze (bijvoorbeeld in VS Code: rechtsklik, Compare Selected):
+
+```bash
+node -e "const f=require('fs').readFileSync(0,'utf8').trim();const a=JSON.parse(JSON.parse(decodeURIComponent(f))[0][0][1]);console.log(JSON.stringify(a,null,1))" < alle.txt > alle.json
+```
+
+5. Herhaal bij een tweede kroeg om te zien of het verschil hetzelfde is. Zet het verschil en de aantallen foto's (Alle tegen Menu) hieronder.
+
+### Uitslag
+
+Nog niet onderzocht. Lukt het, dan bouwt een volgende sessie `--alleen-menu` (standaard als eerste ronde, met de volledige fotolijst als terugval) en meet hoeveel minder foto's en verzoeken het kost. Lukt het niet, dan komt hier wat er geprobeerd is.
+
 ## Proef: Café Van Buren (Molenstraat 89)
 
 6 november 2026.
