@@ -71,8 +71,8 @@ export class FotoBron {
     throw new Error(`Plaats ${placeId} niet gevonden in Google Maps (pagina: ${p.url().slice(0, 120)})`);
   }
 
-  /** Alle foto's van een plaats (pagina's van 10), tot maxFotos. */
-  async fotolijst(dataId, { maxFotos = 400 } = {}) {
+  /** Alle foto's van een plaats (pagina's van 10), tot maxFotos of tot klaar(fotos) true geeft. */
+  async fotolijst(dataId, { maxFotos = 400, klaar = null } = {}) {
     const alle = [];
     const gezien = new Set();
     let token = null;
@@ -99,7 +99,7 @@ export class FotoBron {
         alle.push(f);
       }
       this.log(`    foto's: ${alle.length}${totaal ? ` van ${totaal}` : ""}`);
-      if (!nieuw.length || !pagina.token || pagina.token === token) break;
+      if (klaar?.(alle) || !nieuw.length || !pagina.token || pagina.token === token) break;
       token = pagina.token;
       await wacht(spreid(this.pauzeMs));
     }

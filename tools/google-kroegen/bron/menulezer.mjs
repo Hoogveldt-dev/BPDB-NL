@@ -52,7 +52,9 @@ export function haalJson(tekst) {
 // denken: false zet het nadenken van het model uit. Voor ja/nee-vragen (herkennen,
 // controleren) scheelt dat honderden tot duizenden tokens per verzoek; voor het lezen
 // van prijzen laten we het (laag) aan, want zonder nadenken leest het model slordig.
-async function vraag(afbeeldingen, tekst, { model = STANDAARD_MODEL, maxTokens = 8000, denken = true, log = () => {} } = {}) {
+// antwoorden: optionele lijst waarin elk gelezen antwoord (of null) komt; het meetscript
+// van de testset ziet zo het verschil tussen "nee" en "geen bruikbaar antwoord".
+async function vraag(afbeeldingen, tekst, { model = STANDAARD_MODEL, maxTokens = 8000, denken = true, log = () => {}, antwoorden = null } = {}) {
   const content = [
     ...afbeeldingen.map((b) => ({ type: "image_url", image_url: { url: `data:image/jpeg;base64,${b.toString("base64")}` } })),
     { type: "text", text: tekst },
@@ -78,7 +80,9 @@ async function vraag(afbeeldingen, tekst, { model = STANDAARD_MODEL, maxTokens =
   verbruik.in += d.usage?.prompt_tokens || 0;
   verbruik.uit += d.usage?.completion_tokens || 0;
   if (d.choices?.[0]?.finish_reason === "length") log("    let op: antwoord afgekapt (maximum aantal tokens bereikt)");
-  return haalJson(d.choices?.[0]?.message?.content);
+  const json = haalJson(d.choices?.[0]?.message?.content);
+  antwoorden?.push(json);
+  return json;
 }
 
 /** Geeft de indexen (vanaf 0) van de afbeeldingen die op een kaart lijken. */

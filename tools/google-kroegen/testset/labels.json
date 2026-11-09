@@ -1,0 +1,89 @@
+{
+  "uitleg": "Testset voor de menukaartpijplijn. Kjell controleert elk label met de hand en zet dan gecontroleerd op true. Velden: kaart = staat er een kaart of krijtbord op; bierprijzen = staan er bierprijzen die je kunt lezen; vaasje = verwachte prijs in euro van de goedkoopste pils van de tap in 25 cl, of null; datum = verwachte datum (EXIF-opname, anders upload, of de datum op de kaart). bron google: foto uit Google Maps (place_id en foto_id nodig, haal-fotos.mjs haalt hem op); bron bestand: zet de afbeelding zelf in fotos/<sleutel>/s0.jpg. De foto's zelf staan nooit in Git.",
+  "fotos": [
+    {
+      "sleutel": "jan-kaart",
+      "kroeg": "Stadscafé Jan",
+      "place_id": null,
+      "foto_id": null,
+      "bron": "google",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": 3.90,
+      "datum": "2025-12-20",
+      "omschrijving": "menukaart in Google Maps (soort kaart nog invullen)",
+      "gecontroleerd": false,
+      "opmerking": "Prijs en datum uit docs/menukaartprijzen.md. Stadscafé Jan heeft in de database nog geen Google Place ID: opzoeken in Google Maps, dan foto_id met haal-fotos.mjs --kandidaten."
+    },
+    {
+      "sleutel": "anneke-krijtbord",
+      "kroeg": "St. Anneke",
+      "place_id": "ChIJFSh-pl4Ix0cRlzqTtoR2B_4",
+      "foto_id": null,
+      "bron": "google",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": null,
+      "datum": "2013-06-04",
+      "omschrijving": "krijtbord achter de bar, Paulaner, witbier, Max Rosé en Omer, geen pils",
+      "gecontroleerd": false,
+      "opmerking": "Uit de proef van 6 november 2026. foto_id opzoeken met haal-fotos.mjs --kandidaten."
+    },
+    {
+      "sleutel": "vanburen-qr-1",
+      "kroeg": "Café Van Buren",
+      "place_id": "ChIJiXxxslwIx0cRxyRGj-BgaWw",
+      "foto_id": null,
+      "bron": "google",
+      "kaart": false,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "QR-bordje om te bestellen, geen prijzen",
+      "gecontroleerd": false,
+      "opmerking": "Een van de drie QR-bordjes uit de proef van 6 november 2026."
+    },
+    {
+      "sleutel": "vanburen-qr-2",
+      "kroeg": "Café Van Buren",
+      "place_id": "ChIJiXxxslwIx0cRxyRGj-BgaWw",
+      "foto_id": null,
+      "bron": "google",
+      "kaart": false,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "QR-bordje om te bestellen, geen prijzen",
+      "gecontroleerd": false,
+      "opmerking": "Een van de drie QR-bordjes uit de proef van 6 november 2026."
+    },
+    {
+      "sleutel": "vanburen-qr-3",
+      "kroeg": "Café Van Buren",
+      "place_id": "ChIJiXxxslwIx0cRxyRGj-BgaWw",
+      "foto_id": null,
+      "bron": "google",
+      "kaart": false,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "QR-bordje om te bestellen, geen prijzen",
+      "gecontroleerd": false,
+      "opmerking": "Een van de drie QR-bordjes uit de proef van 6 november 2026."
+    },
+    {
+      "sleutel": "daen-drankkaart",
+      "kroeg": "Café Daen",
+      "place_id": "ChIJB0FRdUQIx0cRZ3ZKb6JP84M",
+      "foto_id": null,
+      "bron": "bestand",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": 4.00,
+      "datum": "2026-09-02",
+      "omschrijving": "gedrukte drankkaart van de eigen website, als afbeelding",
+      "gecontroleerd": false,
+      "opmerking": "Hertog Jan en Jupiler 25 cl. Zet de eerste pagina van de pdf als JPEG in fotos/daen-drankkaart/s0.jpg."
+    }
+  ]
+}
