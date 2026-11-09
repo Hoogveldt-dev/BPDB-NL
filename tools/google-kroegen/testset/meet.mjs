@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { exifDatum } from "../bron/exif.mjs";
 import { kiesDatum, prijsBuitenBereik } from "../bron/controles.mjs";
 import { Ocr } from "../bron/ocr.mjs";
+import { maakUitsnede } from "../bron/nakijken.mjs";
 import { kiesVaasje } from "../bron/vaasje.mjs";
 import { LOKAAL, STANDAARD_MODEL, bevestigVaasje, controleerModellen, heeftBierprijzen, herkenLos, leesKaart } from "../bron/menulezer.mjs";
 import { STAPPEN, beoordeelDatum, beoordeelJaNee, beoordeelLezen, beoordeelPrijs, telOp } from "./score.mjs";
@@ -31,7 +32,8 @@ export const STANDAARD_STAPPEN = {
   lees: async (beeld, model) => {
     const a = [];
     const r = await leesKaart(beeld, { model, antwoorden: a });
-    return a[0] == null ? null : r.bieren;
+    // De kop van de kaart reist mee voor de uitsnede (onderdeel nakijken).
+    return a[0] == null ? null : Object.assign(r.bieren, { kop: r.kop });
   },
   bevestig: (beeld, vaasje, model) => bevestigVaasje(beeld, vaasje, { model }),
 };
@@ -48,7 +50,7 @@ export function bestandsLader(fotoMap) {
 }
 
 /** Draait alle stappen op een foto. Elke stap wordt apart beoordeeld; "keten" is wat de echte pijplijn zou opleveren. */
-export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPEN, meta = {}, ocr = null, ocrModus = "volgorde" }) {
+export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPEN, meta = {}, ocr = null, ocrModus = "volgorde", uitsnedeNaar = null }) {
   const r = { sleutel: label.sleutel, kroeg: label.kroeg, omschrijving: label.omschrijving, uitslag: {}, tijden: {}, fouten: [] };
   const s0 = await laad(label.sleutel, "s0");
   if (!s0) return { ...r, ontbreekt: true };
@@ -79,6 +81,12 @@ export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPE
     const groot = await laad(label.sleutel, "1600");
     r.bieren = await tijd("lezen", () => stappen.lees(groot, rollen.lezer));
     const vaasje = kiesVaasje(r.bieren || []);
+    // Kan de lezer aanwijzen waar de prijs staat? Dan is een uitsnede voor het nakijken mogelijk.
+    r.vak = vaasje ? vaasje.vak ?? null : undefined;
+    if (vaasje?.vak && uitsnedeNaar) {
+      const knip = maakUitsnede(groot, { vak: vaasje.vak, kop: r.bieren?.kop ?? null });
+      if (knip) await uitsnedeNaar(label.sleutel, knip);
+    }
     // Geen antwoord bij het lezen is twijfel, niet "geen prijs".
     r.gekozen = { prijs_cent: vaasje?.prijs_cent ?? null, twijfel: r.bieren == null };
     if (vaasje && prijsBuitenBereik(vaasje.prijs_cent)) r.gekozen.twijfel = true;
@@ -110,8 +118,10 @@ function tabel(tel, perFoto) {
   const regels = [`${"stap".padEnd(12)}${kol.map((k) => k.padStart(9)).join("")}`];
   for (const s of STAPPEN) regels.push(`${s.padEnd(12)}${kol.map((k) => String(tel[s][k]).padStart(9)).join("")}`);
   const gemeten = perFoto.filter((f) => !f.ontbreekt);
+  const gekozen = gemeten.filter((f) => f.vak !== undefined);
   const sec = gemeten.length ? gemeten.reduce((t, f) => t + f.ms, 0) / gemeten.length / 1000 : 0;
   regels.push(`\n${gemeten.length} foto's gemeten, gemiddeld ${sec.toFixed(1)} s per foto`);
+  if (gekozen.length) regels.push(`Plek van de prijsregel (vak) gegeven bij ${gekozen.filter((f) => f.vak).length} van ${gekozen.length} gekozen prijzen`);
   regels.push("\nPer foto:");
   for (const f of perFoto) {
     if (f.ontbreekt) {
@@ -138,13 +148,14 @@ async function hoofd() {
       alleen: { type: "string" },
       ocr: { type: "string", default: "volgorde" },
       "zonder-ocr": { type: "boolean", default: false },
+      uitsneden: { type: "boolean", default: false },
       naam: { type: "string" },
       hulp: { type: "boolean", short: "h", default: false },
     },
   });
   if (o.hulp) {
     console.log(`Gebruik: node testset/meet.mjs [--lezer model] [--schifter model] [--kijker model|geen] [--url ${LOKAAL.lezer.url}]
-  [--alleen sleutel,sleutel] [--naam proef] [--ocr volgorde|filter] [--zonder-ocr] [--labels labels.json] [--fotos map] [--uitslagen map]
+  [--alleen sleutel,sleutel] [--naam proef] [--ocr volgorde|filter] [--zonder-ocr] [--uitsneden] [--labels labels.json] [--fotos map] [--uitslagen map]
 Model "deepseek" gebruikt DeepSeek (DEEPSEEK_API_KEY) in plaats van een lokaal model.`);
     return;
   }
@@ -167,11 +178,16 @@ Model "deepseek" gebruikt DeepSeek (DEEPSEEK_API_KEY) in plaats van een lokaal m
 
   const laad = bestandsLader(o.fotos);
   const ocr = o["zonder-ocr"] ? null : new Ocr({ log: console.log });
+  const stempel = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const naam = (o.naam || `${rollen.lezer?.model}-${rollen.kijker?.model ?? "geen"}`).replace(/[^\w.-]+/g, "_");
+  // Met --uitsneden: de uitsnede van elke gekozen prijs, om met het oog te controleren of het vak klopt.
+  const uitsnedeMap = join(o.uitslagen, `${stempel}-${naam}`);
+  const uitsnedeNaar = o.uitsneden ? async (sleutel, jpg) => { await mkdir(uitsnedeMap, { recursive: true }); await writeFile(join(uitsnedeMap, `${sleutel}.jpg`), jpg); } : null;
   const perFoto = [];
   for (const label of labels) {
     const metaPad = join(o.fotos, label.sleutel, "meta.json");
     const meta = existsSync(metaPad) ? JSON.parse(await readFile(metaPad, "utf8")) : {};
-    const r = await meetFoto(label, { rollen, laad, meta, ocr, ocrModus: o.ocr });
+    const r = await meetFoto(label, { rollen, laad, meta, ocr, ocrModus: o.ocr, uitsnedeNaar });
     console.log(`${label.sleutel}: ${r.ontbreekt ? "foto ontbreekt" : `${(r.ms / 1000).toFixed(1)} s`}`);
     perFoto.push(r);
   }
@@ -180,8 +196,6 @@ Model "deepseek" gebruikt DeepSeek (DEEPSEEK_API_KEY) in plaats van een lokaal m
   console.log(`\n${tabel(tel, perFoto)}`);
 
   await mkdir(o.uitslagen, { recursive: true });
-  const stempel = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const naam = (o.naam || `${rollen.lezer?.model}-${rollen.kijker?.model ?? "geen"}`).replace(/[^\w.-]+/g, "_");
   const pad = join(o.uitslagen, `${stempel}-${naam}.json`);
   // Alleen adres en naam van elk model: een sleutel hoort niet in een bestand.
   const rolNamen = Object.fromEntries(Object.entries(rollen).map(([k, m]) => [k, m && { url: m.url, model: m.model }]));

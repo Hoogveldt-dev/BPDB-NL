@@ -65,8 +65,9 @@ const LEES = `Dit is een foto van een kaart in een Nederlands café. Lees alle b
 Antwoord alleen met JSON:
 {"leesbaar": true/false,
  "datum_op_kaart": "tekst of null",
- "bieren": [{"merk": "Hertog Jan", "omschrijving": "zoals op de kaart", "cl": 25 of null, "prijs": 3.9, "tap": true/false/null, "pils": true/false}]}
-Regels: "cl" alleen als de maat er staat (0,25l = 25; 0,5 = 50). Staan er twee prijzen voor twee maten ("0,25/0,5 4/8"), maak dan twee regels. "tap" is true bij "van de tap", "fust" of "tap"; false bij "fles". Verzin niets: wat je niet kunt lezen, laat je weg.`;
+ "kop": [links, boven, rechts, onder] of null,
+ "bieren": [{"merk": "Hertog Jan", "omschrijving": "zoals op de kaart", "cl": 25 of null, "prijs": 3.9, "tap": true/false/null, "pils": true/false, "vak": [links, boven, rechts, onder]}]}
+Regels: "cl" alleen als de maat er staat (0,25l = 25; 0,5 = 50). Staan er twee prijzen voor twee maten ("0,25/0,5 4/8"), maak dan twee regels. "tap" is true bij "van de tap", "fust" of "tap"; false bij "fles". "vak" is waar de regel met deze prijs op de foto staat, en "kop" de kop boven de bierlijst (zoals "Bier van de tap"), beide als fractie van de breedte en hoogte van de foto (0 tot 1). Verzin niets: wat je niet kunt lezen, laat je weg.`;
 
 /** Opgeteld verbruik van deze run (verzoeken en tokens). */
 export const verbruik = { verzoeken: 0, in: 0, uit: 0 };
@@ -176,8 +177,8 @@ export async function heeftBierprijzen(foto, opties) {
 /** Leest de bieren van een kaart. */
 export async function leesKaart(foto, opties) {
   const antwoord = await vraag([foto], LEES, opties);
-  if (!antwoord || antwoord.leesbaar === false) return { bieren: [], datumOpKaart: null };
-  return { bieren: Array.isArray(antwoord.bieren) ? antwoord.bieren : [], datumOpKaart: antwoord.datum_op_kaart || null };
+  if (!antwoord || antwoord.leesbaar === false) return { bieren: [], datumOpKaart: null, kop: null };
+  return { bieren: Array.isArray(antwoord.bieren) ? antwoord.bieren : [], datumOpKaart: antwoord.datum_op_kaart || null, kop: antwoord.kop || null };
 }
 
 const LOS = `Is op deze foto van een café een drankkaart, menukaart, prijslijst of krijtbord met prijzen te zien, ook als die klein in beeld is?

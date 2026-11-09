@@ -25,7 +25,8 @@ export function kiesVaasje(regels) {
     if (cl === 25) zekerheid = r.tap === true ? "hoog" : "middel";
     else if (cl == null && /\bvaasje\b/i.test(naam)) zekerheid = "middel";
     else continue;
-    kandidaten.push({ merk: schoonMerk(r.merk || naam), volume_cl: 25, prijs_cent: prijsCent, zekerheid });
+    // vak: waar de regel op de foto staat, voor de uitsnede bij het nakijken
+    kandidaten.push({ merk: schoonMerk(r.merk || naam), volume_cl: 25, prijs_cent: prijsCent, zekerheid, ...(r.vak ? { vak: r.vak } : {}) });
   }
   kandidaten.sort((a, b) => a.prijs_cent - b.prijs_cent || (a.zekerheid === "hoog" ? -1 : 1));
   return kandidaten[0] || null;

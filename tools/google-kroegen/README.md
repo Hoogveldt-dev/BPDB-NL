@@ -89,7 +89,7 @@ Niets apart te installeren, ook niet op Windows: `npm install` zet `tesseract.js
 
 Per kroeg: eerst een goedkope schifting (contactblad van 20 miniaturen) en controle (zijn er bierprijzen te lezen?), beide zonder dat het model nadenkt. Alleen foto's met bierprijzen worden echt gelezen, en na de eerste vaasjesprijs stopt de tool (`--volledig` om toch alles te bekijken). Het verbruik staat aan het eind van de run.
 
-Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `importeer_menuprijzen` naar de database. Bekijk de prijzen eerst. Draai dit vanaf een thuisverbinding: vanaf een datacenter toont Google al na een paar kroegen een CAPTCHA, en dan stopt de run.
+Twijfels en een steekproef van 10% komen in `nakijken/<datum>/`, zodat Claude ze kan nakijken (zie `docs/menukaartprijzen.md`, Nakijken). Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `importeer_menuprijzen` naar de database. Bekijk de prijzen eerst. Draai dit vanaf een thuisverbinding: vanaf een datacenter toont Google al na een paar kroegen een CAPTCHA, en dan stopt de run.
 
 | Onderdeel | Bestand |
 |---|---|
@@ -101,6 +101,7 @@ Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `i
 | Dubbele foto's (dHash), JPEG lezen | `bron/beeld.mjs` |
 | OCR-voorfilter | `bron/ocr.mjs` |
 | Vaste controles op prijs en datum | `bron/controles.mjs` |
+| Uitsneden en gevallen om na te kijken, oordelen verwerken | `bron/nakijken.mjs`, `verwerk-oordelen.mjs`, subagent `.claude/agents/menukaart-controleur.md` |
 | Vaasje kiezen | `bron/vaasje.mjs` |
 | Alles samen | `bron/menuprijs.mjs`, `menufotos.mjs` |
 | Testset en meten per stap | `testset/` (zie `testset/README.md`) |

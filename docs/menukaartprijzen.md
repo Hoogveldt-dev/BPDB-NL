@@ -30,6 +30,21 @@ Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufot
 
 Model: standaard DeepSeek (`deepseek-flash`, leest afbeeldingen), via `DEEPSEEK_API_KEY`. Elk ander model in het OpenAI-formaat kan via `MENU_MODEL_URL` en `MENU_MODEL`. Met `--lokaal` draaien Qwen3.5 en Gemma 4 in LM Studio op de eigen computer, zonder kosten of limiet, met een tweede mening per prijs: zie `docs/lokale-vision.md`.
 
+### Nakijken: Claude kijkt alleen waar het nodig is
+
+De lezer geeft bij elke prijs ook aan waar de regel op de foto staat (`vak`) en waar de kop van de bierlijst staat (`kop`), als fractie van de foto. Na een run schrijft `menufotos.mjs` naar `nakijken/<datum>/` (niet in Git):
+
+- alle `twijfels`: de modellen waren het oneens, of een vaste controle keurde de prijs af;
+- een willekeurige steekproef van 10% van de prijzen waar beide modellen het eens waren (`--steekproef 0.1`, `0` voor geen). Zo meten we hoe vaak ze samen fout zitten.
+
+Per geval een map met `uitsnede.jpg` (de prijsregel over de hele breedte, met marge en de kop erboven), `foto.jpg` (de hele foto op 1024 px) en `geval.json` (gelezen prijs, oordeel van lezer en kijker, reden). `rijen.json` bevat de prijzen waar beide modellen het eens waren.
+
+Daarna, in Claude Code op de eigen computer:
+
+1. Vraag: "Kijk `tools/google-kroegen/nakijken/<datum>` na met de menukaart-controleur en zet elk antwoord als `oordeel.json` in de map van het geval." De subagent `.claude/agents/menukaart-controleur.md` draait op Haiku, mag alleen lezen, bekijkt eerst de uitsnede en alleen bij twijfel de hele foto, en antwoordt met `{"is_menukaart", "prijs_klopt", "juiste_prijs", "toelichting"}`.
+2. `node verwerk-oordelen.mjs nakijken/<datum>` maakt `nakijken/<datum>/nagekeken.json`: goedgekeurde twijfels erbij, afgekeurde steekproefprijzen eraf, en een rapport met hoe vaak de modellen samen fout zaten. Een andere prijs van de controleur (`juiste_prijs`) importeren we niet: liever geen prijs dan een verkeerde.
+3. Kjell bekijkt het rapport en importeert zelf met `node verwerk-oordelen.mjs nakijken/<datum> --naar-supabase`.
+
 ### Wat het kost
 
 Gemeten op 6 november 2026 met dezelfde foto's:
