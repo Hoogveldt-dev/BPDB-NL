@@ -11,7 +11,12 @@ Genoemd naar Café Daen (6 november 2026: Hertog Jan 25 cl €4,00, drankkaart v
 1. Zoek de website van de kroeg (staat in Google Maps of OSM).
 2. Zoek de drankkaart: een link naar een pdf op de menupagina, of in de openbare mediabibliotheek van WordPress (`/wp-json/wp/v2/media?search=drank`).
 3. Is de pdf opgemaakt met tekst, dan volstaat `pdftotext -layout`; geen AI nodig. Alleen een gescande pdf of een afbeelding gaat naar een vision-model (eerst Haiku of Sonnet, de betaalde DeepSeek-sleutel alleen als dat nodig is).
-4. Datum: uit de bestandsnaam of de kaart zelf. Anders de map in de URL (`uploads/2026/09/`), `Last-Modified` van de server of de uploaddatum in de mediabibliotheek, in die volgorde.
+4. Datum: het moment waarop de kaart gemaakt of voor het laatst gewijzigd is, nooit de dag dat wij kijken. In deze volgorde:
+   1. EXIF-datum van een foto of afbeelding (`DateTimeOriginal`, zoals bij de JAN-methode);
+   2. een datum op de kaart zelf of in de bestandsnaam;
+   3. de wijzigingsdatum van de pagina of het bestand: bij WordPress `modified` uit `/wp-json/wp/v2/pages?slug=<pagina>` of `/wp-json/wp/v2/media`, anders `dateModified` of `article:modified_time` in de HTML, bij Webflow `Last Published` in de broncode;
+   4. de map in de URL (`uploads/2026/09/`) of `Last-Modified` van de server, alleen als die niet bij elk verzoek de huidige tijd geeft.
+   Vind je geen van deze, dan geen prijs.
 
 Voordelen: de bron is de kroeg zelf, het is goedkoop en het mag. Nadeel: veel kroegen zetten alleen hun eetkaart online.
 
@@ -110,11 +115,13 @@ Vanuit de cloud zijn Google Maps en LM Studio niet bereikbaar, de websites van k
 
 | Kroeg | Bron | Vaasje | Datum |
 |---|---|---|---|
-| Café Wunderkammer | drankkaart als afbeelding op de website (24 pagina's; OCR vond de bierpagina, Claude las hem) | Grolsch 25 cl € 3,80 | 2026-09-09 (upload van de afbeelding) |
-| De Kluizenaar | dranken-pagina | Mokum Bier Pilsener (Heineken) 25 cl € 3,80 | 2026-11-09 (geen datum op de site) |
-| Café Faber | menukaart-pagina, "Heineken fluit / vaas 3.60 / 3.90" | Heineken € 3,90 | 2026-11-09 |
-| Café Lux | menukaart-pagina, "Grolsch Pils (0,25 L/0,5 L) 3,9 / 7,2" | Grolsch 25 cl € 3,90 | 2026-11-09 |
-| Brouwerij Florijn | dranken-pagina, "Heineken fluit 3.6 / vaas 3.9" (DNB is hun eigen blond, geen pils) | Heineken € 3,90 | 2026-11-09 |
+| Café Wunderkammer | drankkaart als afbeelding op de website (24 pagina's; OCR vond de bierpagina, Claude las hem) | Grolsch 25 cl € 3,80 | 2026-09-09 (upload in de mediabibliotheek; de afbeelding heeft geen EXIF) |
+| De Kluizenaar | dranken-pagina | Mokum Bier Pilsener (Heineken) 25 cl € 3,80 | 2026-10-05 (Webflow, `Last Published`) |
+| Café Faber | menukaart-pagina, "Heineken fluit / vaas 3.60 / 3.90" | Heineken € 3,90 | 2026-06-16 (WordPress, `modified`) |
+| Café Lux | menukaart-pagina, "Grolsch Pils (0,25 L/0,5 L) 3,9 / 7,2" | Grolsch 25 cl € 3,90 | 2026-10-07 (`dateModified`) |
+| Brouwerij Florijn | dranken-pagina, "Heineken fluit 3.6 / vaas 3.9" (DNB is hun eigen blond, geen pils) | Heineken € 3,90 | 2026-09-23 (WordPress, `modified`) |
+
+Eerst was bij vier kroegen de dag van het bekijken (9 november 2026) als datum ingevoerd. Dat was fout: de datum hoort bij de kaart, niet bij ons bezoek. Dezelfde avond rechtgezet in de database (`op` en `bron_omschrijving` van deze vijf rijen).
 
 Afgevallen: Café Maxim (alleen Brand in 22 cl), Café Jos (geen prijzen op de site), en kroegen zonder bereikbare site of drankkaart.
 
