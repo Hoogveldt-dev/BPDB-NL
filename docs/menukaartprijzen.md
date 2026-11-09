@@ -104,6 +104,24 @@ node -e "const f=require('fs').readFileSync(0,'utf8').trim();const a=JSON.parse(
 
 Nog niet onderzocht. Lukt het, dan bouwt een volgende sessie `--alleen-menu` (standaard als eerste ronde, met de volledige fotolijst als terugval) en meet hoeveel minder foto's en verzoeken het kost. Lukt het niet, dan komt hier wat er geprobeerd is.
 
+## Proef: DAEN vanuit een cloudsessie (9 november 2026)
+
+Vanuit de cloud zijn Google Maps en LM Studio niet bereikbaar, de websites van kroegen wel. Claude (de hoofdsessie) zocht daarom bij Nijmeegse kroegen zonder prijs de drankkaart op de eigen website. Lokale modellen en DeepSeek zijn niet gebruikt.
+
+| Kroeg | Bron | Vaasje | Datum |
+|---|---|---|---|
+| Café Wunderkammer | drankkaart als afbeelding op de website (24 pagina's; OCR vond de bierpagina, Claude las hem) | Grolsch 25 cl € 3,80 | 2026-09-09 (upload van de afbeelding) |
+| De Kluizenaar | dranken-pagina | Mokum Bier Pilsener (Heineken) 25 cl € 3,80 | 2026-11-09 (geen datum op de site) |
+| Café Faber | menukaart-pagina, "Heineken fluit / vaas 3.60 / 3.90" | Heineken € 3,90 | 2026-11-09 |
+| Café Lux | menukaart-pagina, "Grolsch Pils (0,25 L/0,5 L) 3,9 / 7,2" | Grolsch 25 cl € 3,90 | 2026-11-09 |
+| Brouwerij Florijn | dranken-pagina, "Heineken fluit 3.6 / vaas 3.9" (DNB is hun eigen blond, geen pils) | Heineken € 3,90 | 2026-11-09 |
+
+Afgevallen: Café Maxim (alleen Brand in 22 cl), Café Jos (geen prijzen op de site), en kroegen zonder bereikbare site of drankkaart.
+
+Elke prijs is nagekeken door de subagent menukaart-controleur (Haiku). Die keurde De Kluizenaar eerst af: in de platte tekst stond de maat niet bij de prijs. In de HTML staan prijs (3,6 / 3,8 / 6,7) en maat (18 / 25 / 50 cl) in hetzelfde kaartje; met die bron keurde hij de prijs goed. Daarna de vaste controles (bereik, mediaan € 3,90, datum) en de import via `importeer_menuprijzen`: 5 toegevoegd, 0 overgeslagen. De eerste poging liep vast op de grens van 80 tekens voor `bron_omschrijving`; `naarMenuImport` houdt zich daar nu aan.
+
+Herhalen met een eigen scope: `docs/menukaart-manager.md`.
+
 ## Proef: Café Van Buren (Molenstraat 89)
 
 6 november 2026.

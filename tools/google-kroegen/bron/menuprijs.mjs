@@ -150,13 +150,14 @@ export async function zoekMenuprijs(fotos, {
 /** Een rij voor importeer_menuprijzen. */
 export function naarMenuImport(placeId, p) {
   const wanneer = p.datumBron === "opname" ? `genomen ${p.datum}` : `geupload ${p.datum}`;
-  const extra = [p.klokFout && "datum van de camera klopte niet", p.oud && "foto ouder dan tien jaar"].filter(Boolean);
+  // De database staat hoogstens 80 tekens toe (gebeurtenissen.bron_omschrijving); de langste vorm is 74.
+  const extra = [p.klokFout && "cameraklok fout", p.oud && "10+ jaar oud"].filter(Boolean);
   return {
     google_place_id: placeId,
     merk: p.merk,
     volume_cl: p.volume_cl,
     prijs_cent: p.prijs_cent,
     datum: p.datum,
-    bron_omschrijving: `Foto van de kaart in Google Maps, ${wanneer}${extra.length ? ` (${extra.join(", ")})` : ""}`,
+    bron_omschrijving: `Kaartfoto Google Maps, ${wanneer}${extra.length ? ` (${extra.join(", ")})` : ""}`,
   };
 }
