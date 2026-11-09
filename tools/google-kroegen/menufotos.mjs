@@ -8,7 +8,7 @@ import { FotoBron } from "./bron/fotobron.mjs";
 import { Geblokkeerd } from "./bron/transport.mjs";
 import { naarMenuImport, zoekMenuprijs } from "./bron/menuprijs.mjs";
 import { maakBlad } from "./bron/contactblad.mjs";
-import { LOKAAL, bevestigVaasje, heeftBierprijzen, herkenLos, herkenOpBlad, leesKaart, verbruik } from "./bron/menulezer.mjs";
+import { LOKAAL, bevestigVaasje, controleerModellen, heeftBierprijzen, herkenLos, herkenOpBlad, leesKaart, verbruik } from "./bron/menulezer.mjs";
 
 const HULP = `Gebruik: node menufotos.mjs [opties]
 
@@ -25,13 +25,14 @@ Opties:
   --zichtbaar               browser zichtbaar openen
   --uit menuprijzen.json    standaard menuprijzen.json
   --naar-supabase           ook importeren (SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY nodig)
-  --lokaal                  lokale modellen via Ollama of LM Studio, zonder limiet:
-                            Llama 3.2 Vision schift per foto en geeft een tweede mening,
-                            Qwen2.5-VL controleert en leest. Zie docs/lokale-vision.md.
+  --lokaal                  lokale modellen via LM Studio (of Ollama), zonder limiet:
+                            Gemma 4 schift per foto en geeft een tweede mening,
+                            Qwen3.5 controleert en leest. Zie docs/lokale-vision.md.
 
 Model: DeepSeek (deepseek-flash) via DEEPSEEK_API_KEY. Ander model in het
 OpenAI-formaat: MENU_MODEL_URL en MENU_MODEL. Met --lokaal: LOKAAL_URL
-(standaard http://localhost:11434/v1), LOKAAL_LEZER en LOKAAL_KIJKER.
+(standaard http://localhost:1235/v1, LM Studio), LOKAAL_SCHIFTER, LOKAAL_LEZER
+en LOKAAL_KIJKER (modelnamen zoals GET /v1/models ze toont).
 
 Google blokkeert snel vanaf datacenters: draai dit vanaf een thuisverbinding.
 Bij een CAPTCHA stopt de run; wat al gevonden is, wordt bewaard.
@@ -64,6 +65,16 @@ if (o["place-id"]) kroegen = o["place-id"].split(",").map((id) => ({ place_id: i
 else kroegen = JSON.parse(await readFile(o.kroegen, "utf8")).filter((k) => k.place_id);
 if (o["max-kroegen"]) kroegen = kroegen.slice(0, Number(o["max-kroegen"]));
 
+// Eerst kijken of de lokale modellen er zijn, voordat we Google aanspreken.
+if (o.lokaal) {
+  try {
+    await controleerModellen([LOKAAL.schifter, LOKAAL.lezer, LOKAAL.kijker]);
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
+}
+
 async function haalBeeld(url) {
   const res = await fetch(url, { signal: AbortSignal.timeout(60000) });
   if (!res.ok) throw new Error(`Foto gaf HTTP ${res.status}`);
@@ -85,9 +96,9 @@ try {
       // Anders: een contactblad per 20 foto's, zuinig met tokens.
       const stappen = o.lokaal
         ? {
-          herken: (miniaturen, opties) => herkenLos(miniaturen, { ...opties, model: LOKAAL.kijker }),
+          herken: (miniaturen, opties) => herkenLos(miniaturen, { ...opties, model: LOKAAL.schifter }),
           controleer: (foto, opties) => heeftBierprijzen(foto, { ...opties, model: LOKAAL.lezer }),
-          lees: (foto, opties) => leesKaart(foto, { ...opties, model: LOKAAL.lezer, maxTokens: 2000 }),
+          lees: (foto, opties) => leesKaart(foto, { ...opties, model: LOKAAL.lezer }),
           bevestig: (foto, vaasje, opties) => bevestigVaasje(foto, vaasje, { ...opties, model: LOKAAL.kijker }),
           maxKandidaten: 12,
         }

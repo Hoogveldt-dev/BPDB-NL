@@ -52,6 +52,7 @@ Zie `tools/google-kroegen/testset/README.md`. Alles op je eigen computer, vanaf 
 2. **Drankkaart van Café Daen.** Zet de eerste pagina van de pdf als JPEG in `testset/fotos/daen-drankkaart/s0.jpg`.
 3. **Aanvullen tot ongeveer twintig.** Ook foto's zonder kaart (eten, interieur), scheve en donkere foto's, krijtborden en gedrukte kaarten. Controleer elk label met de hand en zet `gecontroleerd` op `true`.
 4. **Ophalen en meten.** `node testset/haal-fotos.mjs`, daarna `node testset/meet.mjs`.
+5. **LM Studio.** Server aan op poort 1235 (Developer), Just-in-time loading aan. Draai de vier vergelijkingen uit `docs/lokale-vision.md` (Meten) en zet de uitslag in de tabel daar; Claude past daarna de standaard aan als een ander model beter is.
 
 ## Later
 

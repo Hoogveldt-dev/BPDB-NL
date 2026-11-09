@@ -84,6 +84,55 @@ test("modelantwoord: JSON uit tekst met codeblok", () => {
   assert.equal(haalJson("geen json"), null);
 });
 
+test("modelantwoord: redeneertekst eraf en het eerste geldige JSON-blok", () => {
+  assert.deepEqual(haalJson('<think>Ik zie {"kaart": true/false}...</think>\n{"kaart": true}'), { kaart: true });
+  assert.deepEqual(haalJson('Nadenken zonder openingstag {"kaart": false}</think>{"kaart": true}'), { kaart: true });
+  assert.deepEqual(haalJson('Het format is {kaart: ja}. Antwoord: {"bieren": [{"merk": "Brand {tap}", "prijs": 3.6}]} klaar'), { bieren: [{ merk: "Brand {tap}", prijs: 3.6 }] });
+  assert.equal(haalJson('<think>afgekapt midden in het nadenken {"kaart": true}'), null);
+});
+
+// De rollen in een apart proces, zodat eigen LOKAAL_*-variabelen de test niet beinvloeden.
+async function rollenMet(env) {
+  const { execFileSync } = await import("node:child_process");
+  const schoon = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith("LOKAAL_")));
+  const code = 'const { LOKAAL } = await import("./bron/menulezer.mjs"); console.log(JSON.stringify(LOKAAL))';
+  return JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", code], { cwd: new URL("..", import.meta.url), env: { ...schoon, ...env } }).toString());
+}
+
+test("lokale modellen: drie rollen met standaarden voor LM Studio", async () => {
+  const l = await rollenMet({});
+  assert.equal(l.schifter.url, "http://localhost:1235/v1");
+  assert.deepEqual([l.schifter.model, l.lezer.model, l.kijker.model], ["google/gemma-4-e4b", "qwen/qwen3.5-9b", "google/gemma-4-e4b"]);
+});
+
+test("lokale modellen: oude variabele LOKAAL_KIJKER geldt ook voor de schifter; Ollama via LOKAAL_URL", async () => {
+  const l = await rollenMet({ LOKAAL_KIJKER: "qwen2.5-vl-7b-instruct", LOKAAL_URL: "http://localhost:11434/v1" });
+  assert.deepEqual([l.schifter.model, l.kijker.model, l.lezer.url], ["qwen2.5-vl-7b-instruct", "qwen2.5-vl-7b-instruct", "http://localhost:11434/v1"]);
+  assert.equal((await rollenMet({ LOKAAL_KIJKER: "a", LOKAAL_SCHIFTER: "b" })).schifter.model, "b");
+});
+
+test("lokale modellen: controle bij de start noemt ontbrekende en beschikbare modellen", async () => {
+  const { STANDAARD_MODEL, controleerModellen } = await import("../bron/menulezer.mjs");
+  const lok = (model) => ({ url: "http://localhost:1235/v1", model, sleutel: "lokaal", lokaal: true });
+  const LOKAAL = { schifter: lok("google/gemma-4-e4b"), lezer: lok("qwen/qwen3.5-9b"), kijker: lok("google/gemma-4-e4b") };
+  const echt = globalThis.fetch;
+  const gevraagd = [];
+  globalThis.fetch = async (url) => {
+    gevraagd.push(url);
+    return new Response(JSON.stringify({ data: [{ id: "qwen/qwen3.5-9b" }, { id: "google/gemma-4-e4b" }, { id: "qwen2.5-vl-7b-instruct" }] }), { status: 200 });
+  };
+  try {
+    await controleerModellen([LOKAAL.schifter, LOKAAL.lezer, LOKAAL.kijker, STANDAARD_MODEL]);
+    assert.deepEqual(gevraagd, ["http://localhost:1235/v1/models"], "een keer per server, niet voor DeepSeek");
+    await assert.rejects(controleerModellen([{ ...LOKAAL.kijker, model: "llama3.2-vision:11b" }]),
+      /Model llama3\.2-vision:11b staat niet op .*Beschikbaar: qwen\/qwen3\.5-9b, google\/gemma-4-e4b, qwen2\.5-vl-7b-instruct/);
+    globalThis.fetch = async () => { throw new Error("fetch failed"); };
+    await assert.rejects(controleerModellen([LOKAAL.lezer]), /Geen lokale modelserver op http:\/\/localhost:1235\/v1.*LM Studio/);
+  } finally {
+    globalThis.fetch = echt;
+  }
+});
+
 test("zoekMenuprijs: kaart herkennen, EXIF-datum, nieuwste kaart wint", async () => {
   const exif = readFileSync(new URL("./exif-klein.jpg", import.meta.url));
   const zonder = readFileSync(new URL("./zonder-exif.jpg", import.meta.url));
@@ -219,10 +268,11 @@ test("lokale modellen: geen sleutel, geen instelling voor nadenken, temperatuur 
   };
   try {
     const beeld = Buffer.from("x");
-    assert.deepEqual(await herkenLos([beeld, beeld], { model: LOKAAL.kijker }), [0]);
+    assert.deepEqual(await herkenLos([beeld, beeld], { model: LOKAAL.schifter }), [0]);
     assert.equal(verzoeken.length, 2, "elke foto apart");
-    assert.match(verzoeken[0].url, /localhost:11434\/v1\/chat\/completions$/);
-    assert.equal(verzoeken[0].body.model, "llama3.2-vision:11b");
+    assert.equal(verzoeken[0].url, `${LOKAAL.schifter.url}/chat/completions`);
+    assert.equal(verzoeken[0].body.model, LOKAAL.schifter.model);
+    assert.ok(verzoeken[0].body.max_tokens >= 8192, "ruimte om na te denken");
     assert.equal(verzoeken[0].body.temperature, 0);
     assert.equal(verzoeken[0].body.thinking, undefined);
     assert.equal(verzoeken[0].body.reasoning_effort, undefined);

@@ -11,15 +11,50 @@ export const STANDAARD_MODEL = {
   sleutel: process.env.DEEPSEEK_API_KEY || "proxy-injected",
 };
 
-// Lokale modellen op je eigen computer, via Ollama of LM Studio (beide spreken het OpenAI-formaat).
-// Geen sleutel en geen limiet. Zie docs/lokale-vision.md.
-//   lezer   Qwen2.5-VL 7B Instruct: leest kleine tekst en cijfers op kaarten het best.
-//   kijker  Llama 3.2 11B Vision Instruct: ziet goed wat er op een foto staat; tweede mening.
-const LOKAAL_URL = process.env.LOKAAL_URL || "http://localhost:11434/v1";
+// Lokale modellen op je eigen computer, standaard via LM Studio op poort 1235. Ollama werkt ook
+// (LOKAAL_URL=http://localhost:11434/v1); beide spreken het OpenAI-formaat. Geen sleutel en geen limiet.
+// Zie docs/lokale-vision.md. Drie rollen, elk met een eigen variabele:
+//   schifter  LOKAAL_SCHIFTER, Gemma 4 E4B: staat er een kaart of krijtbord op?
+//   lezer     LOKAAL_LEZER, Qwen3.5 9B: controleren en lezen, met nadenken, temperatuur 0.
+//   kijker    LOKAAL_KIJKER, Gemma 4 E4B: tweede mening van een andere modelfamilie.
+// Vroeger schifte de kijker; zonder LOKAAL_SCHIFTER neemt de schifter daarom LOKAAL_KIJKER over.
+export const LOKAAL_URL = process.env.LOKAAL_URL || "http://localhost:1235/v1";
+const lokaal = (model) => ({ url: LOKAAL_URL, model, sleutel: "lokaal", lokaal: true });
 export const LOKAAL = {
-  lezer: { url: LOKAAL_URL, model: process.env.LOKAAL_LEZER || "qwen2.5vl:7b", sleutel: "lokaal", lokaal: true },
-  kijker: { url: LOKAAL_URL, model: process.env.LOKAAL_KIJKER || "llama3.2-vision:11b", sleutel: "lokaal", lokaal: true },
+  schifter: lokaal(process.env.LOKAAL_SCHIFTER || process.env.LOKAAL_KIJKER || "google/gemma-4-e4b"),
+  lezer: lokaal(process.env.LOKAAL_LEZER || "qwen/qwen3.5-9b"),
+  kijker: lokaal(process.env.LOKAAL_KIJKER || "google/gemma-4-e4b"),
 };
+
+// LM Studio laadt een model pas bij de eerste aanroep (JIT); dat kan minuten duren. Daarom ruim.
+const LOKAAL_TIMEOUT_MS = Number(process.env.LOKAAL_TIMEOUT_MS) || 900000;
+// Modellen die nadenken schrijven eerst redeneertekst; met te weinig tokens komt de JSON er niet meer bij.
+// Lokaal kost een token niets, dus nooit minder dan dit.
+const LOKAAL_MIN_TOKENS = 8192;
+
+/**
+ * Controleert bij de start of de gekozen lokale modellen bestaan (GET /v1/models).
+ * Geeft een Nederlandse melding met de beschikbare namen als er een ontbreekt.
+ */
+export async function controleerModellen(modellen) {
+  const lokale = modellen.filter((m) => m?.lokaal);
+  const perUrl = new Map();
+  for (const m of lokale) perUrl.set(m.url, [...(perUrl.get(m.url) || []), m.model]);
+  for (const [url, namen] of perUrl) {
+    let lijst;
+    try {
+      const res = await fetch(`${url.replace(/\/$/, "")}/models`, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      lijst = ((await res.json()).data || []).map((d) => d.id);
+    } catch (e) {
+      throw new Error(`Geen lokale modelserver op ${url} (${e.message}). Start de server in LM Studio (Developer, Start server, poort 1235) of zet LOKAAL_URL goed.`);
+    }
+    const ontbreekt = [...new Set(namen)].filter((n) => !lijst.includes(n));
+    if (ontbreekt.length) {
+      throw new Error(`Model ${ontbreekt.join(", ")} staat niet op ${url}. Beschikbaar: ${lijst.join(", ") || "geen"}. Kies met LOKAAL_SCHIFTER, LOKAAL_LEZER of LOKAAL_KIJKER.`);
+    }
+  }
+}
 
 const HERKEN = `Je ziet genummerde foto's van een café (nummer 1 is de eerste afbeelding).
 Welke foto's tonen een drankkaart, menukaart of prijsbord waarop prijzen van bier leesbaar kunnen zijn?
@@ -36,17 +71,44 @@ Regels: "cl" alleen als de maat er staat (0,25l = 25; 0,5 = 50). Staan er twee p
 /** Opgeteld verbruik van deze run (verzoeken en tokens). */
 export const verbruik = { verzoeken: 0, in: 0, uit: 0 };
 
+/** Haalt redeneertekst van modellen die nadenken weg: <think>...</think>, ook als de openingstag ontbreekt. */
+export function zonderDenken(tekst) {
+  let t = String(tekst ?? "");
+  const eind = t.lastIndexOf("</think>");
+  if (eind >= 0) t = t.slice(eind + "</think>".length);
+  return t.replace(/<think>[\s\S]*$/, "");
+}
+
+/** Het eerste geldige JSON-object in een antwoord, of null. */
 export function haalJson(tekst) {
   if (!tekst) return null;
-  const zonderHek = tekst.replace(/```(?:json)?/g, "");
-  const begin = zonderHek.indexOf("{");
-  const eind = zonderHek.lastIndexOf("}");
-  if (begin < 0 || eind <= begin) return null;
-  try {
-    return JSON.parse(zonderHek.slice(begin, eind + 1));
-  } catch {
-    return null;
+  const t = zonderDenken(tekst);
+  for (let begin = t.indexOf("{"); begin >= 0; begin = t.indexOf("{", begin + 1)) {
+    const eind = sluitHaak(t, begin);
+    if (eind < 0) continue;
+    try {
+      return JSON.parse(t.slice(begin, eind + 1));
+    } catch {
+      // geen geldige JSON op deze plek; probeer de volgende {
+    }
   }
+  return null;
+}
+
+// Positie van de } die bij de { op plek begin hoort, met aandacht voor tekst tussen aanhalingstekens.
+function sluitHaak(t, begin) {
+  let diepte = 0;
+  let inTekst = false;
+  for (let i = begin; i < t.length; i++) {
+    const c = t[i];
+    if (inTekst) {
+      if (c === "\\") i += 1;
+      else if (c === '"') inTekst = false;
+    } else if (c === '"') inTekst = true;
+    else if (c === "{") diepte += 1;
+    else if (c === "}" && --diepte === 0) return i;
+  }
+  return -1;
 }
 
 // denken: false zet het nadenken van het model uit. Voor ja/nee-vragen (herkennen,
@@ -64,13 +126,13 @@ async function vraag(afbeeldingen, tekst, { model = STANDAARD_MODEL, maxTokens =
     headers: { Authorization: `Bearer ${model.sleutel}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: model.model,
-      max_tokens: maxTokens,
-      // Lokale modellen kennen geen instelling voor nadenken; daar vragen we om een vast antwoord (temperatuur 0)
+      max_tokens: model.lokaal ? Math.max(maxTokens, LOKAAL_MIN_TOKENS) : maxTokens,
+      // Lokaal: geen instelling voor nadenken (dat doet het model zelf), wel een vast antwoord (temperatuur 0)
       ...(model.lokaal ? { temperature: 0 } : denken ? { reasoning_effort: "low" } : { thinking: { type: "disabled" } }),
       messages: [{ role: "user", content }],
     }),
     // Een lokaal model op een gewone videokaart kan per foto een halve minuut of meer nodig hebben
-    signal: AbortSignal.timeout(model.lokaal ? 600000 : 180000),
+    signal: AbortSignal.timeout(model.lokaal ? LOKAAL_TIMEOUT_MS : 180000),
   });
   const body = await res.text();
   if (!res.ok) throw new Error(`Model gaf HTTP ${res.status}: ${body.slice(0, 300)}`);
