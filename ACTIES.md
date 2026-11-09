@@ -11,10 +11,7 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 
 Geregistreerd bij Vimexx op 6 november 2026. Daar staan nu de nameservers van Vimexx (`dns1.p01.nsone.net` tot en met `dns3`).
 
-1. **Domein in Cloudflare.** Cloudflare, Domains, Onboard a domain: `bierkoers.nl`, plan Free. Cloudflare toont dan twee nameservers die bij jouw account horen (iets als `naam.ns.cloudflare.com`).
-2. **DNSSEC uit bij Vimexx**, als het aanstaat. Anders werkt het domein niet meer zodra de nameservers wisselen.
-3. **Nameservers bij Vimexx.** Domein `bierkoers.nl`, Nameservers wijzigen naar de twee van Cloudflare. Wachten tot Cloudflare meldt dat het domein actief is (meestal binnen een uur, soms langer).
-4. **Koppelen aan de app.** Workers & Pages, `bpdb-nl`, Custom domains: voeg `bierkoers.nl` en `www.bierkoers.nl` toe.
+1. ~~**Domein in Cloudflare, nameservers en koppelen aan de app (stap 1 tot en met 4).**~~ Gedaan: op 9 november 2026 gecontroleerd dat `https://bierkoers.nl` de app toont via Cloudflare.
 5. **DNSSEC weer aan**, nu via Cloudflare (DNS, Settings), en zet de DS-record die Cloudflare geeft bij Vimexx.
 6. **Supabase-adressen bijwerken.** Authentication, URL Configuration: Site URL `https://bierkoers.nl`, en voeg `https://bierkoers.nl/**` toe aan de Redirect URLs. Laat `https://bpdb-nl.pages.dev/**` staan. Bij inloggen met Apple en Google ook het nieuwe domein toevoegen.
 
@@ -27,9 +24,9 @@ Geregistreerd bij Vimexx op 6 november 2026. Daar staan nu de nameservers van Vi
 
 0. ~~**Nieuwe migratie `20261106150000_bevestigen_naar_betrouwbaarheid`.**~~ Gedaan op 6 november 2026: de rij staat in `supabase_migrations.schema_migrations` (versie `20261106150000`, naam `bevestigen_naar_betrouwbaarheid`). Gecontroleerd: `private.rond_af`, `private.meld_prijs` en de kolommen van `kroeg_kaart` zijn nieuw. Security Advisor: zie hieronder zodra gedraaid.
 0. ~~**Migratie `20261106160000_vaste_spelersnaam`.**~~ Gedaan op 6 november 2026: staat op Supabase met versie `20261106160000`. Jouw naam Pils staat vast. Een naam wijzigen kan alleen nog in de SQL Editor. De Edge Function `osm-import` is opnieuw uitgerold (versie 2): probeert nu drie Overpass-servers en toont de echte foutreden. Security Advisor: alleen de bekende waarschuwing over gelekte wachtwoorden.
-1. ~~**Migraties.**~~ Gedaan op 6 november 2026: `20261106090000_anonieme_spelers` en `20261106120000_extra_bier` staan op project `yzaootlrhxzyxtvacrot`, met de versies gelijk aan de bestandsnamen. De Security Advisor geeft alleen een waarschuwing over gelekte wachtwoorden; die doet er niet toe, want BPDB gebruikt geen wachtwoorden.
+1. ~~**Migraties.**~~ Gedaan op 6 november 2026: `20261106090000_anonieme_spelers` en `20261106120000_extra_bier` staan op project `yzaootlrhxzyxtvacrot`, met de versies gelijk aan de bestandsnamen. De Security Advisor geeft alleen een waarschuwing over gelekte wachtwoorden; die doet er niet toe, want Bierkoers gebruikt geen wachtwoorden.
 2. **Anonieme accounts.** Supabase, Authentication, Sign In / Providers: zet **Allow anonymous sign-ins** en **Allow manual linking** aan. Zonder deze stap kan niemand nieuw meedoen.
-3. **Mailtemplates.** Authentication, Emails, Templates. Zet bij **Magic Link**, **Change Email Address** en **Confirm signup** het onderwerp `Je code voor de Kroegkaart` en de tekst uit `supabase/templates/inlogcode.html` (met `{{ .Token }}`). Zonder deze stap krijgt een speler een link in plaats van een code en kan hij in de app niets invullen.
+3. **Mailtemplates.** Authentication, Emails, Templates. Zet bij **Magic Link**, **Change Email Address** en **Confirm signup** het onderwerp `Je code voor Bierkoers` (in `supabase/config.toml`: `Je inlogcode voor Bierkoers`) en de tekst uit `supabase/templates/inlogcode.html` (met `{{ .Token }}`). Zonder deze stap krijgt een speler een link in plaats van een code en kan hij in de app niets invullen.
 4. **Eigen SMTP.** Authentication, Emails, SMTP Settings. Koppel Resend, Postmark of een andere mailprovider met een eigen afzender. Zonder deze stap krijgen alleen leden van je Supabase-team een mail, en maar een paar per uur.
 5. **Rate limits.** Authentication, Rate Limits: zet het aantal mails per uur hoger zodra SMTP gekoppeld is. Nieuwe anonieme accounts staan standaard op 30 per uur per IP-adres; dat is genoeg.
 6. **Adressen.** Authentication, URL Configuration: Site URL `https://bpdb-nl.pages.dev`, Redirect URLs `https://bpdb-nl.pages.dev/**` en `http://localhost:8765/**`.
@@ -40,7 +37,7 @@ De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze v
 
 1. **Google:** project in Google Cloud, toestemmingsscherm, webclient, Client ID en secret in Supabase, Google aanzetten, app op In production.
 2. **Apple:** lidmaatschap Apple Developer Program, Services ID en sleutel, geheime sleutel in Supabase, Apple aanzetten. De geheime sleutel verloopt na hoogstens 6 maanden.
-3. **Privacyverklaring:** Google vraagt om een link. BPDB heeft er nog geen.
+3. **Privacyverklaring:** Google vraagt om een link. Bierkoers heeft er nog geen.
 
 ## Menukaartprijzen uit Google-foto's
 

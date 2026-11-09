@@ -30,8 +30,8 @@ Authentication, Sign In / Providers: zet **Allow manual linking** aan (nodig om 
 
 ## Stap 2. Google (kan zonder betaald account)
 
-1. Ga naar [console.cloud.google.com](https://console.cloud.google.com) en maak een project "BPDB Kroegkaart".
-2. Google Auth Platform, Branding (het toestemmingsscherm): type Extern, app-naam "BPDB Kroegkaart", een e-mailadres voor ondersteuning, de startpagina `https://bpdb-nl.pages.dev` en een link naar een privacyverklaring. Die heeft BPDB nog niet; zie Open punten. Bij Authorized domains: `yzaootlrhxzyxtvacrot.supabase.co` en `bpdb-nl.pages.dev`.
+1. Ga naar [console.cloud.google.com](https://console.cloud.google.com) en maak een project "Bierkoers".
+2. Google Auth Platform, Branding (het toestemmingsscherm): type Extern, app-naam "Bierkoers", een e-mailadres voor ondersteuning, de startpagina `https://bpdb-nl.pages.dev` en een link naar een privacyverklaring. Die heeft Bierkoers nog niet; zie Open punten. Bij Authorized domains: `yzaootlrhxzyxtvacrot.supabase.co` en `bpdb-nl.pages.dev`.
 3. Data Access: scopes `openid`, `.../auth/userinfo.email` en `.../auth/userinfo.profile`. Meer is niet nodig.
 4. Clients, Create client: type Webapplicatie. Authorized JavaScript origins: `https://bpdb-nl.pages.dev` en `http://localhost:8765`. Authorized redirect URIs: het terugkeeradres van Supabase hierboven.
 5. Kopieer Client ID en Client secret naar Supabase: Authentication, Sign In / Providers, Google. Zet Google aan en sla op. Vanaf nu staat de knop in de app open.
