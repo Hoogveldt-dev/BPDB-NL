@@ -8,6 +8,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { exifDatum } from "../bron/exif.mjs";
+import { kiesDatum, prijsBuitenBereik } from "../bron/controles.mjs";
+import { Ocr } from "../bron/ocr.mjs";
 import { kiesVaasje } from "../bron/vaasje.mjs";
 import { LOKAAL, STANDAARD_MODEL, bevestigVaasje, controleerModellen, heeftBierprijzen, herkenLos, leesKaart } from "../bron/menulezer.mjs";
 import { STAPPEN, beoordeelDatum, beoordeelJaNee, beoordeelLezen, beoordeelPrijs, telOp } from "./score.mjs";
@@ -46,7 +48,7 @@ export function bestandsLader(fotoMap) {
 }
 
 /** Draait alle stappen op een foto. Elke stap wordt apart beoordeeld; "keten" is wat de echte pijplijn zou opleveren. */
-export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPEN, meta = {} }) {
+export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPEN, meta = {}, ocr = null, ocrModus = "volgorde" }) {
   const r = { sleutel: label.sleutel, kroeg: label.kroeg, omschrijving: label.omschrijving, uitslag: {}, tijden: {}, fouten: [] };
   const s0 = await laad(label.sleutel, "s0");
   if (!s0) return { ...r, ontbreekt: true };
@@ -63,6 +65,10 @@ export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPE
     }
   };
 
+  // OCR telt als goed als het een bedrag vindt op een foto met bierprijzen, en als gemist als het
+  // een echte kaart zou wegfilteren.
+  if (ocr) r.bedragen = await tijd("ocr", async () => ocr.bedragen(await laad(label.sleutel, "768")));
+  r.uitslag.ocr = ocr ? beoordeelJaNee(r.bedragen == null ? null : r.bedragen.length > 0, label.bierprijzen) : "nvt";
   r.schift = await tijd("schiften", async () => stappen.schift(await laad(label.sleutel, "256"), rollen.schifter));
   r.controle = await tijd("controleren", async () => stappen.controleer(await laad(label.sleutel, "768"), rollen.lezer));
   r.uitslag.schiften = beoordeelJaNee(r.schift, label.kaart);
@@ -75,7 +81,8 @@ export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPE
     const vaasje = kiesVaasje(r.bieren || []);
     // Geen antwoord bij het lezen is twijfel, niet "geen prijs".
     r.gekozen = { prijs_cent: vaasje?.prijs_cent ?? null, twijfel: r.bieren == null };
-    if (vaasje && rollen.kijker) {
+    if (vaasje && prijsBuitenBereik(vaasje.prijs_cent)) r.gekozen.twijfel = true;
+    else if (vaasje && rollen.kijker) {
       const tweede = await tijd("tweede mening", () => stappen.bevestig(groot, vaasje, rollen.kijker));
       r.tweedeMening = tweede;
       if (!tweede?.klopt) r.gekozen.twijfel = true;
@@ -83,9 +90,10 @@ export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPE
   }
   r.uitslag.lezen = r.bieren === undefined ? "nvt" : beoordeelLezen(r.bieren, label);
   r.uitslag.kiezen = beoordeelPrijs(r.gekozen ?? null, label);
-  const doorDeKeten = r.schift === true && r.controle === true && r.gekozen;
+  const weggefilterd = ocr && ocrModus === "filter" && Array.isArray(r.bedragen) && !r.bedragen.length;
+  const doorDeKeten = !weggefilterd && r.schift === true && r.controle === true && r.gekozen;
   r.uitslag.keten = beoordeelPrijs(doorDeKeten ? r.gekozen : { prijs_cent: null, twijfel: false }, label);
-  r.datum = exifDatum(s0) || meta.geupload || null;
+  r.datum = kiesDatum({ opname: exifDatum(s0), geupload: meta.geupload }).datum;
   r.uitslag.datum = beoordeelDatum(r.datum, label);
   r.ms = Math.round(performance.now() - begin);
   return r;
@@ -128,13 +136,15 @@ async function hoofd() {
       lezer: { type: "string", default: LOKAAL.lezer.model },
       kijker: { type: "string", default: LOKAAL.kijker.model },
       alleen: { type: "string" },
+      ocr: { type: "string", default: "volgorde" },
+      "zonder-ocr": { type: "boolean", default: false },
       naam: { type: "string" },
       hulp: { type: "boolean", short: "h", default: false },
     },
   });
   if (o.hulp) {
     console.log(`Gebruik: node testset/meet.mjs [--lezer model] [--schifter model] [--kijker model|geen] [--url ${LOKAAL.lezer.url}]
-  [--alleen sleutel,sleutel] [--naam proef] [--labels labels.json] [--fotos map] [--uitslagen map]
+  [--alleen sleutel,sleutel] [--naam proef] [--ocr volgorde|filter] [--zonder-ocr] [--labels labels.json] [--fotos map] [--uitslagen map]
 Model "deepseek" gebruikt DeepSeek (DEEPSEEK_API_KEY) in plaats van een lokaal model.`);
     return;
   }
@@ -156,14 +166,16 @@ Model "deepseek" gebruikt DeepSeek (DEEPSEEK_API_KEY) in plaats van een lokaal m
   console.log(`Schifter ${rollen.schifter?.model}, lezer ${rollen.lezer?.model}, kijker ${rollen.kijker?.model ?? "geen"}\n`);
 
   const laad = bestandsLader(o.fotos);
+  const ocr = o["zonder-ocr"] ? null : new Ocr({ log: console.log });
   const perFoto = [];
   for (const label of labels) {
     const metaPad = join(o.fotos, label.sleutel, "meta.json");
     const meta = existsSync(metaPad) ? JSON.parse(await readFile(metaPad, "utf8")) : {};
-    const r = await meetFoto(label, { rollen, laad, meta });
+    const r = await meetFoto(label, { rollen, laad, meta, ocr, ocrModus: o.ocr });
     console.log(`${label.sleutel}: ${r.ontbreekt ? "foto ontbreekt" : `${(r.ms / 1000).toFixed(1)} s`}`);
     perFoto.push(r);
   }
+  await ocr?.sluit();
   const tel = telOp(perFoto);
   console.log(`\n${tabel(tel, perFoto)}`);
 

@@ -77,6 +77,16 @@ Alle kroegen uit een eerdere run, alleen foto's van de laatste twee jaar:
 DEEPSEEK_API_KEY=<geheim> node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01
 ```
 
+Voor de modellen gaan er drie goedkope filters overheen, zonder model:
+
+- **Dubbele foto's.** Een perceptuele hash (dHash) van elke miniatuur; een foto die bijna gelijk is aan een nieuwere foto van dezelfde kroeg slaan we over. De nieuwste blijft.
+- **OCR-voorfilter.** Tesseract zoekt bedragen (`€`, `3,90`, `4.00`, `3,-`). Standaard (`--ocr volgorde`) gaan foto's met een bedrag eerst en de rest pas als die niets opleveren. Met `--ocr filter` gaan foto's zonder bedrag helemaal niet naar het model; doe dat pas als de testset laat zien dat OCR geen echte kaarten mist (krijtborden!). `--zonder-ocr` zet het uit.
+- **Vaste controles.** Een prijs buiten € 2,00 tot € 7,50, of meer dan 30% van de mediaan van de stad af (uit de eigen uitvoer vanaf 5 prijzen, anders uit de database), gaat naar `twijfels`. Een EXIF-datum na de upload of in de toekomst wordt de uploaddatum (de klok van de camera stond verkeerd); een foto ouder dan tien jaar wordt gemarkeerd in de omschrijving.
+
+### OCR en beeldbewerking installeren
+
+Niets apart te installeren, ook niet op Windows: `npm install` zet `tesseract.js` (Tesseract als WebAssembly) en `jpeg-js` (JPEG in puur JavaScript) erbij. Bij de eerste run downloadt tesseract.js het Nederlandse taalpakket (6 MB) een keer naar `.tesseract/` (niet in Git). Ontbreken de pakketten, dan werkt de tool gewoon, zonder OCR en zonder ontdubbelen. Een los geinstalleerde Tesseract (bijvoorbeeld van UB Mannheim) is dus niet nodig. Gemeten op een nagemaakte kaart van 768 px: ongeveer 0,6 seconde per foto.
+
 Per kroeg: eerst een goedkope schifting (contactblad van 20 miniaturen) en controle (zijn er bierprijzen te lezen?), beide zonder dat het model nadenkt. Alleen foto's met bierprijzen worden echt gelezen, en na de eerste vaasjesprijs stopt de tool (`--volledig` om toch alles te bekijken). Het verbruik staat aan het eind van de run.
 
 Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `importeer_menuprijzen` naar de database. Bekijk de prijzen eerst. Draai dit vanaf een thuisverbinding: vanaf een datacenter toont Google al na een paar kroegen een CAPTCHA, en dan stopt de run.
@@ -88,6 +98,9 @@ Het resultaat staat in `menuprijzen.json`; met `--naar-supabase` gaat het via `i
 | Datum uit EXIF, zonder afhankelijkheden | `bron/exif.mjs` |
 | Contactblad met genummerde miniaturen | `bron/contactblad.mjs` |
 | Schiften, controleren en lezen met een model | `bron/menulezer.mjs` |
+| Dubbele foto's (dHash), JPEG lezen | `bron/beeld.mjs` |
+| OCR-voorfilter | `bron/ocr.mjs` |
+| Vaste controles op prijs en datum | `bron/controles.mjs` |
 | Vaasje kiezen | `bron/vaasje.mjs` |
 | Alles samen | `bron/menuprijs.mjs`, `menufotos.mjs` |
 | Testset en meten per stap | `testset/` (zie `testset/README.md`) |

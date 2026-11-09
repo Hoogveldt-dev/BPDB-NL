@@ -144,6 +144,7 @@ test("zoekMenuprijs: kaart herkennen, EXIF-datum, nieuwste kaart wint", async ()
   ], 4, null)).fotos;
   const gevraagd = [];
   const r = await zoekMenuprijs(fotos, {
+    ontdubbel: false, // alle miniaturen zijn hier dezelfde afbeelding
     haalBeeld: async (url) => {
       gevraagd.push(url);
       return url.includes("kaartNieuw") && url.endsWith("=s0") ? exif : zonder;

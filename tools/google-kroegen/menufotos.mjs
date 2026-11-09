@@ -7,6 +7,9 @@ import { readFile, writeFile } from "node:fs/promises";
 import { FotoBron } from "./bron/fotobron.mjs";
 import { Geblokkeerd } from "./bron/transport.mjs";
 import { naarMenuImport, zoekMenuprijs } from "./bron/menuprijs.mjs";
+import { Ocr } from "./bron/ocr.mjs";
+import { mediaan, scheidUitschieters } from "./bron/controles.mjs";
+import { SUPABASE_KEY, SUPABASE_URL } from "../../app/config.js";
 import { maakBlad } from "./bron/contactblad.mjs";
 import { LOKAAL, bevestigVaasje, controleerModellen, heeftBierprijzen, herkenLos, herkenOpBlad, leesKaart, verbruik } from "./bron/menulezer.mjs";
 
@@ -22,6 +25,9 @@ Opties:
   --max-kroegen 20          stop na zoveel kroegen
   --pauze-ms 3000           pauze tussen verzoeken aan Google (met spreiding)
   --volledig                alle foto's bekijken, niet stoppen bij de eerste prijs
+  --ocr volgorde            OCR zoekt bedragen: "volgorde" (eerst foto's met een bedrag, de rest
+                            daarna) of "filter" (foto's zonder bedrag gaan niet naar het model)
+  --zonder-ocr              geen OCR-voorfilter
   --zichtbaar               browser zichtbaar openen
   --uit menuprijzen.json    standaard menuprijzen.json
   --naar-supabase           ook importeren (SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY nodig)
@@ -48,6 +54,8 @@ const { values: o } = parseArgs({
     "pauze-ms": { type: "string", default: "3000" },
     zichtbaar: { type: "boolean", default: false },
     volledig: { type: "boolean", default: false },
+    ocr: { type: "string", default: "volgorde" },
+    "zonder-ocr": { type: "boolean", default: false },
     uit: { type: "string", default: "menuprijzen.json" },
     "naar-supabase": { type: "boolean", default: false },
     lokaal: { type: "boolean", default: false },
@@ -81,6 +89,26 @@ async function haalBeeld(url) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+if (!["volgorde", "filter"].includes(o.ocr)) {
+  console.error('--ocr is "volgorde" of "filter"');
+  process.exit(1);
+}
+const ocr = o["zonder-ocr"] ? null : new Ocr({ log: console.log });
+
+/** Mediaan per 25 cl van de kroegen met een prijs in de database (openbaar leesbaar), of null. */
+async function mediaanUitDatabase() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/kroeg_kaart?select=per25_cent&per25_cent=not.is.null`, {
+      headers: { apikey: SUPABASE_KEY }, signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) return null;
+    const rijen = await res.json();
+    return rijen.length >= 5 ? mediaan(rijen.map((r) => r.per25_cent)) : null;
+  } catch {
+    return null;
+  }
+}
+
 const bron = new FotoBron({ log: console.log, zichtbaar: o.zichtbaar, pauzeMs: Number(o["pauze-ms"]) });
 let bladPagina = null;
 const rijen = [];
@@ -103,11 +131,12 @@ try {
           maxKandidaten: 12,
         }
         : { herken: async (miniaturen, opties) => herkenOpBlad(await maakBlad(bladPagina, miniaturen, { px: 240, kolommen: 5 }), miniaturen.length, opties) };
-      const r = await zoekMenuprijs(fotos, { haalBeeld, ...stappen, sinds: o.sinds, volledig: o.volledig, log: console.log });
+      const r = await zoekMenuprijs(fotos, { haalBeeld, ...stappen, ocr, ocrModus: o.ocr, sinds: o.sinds, volledig: o.volledig, log: console.log });
       verslag.push({
-        place_id: k.place_id, naam: k.naam, bekeken: r.bekeken, kaarten: r.kaarten, prijs: r.prijs && naarMenuImport(k.place_id, r.prijs),
-        // Prijzen waar de modellen het niet over eens waren: nakijken, niet importeren
-        twijfels: r.twijfels.map((t) => ({ ...naarMenuImport(k.place_id, t), foto: t.foto.url, tweede_mening: t.tweedePrijs })),
+        place_id: k.place_id, naam: k.naam, bekeken: r.bekeken, dubbel: r.dubbel, zonder_bedrag: r.zonderBedrag, kaarten: r.kaarten,
+        prijs: r.prijs && naarMenuImport(k.place_id, r.prijs), opmerkingen: r.prijs?.opmerkingen?.length ? r.prijs.opmerkingen : undefined,
+        // Prijzen waar de modellen het niet over eens waren of die een vaste controle niet haalden: nakijken, niet importeren
+        twijfels: r.twijfels.map((t) => ({ ...naarMenuImport(k.place_id, t), foto: t.foto.url, tweede_mening: t.tweedePrijs, reden: t.reden })),
       });
       if (r.prijs) {
         rijen.push(naarMenuImport(k.place_id, r.prijs));
@@ -126,6 +155,18 @@ try {
   console.log(`\n${e.message}. Gestopt; ${rijen.length} prijzen bewaard.`);
 } finally {
   await bron.sluit();
+  await ocr?.sluit();
+  // Vaste controle over de hele run: meer dan 30% van de mediaan van de stad af is een twijfel.
+  const { goed, twijfels, mediaan: m, mediaanBron } = scheidUitschieters(rijen, rijen.length >= 5 ? null : await mediaanUitDatabase());
+  if (m) console.log(`\nMediaan van de stad: EUR ${(m / 100).toFixed(2)} (${mediaanBron}); ${twijfels.length} prijzen wijken meer dan 30% af`);
+  for (const t of twijfels) {
+    const v = verslag.find((x) => x.place_id === t.google_place_id);
+    if (v) {
+      v.prijs = null;
+      v.twijfels = [...(v.twijfels || []), t];
+    }
+  }
+  rijen.splice(0, rijen.length, ...goed);
   await writeFile(o.uit, JSON.stringify({ prijzen: rijen, verslag }, null, 2));
   console.log(`\n${rijen.length} prijzen in ${o.uit}`);
   console.log(`Model: ${verbruik.verzoeken} verzoeken, ${verbruik.in} tokens in, ${verbruik.uit} tokens uit`);
