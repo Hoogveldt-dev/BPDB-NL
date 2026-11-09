@@ -11,6 +11,8 @@ import { Ocr } from "./bron/ocr.mjs";
 import { mediaan, scheidUitschieters } from "./bron/controles.mjs";
 import { SUPABASE_KEY, SUPABASE_URL } from "../../app/config.js";
 import { maakBlad } from "./bron/contactblad.mjs";
+import { kiesSteekproef, nieuweMap, schrijfGevallen } from "./bron/nakijken.mjs";
+import { stuurMenuprijzen } from "./bron/supabase.mjs";
 import { LOKAAL, bevestigVaasje, controleerModellen, heeftBierprijzen, herkenLos, herkenOpBlad, leesKaart, verbruik } from "./bron/menulezer.mjs";
 
 const HULP = `Gebruik: node menufotos.mjs [opties]
@@ -28,6 +30,8 @@ Opties:
   --ocr volgorde            OCR zoekt bedragen: "volgorde" (eerst foto's met een bedrag, de rest
                             daarna) of "filter" (foto's zonder bedrag gaan niet naar het model)
   --zonder-ocr              geen OCR-voorfilter
+  --steekproef 0.1          deel van de prijzen waar beide modellen het eens zijn dat ook
+                            naar nakijken/<datum>/ gaat (met alle twijfels); 0 voor geen
   --zichtbaar               browser zichtbaar openen
   --uit menuprijzen.json    standaard menuprijzen.json
   --naar-supabase           ook importeren (SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY nodig)
@@ -56,6 +60,8 @@ const { values: o } = parseArgs({
     volledig: { type: "boolean", default: false },
     ocr: { type: "string", default: "volgorde" },
     "zonder-ocr": { type: "boolean", default: false },
+    steekproef: { type: "string", default: "0.1" },
+    nakijken: { type: "string", default: "nakijken" },
     uit: { type: "string", default: "menuprijzen.json" },
     "naar-supabase": { type: "boolean", default: false },
     lokaal: { type: "boolean", default: false },
@@ -113,6 +119,9 @@ const bron = new FotoBron({ log: console.log, zichtbaar: o.zichtbaar, pauzeMs: N
 let bladPagina = null;
 const rijen = [];
 const verslag = [];
+const gevonden = new Map(); // place_id -> { kroeg, uitkomst } voor nakijken/
+const gevallen = [];
+const modellen = o.lokaal ? { lezer: LOKAAL.lezer.model, kijker: LOKAAL.kijker.model } : { lezer: null, kijker: null };
 try {
   for (const k of kroegen) {
     console.log(`${k.naam} (${k.place_id})`);
@@ -138,7 +147,9 @@ try {
         // Prijzen waar de modellen het niet over eens waren of die een vaste controle niet haalden: nakijken, niet importeren
         twijfels: r.twijfels.map((t) => ({ ...naarMenuImport(k.place_id, t), foto: t.foto.url, tweede_mening: t.tweedePrijs, reden: t.reden })),
       });
+      for (const t of r.twijfels) gevallen.push({ soort: "twijfel", kroeg: k.naam, place_id: k.place_id, uitkomst: t, rij: naarMenuImport(k.place_id, t), reden: t.reden, modellen });
       if (r.prijs) {
+        gevonden.set(k.place_id, { kroeg: k.naam, uitkomst: r.prijs });
         rijen.push(naarMenuImport(k.place_id, r.prijs));
         console.log(`  => ${r.prijs.merk} 25 cl EUR ${(r.prijs.prijs_cent / 100).toFixed(2)} (${r.prijs.datum})`);
       } else {
@@ -165,23 +176,26 @@ try {
       v.prijs = null;
       v.twijfels = [...(v.twijfels || []), t];
     }
+    const g = gevonden.get(t.google_place_id);
+    if (g) gevallen.push({ soort: "twijfel", kroeg: g.kroeg, place_id: t.google_place_id, uitkomst: g.uitkomst, rij: naarMenuImport(t.google_place_id, g.uitkomst), reden: t.reden, modellen });
   }
   rijen.splice(0, rijen.length, ...goed);
+  // Steekproef uit de prijzen waar beide modellen het eens waren: meet hoe vaak ze samen fout zitten.
+  for (const rij of kiesSteekproef(rijen, Number(o.steekproef))) {
+    const g = gevonden.get(rij.google_place_id);
+    gevallen.push({ soort: "steekproef", kroeg: g.kroeg, place_id: rij.google_place_id, uitkomst: g.uitkomst, rij, reden: "steekproef: beide modellen eens", modellen });
+  }
+  if (gevallen.length) {
+    const map = nieuweMap(o.nakijken);
+    await schrijfGevallen(map, gevallen, { haalBeeld, rijen, log: console.log });
+    console.log(`\n${gevallen.length} gevallen om na te kijken in ${map} (zie docs/menukaartprijzen.md, Nakijken)`);
+  }
   await writeFile(o.uit, JSON.stringify({ prijzen: rijen, verslag }, null, 2));
   console.log(`\n${rijen.length} prijzen in ${o.uit}`);
   console.log(`Model: ${verbruik.verzoeken} verzoeken, ${verbruik.in} tokens in, ${verbruik.uit} tokens uit`);
 }
 
 if (o["naar-supabase"] && rijen.length) {
-  const url = process.env.SUPABASE_URL;
-  const sleutel = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !sleutel) throw new Error("Zet SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY");
-  const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/rpc/importeer_menuprijzen`, {
-    method: "POST",
-    headers: { apikey: sleutel, Authorization: `Bearer ${sleutel}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ p_prijzen: rijen }),
-  });
-  const tekst = await res.text();
-  if (!res.ok) throw new Error(`Supabase gaf ${res.status}: ${tekst}`);
-  console.log(`Geimporteerd: ${tekst}`);
+  // Met nagekeken twijfels: importeer liever met verwerk-oordelen.mjs --naar-supabase.
+  console.log(`Geimporteerd: ${await stuurMenuprijzen(rijen)}`);
 }

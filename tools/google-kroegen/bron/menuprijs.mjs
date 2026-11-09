@@ -110,13 +110,13 @@ export async function zoekMenuprijs(fotos, {
       if (!(await controleer(await haal(leesbaar(f.url, 768)), { log }))) continue;
       tel.gelezen += 1;
       const opname = exifDatum(await haal(origineel(f.url)));
-      const { bieren, datumOpKaart } = await lees(await haal(leesbaar(f.url)), { log });
+      const { bieren, datumOpKaart, kop = null } = await lees(await haal(leesbaar(f.url)), { log });
       const vaasje = kiesVaasje(bieren);
       const d = kiesDatum({ opname, geupload: f.geupload, vandaag });
       log(`    kaart ${f.id.slice(-8)}: ${bieren.length} bieren, ${vaasje ? `${vaasje.merk} ${(vaasje.prijs_cent / 100).toFixed(2)}` : "geen vaasje"}, ${opname ? `opname ${opname}` : `geupload ${f.geupload}`}`);
       for (const o of d.opmerkingen) log(`    let op: ${o}`);
       if (!vaasje || !d.datum) continue;
-      const uitkomst = { ...vaasje, datum: d.datum, datumBron: d.datumBron, klokFout: d.klokFout, oud: d.oud, opmerkingen: d.opmerkingen, datumOpKaart, foto: f };
+      const uitkomst = { ...vaasje, datum: d.datum, datumBron: d.datumBron, klokFout: d.klokFout, oud: d.oud, opmerkingen: d.opmerkingen, datumOpKaart, kop, foto: f };
       const buiten = prijsBuitenBereik(vaasje.prijs_cent);
       if (buiten) {
         log(`    ${buiten}; naar twijfels`);
@@ -127,10 +127,11 @@ export async function zoekMenuprijs(fotos, {
         const tweede = await bevestig(await haal(leesbaar(f.url)), vaasje, { log });
         if (!tweede.klopt) {
           log(`    tweede mening: klopt niet${tweede.prijsOpKaart ? ` (ziet ${tweede.prijsOpKaart})` : ""}; naar twijfels`);
-          twijfels.push({ ...uitkomst, tweedePrijs: tweede.prijsOpKaart, reden: "tweede mening oneens" });
+          twijfels.push({ ...uitkomst, tweede, tweedePrijs: tweede.prijsOpKaart, reden: "tweede mening oneens" });
           continue;
         }
         log("    tweede mening: klopt");
+        uitkomst.tweede = tweede;
       }
       uitkomsten.push(uitkomst);
     }

@@ -55,6 +55,14 @@ Zie `tools/google-kroegen/testset/README.md`. Alles op je eigen computer, vanaf 
 5. **OCR meten.** `npm install` in `tools/google-kroegen` (zet tesseract.js en jpeg-js erbij, geen losse installatie nodig). Kijk in de uitslag van `meet.mjs` naar de regel `ocr`: staat `gemist` op 0, dan kan `--ocr filter` de standaard worden; anders blijft het `volgorde`.
 6. **LM Studio.** Server aan op poort 1235 (Developer), Just-in-time loading aan. Draai de vier vergelijkingen uit `docs/lokale-vision.md` (Meten) en zet de uitslag in de tabel daar; Claude past daarna de standaard aan als een ander model beter is.
 
+## Nakijken van menukaartprijzen
+
+Na een run met `menufotos.mjs` (zie `docs/menukaartprijzen.md`, Nakijken):
+
+1. In Claude Code op je computer: laat de subagent menukaart-controleur de map `nakijken/<datum>` nakijken.
+2. `node verwerk-oordelen.mjs nakijken/<datum>` en lees het rapport (vooral: hoe vaak zaten de modellen samen fout in de steekproef).
+3. Importeren doe je zelf: `node verwerk-oordelen.mjs nakijken/<datum> --naar-supabase`, met `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY` alleen in je eigen terminal.
+
 ## Later
 
 - **Captcha.** Supabase raadt een captcha aan bij anonieme accounts (Cloudflare Turnstile). Zet die pas aan in Supabase als de app hem meestuurt; anders werken beginnen en inloggen niet meer.
