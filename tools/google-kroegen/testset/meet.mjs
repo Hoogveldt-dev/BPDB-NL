@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { exifDatum } from "../bron/exif.mjs";
 import { kiesVaasje } from "../bron/vaasje.mjs";
-import { LOKAAL, STANDAARD_MODEL, bevestigVaasje, heeftBierprijzen, herkenLos, leesKaart } from "../bron/menulezer.mjs";
+import { LOKAAL, STANDAARD_MODEL, bevestigVaasje, controleerModellen, heeftBierprijzen, herkenLos, leesKaart } from "../bron/menulezer.mjs";
 import { STAPPEN, beoordeelDatum, beoordeelJaNee, beoordeelLezen, beoordeelPrijs, telOp } from "./score.mjs";
 
 const MAP = fileURLToPath(new URL(".", import.meta.url));
@@ -28,7 +28,7 @@ export const STANDAARD_STAPPEN = {
   },
   lees: async (beeld, model) => {
     const a = [];
-    const r = await leesKaart(beeld, { model, antwoorden: a, ...(model.lokaal ? { maxTokens: 2000 } : {}) });
+    const r = await leesKaart(beeld, { model, antwoorden: a });
     return a[0] == null ? null : r.bieren;
   },
   bevestig: (beeld, vaasje, model) => bevestigVaasje(beeld, vaasje, { model }),
@@ -124,7 +124,7 @@ async function hoofd() {
       fotos: { type: "string", default: join(MAP, "fotos") },
       uitslagen: { type: "string", default: join(MAP, "uitslagen") },
       url: { type: "string", default: LOKAAL.lezer.url },
-      schifter: { type: "string", default: LOKAAL.kijker.model },
+      schifter: { type: "string", default: LOKAAL.schifter.model },
       lezer: { type: "string", default: LOKAAL.lezer.model },
       kijker: { type: "string", default: LOKAAL.kijker.model },
       alleen: { type: "string" },
@@ -139,6 +139,13 @@ Model "deepseek" gebruikt DeepSeek (DEEPSEEK_API_KEY) in plaats van een lokaal m
     return;
   }
   const rollen = { schifter: rolModel(o.schifter, o.url), lezer: rolModel(o.lezer, o.url), kijker: rolModel(o.kijker, o.url) };
+  try {
+    await controleerModellen(Object.values(rollen));
+  } catch (e) {
+    console.error(e.message);
+    process.exitCode = 1;
+    return;
+  }
   let labels = JSON.parse(await readFile(o.labels, "utf8")).fotos;
   if (o.alleen) {
     const alleen = new Set(o.alleen.split(","));
