@@ -27,15 +27,14 @@ Kjell heeft daarna zelf vier werkregels aan `CLAUDE.md` toegevoegd (eerst lezen,
 
 1. **GitHub:** standaardbranch op `main` zetten. Daarna de oude branches verwijderen: `ux/gebruik-en-kaart` en de 7 oude sessiebranches. Ze zijn allemaal al in `main` opgenomen of bewust niet overgenomen. Een sessie kan ze niet verwijderen (de proxy geeft 403).
 2. **Domein:** DNSSEC weer aanzetten via Cloudflare en de DS-record bij Vimexx zetten. Supabase, URL Configuration: Site URL `https://bierkoers.nl` en `https://bierkoers.nl/**` bij de Redirect URLs.
-3. **Inloggen:** anonieme accounts en manual linking aan, mailtemplates met code, eigen SMTP. Zonder SMTP krijgen alleen teamleden een mail. Let op: het onderwerp in `ACTIES.md` heet nog "Je code voor de Kroegkaart"; de app heet nu Bierkoers.
+3. **Inloggen:** anonieme accounts en manual linking aan, mailtemplates met code, eigen SMTP. Zonder SMTP krijgen alleen teamleden een mail. Onderwerp van de mail: `Je code voor Bierkoers`.
 4. **DeepSeek:** nieuwe sleutel aanmaken (de oude stond in een chat) en tegoed opwaarderen voor een run over heel Nijmegen.
 
 ### Voor een volgende sessie (alleen na akkoord van Kjell)
 
 1. **Proef met lokale vision-modellen.** Op de computer van Kjell, met Claude Code daar (`docs/lokale-vision.md`, "Eerst meten"): Café Daen en Stadscafé Jan, daarna tien kroegen lokaal tegen DeepSeek. Uitkomst noteren in dat document.
-2. **Naam in teksten gelijktrekken.** Mailtemplate (`supabase/templates/inlogcode.html`) en `ACTIES.md` noemen nog Kroegkaart of BPDB. Eerst nakijken met `grep -rn "Kroegkaart\|BPDB" app supabase/templates ACTIES.md`.
-3. **Betrouwbaarheid.** Kjell is nog niet tevreden over de regel uit `20261106220000_betrouwbaarheid_verwachting` (`docs/concept.md`, 2.6). Wacht op zijn voorstel.
-4. **Later:** captcha (Turnstile) bij anonieme accounts, oude anonieme accounts opruimen, ideeën in `docs/kroegentocht.md` en `docs/toekomstplannen.md`.
+2. **Betrouwbaarheid.** Kjell is nog niet tevreden over de regel uit `20261106220000_betrouwbaarheid_verwachting` (`docs/concept.md`, 2.6). Wacht op zijn voorstel.
+3. **Later:** captcha (Turnstile) bij anonieme accounts, oude anonieme accounts opruimen, ideeën in `docs/kroegentocht.md` en `docs/toekomstplannen.md`.
 
 ## Valkuilen
 

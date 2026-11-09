@@ -201,11 +201,11 @@ otp_expiry = 3600
 # "confirmation" is voor wie zonder anoniem account begint. Alle drie tonen {{ .Token }}.
 # Op het echte project zet je dezelfde tekst in het dashboard (zie supabase/README.md, stap 3).
 [auth.email.template.magic_link]
-subject = "Je inlogcode voor de Kroegkaart"
+subject = "Je inlogcode voor Bierkoers"
 content_path = "./supabase/templates/inlogcode.html"
 
 [auth.email.template.confirmation]
-subject = "Je inlogcode voor de Kroegkaart"
+subject = "Je inlogcode voor Bierkoers"
 content_path = "./supabase/templates/inlogcode.html"
 
 # Een anonieme speler die zijn e-mailadres koppelt, krijgt deze mail
