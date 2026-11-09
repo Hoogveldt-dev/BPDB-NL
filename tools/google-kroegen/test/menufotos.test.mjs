@@ -164,7 +164,7 @@ test("zoekMenuprijs: kaart herkennen, EXIF-datum, nieuwste kaart wint", async ()
   assert.ok(gevraagd.some((u) => u.endsWith("kaartOud=s0")));
   assert.deepEqual(naarMenuImport("PID", r.prijs), {
     google_place_id: "PID", merk: "Jupiler", volume_cl: 25, prijs_cent: 400, datum: "2024-06-04",
-    bron_omschrijving: "Foto van de kaart in Google Maps, genomen 2024-06-04",
+    bron_omschrijving: "Kaartfoto Google Maps, genomen 2024-06-04",
   });
 });
 

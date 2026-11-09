@@ -127,5 +127,7 @@ test("zoekMenuprijs: prijs buiten bereik gaat naar twijfels; verkeerde klok en o
   assert.equal(duur.prijs, null);
   assert.match(duur.twijfels[0].reden, /buiten € 2,00 tot € 7,50/);
   const p = { merk: "Heineken", volume_cl: 25, prijs_cent: 360, datum: "2013-06-04", datumBron: "upload", klokFout: true, oud: true };
-  assert.equal(naarMenuImport("PID", p).bron_omschrijving, "Foto van de kaart in Google Maps, geupload 2013-06-04 (datum van de camera klopte niet, foto ouder dan tien jaar)");
+  const omschrijving = naarMenuImport("PID", p).bron_omschrijving;
+  assert.equal(omschrijving, "Kaartfoto Google Maps, geupload 2013-06-04 (cameraklok fout, 10+ jaar oud)");
+  assert.ok(omschrijving.length <= 80, "de database staat hoogstens 80 tekens toe");
 });
