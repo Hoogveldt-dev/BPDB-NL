@@ -6,7 +6,7 @@
 //   twijfel  geen bruikbaar antwoord (geen JSON, time-out), of de prijs ging naar twijfels
 //   nvt      deze stap zegt bij deze foto niets (bijvoorbeeld lezen zonder verwachte prijs)
 
-export const STAPPEN = ["schiften", "controleren", "lezen", "kiezen", "keten", "datum"];
+export const STAPPEN = ["ocr", "schiften", "controleren", "lezen", "kiezen", "keten", "datum"];
 export const UITSLAGEN = ["goed", "fout", "gemist", "twijfel", "nvt"];
 
 const cent = (euro) => (euro == null ? null : Math.round(Number(euro) * 100));

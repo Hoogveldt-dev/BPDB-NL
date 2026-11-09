@@ -3,3 +3,4 @@ google-kroegen-*.json
 menuprijzen*.json
 testset/fotos/
 testset/uitslagen/
+.tesseract/

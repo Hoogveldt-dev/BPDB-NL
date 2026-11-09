@@ -60,7 +60,7 @@ const laad = async () => exif;
 test("meetFoto: een goede kaart gaat goed door alle stappen", async () => {
   const label = { sleutel: "jan", kaart: true, bierprijzen: true, vaasje: 3.9, datum: "2024-06-04" };
   const r = await meetFoto(label, { rollen, laad, stappen: nepStappen() });
-  assert.deepEqual(r.uitslag, { schiften: "goed", controleren: "goed", lezen: "goed", kiezen: "goed", keten: "goed", datum: "goed" });
+  assert.deepEqual(r.uitslag, { ocr: "nvt", schiften: "goed", controleren: "goed", lezen: "goed", kiezen: "goed", keten: "goed", datum: "goed" });
   assert.equal(r.gekozen.prijs_cent, 390);
   assert.ok(r.ms >= 0 && "lezen" in r.tijden);
 });
@@ -78,7 +78,7 @@ test("meetFoto: tweede mening oneens geeft twijfel; QR-bordje wordt niet gelezen
   assert.equal((await meetFoto(jan, { rollen, laad, stappen: nepStappen({ klopt: false }) })).uitslag.keten, "twijfel");
   const qr = { sleutel: "qr", kaart: false, bierprijzen: false, vaasje: null, datum: null };
   const r = await meetFoto(qr, { rollen, laad, stappen: nepStappen({ schift: false, controle: false }) });
-  assert.deepEqual(r.uitslag, { schiften: "goed", controleren: "goed", lezen: "nvt", kiezen: "nvt", keten: "goed", datum: "nvt" });
+  assert.deepEqual(r.uitslag, { ocr: "nvt", schiften: "goed", controleren: "goed", lezen: "nvt", kiezen: "nvt", keten: "goed", datum: "nvt" });
 });
 
 test("meetFoto: fout van het model wordt twijfel, ontbrekende foto wordt overgeslagen", async () => {
@@ -102,4 +102,22 @@ test("meetFoto: lokaal model zonder JSON telt als twijfel", async () => {
   } finally {
     globalThis.fetch = echt;
   }
+});
+
+test("meetFoto: OCR die een echte kaart mist, telt als gemist en filtert alleen in de stand filter", async () => {
+  const label = { sleutel: "krijt", kaart: true, bierprijzen: true, vaasje: 3.9, datum: null };
+  const ocr = { bedragen: async () => [] };
+  const volgorde = await meetFoto(label, { rollen, laad, stappen: nepStappen(), ocr, ocrModus: "volgorde" });
+  assert.equal(volgorde.uitslag.ocr, "gemist");
+  assert.equal(volgorde.uitslag.keten, "goed");
+  const filter = await meetFoto(label, { rollen, laad, stappen: nepStappen(), ocr, ocrModus: "filter" });
+  assert.equal(filter.uitslag.keten, "gemist");
+  const metBedrag = await meetFoto(label, { rollen, laad, stappen: nepStappen(), ocr: { bedragen: async () => [3.9] }, ocrModus: "filter" });
+  assert.equal(metBedrag.uitslag.ocr, "goed");
+});
+
+test("meetFoto: prijs buiten 2,00 tot 7,50 is twijfel", async () => {
+  const label = { sleutel: "duur", kaart: true, bierprijzen: true, vaasje: 8.5, datum: null };
+  const r = await meetFoto(label, { rollen, laad, stappen: nepStappen({ bieren: [{ merk: "Heineken", cl: 25, prijs: 8.5, tap: true, pils: true }] }) });
+  assert.equal(r.uitslag.kiezen, "twijfel");
 });
