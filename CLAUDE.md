@@ -9,6 +9,10 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg, gepresenteerd als een b
 - Commit na elke werkende stap met een duidelijke Nederlandse omschrijving.
 - `main` is de basis. Begin altijd vanaf de nieuwste `main` en lever werk op met een pull request naar `main`. Werkbranches van sessies zijn tijdelijk.
 - Wat Kjell zelf in een dashboard moet doen, staat in `ACTIES.md`. Houd dat bij.
+- Lees eerst alle bestanden die je nodig hebt, maak daarna alle wijzigingen en draai dan de tests.
+- Schrijf nooit "dit bestaat" of "dit bestaat niet" zonder de code opnieuw te openen; noem bestand en regel.
+- Bouw alleen wat gevraagd is. Stel uitbreidingen voor, maar voer ze niet uit zonder akkoord.
+- Kijk na afloop kritisch of het eenvoudiger kan, en zeg het als er onnodige complexiteit in is geslopen.
 
 ## Belangrijke plekken
 - App: `app/app.js` (kaart, inloggen, melden, bevestigen, ranglijst, realtime), `app/styles.css`, `app/index.html`, service worker `app/sw.js`. Verhoog `CACHE` in `sw.js` als de app-schil verandert.
