@@ -93,7 +93,9 @@ check('tekens als < en > gaan uit de naam', namen[D] === 'bDirkb', namen[D]);
 const N = '99999999-9999-9999-9999-999999999999';
 await db.exec(`insert into auth.users (id, email, raw_user_meta_data) values ('${N}', 'nina@example.nl', '{}')`);
 const n0 = await een(`select naam, naam_vast from public.profielen where id = '${N}'`);
-check('speler zonder gekozen naam heet speler en mag nog kiezen', n0?.naam === 'speler' && n0.naam_vast === false, JSON.stringify(n0));
+// Een willekeurige naam: bijvoeglijk naamwoord, streepje, zelfstandig naamwoord (dorstige-zebra), eventueel met een nummer
+const willekeurig = (naam) => /^[a-z]+-[a-z]+[0-9]*$/.test(naam ?? '') && naam.length <= 24;
+check('speler zonder gekozen naam krijgt een willekeurige naam en mag nog kiezen', willekeurig(n0?.naam) && n0.naam_vast === false, JSON.stringify(n0));
 const nv = await een(`select naam_vast from public.profielen where id = '${A}'`);
 check('zelfgekozen naam bij aanmelden staat vast', nv?.naam_vast === true, JSON.stringify(nv));
 const r1 = await als(A, `update public.profielen set naam = 'Anna B' where id = '${A}' returning naam`);
@@ -299,11 +301,17 @@ await db.exec(`
     ('${F}', 'frank.de.vries@example.nl', '{}', false);
 `);
 const nZ = await een(`select naam from public.profielen where id = '${Z}'`);
-check('anonieme speler krijgt profiel met eigen naam', nZ?.naam === 'Zoë', JSON.stringify(nZ));
+check('anonieme speler krijgt een willekeurige naam, ook als de app er een meestuurt', willekeurig(nZ?.naam), JSON.stringify(nZ));
+const vZ = await een(`select naam_vast from public.profielen where id = '${Z}'`);
+check('willekeurige naam staat nog niet vast', vZ?.naam_vast === false, JSON.stringify(vZ));
 const nY = await een(`select naam from public.profielen where id = '${Y}'`);
-check('anonieme speler zonder naam heet speler', nY?.naam === 'speler', JSON.stringify(nY));
+check('anonieme speler zonder naam krijgt een willekeurige naam', willekeurig(nY?.naam) && nY.naam !== nZ.naam, JSON.stringify(nY));
 const nF = await een(`select naam from public.profielen where id = '${F}'`);
-check('naam is nooit een stuk van het e-mailadres', nF?.naam === 'speler2', JSON.stringify(nF));
+check('naam is nooit een stuk van het e-mailadres', willekeurig(nF?.naam) && !/frank/i.test(nF.naam), JSON.stringify(nF));
+const zelfY = await als(Y, `update public.profielen set naam = 'Yara' where id = '${Y}'`);
+check('anonieme speler kan nog geen eigen naam kiezen', /Koppel eerst je e-mailadres/.test(zelfY.fout ?? ''), JSON.stringify(zelfY));
+const dubbel = await een(`select count(*)::int as n, count(distinct lower(naam))::int as uniek from public.profielen`);
+check('elke naam komt een keer voor', dubbel.n === dubbel.uniek, JSON.stringify(dubbel));
 
 const K4 = await id('node/4');
 const a1 = await als(Z, `select * from public.meld_prijs(${K4}, 'Heineken', 25, 330)`);
@@ -329,7 +337,11 @@ check('anonieme melder boven 90% wacht toch op bevestiging', a6.rows?.[0]?.statu
 // E-mailadres gekoppeld: hetzelfde account, met punten, mag nu wel bevestigen
 await db.exec(`update auth.users set is_anonymous = false, email = 'zoe@example.nl' where id = '${Z}'`);
 const pZ2 = await een(`select naam, altijd from public.ranglijst where id = '${Z}'`);
-check('na koppelen blijven naam en punten behouden', pZ2.naam === 'Zoë' && pZ2.altijd === 30, JSON.stringify(pZ2));
+check('na koppelen blijven naam en punten behouden', pZ2.naam === nZ.naam && pZ2.altijd === 30, JSON.stringify(pZ2));
+const zelfZ = await als(Z, `update public.profielen set naam = 'Zoë' where id = '${Z}' returning naam, naam_vast`);
+check('na koppelen kiest de speler een eigen naam, die daarna vaststaat', zelfZ.rows?.[0]?.naam === 'Zoë' && zelfZ.rows[0].naam_vast === true, JSON.stringify(zelfZ));
+await db.exec(`update public.profielen set naam = 'Yvo' where id = '${Y}'`);
+check('beheerder kan de naam van een anonieme speler wijzigen', (await een(`select naam from public.profielen where id = '${Y}'`))?.naam === 'Yvo');
 const a7 = await als(Z, `select * from public.klopt_nog(${K3})`);
 check('na koppelen kan de speler klopt nog doen', !a7.fout, JSON.stringify(a7));
 const a8 = await als(Z, `select public.vereis_email()`);
