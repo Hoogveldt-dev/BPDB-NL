@@ -47,6 +47,15 @@ De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze v
 1. **Run vanaf thuis, met de lokale modellen.** Claude draait dit in de sessie op je pc (`node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01`, standaard lokaal sinds 10 november 2026). Jij zorgt alleen dat de pc aan staat en de server van LM Studio draait (poort 1235). Importeren gaat met `--naar-supabase` en `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY`, die jij zelf in je terminal zet, nooit in Git of in de chat. Vanuit een cloudsessie toont Google al na een paar kroegen een CAPTCHA.
 2. **DeepSeek alleen als reserve (niet nodig).** Alleen voor als je echt iets gedaan wilt krijgen en de pc niet draait (`--extern`). Er staat $0,05 op; niet opwaarderen zolang het lokaal lukt. Wil je de reserve houden, maak dan een nieuwe sleutel aan: de oude stond in een chat.
 
+## Import ronde centrum (10 november 2026)
+
+Zes vaasjesprijzen uit de ronde centrum zijn goedgekeurd en liggen klaar (tabel in `docs/menukaartprijzen.md`, Ronde centrum Nijmegen). Er is nog niets geimporteerd.
+
+1. **Goedkeuren.** Kijk de tabel na en zeg tegen Claude of de rijen erin mogen.
+2. **Importeren.** In je eigen terminal, met `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY` alleen daar: `node verwerk-oordelen.mjs nakijken/2026-11-10 --naar-supabase` en daarna hetzelfde voor `nakijken/2026-11-10-daen`.
+3. **Voorstel kiesVaasje.** Beslis of `kiesVaasje` een bekend pilsmerk van de tap in 25 cl mag houden als het model `pils: false` zegt (zie `docs/lokale-vision.md`).
+4. **Stadscafé Jan.** Heeft nog geen Google Place ID; zonder die ID kan de testfoto niet mee.
+
 ## Testset voor de menukaartpijplijn
 
 Doet Claude als manager (`docs/menukaart-manager.md`, stap 1a). Jij hoeft alleen te helpen als Claude iets vraagt, zoals de Place ID van Stadscafé Jan of de drankkaart van Café Daen.

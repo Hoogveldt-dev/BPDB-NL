@@ -147,3 +147,62 @@ Ter controle las het model de drankkaart van Café Daen als afbeelding: Hertog J
 St Anneke (St. Annastraat 55), zelfde dag: 132 foto's in Google; voordat Google een CAPTCHA toonde kwamen er 10 binnen. Het krijtbord achter de bar (foto genomen 4 juni 2013) werd gevonden en gelezen: Paulaner, witbier, Max Rosé en Omer, maar geen pils, dus terecht geen vaasjesprijs.
 
 Conclusie: Van Buren laat bestellen via een QR-code en heeft weinig kaarten op tafel. Of er tussen de andere 340 foto's een kaart met prijzen zit, laat een run vanaf een thuisverbinding zien.
+
+## Ronde centrum Nijmegen (10 november 2026)
+
+Claude als manager (`docs/menukaart-manager.md`), op de pc van Kjell met de lokale modellen. Scope: de 73 open kroegen in het centrum met een Google Place ID, zonder prijs en zonder openstaande melding. Eerst gemeten (`docs/lokale-vision.md`), dan een proefronde van 10 kroegen, dan de rest. Elke prijs is nagekeken, niet alleen een steekproef (`--steekproef 1`, en de DAEN-prijzen als twijfelgeval). Er is niets geimporteerd: de rijen liggen klaar voor Kjell.
+
+### Proefronde (10 kroegen)
+
+| Kroeg | Methode | Uitkomst |
+|---|---|---|
+| Café De Deut | DAEN, drankkaart (pdf) | Brand vaasje € 3,90, geupload 2025-04-22 |
+| De Derde Kamer | DAEN, drankkaart zomer 2025 (pdf) | Bavaria vaas € 3,90, geupload 2025-05-23 |
+| In de Blaauwe Hand | DAEN, drankkaart (pdf) | Hertog Jan 25 cl € 4,10, kaart van 2026-11-02 |
+| Café de Burgemeester, Cafe de Fuik, Café De Kroeg, Café Goossens, De Beurs, Samson, The Shamrock | JAN, alle foto's (437 bekeken, 197 leken op een kaart) | Geen vaasjesprijs. Samson heeft wel een drankkaart op de site, maar zonder datum, dus geen prijs |
+
+De controleur (menukaart-controleur) keurde de drie prijzen goed. Geen enkele prijs afgekeurd omdat hij verkeerd gelezen was, en geen steekproef waarin de modellen samen fout zaten (er was geen JAN-prijs). Daarmee mocht de rest van het centrum.
+
+### Rest van het centrum (63 kroegen)
+
+DAEN: de 23 kroegen met een website in OSM afgezocht (startpagina, menupagina's en pdf's). Drie nieuwe prijzen, alle drie goedgekeurd:
+
+| Kroeg | Bron | Vaasje | Datum |
+|---|---|---|---|
+| Cafe van Ouds | menukaart (pdf), Tap: "Heineken, Vaasje 3,90" | Heineken € 3,90 | 2025-03-21 (map 2025/03, `Last-Modified`) |
+| Café De Opera | drankenkaart (pdf), "Brand 0,22l / 0,25l / 0,5l 3.7 - 3.9 - 7.1" | Brand 25 cl € 3,90 | 2025-08-18 (map 2025/08, `Last-Modified`) |
+| Grand Café Moenen | menukaart najaar 2025 (afbeelding), "Hertog Jan 0,25L 4,00" | Hertog Jan 25 cl € 4,00 | 2025-10-15 (map 2025/10, `Last-Modified`) |
+
+Bewust geen prijs:
+
+- Freddy's: Heineken S, M, L voor 3.8, 4 en 7.2, zonder maat in cl.
+- Tierney's: Heineken "Glass/Pint" 3,9 en 7,6; de maat van een glass staat er niet.
+- Bar Socio: Peroni 3,8 zonder maat (wel Peroni 50 cl 7,2), en het woord vaasje staat er niet.
+- De Opstand: de menupagina noemt Gulpener Bio Pilsner 0,25 voor zowel 4,10 als 3,90, en de pagina heeft geen datum.
+- PAAK: alleen koffie en cocktails op de kaart.
+- Camelot, De Bieb, Van Buren, Bascafé, Heidi's Skihut, Marcus Antonius, De Onderbroek en TweeKeerBellen: geen drankprijzen op de site.
+- De Tempelier, Sjors & Sjimmie, Ruygh en Blonde Pater: de site was niet bereikbaar.
+- The Boules Club: de site weigerde het verzoek.
+
+Voor de overige kroegen vond zoeken op het web geen eigen site met een drankkaart.
+
+JAN: de 63 kroegen met `--sinds 2025-01-01` (alleen foto's van de laatste twee jaar, om de looptijd te beperken). Uitslag: zie hieronder zodra de run klaar is.
+
+### Rijen voor de import (nog niet geimporteerd)
+
+Alle rijen zijn goedgekeurd door de controleur en halen de vaste controles: prijs tussen € 2,00 en € 7,50, binnen 30% van de mediaan (€ 3,90; de database heeft nog geen huidige prijzen, dus de mediaan van deze rijen), datum niet in de toekomst, omschrijving hoogstens 80 tekens. Ze staan in `nakijken/2026-11-10/nagekeken.json` en `nakijken/2026-11-10-daen/nagekeken.json` (niet in Git).
+
+| Kroeg | Merk | cl | Prijs | Datum |
+|---|---|---|---|---|
+| Café De Deut | Brand | 25 | € 3,90 | 2025-04-22 |
+| De Derde Kamer | Bavaria | 25 | € 3,90 | 2025-05-23 |
+| In de Blaauwe Hand | Hertog Jan | 25 | € 4,10 | 2026-11-02 |
+| Cafe van Ouds | Heineken | 25 | € 3,90 | 2025-03-21 |
+| Café De Opera | Brand | 25 | € 3,90 | 2025-08-18 |
+| Grand Café Moenen | Hertog Jan | 25 | € 4,00 | 2025-10-15 |
+
+### Lessen
+
+- De fotomethode levert in het centrum weinig op. Kaarten in Google Maps zijn vaak eetkaarten, QR-bordjes of oude foto's (2018, 2019). Bij Samson en The Shamrock bekeek de keten samen 361 foto's zonder vaasjesprijs.
+- De websitemethode is goedkoop en betrouwbaar. Waar het misgaat, is het bijna altijd de maat ("glass", "S M L", een prijs zonder cl) of een ontbrekende datum. Dan geen prijs.
+- De drempel van de meting (`docs/lokale-vision.md`) blijft: `kiesVaasje` laat een goed gelezen pils vallen als het model `pils: false` zegt. Voorstel staat daar.
