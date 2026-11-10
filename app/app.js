@@ -646,7 +646,8 @@ function cirkelStijl() {
   }
   return {
     "circle-color": ["match", ["get", "versheid"], "fresh", c.fresh, "stale", c.stale, "old", c.old, "wacht", c.wacht, c.locked],
-    "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0.45, 1],
+    // Kroegen op slot zijn grijs, maar goed zichtbaar: ze laten zien waar de kroegen zijn
+    "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0.85, 1],
     "circle-stroke-color": ["case", ["==", ["get", "versheid"], "locked"], c.surface, "#ffffff"],
   };
 }
@@ -662,8 +663,40 @@ function tochtGeojson() {
   return { type: "FeatureCollection", features: feats };
 }
 
+// De donkere stijl van OpenFreeMap is bijna zwart: straten, water en namen vallen weg, zeker onder de mist.
+// Daarom zetten we hem lichter, naar de donkere stand van Kaarten: grijze straten, blauw water, leesbare namen.
+// Zo kun je je oriënteren, ook als er nog weinig is vrijgespeeld.
+const DONKERE_KAART = [
+  [/^background$/, { "background-color": "#1c1c1e" }],
+  [/^(water|waterway)$/, { "fill-color": "#14304a", "line-color": "#14304a" }],
+  [/^(landuse_park|landcover_wood)$/, { "fill-color": "#1e2c22" }],
+  [/^landuse_residential$/, { "fill-color": "#222224" }],
+  [/^building$/, { "fill-color": "#2a2a2d", "fill-outline-color": "#323235" }],
+  [/^highway_path$/, { "line-color": "#323235" }],
+  [/^(highway_minor|highway_motorway_subtle)$/, { "line-color": "#3e3e42" }],
+  [/^(highway_major_inner|highway_major_subtle)$/, { "line-color": "#4e4e52" }],
+  [/^highway_motorway_inner$/, { "line-color": "#636366" }],
+  [/^railway(_transit|_minor)?$/, { "line-color": "#48484a" }],
+  [/^railway.*_dashline$/, { "line-color": "#1c1c1e" }],
+  [/^highway_name/, { "text-color": "#aeaeb2", "text-halo-color": "#1c1c1e" }],
+  [/^place_/, { "text-color": "#e5e5ea", "text-halo-color": "rgba(0,0,0,0.75)" }],
+  [/^water_name$/, { "text-color": "#64a0d2", "text-halo-color": "rgba(0,0,0,0.6)" }],
+];
+function lichtereDonkereKaart() {
+  if (!donker.matches) return;
+  for (const laag of map.getStyle()?.layers ?? []) {
+    for (const [patroon, verf] of DONKERE_KAART) {
+      if (!patroon.test(laag.id)) continue;
+      // Alleen eigenschappen die bij het soort laag horen: fill-color bij een vlak, text-color bij tekst
+      const soort = laag.type === "symbol" ? "text" : laag.type;
+      for (const [k, v] of Object.entries(verf)) if (k.split("-")[0] === soort) map.setPaintProperty(laag.id, k, v);
+    }
+  }
+}
+
 function kaartLagen() {
   const c = kleur();
+  lichtereDonkereKaart();
   if (map.getSource("kroegen")) return;
   map.addSource("kroegen", { type: "geojson", data: geojson() });
   map.addSource("tocht", { type: "geojson", data: tochtGeojson() });
