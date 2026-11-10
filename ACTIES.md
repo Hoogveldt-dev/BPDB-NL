@@ -51,7 +51,7 @@ De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze v
 
 Zie `tools/google-kroegen/testset/README.md`. Alles op je eigen computer, vanaf een thuisverbinding.
 
-1. **Foto-ID's zoeken.** Deels gedaan op 10 november 2026: de drie QR-bordjes van Café Van Buren en zeven foto's zonder bierprijzen staan in `testset/labels.json` (nog `gecontroleerd: false`, kijk ze na in `testset/fotos/<sleutel>/1600.jpg`). Nog open: het krijtbord van St. Anneke (2013) zat niet in de eerste 60 foto's, verder bladert Google niet; zoek het op in Google Maps en geef Claude de link. Stadscafé Jan heeft nog geen Place ID in de database: zoek de kroeg op in Google Maps.
+1. **Foto-ID's zoeken.** Grotendeels gedaan op 10 november 2026: het krijtbord van St. Anneke (een foto van het interieur, EXIF 4 juni 2013), de drie QR-bordjes van Café Van Buren en zes foto's zonder bierprijzen staan in `testset/labels.json` (nog `gecontroleerd: false`, kijk ze na in `testset/fotos/<sleutel>/1600.jpg`). Nog open: Stadscafé Jan heeft nog geen Place ID in de database: zoek de kroeg op in Google Maps en geef Claude de link.
 2. **Drankkaart van Café Daen.** Zet de eerste pagina van de pdf als JPEG in `testset/fotos/daen-drankkaart/s0.jpg`.
 3. **Aanvullen tot ongeveer twintig.** Ook foto's zonder kaart (eten, interieur), scheve en donkere foto's, krijtborden en gedrukte kaarten. Controleer elk label met de hand en zet `gecontroleerd` op `true`.
 4. **Ophalen en meten.** `node testset/haal-fotos.mjs`, daarna `node testset/meet.mjs`.

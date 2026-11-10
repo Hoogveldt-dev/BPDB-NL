@@ -92,6 +92,15 @@ test("meetFoto: fout van het model wordt twijfel, ontbrekende foto wordt overges
   assert.equal(telOp([r, weg]).controleren.twijfel, 1);
 });
 
+test("meetFoto: EXIF-datum uit meta.json, zonder origineel", async () => {
+  const label = { sleutel: "jan", kaart: true, bierprijzen: true, vaasje: 3.9, datum: "2020-05-01" };
+  const zonderS0 = async (_, maat) => (maat === "s0" ? null : Buffer.from("geen jpeg"));
+  const r = await meetFoto(label, { rollen, laad: zonderS0, stappen: nepStappen(), meta: { exif: "2020-05-01", geupload: "2021-01-01" } });
+  assert.equal(r.uitslag.datum, "goed");
+  const zonderExif = await meetFoto(label, { rollen, laad: zonderS0, stappen: nepStappen(), meta: { exif: null, geupload: "2021-01-01" } });
+  assert.equal(zonderExif.datum, "2021-01-01");
+});
+
 test("meetFoto: lokaal model zonder JSON telt als twijfel", async () => {
   const { STANDAARD_STAPPEN } = await import("../testset/meet.mjs");
   const echt = globalThis.fetch;

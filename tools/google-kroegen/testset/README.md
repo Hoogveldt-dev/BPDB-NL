@@ -5,7 +5,7 @@ Een vaste set foto's met labels die Kjell met de hand heeft gecontroleerd. Daarm
 | Bestand | Wat |
 |---|---|
 | `labels.json` | Per foto: kroeg, `place_id`, `foto_id`, wat erop staat (`kaart`, `bierprijzen`), de verwachte vaasjesprijs (`vaasje` in euro, of `null`), de verwachte `datum` en een korte `omschrijving`. In Git. |
-| `fotos/<sleutel>/` | De foto in vier maten (`256.jpg`, `768.jpg`, `1600.jpg`, origineel `s0.jpg`) en `meta.json`. **Niet in Git.** |
+| `fotos/<sleutel>/` | De foto in drie maten (`256.jpg`, `768.jpg`, `1600.jpg`) en `meta.json` met uploaddatum en EXIF-datum. Het origineel (vaak meer dan 10 MB) wordt alleen gelezen voor de EXIF-datum en niet bewaard. **Niet in Git.** |
 | `uitslagen/` | Uitslagen van `meet.mjs` als JSON. Niet in Git. |
 | `haal-fotos.mjs` | Haalt de foto's op aan de hand van de ID's. |
 | `meet.mjs` | Draait de pijplijn op de testset. |
@@ -25,7 +25,7 @@ Miniaturen van een kroeg bekijken, met ID en uploaddatum:
 node testset/haal-fotos.mjs --kandidaten ChIJFSh-pl4Ix0cRlzqTtoR2B_4
 ```
 
-Open daarna `testset/fotos/kandidaten/<place_id>/overzicht.html`, neem `place_id` en `foto_id` over in `labels.json` en vul de rest in. Bij `bron: "bestand"` (bijvoorbeeld de drankkaart van een website) zet je de afbeelding zelf in `fotos/<sleutel>/s0.jpg`; die wordt dan voor alle maten gebruikt.
+Open daarna `testset/fotos/kandidaten/<place_id>/overzicht.html`, neem `place_id` en `foto_id` over in `labels.json` en vul de rest in. De map `kandidaten` is wegwerp: verwijder hem als de labels gekozen zijn. Bij `bron: "bestand"` (bijvoorbeeld de drankkaart van een website) zet je de afbeelding zelf in `fotos/<sleutel>/s0.jpg`; die wordt dan voor alle maten gebruikt.
 
 Daarna de gekozen foto's ophalen:
 
