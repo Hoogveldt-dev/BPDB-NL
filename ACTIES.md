@@ -71,4 +71,4 @@ Na een run met `menufotos.mjs` (zie `docs/menukaartprijzen.md`, Nakijken):
 ## Later
 
 - **Captcha.** Supabase raadt een captcha aan bij anonieme accounts (Cloudflare Turnstile). Zet die pas aan in Supabase als de app hem meestuurt; anders werken beginnen en inloggen niet meer.
-- **Opruimen.** Supabase ruimt oude anonieme accounts niet zelf op. Omdat elke bezoeker die iets aanraakt nu een anoniem account krijgt, worden het er sneller veel. Dan kunnen we een taak maken die anonieme accounts zonder punten en check-ins na bijvoorbeeld 30 dagen verwijdert.
+- **Opruimen.** Supabase ruimt oude anonieme accounts niet zelf op. Een anoniem account ontstaat pas bij de eerste bijdrage, dus lege accounts zijn zeldzaam. Dan kunnen we een taak maken die anonieme accounts zonder punten en check-ins na bijvoorbeeld 30 dagen verwijdert.

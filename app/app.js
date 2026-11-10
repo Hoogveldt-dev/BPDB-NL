@@ -1053,7 +1053,7 @@ function setModus(m) {
   $("#legenda").hidden = m !== "koers";
   kaartBijwerken();
   hud();
-  if (m === "mijn" && !state.sessie) toast("Log in via Ik om je eigen kaart te zien");
+  if (m === "mijn" && !state.sessie) toast("Check in bij een kroeg en hij komt op jouw kaart");
 }
 
 let vernieuwTimer;
@@ -1187,26 +1187,25 @@ function detailView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
   if (!k) return `<button class="back" data-back>‹ Terug</button><div class="empty">Kroeg niet gevonden.</div>`;
   const v = kroegVersheid(k);
-  const ingelogd = !!state.sessie;
   let actie = "";
-  if (!ingelogd) {
-    // Niet ingelogd: geen grijze knoppen, maar meteen een weg naar meedoen. Daarna kom je hier terug.
+  if (!kanBijdragen()) {
+    // Alleen als anoniem meespelen in Supabase uit staat: een weg naar een account. Daarna kom je hier terug.
     actie = `<div class="btns"><button class="btn primary" data-doe-mee>${k.versheid === "locked" ? "Doe mee en speel deze kroeg vrij" : "Doe mee en houd de prijs bij"}</button></div>
       <div class="small muted" style="margin-top:8px">Je begint meteen, zonder wachtwoord. Daarna kom je terug bij deze kroeg.</div>`;
   } else if (k.open_melding_id && vanMenukaart(k)) {
     actie = `<div class="small" style="margin-top:8px">Ben je hier? Bevestig de prijs ter plaatse en speel de kroeg vrij zodra een andere speler het ook bevestigt.</div>
       <div class="btns">
-      <button class="btn primary" data-menuklopt="${k.id}" ${ingelogd ? "" : "disabled"}>Klopt, ik ben er</button>
-      <button class="btn" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Prijs is anders</button></div>`;
+      <button class="btn primary" data-menuklopt="${k.id}">Klopt, ik ben er</button>
+      <button class="btn" data-form="nieuw">Prijs is anders</button></div>`;
   } else if (k.open_melding_id) {
     actie = `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>`;
   } else if (k.versheid === "locked") {
-    actie = `<div class="btns"><button class="btn primary" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Speel vrij met een prijs</button></div>`;
+    actie = `<div class="btns"><button class="btn primary" data-form="nieuw">Speel vrij met een prijs</button></div>`;
   } else {
     actie = `<div class="btns">
-      <button class="btn good" data-klopt="${k.id}" ${ingelogd && !anoniem() ? "" : "disabled"}>Klopt nog</button>
-      <button class="btn" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Prijs is anders</button></div>
-      ${anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om prijzen te controleren.</div>` : ""}`;
+      <button class="btn good" data-klopt="${k.id}" ${magControleren() ? "" : "disabled"}>Klopt nog</button>
+      <button class="btn" data-form="nieuw">Prijs is anders</button></div>
+      ${magControleren() ? "" : `<div class="small muted" style="margin-top:8px">Met een account (tabblad Ik) kun je prijzen controleren.</div>`}`;
   }
   return `<button class="back" data-back>‹ Terug</button>
     <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
@@ -1266,7 +1265,7 @@ function meldingKnoppen(m) {
   const uid = state.sessie?.user?.id;
   if (!state.sessie) return "";
   if (m.door_id === uid) return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Intrekken</button>`;
-  if (anoniem()) return `<div class="small muted">Koppel je e-mailadres (tabblad Ik) om dit te bevestigen.</div>`;
+  if (anoniem()) return `<div class="small muted">Met een account (tabblad Ik) kun je dit bevestigen.</div>`;
   return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt">Klopt</button><button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Klopt niet</button>`;
 }
 
@@ -1282,7 +1281,7 @@ function tijdenBlok(info) {
       <div class="small muted">${bron}</div>
       ${melding ? `<div class="btns">${meldingKnoppen(melding)}</div>` : ""}`
     : `<div class="small muted">Nog geen openingstijden bekend.</div>`}
-    ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${state.sessie ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
+    ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${kanBijdragen() ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
 }
 
 // Klopt deze kroeg niet? Open meldingen bovenaan; daaronder een klein formulier voor een nieuwe melding.
@@ -1299,7 +1298,7 @@ function sluitingBlok(info) {
       <div class="small muted">Gemeld ${wanneer(m.op)}${m.klopt_niet ? ", 1 keer klopt niet" : ""}. ${KROEGMELDING[m.soort].gevolg}</div>
       <div class="btns">${meldingKnoppen(m)}</div></div>`).join("");
   const vrij = Object.keys(KROEGMELDING).filter((soort) => !open.some((m) => m.soort === soort));
-  const formulier = !state.sessie || !vrij.length ? "" : `<details class="klopt-niet">
+  const formulier = !kanBijdragen() || !vrij.length ? "" : `<details class="klopt-niet">
       <summary>Klopt deze kroeg niet?</summary>
       <form class="form" id="kroegmeldingForm">
         <div class="seg">${vrij.map((soort, i) => `<label class="keuze"><input type="radio" name="soort" value="${soort}" ${i ? "" : "checked"}> ${KROEGMELDING[soort].knop}</label>`).join("")}</div>
@@ -1352,6 +1351,7 @@ async function verstuurTijden(form) {
     tijden[d] = lijst;
   }
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
   const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: "openingstijden", p_openingstijden: tijden });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
@@ -1367,6 +1367,7 @@ async function verstuurKroegmelding(form) {
   if (toelichting && toelichting.length < 2) return toast("Maak de toelichting iets langer, of laat hem leeg");
   if (soort !== "verkeerde_plek" && !(await vraag(`${KROEGMELDING[soort].knop}: ${k.naam}? ${KROEGMELDING[soort].gevolg}`, "Melden"))) return;
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
   const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: soort, p_toelichting: toelichting || null });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
@@ -1388,7 +1389,7 @@ async function beoordeelMelding(id, oordeel) {
 
 // Inchecken: persoonlijk, los van de gezamenlijke mist. Alleen ter plaatse, een keer per dag.
 function incheckHtml(k) {
-  if (!state.sessie) return "";
+  if (!kanBijdragen()) return "";
   const m = state.mijn.get(k.id);
   const vandaag = m && isVandaag(m.laatst);
   const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
@@ -1418,9 +1419,9 @@ function aanbodBlok(k) {
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}</span>` : `<span class="small muted">prijs?</span>`}
       <div class="aanbod-knoppen">${knoppen}</div>
     </div>
-    ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${state.sessie ? "" : "disabled"}>Prijs van een pint melden</button></div>`}`
+    ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${kanBijdragen() ? "" : "disabled"}>Prijs van een pint melden</button></div>`}`
     : `<div class="small muted">Nog niet bekend of ze hier Guinness tappen.</div>
-    ${state.sessie ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
+    ${kanBijdragen() ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
 }
 
 function aanbodFormView() {
@@ -1455,6 +1456,7 @@ async function verstuurAanbod(form) {
   if (prijs != null && (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500)) return toast("Vul een prijs tussen €0,50 en €25 in");
   if (prijs != null && cl == null) return toast("Vul bij een prijs ook het glas in");
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
   const { error } = await sb.rpc("meld_aanbod", { p_kroeg_id: k.id, p_soort: String(fd.get("soort")), p_merk: merk || null, p_volume_cl: cl, p_prijs_cent: prijs });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
@@ -1506,9 +1508,9 @@ async function laadTijdlijn(id) {
       ${open.foto_pad ? `<div class="small"><button type="button" class="linkbtn" data-foto="${esc(fotoUrl(open.foto_pad))}">Foto van de prijslijst</button></div>` : ""}
       ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door andere spelers.</div>`
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
-        : anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om meldingen van anderen te bevestigen of te weerleggen.</div>`
-        : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}" ${state.sessie ? "" : "disabled"}>Klopt</button>
-             <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}" ${state.sessie ? "" : "disabled"}>Klopt niet</button></div>`}`;
+        : !magControleren() ? `<div class="small muted" style="margin-top:8px">Met een account (tabblad Ik) kun je meldingen van anderen bevestigen.</div>`
+        : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}">Klopt</button>
+             <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}">Klopt niet</button></div>`}`;
   }
   $("#tijdlijn").innerHTML = data.length ? `<ul class="timeline">${data.map(tijdlijnItem).join("")}</ul>` : `<div class="muted small">Nog niets gebeurd.</div>`;
   $("#spark").innerHTML = spark(data);
@@ -1816,8 +1818,9 @@ function aanbiederKnoppen(soort = "inloggen") {
 }
 
 async function inloggenMet(aanbieder, knop) {
-  const koppelen = knop.dataset.soort === "koppelen" && anoniem();
+  const koppelen = knop.dataset.soort === "koppelen" && (anoniem() || !state.sessie);
   if (!koppelen && !(await verlaatAnoniem())) return;
+  if (koppelen && !(await zorgVoorSpeler())) return;
   knop.disabled = true;
   const terug = location.origin + location.pathname;
   // De pagina gaat naar Apple of Google en komt terug met ?code=; supabase-js wisselt die zelf in
@@ -1842,6 +1845,11 @@ async function laadAanbieders() {
 function anoniem() {
   return !!state.sessie?.user?.is_anonymous;
 }
+// Kan deze bezoeker bijdragen? Met een sessie, of zonder: dan maakt de eerste bijdrage een anoniem account.
+const kanAnoniem = () => state.aanbieders.anoniem && !state.anoniemMislukt;
+const kanBijdragen = () => !!state.sessie || kanAnoniem();
+// Het werk van anderen controleren kan alleen met een account (private.vereis_email())
+const magControleren = () => !!state.sessie && !anoniem();
 
 // Inloggen met een ander, bestaand account vanuit een anonieme speler: de punten en check-ins van de anonieme
 // speler gaan dan niet mee. Vraag het alleen als er iets verloren gaat.
@@ -1860,14 +1868,41 @@ function codeFormulier(knop) {
     <div class="btns"><button class="btn" data-nieuwecode>Nieuwe code sturen</button><button class="btn" data-anderadres>Ander e-mailadres</button></div>`;
 }
 
+// Account maken en inloggen. Een anonieme speler (of iemand zonder bijdragen) maakt een account: hetzelfde
+// account krijgt een e-mailadres of Google, dus punten en check-ins blijven staan. Daarna kiest hij een eigen naam.
+function accountBlok(p) {
+  const code = (soort, knop) => state.inlog?.soort === soort ? codeFormulier(knop) : null;
+  return `<h3>Account maken</h3>
+    <div class="card">
+      <div class="small">${p ? `Je speelt nu als <b>${esc(p.naam)}</b>. ` : ""}Maak een account om je eigen spelersnaam te kiezen, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.${p ? " Je punten en check-ins gaan mee." : ""}</div>
+      ${code("koppelen", "Account maken") ?? `<form class="form" id="koppelForm">
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
+        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
+      </form>
+      <div class="of">of</div>
+      ${aanbiederKnoppen("koppelen")}`}
+    </div>
+    <h3>Al een account?</h3>
+    ${code("inloggen", "Inloggen") ?? `${aanbiederKnoppen("inloggen")}
+      <div class="of">of met je e-mailadres</div>
+      <form class="form" id="loginForm">
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(onthouden.lees().email ?? "")}" required>
+        <div class="btns"><button class="btn" type="submit">Stuur inlogcode</button></div>
+      </form>`}`;
+}
+
 function ikView() {
   if (!state.sessie && state.inlog) {
     return `<h2>Vul je code in</h2>${codeFormulier("Inloggen")}`;
   }
+  // Nog niets bijgedragen: nog geen account. Je speelt mee vanaf je eerste bijdrage, of je maakt hier meteen een account.
+  if (!state.sessie && kanAnoniem()) {
+    return `<h2>Ik</h2><p class="muted">Nog geen bijdragen. Meld een prijs of check in bij een kroeg en je speelt meteen mee.</p>
+      ${accountBlok(null)}
+      <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>`;
+  }
   if (!state.sessie) {
-    // Normaal speel je al mee als anonieme speler (startAnoniem) en kom je hier niet. Dit scherm is er alleen
-    // als dat niet kan: anonieme accounts staan in Supabase uit, of aanmaken lukte niet.
-    if (state.aanbieders.anoniem && !state.anoniemMislukt) { startAnoniem(); return `<div class="empty">Laden…</div>`; }
+    // Alleen als anoniem meespelen niet kan: anonieme accounts staan in Supabase uit, of aanmaken lukte niet
     const vorig = onthouden.lees();
     const beginnen = `<p class="muted">Kies een spelersnaam en vul je e-mailadres in. Je krijgt een code per mail, geen wachtwoord nodig.</p>
       <form class="form" id="aanmeldForm">
@@ -1897,26 +1932,7 @@ function ikView() {
       ${inloggen}`;
   }
   const p = state.profiel;
-  // Een anonieme speler maakt hier een account: hetzelfde account krijgt een e-mailadres, dus punten en
-  // check-ins blijven staan. Daarna kiest hij een eigen naam. Wie al een account heeft, logt eronder in.
-  const code = (soort, knop) => state.inlog?.soort === soort ? codeFormulier(knop) : null;
-  const koppelen = !anoniem() ? "" : `<h3>Account maken</h3>
-    <div class="card">
-      <div class="small">Je speelt nu als <b>${esc(p?.naam ?? "")}</b>. Maak een account om je eigen spelersnaam te kiezen, op een ander toestel verder te spelen en prijzen van anderen te bevestigen. Je punten en check-ins gaan mee.</div>
-      ${code("koppelen", "Account maken") ?? `<form class="form" id="koppelForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
-        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
-      </form>
-      <div class="of">of</div>
-      ${aanbiederKnoppen("koppelen")}`}
-    </div>
-    <h3>Al een account?</h3>
-    ${code("inloggen", "Inloggen") ?? `${aanbiederKnoppen("inloggen")}
-      <div class="of">of met je e-mailadres</div>
-      <form class="form" id="loginForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(onthouden.lees().email ?? "")}" required>
-        <div class="btns"><button class="btn" type="submit">Stuur inlogcode</button></div>
-      </form>`}`;
+  const koppelen = anoniem() ? accountBlok(p) : "";
   return `<h2>${esc(p?.naam ?? "")}</h2>
     <div class="card saldo">
       <div class="kop">Puntensaldo</div>
@@ -2192,6 +2208,7 @@ async function verstuurPrijs(form) {
   if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl");
   if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in");
   const knop = $("#verstuur"); knop.disabled = true; knop.textContent = "Bezig…";
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; knop.textContent = "Versturen"; return; }
   try {
     let pos = null;
     if (fd.get("locatie")) pos = await locatie();
@@ -2232,6 +2249,7 @@ async function menukaartKlopt(id, knop) {
   const pos = await locatie(10000);
   knop.disabled = false; knop.textContent = "Klopt, ik ben er";
   if (!pos) return toast("Zet je locatie aan: een prijs van de menukaart bevestig je bij de kroeg");
+  if (!(await zorgVoorSpeler())) return;
   const { error } = await sb.rpc("meld_prijs", {
     p_kroeg_id: id, p_merk: k.open_merk, p_volume_cl: k.open_volume_cl, p_prijs_cent: k.open_prijs_cent,
     p_lat: pos[1], p_lon: pos[0], p_foto_pad: null,
@@ -2267,6 +2285,7 @@ async function inchecken(id, knop) {
   const pos = await locatie(10000);
   if (!pos) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return toast("Zet je locatie aan om in te checken"); }
   const nieuw = !state.mijn.has(id);
+  if (!(await zorgVoorSpeler())) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return; }
   const { error } = await sb.rpc("inchecken", { p_kroeg_id: id, p_lat: pos[1], p_lon: pos[0] });
   if (error) { toast(await leesFout(error)); await laadMijn(); return draw(); }
   toast(nieuw ? `Ingecheckt! ${k.naam} staat nu op jouw kaart` : `Ingecheckt bij ${k.naam}`);
@@ -2307,13 +2326,7 @@ body.addEventListener("click", (e) => {
   if (t.dataset.back !== undefined) return sluitKroeg();
   if (t.dataset.cancel !== undefined) { state.form = null; state.aanbodForm = null; state.tijdenForm = null; return draw(); }
   if (t.dataset.tijdenform !== undefined) { state.tijdenForm = {}; return draw(); }
-  if (t.dataset.doeMee !== undefined) {
-    // Alleen als anoniem meespelen nog niet lukte: nog een poging, of anders een account met e-mailadres
-    state.terugNaar = state.selected;
-    if (!state.aanbieders.anoniem) return setTab("ik");
-    state.anoniemMislukt = false;
-    return startAnoniem({ stil: false });
-  }
+  if (t.dataset.doeMee !== undefined) { state.terugNaar = state.selected; return setTab("ik"); }
   if (t.dataset.oordeelMelding) return beoordeelMelding(Number(t.dataset.melding), t.dataset.oordeelMelding);
   if (t.dataset.aanbodform !== undefined) { state.aanbodForm = { soort: GUINNESS, cl: PINT }; return draw(); }
   if (t.dataset.guinnessUit !== undefined) return setGuinness(false);
@@ -2426,6 +2439,7 @@ body.addEventListener("submit", async (e) => {
     onthouden.schrijf({ ...onthouden.lees(), email, ...(naam ? { naam } : {}) });
     const soort = { loginForm: "inloggen", koppelForm: "koppelen", aanmeldForm: "aanmelden" }[f.id];
     if (soort === "inloggen" && !(await verlaatAnoniem())) return;
+    if (soort === "koppelen" && !(await zorgVoorSpeler())) return;
     return stuurCode(email, soort, f.querySelector("button[type=submit]"), naam);
   }
   if (f.id === "codeForm") {
@@ -2454,34 +2468,36 @@ body.addEventListener("submit", async (e) => {
   }
 });
 
-// Iedereen speelt meteen mee als anonieme speler: een anoniem account van Supabase met een vaste gebruikers-ID,
-// zonder scherm of knop. De sessie blijft op dit apparaat bewaard (zoals een cookie) en de database geeft een
-// willekeurige spelersnaam (dorstige-zebra). Maakt de speler later een account, dan krijgt hetzelfde account een
-// e-mailadres: punten, check-ins en ranglijst blijven staan. Het account ontstaat bij de eerste tik of toets,
-// niet bij het laden van de pagina, zodat zoekmachines en bots geen accounts aanmaken.
+// Meespelen zonder account: de eerste bijdrage (prijs, check-in, Guinness, openingstijden, kroegmelding) of
+// Account maken maakt ongemerkt een anoniem account van Supabase, met een vaste gebruikers-ID en een willekeurige
+// naam uit de database (dorstige-zebra). Zo ontstaat alleen een account als er echt iets bewaard moet worden.
+// De sessie blijft op dit apparaat bewaard (zoals een cookie). Maakt de speler later een account, dan krijgt
+// hetzelfde account een e-mailadres: punten, check-ins en ranglijst blijven staan.
 let anoniemBezig = null;
 let sessieBekend = false; // pas na het starten: anders vervangt een vroege tik een bestaande sessie
-function startAnoniem({ stil = true } = {}) {
-  if (!sessieBekend || state.sessie || !state.aanbieders.anoniem || state.anoniemMislukt) return Promise.resolve();
-  anoniemBezig ??= sb.auth.signInAnonymously().then(({ error }) => {
-    anoniemBezig = null;
-    if (!error) return; // onAuthStateChange zet de sessie en tekent het scherm opnieuw
+let stilAangemeld = false; // het nieuwe anonieme account niet opnieuw tekenen midden in een bijdrage
+async function zorgVoorSpeler() {
+  if (state.sessie) return true;
+  if (!sessieBekend) return false;
+  if (!kanAnoniem()) { setTab("ik"); return false; }
+  stilAangemeld = true;
+  anoniemBezig ??= sb.auth.signInAnonymously().finally(() => { anoniemBezig = null; });
+  const { data, error } = await anoniemBezig;
+  if (error) {
+    stilAangemeld = false;
     state.anoniemMislukt = true;
-    state.terugNaar = null;
-    console.error(error);
-    if (!stil) toast(vertaalAuthFout(error));
-    if (!bezigMetTypen()) draw();
-  });
-  return anoniemBezig;
+    toast(vertaalAuthFout(error));
+    draw();
+    return false;
+  }
+  state.sessie = data.session;
+  return true;
 }
-const eersteTik = () => { if (!state.sessie) startAnoniem(); };
-addEventListener("pointerdown", eersteTik, true);
-addEventListener("keydown", eersteTik, true);
 
 // Stuurt een code per mail. "inloggen": bestaand account met e-mailadres. "koppelen": een anonieme speler
 // koppelt zijn e-mailadres; het account met alle punten blijft hetzelfde. "aanmelden": nieuw account met
 // e-mailadres, alleen als anonieme accounts in Supabase uit staan. Normaal beginnen nieuwe spelers anoniem
-// (startAnoniem), dus inloggen maakt geen nieuw account aan.
+// (zorgVoorSpeler), dus inloggen maakt geen nieuw account aan.
 // De code typ je in de app: dat werkt ook als de mail op een ander apparaat of in een andere browser opengaat,
 // en een virusscanner van het mailprogramma kan hem niet "opgebruiken" zoals bij een link.
 async function stuurCode(email, soort, knop, naam) {
@@ -2569,6 +2585,7 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.
   setTimeout(async () => {
     await Promise.all([laadProfiel(), laadMijn()]);
+    if (stilAangemeld) { stilAangemeld = false; return; }
     // Kwam de speler via "Doe mee" bij een kroeg? Dan terug naar die kroeg.
     if (sessie && gebeurtenis === "SIGNED_IN" && state.terugNaar != null) {
       const id = state.terugNaar;
