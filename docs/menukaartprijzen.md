@@ -10,7 +10,7 @@ Genoemd naar Café Daen (6 november 2026: Hertog Jan 25 cl €4,00, drankkaart v
 
 1. Zoek de website van de kroeg (staat in Google Maps of OSM).
 2. Zoek de drankkaart: een link naar een pdf op de menupagina, of in de openbare mediabibliotheek van WordPress (`/wp-json/wp/v2/media?search=drank`).
-3. Is de pdf opgemaakt met tekst, dan volstaat `pdftotext -layout`; geen AI nodig. Alleen een gescande pdf of een afbeelding gaat naar een vision-model (eerst Haiku of Sonnet, de betaalde DeepSeek-sleutel alleen als dat nodig is).
+3. Is de pdf opgemaakt met tekst, dan volstaat `pdftotext -layout`; geen AI nodig. Alleen een gescande pdf of een afbeelding gaat naar een vision-model: op de pc eerst een lokaal model in LM Studio (Qwen3.5). Draait de pc niet, dan leest Claude de kaart zelf, en de betaalde DeepSeek-sleutel alleen als het echt moet.
 4. Datum: het moment waarop de kaart gemaakt of voor het laatst gewijzigd is, nooit de dag dat wij kijken. In deze volgorde:
    1. EXIF-datum van een foto of afbeelding (`DateTimeOriginal`, zoals bij de JAN-methode);
    2. een datum op de kaart zelf of in de bestandsnaam;
@@ -33,7 +33,7 @@ Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufot
 7. **Stoppen.** Levert een groep een vaasjesprijs op, dan kijken we niet verder naar oudere foto's.
 8. **Nieuwste kaart wint.** Per kroeg de prijs met de nieuwste datum, als rij voor `importeer_menuprijzen`.
 
-Model: standaard DeepSeek (`deepseek-flash`, leest afbeeldingen), via `DEEPSEEK_API_KEY`. Elk ander model in het OpenAI-formaat kan via `MENU_MODEL_URL` en `MENU_MODEL`. Met `--lokaal` draaien Qwen3.5 en Gemma 4 in LM Studio op de eigen computer, zonder kosten of limiet, met een tweede mening per prijs: zie `docs/lokale-vision.md`.
+Model: standaard lokaal (sinds 10 november 2026). Qwen3.5 en Gemma 4 draaien in LM Studio op de pc van Kjell, zonder kosten of limiet, met een tweede mening per prijs en elke foto apart geschift in plaats van op een contactblad: zie `docs/lokale-vision.md`. Alleen als reserve, als het echt moet: `--extern` gebruikt de betaalde DeepSeek (`deepseek-flash`, via `DEEPSEEK_API_KEY`) of een ander model in het OpenAI-formaat via `MENU_MODEL_URL` en `MENU_MODEL`. Let op: automatisch foto's bij Google ophalen werkt alleen vanaf een thuisverbinding, dus zonder de pc lukt deze methode ook met DeepSeek niet. (Het zijn de foto's van het bedrijfsprofiel, dezelfde als in Google Zoeken; de tool haalt de lijst via een Maps-pagina op omdat dat daar kan.) Een foto die Kjell zelf vindt, kan Claude of DeepSeek wel altijd lezen.
 
 ### Nakijken: Claude kijkt alleen waar het nodig is
 

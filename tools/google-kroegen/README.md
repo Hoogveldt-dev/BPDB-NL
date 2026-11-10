@@ -42,6 +42,8 @@ npm install
 npx playwright install chromium
 ```
 
+Blijft die installatie hangen bij het uitpakken (gezien op Windows met Node 26), sla hem dan over en gebruik de Chrome of Edge van de computer: zet `PLAYWRIGHT_KANAAL=chrome` (of `msedge`) voor het commando, bijvoorbeeld `PLAYWRIGHT_KANAAL=chrome node testset/haal-fotos.mjs`.
+
 ## Wat er gebeurt
 
 1. De gemeentegrens wordt opgedeeld in cellen van 1,5 km. Alleen cellen die de grens raken tellen mee.
@@ -65,17 +67,19 @@ Wat er niet in komt: beoordelingen, reviews, telefoon en website. Het spel gebru
 
 ## Menukaartprijzen uit foto's (JAN-methode)
 
-`menufotos.mjs` zoekt in de foto's van een kroeg in Google Maps naar de drankkaart en leest de vaasjesprijs, met de datum uit de EXIF-gegevens. Uitleg: [`docs/menukaartprijzen.md`](../../docs/menukaartprijzen.md). Vereist Playwright en een sleutel voor een vision-model (standaard DeepSeek).
+`menufotos.mjs` zoekt in de foto's van een kroeg in Google Maps naar de drankkaart en leest de vaasjesprijs, met de datum uit de EXIF-gegevens. Uitleg: [`docs/menukaartprijzen.md`](../../docs/menukaartprijzen.md). Vereist Playwright en LM Studio met de server op poort 1235: de modellen draaien standaard lokaal, zonder kosten (zie [`docs/lokale-vision.md`](../../docs/lokale-vision.md)).
 
 ```bash
-DEEPSEEK_API_KEY=<geheim> node menufotos.mjs --place-id ChIJiXxxslwIx0cRxyRGj-BgaWw
+node menufotos.mjs --place-id ChIJiXxxslwIx0cRxyRGj-BgaWw
 ```
 
 Alle kroegen uit een eerdere run, alleen foto's van de laatste twee jaar:
 
 ```bash
-DEEPSEEK_API_KEY=<geheim> node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01
+node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01
 ```
+
+Reserve als LM Studio niet beschikbaar is: `--extern` gebruikt de betaalde DeepSeek (`DEEPSEEK_API_KEY=<geheim>` ervoor) of een ander model via `MENU_MODEL_URL` en `MENU_MODEL`. Foto's bij Google ophalen werkt alleen vanaf een thuisverbinding, ook met `--extern`.
 
 Voor de modellen gaan er drie goedkope filters overheen, zonder model:
 

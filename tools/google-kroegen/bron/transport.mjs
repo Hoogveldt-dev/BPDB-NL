@@ -74,7 +74,7 @@ export class BrowserTransport {
     } catch {
       throw new Error("Playwright ontbreekt. Installeer met: npm install && npx playwright install chromium");
     }
-    this.browser = await playwright.chromium.launch({ headless: !this.zichtbaar });
+    this.browser = await playwright.chromium.launch({ channel: process.env.PLAYWRIGHT_KANAAL || undefined, headless: !this.zichtbaar });
     const ctx = await this.browser.newContext({ locale: "nl-NL", userAgent: UA, viewport: { width: 1280, height: 900 } });
     this.pagina = await ctx.newPage();
     await this.pagina.goto(`${BASIS}/maps?hl=nl`, { waitUntil: "domcontentloaded", timeout: 45000 });

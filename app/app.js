@@ -280,6 +280,8 @@ const state = {
   pos: null,
   // Na het versturen van een code: { email, soort, naam }
   inlog: null,
+  // Inloggen met een e-mailadres zonder account: dat adres, zodat we een nieuw account kunnen aanbieden
+  nieuwAdres: null,
   // Wat in Supabase aanstaat; bijgewerkt door laadAanbieders()
   aanbieders: { google: false, apple: false, anoniem: true },
   // Extra bier per kroeg (aanbod_overzicht), de lijst met soorten en het gekozen filter op soort
@@ -1930,6 +1932,16 @@ function ikView() {
   if (!state.sessie && state.inlog) {
     return `<h2>Vul je code in</h2>${codeFormulier("Inloggen")}`;
   }
+  // Inloggen met een onbekend e-mailadres: bied meteen een account aan in plaats van een weigering. Dat wordt
+  // het anonieme account (nieuw, of het bestaande met punten), gekoppeld aan dit e-mailadres.
+  if (state.nieuwAdres && (!state.sessie || anoniem())) {
+    return `<h2>Nieuw account</h2>
+      <p class="muted">Bij <strong>${esc(state.nieuwAdres)}</strong> hoort nog geen account. Maak er een: je krijgt een code per mail en kiest daarna je eigen spelersnaam.${state.sessie ? " Je punten en check-ins gaan mee." : ""}</p>
+      <form class="form" id="nieuwForm">
+        <div class="btns"><button class="btn primary" type="submit">Maak account en stuur code</button></div>
+      </form>
+      <div class="btns"><button class="btn" data-anderadres>Ander e-mailadres</button></div>`;
+  }
   // Nog niets bijgedragen: nog geen account. Je speelt mee vanaf je eerste bijdrage, of je maakt hier meteen een account.
   if (!state.sessie && kanAnoniem()) {
     return `<h2>Ik</h2><p class="muted">Nog geen bijdragen. Meld een prijs of check in bij een kroeg en je speelt meteen mee.</p>
@@ -2416,7 +2428,7 @@ body.addEventListener("click", (e) => {
   if (t.dataset.verwijder !== undefined) return verwijderAccount(t);
   if (t.dataset.nieuwecode !== undefined) return stuurCode(state.inlog.email, state.inlog.soort, t, state.inlog.naam);
   if (t.dataset.aanbieder) return inloggenMet(t.dataset.aanbieder, t);
-  if (t.dataset.anderadres !== undefined) { state.inlog = null; return draw(); }
+  if (t.dataset.anderadres !== undefined) { state.inlog = null; state.nieuwAdres = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
   if (t.dataset.foto) return openFoto(t.dataset.foto);
   if (t.dataset.tekstenBewerken !== undefined) { teksten.zetBewerken(true); return toast("Tik op een tekst om hem aan te passen"); }
@@ -2476,6 +2488,15 @@ body.addEventListener("submit", async (e) => {
     if (soort === "koppelen" && !(await zorgVoorSpeler())) return;
     return stuurCode(email, soort, f.querySelector("button[type=submit]"), naam);
   }
+  // Nieuw account vanuit inloggen: hetzelfde als Account maken met dit e-mailadres. Het anonieme account
+  // (zorgVoorSpeler) krijgt het e-mailadres; na de code kiest de speler zijn eigen naam (naamForm).
+  if (f.id === "nieuwForm") {
+    const email = state.nieuwAdres;
+    if (!(await zorgVoorSpeler())) return;
+    state.nieuwAdres = null;
+    if (await stuurCode(email, "koppelen", f.querySelector("button[type=submit]"))) { await laadProfiel(); draw(); }
+    return;
+  }
   if (f.id === "codeForm") {
     const knop = f.querySelector("button[type=submit]");
     knop.disabled = true;
@@ -2532,9 +2553,11 @@ async function zorgVoorSpeler() {
 // Stuurt een code per mail. "inloggen": bestaand account met e-mailadres. "koppelen": een anonieme speler
 // koppelt zijn e-mailadres; het account met alle punten blijft hetzelfde. "aanmelden": nieuw account met
 // e-mailadres, alleen als anonieme accounts in Supabase uit staan. Normaal beginnen nieuwe spelers anoniem
-// (zorgVoorSpeler), dus inloggen maakt geen nieuw account aan.
+// (zorgVoorSpeler), dus inloggen maakt geen nieuw account aan. Hoort bij een e-mailadres nog geen account, dan
+// bieden we er een aan (nieuwForm) in plaats van een weigering.
 // De code typ je in de app: dat werkt ook als de mail op een ander apparaat of in een andere browser opengaat,
 // en een virusscanner van het mailprogramma kan hem niet "opgebruiken" zoals bij een link.
+// Geeft true als de code is verstuurd.
 async function stuurCode(email, soort, knop, naam) {
   if (knop) knop.disabled = true;
   const terug = location.origin + location.pathname;
@@ -2547,11 +2570,20 @@ async function stuurCode(email, soort, knop, naam) {
         : { shouldCreateUser: false, emailRedirectTo: terug },
     });
   if (knop) knop.disabled = false;
-  if (error) return toast(vertaalAuthFout(error));
+  if (error) {
+    if (soort === "inloggen" && (kanAnoniem() || anoniem()) && /signups not allowed for otp/i.test(error.message ?? "")) {
+      state.nieuwAdres = email;
+      draw();
+      return false;
+    }
+    toast(vertaalAuthFout(error));
+    return false;
+  }
   const nieuw = state.inlog == null;
-  state.inlog = { email, soort, naam };
+  state.inlog = { ...state.inlog, email, soort, naam };
   if (nieuw) draw();
   else toast("Nieuwe code verstuurd. Gebruik de nieuwste mail.");
+  return true;
 }
 
 async function importeer(knop) {
