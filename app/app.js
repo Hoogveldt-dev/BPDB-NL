@@ -301,6 +301,8 @@ const state = {
   limiet: 40,
   // Kroeg waar je naartoe teruggaat na het inloggen
   terugNaar: null,
+  // Net anoniem begonnen: na het laden van het profiel noemen we de willekeurige spelersnaam
+  welkom: false,
   koersRuw: [],
   koers: { punten: new Map(), index: null, recent: [] },
   codes: new Map(),
@@ -1083,7 +1085,8 @@ function draw() {
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
   else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) laadBeheerMeldingen();
-  $("#tabIk").textContent = state.profiel ? state.profiel.naam.slice(0, 10) : "Ik";
+  // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
+  $("#tabIk").textContent = state.profiel && !anoniem() ? state.profiel.naam.slice(0, 10) : "Ik";
 }
 
 function kroegVersheid(k) {
@@ -1189,7 +1192,7 @@ function detailView() {
   if (!ingelogd) {
     // Niet ingelogd: geen grijze knoppen, maar meteen een weg naar meedoen. Daarna kom je hier terug.
     actie = `<div class="btns"><button class="btn primary" data-doe-mee>${k.versheid === "locked" ? "Doe mee en speel deze kroeg vrij" : "Doe mee en houd de prijs bij"}</button></div>
-      <div class="small muted" style="margin-top:8px">Je begint meteen, zonder e-mailadres of wachtwoord. Daarna kom je terug bij deze kroeg.</div>`;
+      <div class="small muted" style="margin-top:8px">Je begint meteen, zonder e-mailadres of wachtwoord, met een willekeurige spelersnaam.</div>`;
   } else if (k.open_melding_id && vanMenukaart(k)) {
     actie = `<div class="small" style="margin-top:8px">Ben je hier? Bevestig de prijs ter plaatse en speel de kroeg vrij zodra een andere speler het ook bevestigt.</div>
       <div class="btns">
@@ -1853,12 +1856,15 @@ function ikView() {
   }
   if (!state.sessie) {
     const vorig = onthouden.lees();
+    const leeftijdVeld = `<label class="check"><input type="checkbox" name="leeftijd" required> Ik ben 18 jaar of ouder</label>`;
     const naamVeld = `<label>Spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" value="${esc(vorig.naam ?? "")}" required>
-        <label class="check"><input type="checkbox" name="leeftijd" required> Ik ben 18 jaar of ouder</label>`;
-    // Staan anonieme accounts in Supabase (nog) uit, dan meld je je aan met e-mailadres en code
+        ${leeftijdVeld}`;
+    // Anoniem beginnen: geen naam kiezen, de database geeft je er een (dorstige-zebra). Een eigen naam kies je
+    // na het koppelen van je e-mailadres. Staan anonieme accounts in Supabase (nog) uit, dan meld je je aan
+    // met e-mailadres en code.
     const beginnen = state.aanbieders.anoniem
-      ? `<p class="muted">Kies een spelersnaam en begin meteen. Geen e-mail of wachtwoord nodig.</p>
-      <form class="form" id="startForm">${naamVeld}
+      ? `<p class="muted">Begin meteen, zonder e-mail of wachtwoord. Je krijgt een willekeurige spelersnaam, zoals dorstige-zebra. Een eigen naam kies je zodra je je e-mailadres koppelt; je punten en check-ins gaan mee.</p>
+      <form class="form" id="startForm">${leeftijdVeld}
         <div class="btns"><button class="btn primary" type="submit">Begin meteen</button></div>
       </form>`
       : `<p class="muted">Kies een spelersnaam en vul je e-mailadres in. Je krijgt een code per mail, geen wachtwoord nodig.</p>
@@ -1890,7 +1896,7 @@ function ikView() {
   const p = state.profiel;
   const koppelen = !anoniem() ? "" : `<h3>Bewaar je account</h3>
     <div class="card">
-      <div class="small">Je speelt zonder e-mailadres. Koppel er een om je punten te bewaren, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.</div>
+      <div class="small">Je speelt zonder e-mailadres, onder een willekeurige naam. Koppel een e-mailadres om een eigen spelersnaam te kiezen, je punten en check-ins te bewaren, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.</div>
       ${state.inlog ? codeFormulier("Koppelen") : `<form class="form" id="koppelForm">
         <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
         <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
@@ -1911,8 +1917,8 @@ function ikView() {
     </div>
     ${mijnKroegenHtml()}
     ${koppelen}
-    ${p && !p.naam_vast ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
-      <div class="small muted">Je kiest je naam een keer; daarna staat hij vast.</div>
+    ${p && !p.naam_vast && !anoniem() ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
+      <div class="small muted">Je speelt nu als ${esc(p.naam)}. Je kiest je naam een keer; daarna staat hij vast.</div>
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
@@ -2288,7 +2294,13 @@ body.addEventListener("click", (e) => {
   if (t.dataset.back !== undefined) return sluitKroeg();
   if (t.dataset.cancel !== undefined) { state.form = null; state.aanbodForm = null; state.tijdenForm = null; return draw(); }
   if (t.dataset.tijdenform !== undefined) { state.tijdenForm = {}; return draw(); }
-  if (t.dataset.doeMee !== undefined) { state.terugNaar = state.selected; return setTab("ik"); }
+  if (t.dataset.doeMee !== undefined) {
+    state.terugNaar = state.selected;
+    // Anoniem beginnen kan meteen vanaf de kroeg; alleen de leeftijd vragen we nog
+    if (!state.aanbieders.anoniem) return setTab("ik");
+    return vraag("Je doet mee zonder e-mailadres, met een willekeurige spelersnaam. Een eigen naam kies je later, als je je e-mailadres koppelt. Ben je 18 jaar of ouder?", "Ja, begin", { gevaar: false })
+      .then((ja) => (ja ? beginAnoniem(t) : (state.terugNaar = null)));
+  }
   if (t.dataset.oordeelMelding) return beoordeelMelding(Number(t.dataset.melding), t.dataset.oordeelMelding);
   if (t.dataset.aanbodform !== undefined) { state.aanbodForm = { soort: GUINNESS, cl: PINT }; return draw(); }
   if (t.dataset.guinnessUit !== undefined) return setGuinness(false);
@@ -2397,17 +2409,7 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "aanbodForm") return verstuurAanbod(f);
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
-  if (f.id === "startForm") {
-    const naam = String(new FormData(f).get("naam")).trim();
-    onthouden.schrijf({ ...onthouden.lees(), naam });
-    const knop = f.querySelector("button[type=submit]");
-    knop.disabled = true;
-    const { error } = await sb.auth.signInAnonymously({ options: { data: { naam } } });
-    knop.disabled = false;
-    if (error) return toast(vertaalAuthFout(error));
-    // onAuthStateChange zet de sessie en tekent het scherm opnieuw
-    return toast("Welkom! Je kunt meteen meespelen");
-  }
+  if (f.id === "startForm") return beginAnoniem(f.querySelector("button[type=submit]"));
   if (f.id === "loginForm" || f.id === "koppelForm" || f.id === "aanmeldForm") {
     const fd = new FormData(f);
     const email = String(fd.get("email")).trim().toLowerCase();
@@ -2426,19 +2428,33 @@ body.addEventListener("submit", async (e) => {
     if (error) return toast(vertaalAuthFout(error));
     state.inlog = null;
     // onAuthStateChange zet de sessie en tekent het scherm opnieuw
-    toast(koppelen ? "Je e-mailadres is gekoppeld. Je punten zijn bewaard" : "Je bent ingelogd");
     if (koppelen) { await laadProfiel(); draw(); }
+    toast(!koppelen ? "Je bent ingelogd"
+      : state.profiel?.naam_vast === false ? "Je e-mailadres is gekoppeld. Kies nu je eigen spelersnaam" : "Je e-mailadres is gekoppeld. Je punten zijn bewaard");
     return;
   }
   if (f.id === "naamForm") {
     const naam = String(new FormData(f).get("naam")).trim();
     if (!(await vraag(`Wil je "${naam}" als spelersnaam? Je kunt hem daarna niet meer wijzigen.`, "Naam vastzetten", { gevaar: false }))) return;
     const { error } = await sb.from("profielen").update({ naam }).eq("id", state.sessie.user.id);
-    if (error) return toast(error.code === "23505" ? "Die naam is al bezet" : error.code === "P0001" ? "Je spelersnaam staat al vast" : "Opslaan lukte niet");
+    if (error) return toast(error.code === "23505" ? "Die naam is al bezet" : error.code === "P0001" ? "Je spelersnaam staat al vast"
+      : error.code === "42501" ? "Koppel eerst je e-mailadres om een eigen naam te kiezen" : "Opslaan lukte niet");
     toast("Naam opgeslagen");
     await laadProfiel(); draw();
   }
 });
+
+// Meteen meedoen zonder e-mailadres: een anoniem account van Supabase. De sessie blijft op dit apparaat bewaard
+// (zoals een cookie), en de database geeft een willekeurige spelersnaam. Koppelt de speler later een e-mailadres,
+// dan blijft het account hetzelfde, met alle punten en check-ins.
+async function beginAnoniem(knop) {
+  if (knop) knop.disabled = true;
+  state.welkom = true;
+  const { error } = await sb.auth.signInAnonymously();
+  if (knop) knop.disabled = false;
+  if (error) { state.welkom = false; state.terugNaar = null; return toast(vertaalAuthFout(error)); }
+  // onAuthStateChange zet de sessie, laadt het profiel en noemt de spelersnaam
+}
 
 // Stuurt een code per mail. "inloggen": bestaand account met e-mailadres. "koppelen": een anonieme speler
 // koppelt zijn e-mailadres; het account met alle punten blijft hetzelfde. "aanmelden": nieuw account met
@@ -2529,6 +2545,7 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.
   setTimeout(async () => {
     await Promise.all([laadProfiel(), laadMijn()]);
+    if (state.welkom && state.profiel) { state.welkom = false; toast(`Welkom! Je speelt als ${state.profiel.naam}`); }
     // Kwam de speler via "Doe mee" bij een kroeg? Dan terug naar die kroeg.
     if (sessie && gebeurtenis === "SIGNED_IN" && state.terugNaar != null) {
       const id = state.terugNaar;
