@@ -42,6 +42,8 @@ npm install
 npx playwright install chromium
 ```
 
+Blijft die installatie hangen bij het uitpakken (gezien op Windows met Node 26), sla hem dan over en gebruik de Chrome of Edge van de computer: zet `PLAYWRIGHT_KANAAL=chrome` (of `msedge`) voor het commando, bijvoorbeeld `PLAYWRIGHT_KANAAL=chrome node testset/haal-fotos.mjs`.
+
 ## Wat er gebeurt
 
 1. De gemeentegrens wordt opgedeeld in cellen van 1,5 km. Alleen cellen die de grens raken tellen mee.
