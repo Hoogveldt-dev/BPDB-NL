@@ -154,7 +154,7 @@ Punten worden pas uitgekeerd na bevestiging door een andere speler.
 
 ### 2.7 Wat we niet doen
 
-Geen tokens, geen virtueel vastgoed (Upland/Earth2), geen eigen blockchain. Echt geld trekt speculanten aan, valt onder MiCA en mogelijk de Kansspelautoriteit, en een onveranderlijk grootboek botst met foutcorrectie en de AVG. We belonen bijdragen, nooit drinken (Reclamecode voor Alcoholhoudende dranken). Alleen voor 18+.
+Geen tokens, geen virtueel vastgoed (Upland/Earth2), geen eigen blockchain. Echt geld trekt speculanten aan, valt onder MiCA en mogelijk de Kansspelautoriteit, en een onveranderlijk grootboek botst met foutcorrectie en de AVG. We belonen bijdragen, nooit drinken (Reclamecode voor Alcoholhoudende dranken). Geen leeftijdscheck in de app: Bierkoers verkoopt niets en verzamelt alleen prijzen van spelers.
 
 ### 2.8 Inchecken en Mijn kroegen
 

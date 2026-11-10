@@ -278,7 +278,7 @@ const state = {
   sessie: null,
   profiel: null,
   pos: null,
-  // Na het versturen van een code: { email, soort, naam, nieuw }
+  // Na het versturen van een code: { email, soort, naam }
   inlog: null,
   // Inloggen met een e-mailadres zonder account: dat adres, zodat we een nieuw account kunnen aanbieden
   nieuwAdres: null,
@@ -303,6 +303,8 @@ const state = {
   limiet: 40,
   // Kroeg waar je naartoe teruggaat na het inloggen
   terugNaar: null,
+  // Anoniem beginnen lukte niet (staat in Supabase uit, of te veel nieuwe accounts): dan het gewone aanmeldscherm
+  anoniemMislukt: false,
   koersRuw: [],
   koers: { punten: new Map(), index: null, recent: [] },
   codes: new Map(),
@@ -385,9 +387,9 @@ function vertaalAuthFout(fout) {
     return "Deze manier van inloggen staat nog niet aan. Gebruik voorlopig je e-mailadres.";
   if (m.includes("manual linking is disabled")) return "Koppelen met Apple of Google staat nog niet aan. Gebruik voorlopig je e-mailadres.";
   if (m.includes("identity") && m.includes("already")) return "Dit Apple- of Google-account hoort al bij een andere speler.";
-  if (m.includes("signups not allowed for otp")) return "Dit e-mailadres hoort nog niet bij een account. Begin hierboven en koppel daarna je e-mailadres.";
+  if (m.includes("signups not allowed for otp")) return "Dit e-mailadres hoort nog niet bij een account. Maak er hierboven een account mee.";
   if (m.includes("already been registered") || m.includes("email_exists"))
-    return "Dit e-mailadres hoort al bij een account. Log uit en log daarmee in; de punten van deze speler gaan dan niet mee.";
+    return "Dit e-mailadres hoort al bij een account. Log ermee in onder Al een account?; je bijdragen gaan mee.";
   if (m.includes("email") && (m.includes("invalid") || m.includes("validate"))) return "Dit e-mailadres klopt niet.";
   if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "Nieuwe accounts kunnen nu niet worden aangemaakt.";
   if (m.includes("fetch") || m.includes("network")) return "Geen verbinding. Controleer je internet en probeer het opnieuw.";
@@ -648,7 +650,8 @@ function cirkelStijl() {
   }
   return {
     "circle-color": ["match", ["get", "versheid"], "fresh", c.fresh, "stale", c.stale, "old", c.old, "wacht", c.wacht, c.locked],
-    "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0.45, 1],
+    // Kroegen op slot zijn grijs, maar goed zichtbaar: ze laten zien waar de kroegen zijn
+    "circle-opacity": ["case", ["==", ["get", "versheid"], "locked"], 0.85, 1],
     "circle-stroke-color": ["case", ["==", ["get", "versheid"], "locked"], c.surface, "#ffffff"],
   };
 }
@@ -664,8 +667,40 @@ function tochtGeojson() {
   return { type: "FeatureCollection", features: feats };
 }
 
+// De donkere stijl van OpenFreeMap is bijna zwart: straten, water en namen vallen weg, zeker onder de mist.
+// Daarom zetten we hem lichter, naar de donkere stand van Kaarten: grijze straten, blauw water, leesbare namen.
+// Zo kun je je oriënteren, ook als er nog weinig is vrijgespeeld.
+const DONKERE_KAART = [
+  [/^background$/, { "background-color": "#1c1c1e" }],
+  [/^(water|waterway)$/, { "fill-color": "#14304a", "line-color": "#14304a" }],
+  [/^(landuse_park|landcover_wood)$/, { "fill-color": "#1e2c22" }],
+  [/^landuse_residential$/, { "fill-color": "#222224" }],
+  [/^building$/, { "fill-color": "#2a2a2d", "fill-outline-color": "#323235" }],
+  [/^highway_path$/, { "line-color": "#323235" }],
+  [/^(highway_minor|highway_motorway_subtle)$/, { "line-color": "#3e3e42" }],
+  [/^(highway_major_inner|highway_major_subtle)$/, { "line-color": "#4e4e52" }],
+  [/^highway_motorway_inner$/, { "line-color": "#636366" }],
+  [/^railway(_transit|_minor)?$/, { "line-color": "#48484a" }],
+  [/^railway.*_dashline$/, { "line-color": "#1c1c1e" }],
+  [/^highway_name/, { "text-color": "#aeaeb2", "text-halo-color": "#1c1c1e" }],
+  [/^place_/, { "text-color": "#e5e5ea", "text-halo-color": "rgba(0,0,0,0.75)" }],
+  [/^water_name$/, { "text-color": "#64a0d2", "text-halo-color": "rgba(0,0,0,0.6)" }],
+];
+function lichtereDonkereKaart() {
+  if (!donker.matches) return;
+  for (const laag of map.getStyle()?.layers ?? []) {
+    for (const [patroon, verf] of DONKERE_KAART) {
+      if (!patroon.test(laag.id)) continue;
+      // Alleen eigenschappen die bij het soort laag horen: fill-color bij een vlak, text-color bij tekst
+      const soort = laag.type === "symbol" ? "text" : laag.type;
+      for (const [k, v] of Object.entries(verf)) if (k.split("-")[0] === soort) map.setPaintProperty(laag.id, k, v);
+    }
+  }
+}
+
 function kaartLagen() {
   const c = kleur();
+  lichtereDonkereKaart();
   if (map.getSource("kroegen")) return;
   map.addSource("kroegen", { type: "geojson", data: geojson() });
   map.addSource("tocht", { type: "geojson", data: tochtGeojson() });
@@ -1020,7 +1055,7 @@ function setModus(m) {
   $("#legenda").hidden = m !== "koers";
   kaartBijwerken();
   hud();
-  if (m === "mijn" && !state.sessie) toast("Log in via Ik om je eigen kaart te zien");
+  if (m === "mijn" && !state.sessie) toast("Check in bij een kroeg en hij komt op jouw kaart");
 }
 
 let vernieuwTimer;
@@ -1052,7 +1087,8 @@ function draw() {
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
   else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) laadBeheerMeldingen();
-  $("#tabIk").textContent = state.profiel ? state.profiel.naam.slice(0, 10) : "Ik";
+  // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
+  $("#tabIk").textContent = state.profiel && !anoniem() ? state.profiel.naam.slice(0, 10) : "Ik";
 }
 
 function kroegVersheid(k) {
@@ -1153,26 +1189,25 @@ function detailView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
   if (!k) return `<button class="back" data-back>‹ Terug</button><div class="empty">Kroeg niet gevonden.</div>`;
   const v = kroegVersheid(k);
-  const ingelogd = !!state.sessie;
   let actie = "";
-  if (!ingelogd) {
-    // Niet ingelogd: geen grijze knoppen, maar meteen een weg naar meedoen. Daarna kom je hier terug.
+  if (!kanBijdragen()) {
+    // Alleen als anoniem meespelen in Supabase uit staat: een weg naar een account. Daarna kom je hier terug.
     actie = `<div class="btns"><button class="btn primary" data-doe-mee>${k.versheid === "locked" ? "Doe mee en speel deze kroeg vrij" : "Doe mee en houd de prijs bij"}</button></div>
-      <div class="small muted" style="margin-top:8px">Je begint meteen, zonder e-mailadres of wachtwoord. Daarna kom je terug bij deze kroeg.</div>`;
+      <div class="small muted" style="margin-top:8px">Je begint meteen, zonder wachtwoord. Daarna kom je terug bij deze kroeg.</div>`;
   } else if (k.open_melding_id && vanMenukaart(k)) {
     actie = `<div class="small" style="margin-top:8px">Ben je hier? Bevestig de prijs ter plaatse en speel de kroeg vrij zodra een andere speler het ook bevestigt.</div>
       <div class="btns">
-      <button class="btn primary" data-menuklopt="${k.id}" ${ingelogd ? "" : "disabled"}>Klopt, ik ben er</button>
-      <button class="btn" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Prijs is anders</button></div>`;
+      <button class="btn primary" data-menuklopt="${k.id}">Klopt, ik ben er</button>
+      <button class="btn" data-form="nieuw">Prijs is anders</button></div>`;
   } else if (k.open_melding_id) {
     actie = `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>`;
   } else if (k.versheid === "locked") {
-    actie = `<div class="btns"><button class="btn primary" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Speel vrij met een prijs</button></div>`;
+    actie = `<div class="btns"><button class="btn primary" data-form="nieuw">Speel vrij met een prijs</button></div>`;
   } else {
     actie = `<div class="btns">
-      <button class="btn good" data-klopt="${k.id}" ${ingelogd && !anoniem() ? "" : "disabled"}>Klopt nog</button>
-      <button class="btn" data-form="nieuw" ${ingelogd ? "" : "disabled"}>Prijs is anders</button></div>
-      ${anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om prijzen te controleren.</div>` : ""}`;
+      <button class="btn good" data-klopt="${k.id}" ${magControleren() ? "" : "disabled"}>Klopt nog</button>
+      <button class="btn" data-form="nieuw">Prijs is anders</button></div>
+      ${magControleren() ? "" : `<div class="small muted" style="margin-top:8px">Met een account (tabblad Ik) kun je prijzen controleren.</div>`}`;
   }
   return `<button class="back" data-back>‹ Terug</button>
     <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
@@ -1232,7 +1267,7 @@ function meldingKnoppen(m) {
   const uid = state.sessie?.user?.id;
   if (!state.sessie) return "";
   if (m.door_id === uid) return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Intrekken</button>`;
-  if (anoniem()) return `<div class="small muted">Koppel je e-mailadres (tabblad Ik) om dit te bevestigen.</div>`;
+  if (anoniem()) return `<div class="small muted">Met een account (tabblad Ik) kun je dit bevestigen.</div>`;
   return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt">Klopt</button><button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Klopt niet</button>`;
 }
 
@@ -1248,7 +1283,7 @@ function tijdenBlok(info) {
       <div class="small muted">${bron}</div>
       ${melding ? `<div class="btns">${meldingKnoppen(melding)}</div>` : ""}`
     : `<div class="small muted">Nog geen openingstijden bekend.</div>`}
-    ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${state.sessie ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
+    ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${kanBijdragen() ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
 }
 
 // Klopt deze kroeg niet? Open meldingen bovenaan; daaronder een klein formulier voor een nieuwe melding.
@@ -1265,7 +1300,7 @@ function sluitingBlok(info) {
       <div class="small muted">Gemeld ${wanneer(m.op)}${m.klopt_niet ? ", 1 keer klopt niet" : ""}. ${KROEGMELDING[m.soort].gevolg}</div>
       <div class="btns">${meldingKnoppen(m)}</div></div>`).join("");
   const vrij = Object.keys(KROEGMELDING).filter((soort) => !open.some((m) => m.soort === soort));
-  const formulier = !state.sessie || !vrij.length ? "" : `<details class="klopt-niet">
+  const formulier = !kanBijdragen() || !vrij.length ? "" : `<details class="klopt-niet">
       <summary>Klopt deze kroeg niet?</summary>
       <form class="form" id="kroegmeldingForm">
         <div class="seg">${vrij.map((soort, i) => `<label class="keuze"><input type="radio" name="soort" value="${soort}" ${i ? "" : "checked"}> ${KROEGMELDING[soort].knop}</label>`).join("")}</div>
@@ -1318,6 +1353,7 @@ async function verstuurTijden(form) {
     tijden[d] = lijst;
   }
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
   const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: "openingstijden", p_openingstijden: tijden });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
@@ -1333,6 +1369,7 @@ async function verstuurKroegmelding(form) {
   if (toelichting && toelichting.length < 2) return toast("Maak de toelichting iets langer, of laat hem leeg");
   if (soort !== "verkeerde_plek" && !(await vraag(`${KROEGMELDING[soort].knop}: ${k.naam}? ${KROEGMELDING[soort].gevolg}`, "Melden"))) return;
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
   const { error } = await sb.rpc("meld_kroeg", { p_kroeg_id: k.id, p_soort: soort, p_toelichting: toelichting || null });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
@@ -1354,7 +1391,7 @@ async function beoordeelMelding(id, oordeel) {
 
 // Inchecken: persoonlijk, los van de gezamenlijke mist. Alleen ter plaatse, een keer per dag.
 function incheckHtml(k) {
-  if (!state.sessie) return "";
+  if (!kanBijdragen()) return "";
   const m = state.mijn.get(k.id);
   const vandaag = m && isVandaag(m.laatst);
   const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
@@ -1384,9 +1421,9 @@ function aanbodBlok(k) {
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}</span>` : `<span class="small muted">prijs?</span>`}
       <div class="aanbod-knoppen">${knoppen}</div>
     </div>
-    ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${state.sessie ? "" : "disabled"}>Prijs van een pint melden</button></div>`}`
+    ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${kanBijdragen() ? "" : "disabled"}>Prijs van een pint melden</button></div>`}`
     : `<div class="small muted">Nog niet bekend of ze hier Guinness tappen.</div>
-    ${state.sessie ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
+    ${kanBijdragen() ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
 }
 
 function aanbodFormView() {
@@ -1421,6 +1458,7 @@ async function verstuurAanbod(form) {
   if (prijs != null && (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500)) return toast("Vul een prijs tussen €0,50 en €25 in");
   if (prijs != null && cl == null) return toast("Vul bij een prijs ook het glas in");
   const knop = form.querySelector("button[type=submit]"); knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
   const { error } = await sb.rpc("meld_aanbod", { p_kroeg_id: k.id, p_soort: String(fd.get("soort")), p_merk: merk || null, p_volume_cl: cl, p_prijs_cent: prijs });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
@@ -1472,9 +1510,9 @@ async function laadTijdlijn(id) {
       ${open.foto_pad ? `<div class="small"><button type="button" class="linkbtn" data-foto="${esc(fotoUrl(open.foto_pad))}">Foto van de prijslijst</button></div>` : ""}
       ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door andere spelers.</div>`
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
-        : anoniem() ? `<div class="small muted" style="margin-top:8px">Koppel je e-mailadres (tabblad Ik) om meldingen van anderen te bevestigen of te weerleggen.</div>`
-        : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}" ${state.sessie ? "" : "disabled"}>Klopt</button>
-             <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}" ${state.sessie ? "" : "disabled"}>Klopt niet</button></div>`}`;
+        : !magControleren() ? `<div class="small muted" style="margin-top:8px">Met een account (tabblad Ik) kun je meldingen van anderen bevestigen.</div>`
+        : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}">Klopt</button>
+             <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}">Klopt niet</button></div>`}`;
   }
   $("#tijdlijn").innerHTML = data.length ? `<ul class="timeline">${data.map(tijdlijnItem).join("")}</ul>` : `<div class="muted small">Nog niets gebeurd.</div>`;
   $("#spark").innerHTML = spark(data);
@@ -1772,19 +1810,23 @@ const LOGO = {
 };
 
 // Knoppen voor Apple en Google. Zolang een aanbieder in Supabase uit staat, staat de knop op slot
-// (zie docs/inloggen-met-apple-en-google.md). Een anonieme speler koppelt er zijn account mee.
-function aanbiederKnoppen() {
-  const werkwoord = anoniem() ? "Koppelen met" : "Doorgaan met";
+// (zie docs/inloggen-met-apple-en-google.md). "koppelen": een anonieme speler maakt er een account van, met
+// behoud van punten en check-ins. "inloggen": met een bestaand account.
+function aanbiederKnoppen(soort = "inloggen") {
+  const werkwoord = soort === "koppelen" ? "Account maken met" : "Doorgaan met";
   return `<div class="sociaal">${[["apple", "Apple"], ["google", "Google"]].map(([id, naam]) => state.aanbieders[id]
-    ? `<button class="btn aanbieder" data-aanbieder="${id}">${LOGO[id]}<span class="naam">${werkwoord} ${naam}</span></button>`
+    ? `<button class="btn aanbieder" data-aanbieder="${id}" data-soort="${soort}">${LOGO[id]}<span class="naam">${werkwoord} ${naam}</span></button>`
     : `<button class="btn aanbieder op-slot" disabled aria-label="${werkwoord} ${naam}, nog niet beschikbaar">${LOGO[id]}<span class="naam">${werkwoord} ${naam}</span><span class="slot">${LOGO.slot}Binnenkort</span></button>`).join("")}</div>`;
 }
 
 async function inloggenMet(aanbieder, knop) {
+  const koppelen = knop.dataset.soort === "koppelen" && (anoniem() || !state.sessie);
+  if (!koppelen) onthoudAnoniem();
+  if (koppelen && !(await zorgVoorSpeler())) return;
   knop.disabled = true;
   const terug = location.origin + location.pathname;
   // De pagina gaat naar Apple of Google en komt terug met ?code=; supabase-js wisselt die zelf in
-  const { error } = anoniem()
+  const { error } = koppelen
     ? await sb.auth.linkIdentity({ provider: aanbieder, options: { redirectTo: terug } })
     : await sb.auth.signInWithOAuth({ provider: aanbieder, options: { redirectTo: terug } });
   if (error) { knop.disabled = false; toast(vertaalAuthFout(error)); }
@@ -1801,9 +1843,55 @@ async function laadAanbieders() {
   } catch { /* geen verbinding: alles blijft zoals het was */ }
 }
 
+// Bewaarkopie van de sessie in een HttpOnly-cookie (app/_worker.js op Cloudflare Pages). Wist de browser zijn
+// opslag (Safari na 7 dagen zonder bezoek, of de speler zelf), dan haalt de app de sessie daarmee terug. Ook een
+// anonieme speler komt zo terug. Lokaal (zonder Cloudflare) mislukt dit stil.
+const bewaar = {
+  zet(sessie) {
+    fetch("/api/sessie", sessie
+      ? { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: sessie.refresh_token }), keepalive: true }
+      : { method: "DELETE", keepalive: true }).catch(() => {});
+  },
+  async herstel() {
+    try {
+      const r = await fetch("/api/sessie", { method: "POST" });
+      if (!r.ok) return null;
+      const s = await r.json();
+      if (!s?.access_token || !s.refresh_token) return null;
+      const { data, error } = await sb.auth.setSession({ access_token: s.access_token, refresh_token: s.refresh_token });
+      return error ? null : data.session;
+    } catch { return null; }
+  },
+};
+
 // Speelt de speler zonder e-mailadres (anoniem account van Supabase)?
 function anoniem() {
   return !!state.sessie?.user?.is_anonymous;
+}
+// Kan deze bezoeker bijdragen? Met een sessie, of zonder: dan maakt de eerste bijdrage een anoniem account.
+const kanAnoniem = () => state.aanbieders.anoniem && !state.anoniemMislukt;
+const kanBijdragen = () => !!state.sessie || kanAnoniem();
+// Het werk van anderen controleren kan alleen met een account (private.vereis_email())
+const magControleren = () => !!state.sessie && !anoniem();
+
+// Inloggen met een ander, bestaand account vanuit een anonieme speler: zijn bijdragen gaan mee. Vlak voor het
+// inloggen bewaren we het toegangstoken van de anonieme speler; na het inloggen zet de Edge Function samenvoegen
+// alles over naar het account (private.voeg_samen) en verwijdert ze de anonieme speler.
+const SAMEN = "bierkoers-samenvoegen";
+function onthoudAnoniem() {
+  if (!anoniem()) return;
+  try { localStorage.setItem(SAMEN, JSON.stringify({ id: state.sessie.user.id, token: state.sessie.access_token })); } catch { /* privévenster */ }
+}
+async function samenvoegen(id) {
+  let van = null;
+  try { van = JSON.parse(localStorage.getItem(SAMEN) ?? "null"); localStorage.removeItem(SAMEN); } catch { return; }
+  if (!van?.token || van.id === id) return;
+  const { data, error } = await sb.functions.invoke("samenvoegen", { body: { anoniem_token: van.token } });
+  if (error) return toast(await leesFout(error));
+  if (data?.samengevoegd && (data.meldingen || data.punten || data.checkins)) {
+    toast("Je bijdragen zonder account staan nu onder je account");
+    vernieuw();
+  }
 }
 
 function codeFormulier(knop) {
@@ -1816,38 +1904,57 @@ function codeFormulier(knop) {
     <div class="btns"><button class="btn" data-nieuwecode>Nieuwe code sturen</button><button class="btn" data-anderadres>Ander e-mailadres</button></div>`;
 }
 
+// Account maken en inloggen. Een anonieme speler (of iemand zonder bijdragen) maakt een account: hetzelfde
+// account krijgt een e-mailadres of Google, dus punten en check-ins blijven staan. Daarna kiest hij een eigen naam.
+function accountBlok(p) {
+  const code = (soort, knop) => state.inlog?.soort === soort ? codeFormulier(knop) : null;
+  return `<h3>Account maken</h3>
+    <div class="card">
+      <div class="small">${p ? `Je speelt nu als <b>${esc(p.naam)}</b>. ` : ""}Maak een account om je eigen spelersnaam te kiezen, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.${p ? " Je punten en check-ins gaan mee." : ""}</div>
+      ${code("koppelen", "Account maken") ?? `<form class="form" id="koppelForm">
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
+        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
+      </form>
+      <div class="of">of</div>
+      ${aanbiederKnoppen("koppelen")}`}
+    </div>
+    <h3>Al een account?</h3>
+    ${p ? `<p class="small muted">Log in en je bijdragen van nu gaan mee.</p>` : ""}
+    ${code("inloggen", "Inloggen") ?? `${aanbiederKnoppen("inloggen")}
+      <div class="of">of met je e-mailadres</div>
+      <form class="form" id="loginForm">
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(onthouden.lees().email ?? "")}" required>
+        <div class="btns"><button class="btn" type="submit">Stuur inlogcode</button></div>
+      </form>`}`;
+}
+
 function ikView() {
   if (!state.sessie && state.inlog) {
     return `<h2>Vul je code in</h2>${codeFormulier("Inloggen")}`;
   }
-  // Nieuw account vanuit inloggen: het anonieme account bestaat al, maar voor de speler is dit nog de aanmelding
-  if (state.sessie && state.inlog?.nieuwAccount) {
-    return `<h2>Vul je code in</h2>${codeFormulier("Account maken")}`;
-  }
-  // Inloggen met een onbekend e-mailadres: bied meteen een nieuw account aan in plaats van een weigering
-  if (!state.sessie && state.nieuwAdres) {
+  // Inloggen met een onbekend e-mailadres: bied meteen een account aan in plaats van een weigering. Dat wordt
+  // het anonieme account (nieuw, of het bestaande met punten), gekoppeld aan dit e-mailadres.
+  if (state.nieuwAdres && (!state.sessie || anoniem())) {
     return `<h2>Nieuw account</h2>
-      <p class="muted">Bij <strong>${esc(state.nieuwAdres)}</strong> hoort nog geen account. Maak er een: je krijgt een code per mail en kiest daarna je spelersnaam.</p>
+      <p class="muted">Bij <strong>${esc(state.nieuwAdres)}</strong> hoort nog geen account. Maak er een: je krijgt een code per mail en kiest daarna je eigen spelersnaam.${state.sessie ? " Je punten en check-ins gaan mee." : ""}</p>
       <form class="form" id="nieuwForm">
-        <label class="check"><input type="checkbox" name="leeftijd" required> Ik ben 18 jaar of ouder</label>
         <div class="btns"><button class="btn primary" type="submit">Maak account en stuur code</button></div>
       </form>
-      <div class="btns"><button class="btn" data-anderadres>Ander e-mailadres</button></div>
-      <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
+      <div class="btns"><button class="btn" data-anderadres>Ander e-mailadres</button></div>`;
+  }
+  // Nog niets bijgedragen: nog geen account. Je speelt mee vanaf je eerste bijdrage, of je maakt hier meteen een account.
+  if (!state.sessie && kanAnoniem()) {
+    return `<h2>Ik</h2><p class="muted">Nog geen bijdragen. Meld een prijs of check in bij een kroeg en je speelt meteen mee.</p>
+      ${accountBlok(null)}
+      <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>`;
   }
   if (!state.sessie) {
+    // Alleen als anoniem meespelen niet kan: anonieme accounts staan in Supabase uit, of aanmaken lukte niet
     const vorig = onthouden.lees();
-    const naamVeld = `<label>Spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" value="${esc(vorig.naam ?? "")}" required>
-        <label class="check"><input type="checkbox" name="leeftijd" required> Ik ben 18 jaar of ouder</label>`;
-    // Staan anonieme accounts in Supabase (nog) uit, dan meld je je aan met e-mailadres en code
-    const beginnen = state.aanbieders.anoniem
-      ? `<p class="muted">Kies een spelersnaam en begin meteen. Geen e-mail of wachtwoord nodig.</p>
-      <form class="form" id="startForm">${naamVeld}
-        <div class="btns"><button class="btn primary" type="submit">Begin meteen</button></div>
-      </form>`
-      : `<p class="muted">Kies een spelersnaam en vul je e-mailadres in. Je krijgt een code per mail, geen wachtwoord nodig.</p>
+    const beginnen = `<p class="muted">Kies een spelersnaam en vul je e-mailadres in. Je krijgt een code per mail, geen wachtwoord nodig.</p>
       <form class="form" id="aanmeldForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>${naamVeld}
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
+        <label>Spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" value="${esc(vorig.naam ?? "")}" required>
         <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
       </form>`;
     const inloggen = `${aanbiederKnoppen()}
@@ -1865,23 +1972,14 @@ function ikView() {
       <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
     }
     const terug = state.terugNaar != null ? state.kroegen.find((k) => k.id === state.terugNaar) : null;
-    return `<h2>Doe mee</h2>${terug ? `<p class="small">Daarna ga je terug naar <b>${esc(terug.naam)}</b>.</p>` : ""}${beginnen}
+    return `<h2>Account maken</h2>${terug ? `<p class="small">Daarna ga je terug naar <b>${esc(terug.naam)}</b>.</p>` : ""}${beginnen}
       <p class="small muted">We belonen bijdragen, nooit drinken.</p>
       <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
       <h3>Al een account?</h3>
       ${inloggen}`;
   }
   const p = state.profiel;
-  const koppelen = !anoniem() ? "" : `<h3>Bewaar je account</h3>
-    <div class="card">
-      <div class="small">Je speelt zonder e-mailadres. Koppel er een om je punten te bewaren, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.</div>
-      ${state.inlog ? codeFormulier("Koppelen") : `<form class="form" id="koppelForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
-        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
-      </form>
-      <div class="of">of</div>
-      ${aanbiederKnoppen()}`}
-    </div>`;
+  const koppelen = anoniem() ? accountBlok(p) : "";
   return `<h2>${esc(p?.naam ?? "")}</h2>
     <div class="card saldo">
       <div class="kop">Puntensaldo</div>
@@ -1895,8 +1993,8 @@ function ikView() {
     </div>
     ${mijnKroegenHtml()}
     ${koppelen}
-    ${p && !p.naam_vast ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
-      <div class="small muted">Je kiest je naam een keer; daarna staat hij vast.</div>
+    ${p && !p.naam_vast && !anoniem() ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
+      <div class="small muted">Je speelt nu als ${esc(p.naam)}. Je kiest je naam een keer; daarna staat hij vast.</div>
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
@@ -1908,8 +2006,8 @@ function ikView() {
         <button type="button" class="mini" data-tekst-wis="${esc(sleutel)}">Standaard</button></li>`).join("")}</ul>` : `<div class="small muted" style="margin-top:8px">Nog geen eigen teksten.</div>`}</div>` : ""}
     <h3>Jouw gegevens</h3>
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
-      Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken. Alleen voor 18 jaar en ouder.</p>
-    <div class="btns"><button class="btn" data-logout>Uitloggen</button><button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
+      Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p>
+    <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
 }
 
 // Spelregels in het kort; de uitwerking staat in supabase/README.md
@@ -2157,6 +2255,7 @@ async function verstuurPrijs(form) {
   if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl");
   if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in");
   const knop = $("#verstuur"); knop.disabled = true; knop.textContent = "Bezig…";
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; knop.textContent = "Versturen"; return; }
   try {
     let pos = null;
     if (fd.get("locatie")) pos = await locatie();
@@ -2197,6 +2296,7 @@ async function menukaartKlopt(id, knop) {
   const pos = await locatie(10000);
   knop.disabled = false; knop.textContent = "Klopt, ik ben er";
   if (!pos) return toast("Zet je locatie aan: een prijs van de menukaart bevestig je bij de kroeg");
+  if (!(await zorgVoorSpeler())) return;
   const { error } = await sb.rpc("meld_prijs", {
     p_kroeg_id: id, p_merk: k.open_merk, p_volume_cl: k.open_volume_cl, p_prijs_cent: k.open_prijs_cent,
     p_lat: pos[1], p_lon: pos[0], p_foto_pad: null,
@@ -2232,6 +2332,7 @@ async function inchecken(id, knop) {
   const pos = await locatie(10000);
   if (!pos) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return toast("Zet je locatie aan om in te checken"); }
   const nieuw = !state.mijn.has(id);
+  if (!(await zorgVoorSpeler())) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return; }
   const { error } = await sb.rpc("inchecken", { p_kroeg_id: id, p_lat: pos[1], p_lon: pos[0] });
   if (error) { toast(await leesFout(error)); await laadMijn(); return draw(); }
   toast(nieuw ? `Ingecheckt! ${k.naam} staat nu op jouw kaart` : `Ingecheckt bij ${k.naam}`);
@@ -2322,11 +2423,8 @@ body.addEventListener("click", (e) => {
     return locatie().then((pos) => { if (!pos) return toast("Locatie niet beschikbaar"); planTocht(); draw(); });
   }
   if (t.dataset.oordeel) return beoordeel(Number(t.dataset.g), t.dataset.oordeel);
-  if (t.dataset.logout !== undefined) {
-    if (!anoniem()) return sb.auth.signOut();
-    return vraag("Je speelt zonder e-mailadres. Als je uitlogt, ben je deze speler en je punten kwijt. Toch uitloggen?", "Uitloggen")
-      .then((ja) => ja && sb.auth.signOut());
-  }
+  // Alleen met een account; een anonieme speler heeft geen knop om uit te loggen
+  if (t.dataset.logout !== undefined) return sb.auth.signOut();
   if (t.dataset.verwijder !== undefined) return verwijderAccount(t);
   if (t.dataset.nieuwecode !== undefined) return stuurCode(state.inlog.email, state.inlog.soort, t, state.inlog.naam);
   if (t.dataset.aanbieder) return inloggenMet(t.dataset.aanbieder, t);
@@ -2381,35 +2479,22 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "aanbodForm") return verstuurAanbod(f);
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
-  if (f.id === "startForm") {
-    const naam = String(new FormData(f).get("naam")).trim();
-    onthouden.schrijf({ ...onthouden.lees(), naam });
-    const knop = f.querySelector("button[type=submit]");
-    knop.disabled = true;
-    const { error } = await sb.auth.signInAnonymously({ options: { data: { naam } } });
-    knop.disabled = false;
-    if (error) return toast(vertaalAuthFout(error));
-    // onAuthStateChange zet de sessie en tekent het scherm opnieuw
-    return toast("Welkom! Je kunt meteen meespelen");
-  }
   if (f.id === "loginForm" || f.id === "koppelForm" || f.id === "aanmeldForm") {
     const fd = new FormData(f);
     const email = String(fd.get("email")).trim().toLowerCase();
     const naam = fd.has("naam") ? String(fd.get("naam")).trim() : undefined;
     onthouden.schrijf({ ...onthouden.lees(), email, ...(naam ? { naam } : {}) });
     const soort = { loginForm: "inloggen", koppelForm: "koppelen", aanmeldForm: "aanmelden" }[f.id];
+    if (soort === "koppelen" && !(await zorgVoorSpeler())) return;
     return stuurCode(email, soort, f.querySelector("button[type=submit]"), naam);
   }
-  // Nieuw account vanuit inloggen: eerst een anoniem account (zoals "Begin meteen", nog zonder naam), dan
-  // meteen het e-mailadres koppelen. Na de code kiest de speler zijn naam (naamForm).
+  // Nieuw account vanuit inloggen: hetzelfde als Account maken met dit e-mailadres. Het anonieme account
+  // (zorgVoorSpeler) krijgt het e-mailadres; na de code kiest de speler zijn eigen naam (naamForm).
   if (f.id === "nieuwForm") {
     const email = state.nieuwAdres;
-    const knop = f.querySelector("button[type=submit]");
-    knop.disabled = true;
-    const { error } = await sb.auth.signInAnonymously();
-    if (error) { knop.disabled = false; return toast(vertaalAuthFout(error)); }
+    if (!(await zorgVoorSpeler())) return;
     state.nieuwAdres = null;
-    if (await stuurCode(email, "koppelen", knop)) { state.inlog.nieuwAccount = true; draw(); }
+    if (await stuurCode(email, "koppelen", f.querySelector("button[type=submit]"))) { await laadProfiel(); draw(); }
     return;
   }
   if (f.id === "codeForm") {
@@ -2417,30 +2502,58 @@ body.addEventListener("submit", async (e) => {
     knop.disabled = true;
     const code = String(new FormData(f).get("code")).replace(/\D/g, "");
     const koppelen = state.inlog.soort === "koppelen";
-    const nieuwAccount = !!state.inlog.nieuwAccount;
+    if (!koppelen) onthoudAnoniem();
     const { error } = await sb.auth.verifyOtp({ email: state.inlog.email, token: code, type: koppelen ? "email_change" : "email" });
     knop.disabled = false;
     if (error) return toast(vertaalAuthFout(error));
     state.inlog = null;
     // onAuthStateChange zet de sessie en tekent het scherm opnieuw
-    toast(nieuwAccount ? "Je account is klaar. Kies nu je spelersnaam" : koppelen ? "Je e-mailadres is gekoppeld. Je punten zijn bewaard" : "Je bent ingelogd");
     if (koppelen) { await laadProfiel(); draw(); }
+    toast(!koppelen ? "Je bent ingelogd"
+      : state.profiel?.naam_vast === false ? "Je e-mailadres is gekoppeld. Kies nu je eigen spelersnaam" : "Je e-mailadres is gekoppeld. Je punten zijn bewaard");
     return;
   }
   if (f.id === "naamForm") {
     const naam = String(new FormData(f).get("naam")).trim();
     if (!(await vraag(`Wil je "${naam}" als spelersnaam? Je kunt hem daarna niet meer wijzigen.`, "Naam vastzetten", { gevaar: false }))) return;
     const { error } = await sb.from("profielen").update({ naam }).eq("id", state.sessie.user.id);
-    if (error) return toast(error.code === "23505" ? "Die naam is al bezet" : error.code === "P0001" ? "Je spelersnaam staat al vast" : "Opslaan lukte niet");
+    if (error) return toast(error.code === "23505" ? "Die naam is al bezet" : error.code === "P0001" ? "Je spelersnaam staat al vast"
+      : error.code === "42501" ? "Koppel eerst je e-mailadres om een eigen naam te kiezen" : "Opslaan lukte niet");
     toast("Naam opgeslagen");
     await laadProfiel(); draw();
   }
 });
 
+// Meespelen zonder account: de eerste bijdrage (prijs, check-in, Guinness, openingstijden, kroegmelding) of
+// Account maken maakt ongemerkt een anoniem account van Supabase, met een vaste gebruikers-ID en een willekeurige
+// naam uit de database (dorstige-zebra). Zo ontstaat alleen een account als er echt iets bewaard moet worden.
+// De sessie blijft op dit apparaat bewaard (zoals een cookie). Maakt de speler later een account, dan krijgt
+// hetzelfde account een e-mailadres: punten, check-ins en ranglijst blijven staan.
+let anoniemBezig = null;
+let sessieBekend = false; // pas na het starten: anders vervangt een vroege tik een bestaande sessie
+let stilAangemeld = false; // het nieuwe anonieme account niet opnieuw tekenen midden in een bijdrage
+async function zorgVoorSpeler() {
+  if (state.sessie) return true;
+  if (!sessieBekend) return false;
+  if (!kanAnoniem()) { setTab("ik"); return false; }
+  stilAangemeld = true;
+  anoniemBezig ??= sb.auth.signInAnonymously().finally(() => { anoniemBezig = null; });
+  const { data, error } = await anoniemBezig;
+  if (error) {
+    stilAangemeld = false;
+    state.anoniemMislukt = true;
+    toast(vertaalAuthFout(error));
+    draw();
+    return false;
+  }
+  state.sessie = data.session;
+  return true;
+}
+
 // Stuurt een code per mail. "inloggen": bestaand account met e-mailadres. "koppelen": een anonieme speler
 // koppelt zijn e-mailadres; het account met alle punten blijft hetzelfde. "aanmelden": nieuw account met
 // e-mailadres, alleen als anonieme accounts in Supabase uit staan. Normaal beginnen nieuwe spelers anoniem
-// (startForm), dus inloggen maakt geen nieuw account aan. Hoort bij een e-mailadres nog geen account, dan
+// (zorgVoorSpeler), dus inloggen maakt geen nieuw account aan. Hoort bij een e-mailadres nog geen account, dan
 // bieden we er een aan (nieuwForm) in plaats van een weigering.
 // De code typ je in de app: dat werkt ook als de mail op een ander apparaat of in een andere browser opengaat,
 // en een virusscanner van het mailprogramma kan hem niet "opgebruiken" zoals bij een link.
@@ -2458,7 +2571,7 @@ async function stuurCode(email, soort, knop, naam) {
     });
   if (knop) knop.disabled = false;
   if (error) {
-    if (soort === "inloggen" && state.aanbieders.anoniem && /signups not allowed for otp/i.test(error.message ?? "")) {
+    if (soort === "inloggen" && (kanAnoniem() || anoniem()) && /signups not allowed for otp/i.test(error.message ?? "")) {
       state.nieuwAdres = email;
       draw();
       return false;
@@ -2529,14 +2642,21 @@ sb.channel("stad")
 // ---------------------------------------------------------------------------
 
 sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
+  const vorigeId = state.sessie?.user?.id;
   state.sessie = sessie;
-  // Bij koppelen bestaat de sessie al; dan blijft het codeformulier staan tot de code is ingevuld
-  if (!sessie || (state.inlog && state.inlog.soort !== "koppelen")) state.inlog = null;
+  // Een ander account (of uitgelogd): het codeformulier is klaar. Bij koppelen en bij inloggen vanuit een
+  // anonieme speler blijft de sessie tot de code is ingevuld; dan blijft het formulier staan.
+  if (!sessie || (sessie.user.id !== vorigeId && state.inlog?.soort !== "koppelen")) state.inlog = null;
+  // Elke nieuwe vernieuwingssleutel ook in de bewaarcookie; uitloggen wist hem
+  if (sessie) bewaar.zet(sessie);
+  else if (gebeurtenis === "SIGNED_OUT") bewaar.zet(null);
   // Tokenvernieuwing: niets opnieuw laden
   if (gebeurtenis === "TOKEN_REFRESHED") return;
   // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.
   setTimeout(async () => {
     await Promise.all([laadProfiel(), laadMijn()]);
+    if (stilAangemeld) { stilAangemeld = false; return; }
+    if (sessie && !sessie.user.is_anonymous) samenvoegen(sessie.user.id);
     // Kwam de speler via "Doe mee" bij een kroeg? Dan terug naar die kroeg.
     if (sessie && gebeurtenis === "SIGNED_IN" && state.terugNaar != null) {
       const id = state.terugNaar;
@@ -2563,8 +2683,10 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
     document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === "ik")));
   }
   const { data } = await sb.auth.getSession();
-  state.sessie = data.session;
+  // Geen sessie in de browser: misschien wel in de bewaarcookie
+  state.sessie = data.session ?? (await bewaar.herstel());
   await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
+  sessieBekend = true; // nu weten we of er al een sessie is en of anonieme accounts in Supabase aanstaan
   koersen(); lichtkrant(); hud(); kaartBijwerken();
   draw();
   setDetent("half");

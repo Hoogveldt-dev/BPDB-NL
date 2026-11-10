@@ -20,8 +20,9 @@
   --balk: rgb(255 255 255 / .92); --balk-fg: #000; --balk-muted: rgb(60 60 67 / .6);
   --shadow: 0 2px 12px rgb(0 0 0 / .08), 0 0 1px rgb(0 0 0 / .12);
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .14);
-  /* Mist: een egale waas, geen stippen */
-  --mist: rgb(242 242 247 / .62); --mist-stip: transparent;
+  /* Mist: een lichte, egale waas, geen stippen. Licht genoeg dat straten en wijknamen leesbaar blijven,
+     zodat je je ook kunt orienteren als er nog weinig is vrijgespeeld. */
+  --mist: rgb(242 242 247 / .42); --mist-stip: transparent;
   --hair: .5px solid var(--sep);
   --f-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
   --f-titel: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
@@ -44,7 +45,7 @@
     --balk: rgb(0 0 0 / .9); --balk-fg: #fff; --balk-muted: rgb(235 235 245 / .6);
     --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
     --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
-    --mist: rgb(0 0 0 / .5);
+    --mist: rgb(0 0 0 / .24);
     color-scheme: dark;
   }
 }
@@ -61,7 +62,7 @@
   --balk: rgb(0 0 0 / .9); --balk-fg: #fff; --balk-muted: rgb(235 235 245 / .6);
   --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
-  --mist: rgb(0 0 0 / .5);
+  --mist: rgb(0 0 0 / .24);
   color-scheme: dark;
 }
 /* Guinness-stand: Iers groen in plaats van biergeel */

@@ -93,7 +93,9 @@ check('tekens als < en > gaan uit de naam', namen[D] === 'bDirkb', namen[D]);
 const N = '99999999-9999-9999-9999-999999999999';
 await db.exec(`insert into auth.users (id, email, raw_user_meta_data) values ('${N}', 'nina@example.nl', '{}')`);
 const n0 = await een(`select naam, naam_vast from public.profielen where id = '${N}'`);
-check('speler zonder gekozen naam heet speler en mag nog kiezen', n0?.naam === 'speler' && n0.naam_vast === false, JSON.stringify(n0));
+// Een willekeurige naam: bijvoeglijk naamwoord, streepje, zelfstandig naamwoord (dorstige-zebra), eventueel met een nummer
+const willekeurig = (naam) => /^[a-z]+-[a-z]+[0-9]*$/.test(naam ?? '') && naam.length <= 24;
+check('speler zonder gekozen naam krijgt een willekeurige naam en mag nog kiezen', willekeurig(n0?.naam) && n0.naam_vast === false, JSON.stringify(n0));
 const nv = await een(`select naam_vast from public.profielen where id = '${A}'`);
 check('zelfgekozen naam bij aanmelden staat vast', nv?.naam_vast === true, JSON.stringify(nv));
 const r1 = await als(A, `update public.profielen set naam = 'Anna B' where id = '${A}' returning naam`);
@@ -299,11 +301,17 @@ await db.exec(`
     ('${F}', 'frank.de.vries@example.nl', '{}', false);
 `);
 const nZ = await een(`select naam from public.profielen where id = '${Z}'`);
-check('anonieme speler krijgt profiel met eigen naam', nZ?.naam === 'Zoë', JSON.stringify(nZ));
+check('anonieme speler krijgt een willekeurige naam, ook als de app er een meestuurt', willekeurig(nZ?.naam), JSON.stringify(nZ));
+const vZ = await een(`select naam_vast from public.profielen where id = '${Z}'`);
+check('willekeurige naam staat nog niet vast', vZ?.naam_vast === false, JSON.stringify(vZ));
 const nY = await een(`select naam from public.profielen where id = '${Y}'`);
-check('anonieme speler zonder naam heet speler', nY?.naam === 'speler', JSON.stringify(nY));
+check('anonieme speler zonder naam krijgt een willekeurige naam', willekeurig(nY?.naam) && nY.naam !== nZ.naam, JSON.stringify(nY));
 const nF = await een(`select naam from public.profielen where id = '${F}'`);
-check('naam is nooit een stuk van het e-mailadres', nF?.naam === 'speler2', JSON.stringify(nF));
+check('naam is nooit een stuk van het e-mailadres', willekeurig(nF?.naam) && !/frank/i.test(nF.naam), JSON.stringify(nF));
+const zelfY = await als(Y, `update public.profielen set naam = 'Yara' where id = '${Y}'`);
+check('anonieme speler kan nog geen eigen naam kiezen', /Koppel eerst je e-mailadres/.test(zelfY.fout ?? ''), JSON.stringify(zelfY));
+const dubbel = await een(`select count(*)::int as n, count(distinct lower(naam))::int as uniek from public.profielen`);
+check('elke naam komt een keer voor', dubbel.n === dubbel.uniek, JSON.stringify(dubbel));
 
 const K4 = await id('node/4');
 const a1 = await als(Z, `select * from public.meld_prijs(${K4}, 'Heineken', 25, 330)`);
@@ -329,7 +337,11 @@ check('anonieme melder boven 90% wacht toch op bevestiging', a6.rows?.[0]?.statu
 // E-mailadres gekoppeld: hetzelfde account, met punten, mag nu wel bevestigen
 await db.exec(`update auth.users set is_anonymous = false, email = 'zoe@example.nl' where id = '${Z}'`);
 const pZ2 = await een(`select naam, altijd from public.ranglijst where id = '${Z}'`);
-check('na koppelen blijven naam en punten behouden', pZ2.naam === 'Zoë' && pZ2.altijd === 30, JSON.stringify(pZ2));
+check('na koppelen blijven naam en punten behouden', pZ2.naam === nZ.naam && pZ2.altijd === 30, JSON.stringify(pZ2));
+const zelfZ = await als(Z, `update public.profielen set naam = 'Zoë' where id = '${Z}' returning naam, naam_vast`);
+check('na koppelen kiest de speler een eigen naam, die daarna vaststaat', zelfZ.rows?.[0]?.naam === 'Zoë' && zelfZ.rows[0].naam_vast === true, JSON.stringify(zelfZ));
+await db.exec(`update public.profielen set naam = 'Yvo' where id = '${Y}'`);
+check('beheerder kan de naam van een anonieme speler wijzigen', (await een(`select naam from public.profielen where id = '${Y}'`))?.naam === 'Yvo');
 const a7 = await als(Z, `select * from public.klopt_nog(${K3})`);
 check('na koppelen kan de speler klopt nog doen', !a7.fout, JSON.stringify(a7));
 const a8 = await als(Z, `select public.vereis_email()`);
@@ -745,6 +757,48 @@ await als(E, `select * from public.zet_tekst('# kroegen', '# kroegen')`);
 check('de standaardtekst zelf opslaan haalt de eigen tekst ook weg', !(await een(`select 1 as x from public.app_teksten where sleutel = '# kroegen'`)));
 check('spelers kunnen niet direct in de teksten schrijven', !!(await als(A, `insert into public.app_teksten (sleutel, tekst) values ('x', 'y')`)).fout);
 check('ook een beheerder niet direct', !!(await als(E, `insert into public.app_teksten (sleutel, tekst) values ('x', 'y')`)).fout);
+
+// ---------------------------------------------------------------------------
+// Samenvoegen: een anonieme speler logt in met een bestaand account
+// ---------------------------------------------------------------------------
+
+const alsService = async (q, params) => {
+  await db.exec('reset role; set role service_role;');
+  try { return { rows: (await db.query(q, params)).rows }; } catch (e) { return { fout: e.message }; } finally { await db.exec('reset role'); }
+};
+await db.query(`select private.importeer_kroegen($1, 'Samenstad')`, [JSON.stringify([
+  { osm_id: 'node/961', naam: 'Samen Een', soort: 'pub', lat: 51.8301, lon: 5.8401 },
+  { osm_id: 'node/962', naam: 'Samen Twee', soort: 'pub', lat: 51.8311, lon: 5.8411 },
+  { osm_id: 'node/963', naam: 'Samen Drie', soort: 'pub', lat: 51.8321, lon: 5.8421 },
+])]);
+const SV = Object.fromEntries((await db.query(`select osm_id, id from public.kroegen where gemeente = 'Samenstad'`)).rows.map((r) => [r.osm_id, r.id]));
+const S1 = 'a1a1a1a1-0000-0000-0000-000000000001', S2 = 'a2a2a2a2-0000-0000-0000-000000000002', R = 'b1b1b1b1-0000-0000-0000-000000000001';
+await db.exec(`insert into auth.users (id, email, raw_user_meta_data, is_anonymous) values
+  ('${S1}', null, '{}', true), ('${S2}', null, '{}', true), ('${R}', 'rik@example.nl', '{"naam": "Rik"}', false)`);
+const sm1 = (await als(S1, `select * from public.meld_prijs(${SV['node/961']}, 'Heineken', 25, 300, 51.8301, 5.8401)`)).rows?.[0];
+await als(S1, `select * from public.inchecken(${SV['node/962']}, 51.8311, 5.8411)`);
+await als(R, `select * from public.inchecken(${SV['node/962']}, 51.8311, 5.8411)`);
+await db.exec(`insert into public.punten (gebruiker_id, reden, punten) values ('${S1}', 'test', 7)`);
+const checkS1 = (await een(`select count(*)::int as n from public.incheckingen where gebruiker_id = '${S1}'`)).n;
+check('samenvoegen: de anonieme speler heeft een melding en check-ins', sm1?.door_id === S1 && checkS1 === 2, JSON.stringify({ sm1, checkS1 }));
+check('samenvoegen kan een speler niet zelf aanroepen', !!(await als(R, `select public.voeg_samen('${S1}', '${R}')`)).fout);
+check('een account met e-mailadres wordt nooit samengevoegd', /anonieme speler/.test((await alsService(`select public.voeg_samen('${A}', '${R}')`)).fout ?? ''));
+const sv1 = await alsService(`select public.voeg_samen('${S1}', '${R}') as r`);
+check('samenvoegen met de service_role lukt', sv1.rows?.[0]?.r?.meldingen === 1, JSON.stringify(sv1));
+const naSV = await een(`select
+  (select door_id from public.gebeurtenissen where id = ${sm1.id}) as melder,
+  (select ontdekker_id from public.kroegen where id = ${SV['node/961']}) as ontdekker,
+  (select count(*)::int from public.punten where gebruiker_id = '${S1}') as punten_oud,
+  (select count(*)::int from public.punten where gebruiker_id = '${R}' and reden = 'test') as punten_nieuw,
+  (select count(*)::int from public.incheckingen where gebruiker_id = '${S1}') as check_oud,
+  (select count(*)::int from public.incheckingen where gebruiker_id = '${R}') as check_nieuw`);
+check('melding, ontdekker en punten staan nu onder het account', naSV.melder === R && naSV.ontdekker === R && naSV.punten_oud === 0 && naSV.punten_nieuw === 1, JSON.stringify(naSV));
+check('dubbele check-in op dezelfde dag vervalt, de andere gaat mee', naSV.check_oud === 0 && naSV.check_nieuw === 2, JSON.stringify(naSV));
+const sm2 = (await als(S2, `select * from public.meld_prijs(${SV['node/963']}, 'Heineken', 25, 320)`)).rows?.[0];
+await als(R, `select public.beoordeel(${sm2.id}, 'klopt')`);
+const sv2 = await alsService(`select public.voeg_samen('${S2}', '${R}')`);
+check('samenvoegen weigert als het account een melding van de anonieme speler beoordeelde', /beoordeeld/.test(sv2.fout ?? ''), JSON.stringify(sv2));
+check('na een weigering blijft de anonieme speler zijn melding houden', (await een(`select door_id from public.gebeurtenissen where id = ${sm2.id}`)).door_id === S2);
 
 // ---------------------------------------------------------------------------
 
