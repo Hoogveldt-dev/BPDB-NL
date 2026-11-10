@@ -387,7 +387,7 @@ function vertaalAuthFout(fout) {
   if (m.includes("identity") && m.includes("already")) return "Dit Apple- of Google-account hoort al bij een andere speler.";
   if (m.includes("signups not allowed for otp")) return "Dit e-mailadres hoort nog niet bij een account. Maak er hierboven een account mee.";
   if (m.includes("already been registered") || m.includes("email_exists"))
-    return "Dit e-mailadres hoort al bij een account. Log ermee in onder Al een account?; de punten van deze anonieme speler gaan dan niet mee.";
+    return "Dit e-mailadres hoort al bij een account. Log ermee in onder Al een account?; je bijdragen gaan mee.";
   if (m.includes("email") && (m.includes("invalid") || m.includes("validate"))) return "Dit e-mailadres klopt niet.";
   if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "Nieuwe accounts kunnen nu niet worden aangemaakt.";
   if (m.includes("fetch") || m.includes("network")) return "Geen verbinding. Controleer je internet en probeer het opnieuw.";
@@ -1819,7 +1819,7 @@ function aanbiederKnoppen(soort = "inloggen") {
 
 async function inloggenMet(aanbieder, knop) {
   const koppelen = knop.dataset.soort === "koppelen" && (anoniem() || !state.sessie);
-  if (!koppelen && !(await verlaatAnoniem())) return;
+  if (!koppelen) onthoudAnoniem();
   if (koppelen && !(await zorgVoorSpeler())) return;
   knop.disabled = true;
   const terug = location.origin + location.pathname;
@@ -1841,6 +1841,27 @@ async function laadAanbieders() {
   } catch { /* geen verbinding: alles blijft zoals het was */ }
 }
 
+// Bewaarkopie van de sessie in een HttpOnly-cookie (app/_worker.js op Cloudflare Pages). Wist de browser zijn
+// opslag (Safari na 7 dagen zonder bezoek, of de speler zelf), dan haalt de app de sessie daarmee terug. Ook een
+// anonieme speler komt zo terug. Lokaal (zonder Cloudflare) mislukt dit stil.
+const bewaar = {
+  zet(sessie) {
+    fetch("/api/sessie", sessie
+      ? { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: sessie.refresh_token }), keepalive: true }
+      : { method: "DELETE", keepalive: true }).catch(() => {});
+  },
+  async herstel() {
+    try {
+      const r = await fetch("/api/sessie", { method: "POST" });
+      if (!r.ok) return null;
+      const s = await r.json();
+      if (!s?.access_token || !s.refresh_token) return null;
+      const { data, error } = await sb.auth.setSession({ access_token: s.access_token, refresh_token: s.refresh_token });
+      return error ? null : data.session;
+    } catch { return null; }
+  },
+};
+
 // Speelt de speler zonder e-mailadres (anoniem account van Supabase)?
 function anoniem() {
   return !!state.sessie?.user?.is_anonymous;
@@ -1851,11 +1872,24 @@ const kanBijdragen = () => !!state.sessie || kanAnoniem();
 // Het werk van anderen controleren kan alleen met een account (private.vereis_email())
 const magControleren = () => !!state.sessie && !anoniem();
 
-// Inloggen met een ander, bestaand account vanuit een anonieme speler: de punten en check-ins van de anonieme
-// speler gaan dan niet mee. Vraag het alleen als er iets verloren gaat.
-async function verlaatAnoniem() {
-  if (!anoniem() || (!(state.profiel?.altijd > 0) && !state.mijn.size)) return true;
-  return vraag("Log je in met een bestaand account, dan gaan de punten en check-ins van deze anonieme speler niet mee. Wil je ze bewaren, maak dan een account onder Account maken.", "Toch inloggen");
+// Inloggen met een ander, bestaand account vanuit een anonieme speler: zijn bijdragen gaan mee. Vlak voor het
+// inloggen bewaren we het toegangstoken van de anonieme speler; na het inloggen zet de Edge Function samenvoegen
+// alles over naar het account (private.voeg_samen) en verwijdert ze de anonieme speler.
+const SAMEN = "bierkoers-samenvoegen";
+function onthoudAnoniem() {
+  if (!anoniem()) return;
+  try { localStorage.setItem(SAMEN, JSON.stringify({ id: state.sessie.user.id, token: state.sessie.access_token })); } catch { /* privévenster */ }
+}
+async function samenvoegen(id) {
+  let van = null;
+  try { van = JSON.parse(localStorage.getItem(SAMEN) ?? "null"); localStorage.removeItem(SAMEN); } catch { return; }
+  if (!van?.token || van.id === id) return;
+  const { data, error } = await sb.functions.invoke("samenvoegen", { body: { anoniem_token: van.token } });
+  if (error) return toast(await leesFout(error));
+  if (data?.samengevoegd && (data.meldingen || data.punten || data.checkins)) {
+    toast("Je bijdragen zonder account staan nu onder je account");
+    vernieuw();
+  }
 }
 
 function codeFormulier(knop) {
@@ -1883,6 +1917,7 @@ function accountBlok(p) {
       ${aanbiederKnoppen("koppelen")}`}
     </div>
     <h3>Al een account?</h3>
+    ${p ? `<p class="small muted">Log in en je bijdragen van nu gaan mee.</p>` : ""}
     ${code("inloggen", "Inloggen") ?? `${aanbiederKnoppen("inloggen")}
       <div class="of">of met je e-mailadres</div>
       <form class="form" id="loginForm">
@@ -2438,7 +2473,6 @@ body.addEventListener("submit", async (e) => {
     const naam = fd.has("naam") ? String(fd.get("naam")).trim() : undefined;
     onthouden.schrijf({ ...onthouden.lees(), email, ...(naam ? { naam } : {}) });
     const soort = { loginForm: "inloggen", koppelForm: "koppelen", aanmeldForm: "aanmelden" }[f.id];
-    if (soort === "inloggen" && !(await verlaatAnoniem())) return;
     if (soort === "koppelen" && !(await zorgVoorSpeler())) return;
     return stuurCode(email, soort, f.querySelector("button[type=submit]"), naam);
   }
@@ -2447,6 +2481,7 @@ body.addEventListener("submit", async (e) => {
     knop.disabled = true;
     const code = String(new FormData(f).get("code")).replace(/\D/g, "");
     const koppelen = state.inlog.soort === "koppelen";
+    if (!koppelen) onthoudAnoniem();
     const { error } = await sb.auth.verifyOtp({ email: state.inlog.email, token: code, type: koppelen ? "email_change" : "email" });
     knop.disabled = false;
     if (error) return toast(vertaalAuthFout(error));
@@ -2580,12 +2615,16 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   // Een ander account (of uitgelogd): het codeformulier is klaar. Bij koppelen en bij inloggen vanuit een
   // anonieme speler blijft de sessie tot de code is ingevuld; dan blijft het formulier staan.
   if (!sessie || (sessie.user.id !== vorigeId && state.inlog?.soort !== "koppelen")) state.inlog = null;
+  // Elke nieuwe vernieuwingssleutel ook in de bewaarcookie; uitloggen wist hem
+  if (sessie) bewaar.zet(sessie);
+  else if (gebeurtenis === "SIGNED_OUT") bewaar.zet(null);
   // Tokenvernieuwing: niets opnieuw laden
   if (gebeurtenis === "TOKEN_REFRESHED") return;
   // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.
   setTimeout(async () => {
     await Promise.all([laadProfiel(), laadMijn()]);
     if (stilAangemeld) { stilAangemeld = false; return; }
+    if (sessie && !sessie.user.is_anonymous) samenvoegen(sessie.user.id);
     // Kwam de speler via "Doe mee" bij een kroeg? Dan terug naar die kroeg.
     if (sessie && gebeurtenis === "SIGNED_IN" && state.terugNaar != null) {
       const id = state.terugNaar;
@@ -2612,7 +2651,8 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
     document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === "ik")));
   }
   const { data } = await sb.auth.getSession();
-  state.sessie = data.session;
+  // Geen sessie in de browser: misschien wel in de bewaarcookie
+  state.sessie = data.session ?? (await bewaar.herstel());
   await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
   sessieBekend = true; // nu weten we of er al een sessie is en of anonieme accounts in Supabase aanstaan
   koersen(); lichtkrant(); hud(); kaartBijwerken();

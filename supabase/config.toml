@@ -381,3 +381,7 @@ verify_jwt = true
 [functions.account-verwijderen]
 enabled = true
 verify_jwt = true
+
+[functions.samenvoegen]
+enabled = true
+verify_jwt = true
