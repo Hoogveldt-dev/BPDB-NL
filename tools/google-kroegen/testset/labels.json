@@ -9,7 +9,7 @@
       "bron": "google",
       "kaart": true,
       "bierprijzen": true,
-      "vaasje": 3.90,
+      "vaasje": 3.9,
       "datum": "2025-12-20",
       "omschrijving": "menukaart in Google Maps (soort kaart nog invullen)",
       "gecontroleerd": false,
@@ -26,8 +26,8 @@
       "vaasje": null,
       "datum": "2013-06-04",
       "omschrijving": "krijtbord achter de bar, Paulaner, witbier, Max Rosé en Omer, geen pils",
-      "gecontroleerd": false,
-      "opmerking": "Uit de proef van 6 november 2026. Zelfde foto als het interieur met het bord \"Zomer in St. Anneke!\" links van de bar (EXIF 2013-06-04, upload 2018-08-07)."
+      "gecontroleerd": true,
+      "opmerking": "Uit de proef van 6 november 2026. Zelfde foto als het interieur met het bord \"Zomer in St. Anneke!\" links van de bar (EXIF 2013-06-04, upload 2018-08-07). Nagekeken op de foto van 1600 px: Paulaner 0,5 L en 0,3 L, Witte trappist, Max Rosé, Bucket Corona en Omer blond met prijzen; geen pils."
     },
     {
       "sleutel": "vanburen-qr-1",
@@ -40,7 +40,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "QR-bordje om te bestellen, geen prijzen",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Een van de drie QR-bordjes uit de proef van 6 november 2026."
     },
     {
@@ -54,7 +54,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "QR-bordje om te bestellen, geen prijzen",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Een van de drie QR-bordjes uit de proef van 6 november 2026."
     },
     {
@@ -68,7 +68,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "QR-bordje om te bestellen, geen prijzen",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Een van de drie QR-bordjes uit de proef van 6 november 2026."
     },
     {
@@ -79,11 +79,11 @@
       "bron": "bestand",
       "kaart": true,
       "bierprijzen": true,
-      "vaasje": 4.00,
+      "vaasje": 4,
       "datum": "2026-09-02",
-      "omschrijving": "gedrukte drankkaart van de eigen website, als afbeelding",
-      "gecontroleerd": false,
-      "opmerking": "Hertog Jan en Jupiler 25 cl. Zet de eerste pagina van de pdf als JPEG in fotos/daen-drankkaart/s0.jpg."
+      "omschrijving": "drankkaart van de eigen website (pdf, pagina 1 als afbeelding), Bieren van Fust: Hertog Jan en Jupiler 0,25l/0,5l 4/8",
+      "gecontroleerd": true,
+      "opmerking": "Nagekeken op de afbeelding: Hertog Jan 0,25l 4. Bestandsnaam Drankkaart_Sept_2-026.pdf, upload 2026-09-16; de datum 2026-09-02 komt uit de eerdere proef."
     },
     {
       "sleutel": "vanburen-menuhouder",
@@ -96,7 +96,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "Texels op het terras, dichte menukaarten in een houder",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Upload 2024-04-09. Voorstel kaart false: de kaarten zijn dicht, er is niets te lezen."
     },
     {
@@ -110,7 +110,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "donkere bar met neonlicht, geen kaart",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Upload 2018-03-08."
     },
     {
@@ -124,7 +124,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "wijnkaart van St. Anneke achter een glas Two Chefs Brewing, geen bier",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Upload 2023-06-15. Kaart \"Anneke's bijzondere wijnen\": wel een kaart, geen bierprijzen. Lastig geval: prijzen van wijn."
     },
     {
@@ -138,7 +138,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "Bavaria met de dichte menukaart en dinerkaart op tafel",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Upload 2024-04-07. Voorstel kaart false: de kaarten zijn dicht, er is niets te lezen."
     },
     {
@@ -152,7 +152,7 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "burger met friet, geen kaart",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Upload 2020-11-17."
     },
     {
@@ -166,8 +166,162 @@
       "vaasje": null,
       "datum": null,
       "omschrijving": "gevel en straat, geen kaart",
-      "gecontroleerd": false,
+      "gecontroleerd": true,
       "opmerking": "Upload 2021-06-25."
+    },
+    {
+      "sleutel": "lux-krijtbord",
+      "kroeg": "Café Lux",
+      "place_id": "ChIJp-7gF0UIx0cRP0yqbqbFIbA",
+      "foto_id": "CIABIhD5Qw2IqXQartK3h6EMzrr7",
+      "bron": "google",
+      "kaart": true,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "krijtbord Lekker bij de film met bieren en alcoholpercentages, geen prijzen",
+      "gecontroleerd": true,
+      "opmerking": "Lastig geval: getallen zijn percentages, geen prijzen."
+    },
+    {
+      "sleutel": "kluizenaar-krijtbord-klein",
+      "kroeg": "De Kluizenaar",
+      "place_id": "ChIJkU6c5V0Ix0cR7W-e99g4ubc",
+      "foto_id": "CIABIhBZdKThMYkyGm0Om6Sjs6Gm",
+      "bron": "google",
+      "kaart": false,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "interieur met welkomstbord en bierreclames, geen prijzen",
+      "gecontroleerd": true,
+      "opmerking": "Het bord is een welkomsttekst; de kaart in de houder is niet te lezen."
+    },
+    {
+      "sleutel": "kluizenaar-krijtborden",
+      "kroeg": "De Kluizenaar",
+      "place_id": "ChIJkU6c5V0Ix0cR7W-e99g4ubc",
+      "foto_id": "CIHM0ogKEICAgIC-186Xag",
+      "bron": "google",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "krijtborden achter een glas, bierprijzen half afgesneden en wazig, geen pils te herkennen",
+      "gecontroleerd": true,
+      "opmerking": "Geen vaasjesprijs te lezen: liever geen prijs."
+    },
+    {
+      "sleutel": "kluizenaar-open-kaart",
+      "kroeg": "De Kluizenaar",
+      "place_id": "ChIJkU6c5V0Ix0cR7W-e99g4ubc",
+      "foto_id": "CIHM0ogKEICAgICk3r68Lw",
+      "bron": "google",
+      "kaart": true,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "open spijzenkaart met gerechten en prijzen; bieren alleen als suggestie, zonder prijs",
+      "gecontroleerd": true,
+      "opmerking": "Lastig geval: biernamen en bedragen staan erop, maar de bedragen zijn van gerechten."
+    },
+    {
+      "sleutel": "wunderkammer-kassabon",
+      "kroeg": "Café Wunderkammer",
+      "place_id": "ChIJBVgRokMIx0cRiWcC1SaAsPM",
+      "foto_id": "CIHM0ogKEICAgICTj52AYQ",
+      "bron": "google",
+      "kaart": false,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "kassabon met samosas, water en wijn, geen bier",
+      "gecontroleerd": true,
+      "opmerking": "Lastig geval: bedragen, maar geen kaart en geen bier."
+    },
+    {
+      "sleutel": "wunderkammer-krijtbord-fles",
+      "kroeg": "Café Wunderkammer",
+      "place_id": "ChIJBVgRokMIx0cRiWcC1SaAsPM",
+      "foto_id": "CIHM0ogKEICAgID4yJ3ZGA",
+      "bron": "google",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "donker krijtbord met flessen van 37,5 cl (8,50 tot 9 euro), deels doorgestreept, geen tap",
+      "gecontroleerd": true,
+      "opmerking": "Donker; bierprijzen wel, geen pils van de tap."
+    },
+    {
+      "sleutel": "wunderkammer-krijtbord-tap",
+      "kroeg": "Café Wunderkammer",
+      "place_id": "ChIJBVgRokMIx0cRiWcC1SaAsPM",
+      "foto_id": "CIHM0ogKEICAgIDe19XV6wE",
+      "bron": "google",
+      "kaart": true,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "krijtbord Van de tap met Grolsch en andere bieren, alleen percentages, donker",
+      "gecontroleerd": true,
+      "opmerking": "Lastig geval: Grolsch van de tap staat erop, maar zonder prijs."
+    },
+    {
+      "sleutel": "wunderkammer-dichte-kaart",
+      "kroeg": "Café Wunderkammer",
+      "place_id": "ChIJBVgRokMIx0cRiWcC1SaAsPM",
+      "foto_id": "CIHM0ogKEICAgIDEkYTeQw",
+      "bron": "google",
+      "kaart": false,
+      "bierprijzen": false,
+      "vaasje": null,
+      "datum": null,
+      "omschrijving": "dichte kaart van Wunderkammer op tafel, donker",
+      "gecontroleerd": true,
+      "opmerking": "Niets te lezen."
+    },
+    {
+      "sleutel": "wunderkammer-drankkaart",
+      "kroeg": "Café Wunderkammer",
+      "place_id": "ChIJBVgRokMIx0cRiWcC1SaAsPM",
+      "foto_id": null,
+      "bron": "bestand",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": 3.8,
+      "datum": "2026-09-09",
+      "omschrijving": "bierpagina van de drankkaart (afbeelding op de website): Tap, Grolsch 0,20 3,6, Grolsch 0,25 3,8, Grolsch 0,50 7,1",
+      "gecontroleerd": true,
+      "opmerking": "Lastig geval: de goedkoopste Grolsch is 0,20 (3,6), het vaasje is 0,25 (3,8). Upload in de mediabibliotheek 2026-09-09, geen EXIF."
+    },
+    {
+      "sleutel": "kluizenaar-website",
+      "kroeg": "De Kluizenaar",
+      "place_id": "ChIJkU6c5V0Ix0cR7W-e99g4ubc",
+      "foto_id": null,
+      "bron": "bestand",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": 3.8,
+      "datum": null,
+      "omschrijving": "schermafdruk van de dranken-pagina: Mokum Bier Pilsener 3,6 / 3,8 / 6,7 met daaronder 18 cl / 25 cl / 50 cl",
+      "gecontroleerd": true,
+      "opmerking": "Lastig geval: prijs en maat staan op twee regels. Schermafdruk, dus geen datum."
+    },
+    {
+      "sleutel": "florijn-website",
+      "kroeg": "Brouwerij Florijn",
+      "place_id": "ChIJb2GxiaUJx0cRXnJEh7Qibgk",
+      "foto_id": null,
+      "bron": "bestand",
+      "kaart": true,
+      "bierprijzen": true,
+      "vaasje": 3.9,
+      "datum": null,
+      "omschrijving": "schermafdruk van de dranken-pagina: Heineken fluit 3.6 / vaas 3.9, daarboven speciaalbieren",
+      "gecontroleerd": true,
+      "opmerking": "Vaasje zonder maat, met het woord vaas. Schermafdruk, dus geen datum."
     }
   ]
 }

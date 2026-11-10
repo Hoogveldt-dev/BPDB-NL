@@ -95,14 +95,30 @@ Voor de lezer tellen de regels `controleren`, `lezen` en `kiezen`, voor de kijke
 
 ### Uitslag
 
-**Nog niet gemeten.** De sessie van 9 november 2026 draaide in de cloud en kon LM Studio niet bereiken; de testset heeft ook nog geen foto's. De standaarden hierboven komen uit de opdracht, niet uit een meting. Na de meting hier per vergelijking het aantal goed, fout, gemist en twijfel en de seconden per foto noteren, en de standaard aanpassen als een ander model beter is.
+Gemeten op 10 november 2026, op de pc van Kjell (RTX 2080 Ti, 11 GB), met 22 foto's uit de testset. Claude koos de foto's en keek elk label na op de foto zelf. Van die 22 hebben er 4 een vaasjesprijs: drankkaarten van Daen en Wunderkammer (afbeelding van de eigen website) en schermafdrukken van de dranken-pagina's van De Kluizenaar en Florijn. De andere 18 zijn foto's uit Google Maps: krijtborden met alleen alcoholpercentages, een eetkaart met biernamen maar zonder bierprijzen, een kassabon, een donker krijtbord met flessen, QR-bordjes, eten en interieur. De foto van Stadscafé Jan ontbreekt nog (geen Google Place ID). Schifter in alle vier de vergelijkingen: Gemma 4 E4B.
+
+Per stap: goed / fout / gemist / twijfel (de rest is nvt).
 
 | Vergelijking | controleren | lezen | kiezen | keten | s per foto |
 |---|---|---|---|---|---|
-| lezer Qwen3.5 9B | | | | | |
-| lezer Qwen2.5-VL 7B | | | | | |
-| kijker Gemma 4 E4B | | | | | |
-| kijker Qwen2.5-VL 7B | | | | | |
+| lezer Qwen3.5 9B | 22 / 0 / 0 / 0 | 2 / 0 / 0 / 2 | 3 / 0 / 2 / 2 | 18 / 0 / 2 / 2 | 78 |
+| lezer Qwen2.5-VL 7B | 6 / 1 / 3 / 12 | 2 / 1 / 1 / 0 | 4 / 0 / 4 / 0 | 18 / 0 / 4 / 0 | 29 |
+| kijker Gemma 4 E4B (lezer Qwen3.5) | 22 / 0 / 0 / 0 | 2 / 0 / 0 / 2 | 3 / 0 / 2 / 2 | 18 / 0 / 2 / 2 | 77 |
+| kijker Qwen2.5-VL 7B (lezer Qwen3.5) | 22 / 0 / 0 / 0 | 2 / 0 / 0 / 2 | 3 / 0 / 2 / 2 | 18 / 0 / 2 / 2 | 77 |
+
+Schiften (Gemma 4 E4B): 14 goed, 8 fout, 0 gemist. Ruim, zoals bedoeld: geen kaart gemist, wel dichte kaarten, QR-bordjes en een kassabon doorgelaten.
+
+Wat het zegt:
+
+- **Geen enkele verkeerde prijs.** Geen model gaf bij kiezen of in de keten een foute prijs. De grens (hoogstens 1 op 20) is gehaald.
+- **Maar ook geen enkele goede vaasjesprijs.** De keten vond bij geen van de 4 kaarten met een vaasje een prijs. De oorzaak zit vooral na het lezen: de lezer las bij Wunderkammer "Grolsch 0,25 3,8" goed, en Qwen2.5-VL las bij Daen "Hertog Jan 25 cl 4", maar beide zetten `pils: false` bij die regel (waarschijnlijk omdat er een aparte kop "Pils" op de kaart staat), en `kiesVaasje` (`bron/vaasje.mjs`) slaat een regel met `pils: false` over. Bij Florijn las Qwen3.5 "vaas 3.9" als 50 cl en niet van de tap: terecht geen prijs.
+- **Qwen3.5 denkt zich vast op dichte kaarten.** Bij Daen en De Kluizenaar kwam er na ongeveer 3 minuten geen bruikbaar antwoord (twijfel).
+- **Qwen2.5-VL is drie keer zo snel, maar onbetrouwbaar bij controleren** (12 keer geen bruikbaar antwoord, 1 keer fout) en geeft het vak van de prijsregel niet goed terug (twee getallen in plaats van vier).
+- **De kijker is nog niet echt gemeten.** Hij komt pas in actie als de lezer een vaasjesprijs kiest, en dat gebeurde niet. De twee kijkerrijen zijn daarom gelijk.
+
+Keuze per rol: alles blijft bij de standaard. Schifter Gemma 4 E4B, lezer Qwen3.5 9B (de enige die betrouwbaar controleert), kijker Gemma 4 E4B (geen meting die een ander model beter maakt).
+
+Voorstel, nog niet gedaan: laat `kiesVaasje` een bekend pilsmerk van de tap in 25 cl niet weggooien alleen omdat het model `pils: false` zegt, en meet daarna opnieuw. Dat kan het aantal gevonden prijzen flink verhogen; de kijker en het nakijken vangen een fout dan op.
 
 Daarna een proef op kroegen waarvan we de prijs al weten (de menukaartprijzen in de database, zie hieronder): noteren hoeveel prijzen lokaal gelijk uitkomen, hoeveel verschillen en hoeveel twijfels er zijn. De vergelijking met DeepSeek laten we vallen (besluit van Kjell, 10 november 2026): het doel is zonder betaalde modellen te werken.
 
