@@ -29,7 +29,7 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg, gepresenteerd als een b
 - Kroegimport uit OpenStreetMap en wijken van het CBS: Edge Function `supabase/functions/osm-import/`.
 - Inloggen met Apple en Google: knoppen in `aanbiederKnoppen()`, op slot tot de aanbieder in Supabase aanstaat (`laadAanbieders()` leest `/auth/v1/settings`). Stappenplan: `docs/inloggen-met-apple-en-google.md`. Zet nooit een `.p8`-sleutel of geheime sleutel van Apple of Google in de app of in Git.
 - Ideeën die nog uitgewerkt moeten worden: `docs/kroegentocht.md` en `docs/toekomstplannen.md` (prijs zonder alcohol, punten voor extra bier).
-- Inloggen: nieuwe spelers beginnen anoniem (`startForm`, `signInAnonymously`) en koppelen later hun e-mailadres (`koppelForm`, `updateUser` en `verifyOtp` met `type: 'email_change'`). Bestaande spelers loggen in met een code (`loginForm`). Alles via `stuurCode` en `codeForm` in `app/app.js`; mailtekst in `supabase/templates/inlogcode.html`.
+- Inloggen: nieuwe spelers beginnen anoniem (`startForm`, `signInAnonymously`) en koppelen later hun e-mailadres (`koppelForm`, `updateUser` en `verifyOtp` met `type: 'email_change'`). Bestaande spelers loggen in met een code (`loginForm`). Hoort bij dat e-mailadres nog geen account, dan biedt de app er een aan (`nieuwForm`, `state.nieuwAdres`): een anoniem account zonder naam, meteen gekoppeld aan het e-mailadres; na de code kiest de speler zijn naam (`naamForm`). Alles via `stuurCode` en `codeForm` in `app/app.js`; mailtekst in `supabase/templates/inlogcode.html`.
 
 ## Inloggen (lessen uit Woober, Woofer en DBDB)
 - Meteen kunnen beginnen zonder account (het idee van DBDB), maar met een echt account van Supabase dat je later aan een e-mailadres koppelt, zodat punten niet verloren gaan.

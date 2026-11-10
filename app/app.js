@@ -278,8 +278,10 @@ const state = {
   sessie: null,
   profiel: null,
   pos: null,
-  // Na het versturen van een code: { email, soort, naam }
+  // Na het versturen van een code: { email, soort, naam, nieuw }
   inlog: null,
+  // Inloggen met een e-mailadres zonder account: dat adres, zodat we een nieuw account kunnen aanbieden
+  nieuwAdres: null,
   // Wat in Supabase aanstaat; bijgewerkt door laadAanbieders()
   aanbieders: { google: false, apple: false, anoniem: true },
   // Extra bier per kroeg (aanbod_overzicht), de lijst met soorten en het gekozen filter op soort
@@ -1818,6 +1820,21 @@ function ikView() {
   if (!state.sessie && state.inlog) {
     return `<h2>Vul je code in</h2>${codeFormulier("Inloggen")}`;
   }
+  // Nieuw account vanuit inloggen: het anonieme account bestaat al, maar voor de speler is dit nog de aanmelding
+  if (state.sessie && state.inlog?.nieuwAccount) {
+    return `<h2>Vul je code in</h2>${codeFormulier("Account maken")}`;
+  }
+  // Inloggen met een onbekend e-mailadres: bied meteen een nieuw account aan in plaats van een weigering
+  if (!state.sessie && state.nieuwAdres) {
+    return `<h2>Nieuw account</h2>
+      <p class="muted">Bij <strong>${esc(state.nieuwAdres)}</strong> hoort nog geen account. Maak er een: je krijgt een code per mail en kiest daarna je spelersnaam.</p>
+      <form class="form" id="nieuwForm">
+        <label class="check"><input type="checkbox" name="leeftijd" required> Ik ben 18 jaar of ouder</label>
+        <div class="btns"><button class="btn primary" type="submit">Maak account en stuur code</button></div>
+      </form>
+      <div class="btns"><button class="btn" data-anderadres>Ander e-mailadres</button></div>
+      <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
+  }
   if (!state.sessie) {
     const vorig = onthouden.lees();
     const naamVeld = `<label>Spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" value="${esc(vorig.naam ?? "")}" required>
@@ -2313,7 +2330,7 @@ body.addEventListener("click", (e) => {
   if (t.dataset.verwijder !== undefined) return verwijderAccount(t);
   if (t.dataset.nieuwecode !== undefined) return stuurCode(state.inlog.email, state.inlog.soort, t, state.inlog.naam);
   if (t.dataset.aanbieder) return inloggenMet(t.dataset.aanbieder, t);
-  if (t.dataset.anderadres !== undefined) { state.inlog = null; return draw(); }
+  if (t.dataset.anderadres !== undefined) { state.inlog = null; state.nieuwAdres = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
   if (t.dataset.foto) return openFoto(t.dataset.foto);
   if (t.dataset.tekstenBewerken !== undefined) { teksten.zetBewerken(true); return toast("Tik op een tekst om hem aan te passen"); }
@@ -2383,17 +2400,30 @@ body.addEventListener("submit", async (e) => {
     const soort = { loginForm: "inloggen", koppelForm: "koppelen", aanmeldForm: "aanmelden" }[f.id];
     return stuurCode(email, soort, f.querySelector("button[type=submit]"), naam);
   }
+  // Nieuw account vanuit inloggen: eerst een anoniem account (zoals "Begin meteen", nog zonder naam), dan
+  // meteen het e-mailadres koppelen. Na de code kiest de speler zijn naam (naamForm).
+  if (f.id === "nieuwForm") {
+    const email = state.nieuwAdres;
+    const knop = f.querySelector("button[type=submit]");
+    knop.disabled = true;
+    const { error } = await sb.auth.signInAnonymously();
+    if (error) { knop.disabled = false; return toast(vertaalAuthFout(error)); }
+    state.nieuwAdres = null;
+    if (await stuurCode(email, "koppelen", knop)) { state.inlog.nieuwAccount = true; draw(); }
+    return;
+  }
   if (f.id === "codeForm") {
     const knop = f.querySelector("button[type=submit]");
     knop.disabled = true;
     const code = String(new FormData(f).get("code")).replace(/\D/g, "");
     const koppelen = state.inlog.soort === "koppelen";
+    const nieuwAccount = !!state.inlog.nieuwAccount;
     const { error } = await sb.auth.verifyOtp({ email: state.inlog.email, token: code, type: koppelen ? "email_change" : "email" });
     knop.disabled = false;
     if (error) return toast(vertaalAuthFout(error));
     state.inlog = null;
     // onAuthStateChange zet de sessie en tekent het scherm opnieuw
-    toast(koppelen ? "Je e-mailadres is gekoppeld. Je punten zijn bewaard" : "Je bent ingelogd");
+    toast(nieuwAccount ? "Je account is klaar. Kies nu je spelersnaam" : koppelen ? "Je e-mailadres is gekoppeld. Je punten zijn bewaard" : "Je bent ingelogd");
     if (koppelen) { await laadProfiel(); draw(); }
     return;
   }
@@ -2410,9 +2440,11 @@ body.addEventListener("submit", async (e) => {
 // Stuurt een code per mail. "inloggen": bestaand account met e-mailadres. "koppelen": een anonieme speler
 // koppelt zijn e-mailadres; het account met alle punten blijft hetzelfde. "aanmelden": nieuw account met
 // e-mailadres, alleen als anonieme accounts in Supabase uit staan. Normaal beginnen nieuwe spelers anoniem
-// (startForm), dus inloggen maakt geen nieuw account aan.
+// (startForm), dus inloggen maakt geen nieuw account aan. Hoort bij een e-mailadres nog geen account, dan
+// bieden we er een aan (nieuwForm) in plaats van een weigering.
 // De code typ je in de app: dat werkt ook als de mail op een ander apparaat of in een andere browser opengaat,
 // en een virusscanner van het mailprogramma kan hem niet "opgebruiken" zoals bij een link.
+// Geeft true als de code is verstuurd.
 async function stuurCode(email, soort, knop, naam) {
   if (knop) knop.disabled = true;
   const terug = location.origin + location.pathname;
@@ -2425,11 +2457,20 @@ async function stuurCode(email, soort, knop, naam) {
         : { shouldCreateUser: false, emailRedirectTo: terug },
     });
   if (knop) knop.disabled = false;
-  if (error) return toast(vertaalAuthFout(error));
+  if (error) {
+    if (soort === "inloggen" && state.aanbieders.anoniem && /signups not allowed for otp/i.test(error.message ?? "")) {
+      state.nieuwAdres = email;
+      draw();
+      return false;
+    }
+    toast(vertaalAuthFout(error));
+    return false;
+  }
   const nieuw = state.inlog == null;
-  state.inlog = { email, soort, naam };
+  state.inlog = { ...state.inlog, email, soort, naam };
   if (nieuw) draw();
   else toast("Nieuwe code verstuurd. Gebruik de nieuwste mail.");
+  return true;
 }
 
 async function importeer(knop) {
