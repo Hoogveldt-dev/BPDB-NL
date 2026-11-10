@@ -52,8 +52,7 @@ export function bestandsLader(fotoMap) {
 /** Draait alle stappen op een foto. Elke stap wordt apart beoordeeld; "keten" is wat de echte pijplijn zou opleveren. */
 export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPEN, meta = {}, ocr = null, ocrModus = "volgorde", uitsnedeNaar = null }) {
   const r = { sleutel: label.sleutel, kroeg: label.kroeg, omschrijving: label.omschrijving, uitslag: {}, tijden: {}, fouten: [] };
-  const s0 = await laad(label.sleutel, "s0");
-  if (!s0) return { ...r, ontbreekt: true };
+  if (!(await laad(label.sleutel, "1600"))) return { ...r, ontbreekt: true };
   const begin = performance.now();
   const tijd = async (naam, fn) => {
     const t0 = performance.now();
@@ -101,7 +100,9 @@ export async function meetFoto(label, { rollen, laad, stappen = STANDAARD_STAPPE
   const weggefilterd = ocr && ocrModus === "filter" && Array.isArray(r.bedragen) && !r.bedragen.length;
   const doorDeKeten = !weggefilterd && r.schift === true && r.controle === true && r.gekozen;
   r.uitslag.keten = beoordeelPrijs(doorDeKeten ? r.gekozen : { prijs_cent: null, twijfel: false }, label);
-  r.datum = kiesDatum({ opname: exifDatum(s0), geupload: meta.geupload }).datum;
+  // EXIF-datum uit meta.json (haal-fotos.mjs bewaart het origineel niet); anders uit s0.jpg (eigen bestand).
+  const opname = "exif" in meta ? meta.exif : exifDatum(await laad(label.sleutel, "s0"));
+  r.datum = kiesDatum({ opname, geupload: meta.geupload }).datum;
   r.uitslag.datum = beoordeelDatum(r.datum, label);
   r.ms = Math.round(performance.now() - begin);
   return r;

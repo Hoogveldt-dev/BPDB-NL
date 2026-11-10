@@ -19,7 +19,7 @@
       "sleutel": "anneke-krijtbord",
       "kroeg": "St. Anneke",
       "place_id": "ChIJFSh-pl4Ix0cRlzqTtoR2B_4",
-      "foto_id": null,
+      "foto_id": "CIHM0ogKEICAgIDy3ea-BA",
       "bron": "google",
       "kaart": true,
       "bierprijzen": true,
@@ -27,7 +27,7 @@
       "datum": "2013-06-04",
       "omschrijving": "krijtbord achter de bar, Paulaner, witbier, Max Rosé en Omer, geen pils",
       "gecontroleerd": false,
-      "opmerking": "Uit de proef van 6 november 2026. foto_id opzoeken met haal-fotos.mjs --kandidaten."
+      "opmerking": "Uit de proef van 6 november 2026. Zelfde foto als het interieur met het bord \"Zomer in St. Anneke!\" links van de bar (EXIF 2013-06-04, upload 2018-08-07)."
     },
     {
       "sleutel": "vanburen-qr-1",
@@ -140,20 +140,6 @@
       "omschrijving": "Bavaria met de dichte menukaart en dinerkaart op tafel",
       "gecontroleerd": false,
       "opmerking": "Upload 2024-04-07. Voorstel kaart false: de kaarten zijn dicht, er is niets te lezen."
-    },
-    {
-      "sleutel": "anneke-interieur",
-      "kroeg": "St. Anneke",
-      "place_id": "ChIJFSh-pl4Ix0cRlzqTtoR2B_4",
-      "foto_id": "CIHM0ogKEICAgIDy3ea-BA",
-      "bron": "google",
-      "kaart": true,
-      "bierprijzen": false,
-      "vaasje": null,
-      "datum": null,
-      "omschrijving": "bar met krijtborden aan de muur, van ver",
-      "gecontroleerd": false,
-      "opmerking": "Upload 2018-08-07. Voorstel kaart true en bierprijzen false: krijtbord \"Welcome to St. Anneke\" links van de bar, van ver niet te lezen."
     },
     {
       "sleutel": "anneke-burger",

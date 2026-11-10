@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 import { FotoBron } from "../bron/fotobron.mjs";
 import { Geblokkeerd } from "../bron/transport.mjs";
 import { leesbaar, miniatuur, origineel } from "../bron/fotos.mjs";
+import { exifDatum } from "../bron/exif.mjs";
 
 const MAP = fileURLToPath(new URL(".", import.meta.url));
 const wacht = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -33,8 +34,9 @@ const { values: o } = parseArgs({
 });
 const pauzeMs = Number(o["pauze-ms"]);
 
-// Dezelfde maten als de pijplijn vraagt, door Google zelf verkleind.
-const MATEN = { 256: miniatuur, 768: (u) => leesbaar(u, 768), 1600: (u) => leesbaar(u), s0: origineel };
+// Dezelfde maten als de pijplijn vraagt, door Google zelf verkleind. Het origineel (vaak meer dan
+// 10 MB) is alleen nodig voor de EXIF-datum: die gaat naar meta.json, het bestand bewaren we niet.
+const MATEN = { 256: miniatuur, 768: (u) => leesbaar(u, 768), 1600: (u) => leesbaar(u) };
 
 async function haal(url) {
   const res = await fetch(url, { signal: AbortSignal.timeout(60000) });
@@ -72,7 +74,7 @@ img{width:256px;height:256px;object-fit:contain;background:#eee}code{word-break:
     const perKroeg = new Map();
     for (const l of labels) perKroeg.set(l.place_id, [...(perKroeg.get(l.place_id) || []), l]);
     for (const [placeId, groep] of perKroeg) {
-      const nodig = groep.filter((l) => o.opnieuw || !existsSync(join(o.fotos, l.sleutel, "s0.jpg")));
+      const nodig = groep.filter((l) => o.opnieuw || !existsSync(join(o.fotos, l.sleutel, "1600.jpg")));
       if (!nodig.length) continue;
       console.log(`${groep[0].kroeg} (${placeId}): ${nodig.length} foto's`);
       const ids = new Set(nodig.map((l) => l.foto_id));
@@ -87,7 +89,8 @@ img{width:256px;height:256px;object-fit:contain;background:#eee}code{word-break:
         const doel = join(o.fotos, l.sleutel);
         await mkdir(doel, { recursive: true });
         for (const [maat, maak] of Object.entries(MATEN)) await writeFile(join(doel, `${maat}.jpg`), await haal(maak(f.url)));
-        await writeFile(join(doel, "meta.json"), JSON.stringify({ foto_id: f.id, geupload: f.geupload, opgehaald: new Date().toISOString().slice(0, 10) }, null, 2));
+        const exif = exifDatum(await haal(origineel(f.url)));
+        await writeFile(join(doel, "meta.json"), JSON.stringify({ foto_id: f.id, geupload: f.geupload, exif, opgehaald: new Date().toISOString().slice(0, 10) }, null, 2));
         console.log(`  ${l.sleutel}: opgehaald`);
         await wacht(1000);
       }
