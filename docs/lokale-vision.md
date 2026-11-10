@@ -61,10 +61,10 @@ Vanaf een thuisverbinding, in de map `tools/google-kroegen`:
 ```bash
 npm install
 node cli.mjs --gemeentecode GM0268                   # lijst met kroegen uit Google (Nijmegen), als die er nog niet is
-node menufotos.mjs --kroegen google-kroegen-nijmegen.json --lokaal --volledig --max-fotos 400 --uit menuprijzen.json
+node menufotos.mjs --kroegen google-kroegen-nijmegen.json --volledig --max-fotos 400 --uit menuprijzen.json
 ```
 
-- `--lokaal`: de stappen hierboven, met de lokale modellen.
+- De lokale modellen zijn de standaard (sinds 10 november 2026); `--lokaal` hoeft niet meer. `--extern` gebruikt de betaalde DeepSeek, als reserve als LM Studio niet draait. Foto's ophalen bij Google kan alleen vanaf de thuisverbinding.
 - `--volledig`: niet stoppen bij de eerste prijs, maar alle foto's bekijken. Zo vinden we de nieuwste kaart.
 - De uitvoer heeft per kroeg `prijs` (beide modellen eens) en `twijfels` (nakijken).
 - Importeren gaat met `--naar-supabase` en de `service_role`-sleutel in `SUPABASE_SERVICE_ROLE_KEY`. Die sleutel staat alleen op de computer van Kjell, nooit in Git of in een chat.
@@ -104,7 +104,7 @@ Voor de lezer tellen de regels `controleren`, `lezen` en `kiezen`, voor de kijke
 | kijker Gemma 4 E4B | | | | | |
 | kijker Qwen2.5-VL 7B | | | | | |
 
-Daarna, zoals eerder afgesproken: tien kroegen lokaal tegen dezelfde tien met DeepSeek, en noteren hoeveel prijzen gelijk zijn, hoeveel er alleen lokaal of alleen bij DeepSeek uitkomen, en hoeveel twijfels er zijn.
+Daarna een proef op kroegen waarvan we de prijs al weten (de menukaartprijzen in de database, zie hieronder): noteren hoeveel prijzen lokaal gelijk uitkomen, hoeveel verschillen en hoeveel twijfels er zijn. De vergelijking met DeepSeek laten we vallen (besluit van Kjell, 10 november 2026): het doel is zonder betaalde modellen te werken.
 
 ## Hoe Claude meewerkt
 

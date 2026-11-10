@@ -9,11 +9,11 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 
 ## Domein bierkoers.nl
 
-Geregistreerd bij Vimexx op 6 november 2026. Daar staan nu de nameservers van Vimexx (`dns1.p01.nsone.net` tot en met `dns3`).
+Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (nameservers `jocelyn.ns.cloudflare.com` en `kip.ns.cloudflare.com`): DNS-records wijzig je dus in Cloudflare, niet bij Vimexx.
 
 1. ~~**Domein in Cloudflare, nameservers en koppelen aan de app (stap 1 tot en met 4).**~~ Gedaan: op 9 november 2026 gecontroleerd dat `https://bierkoers.nl` de app toont via Cloudflare.
 5. **DNSSEC weer aan**, nu via Cloudflare (DNS, Settings), en zet de DS-record die Cloudflare geeft bij Vimexx.
-6. **Supabase-adressen bijwerken.** Authentication, URL Configuration: Site URL `https://bierkoers.nl`, en voeg `https://bierkoers.nl/**` toe aan de Redirect URLs. Laat `https://bpdb-nl.pages.dev/**` staan. Bij inloggen met Apple en Google ook het nieuwe domein toevoegen.
+6. ~~**Supabase-adressen bijwerken.**~~ Gedaan: op 10 november 2026 gecontroleerd dat de Site URL `https://bierkoers.nl` is en dat de Redirect URLs `https://bpdb-nl.pages.dev/**`, `https://bierkoers.nl/**`, `https://www.bierkoers.nl/**` en `http://localhost:8765/**` zijn. Nog open: bij inloggen met Apple en Google ook het nieuwe domein toevoegen.
 
 ## Inloggen: meteen beginnen, later e-mail koppelen
 
@@ -25,11 +25,12 @@ Geregistreerd bij Vimexx op 6 november 2026. Daar staan nu de nameservers van Vi
 0. ~~**Nieuwe migratie `20261106150000_bevestigen_naar_betrouwbaarheid`.**~~ Gedaan op 6 november 2026: de rij staat in `supabase_migrations.schema_migrations` (versie `20261106150000`, naam `bevestigen_naar_betrouwbaarheid`). Gecontroleerd: `private.rond_af`, `private.meld_prijs` en de kolommen van `kroeg_kaart` zijn nieuw. Security Advisor: zie hieronder zodra gedraaid.
 0. ~~**Migratie `20261106160000_vaste_spelersnaam`.**~~ Gedaan op 6 november 2026: staat op Supabase met versie `20261106160000`. Jouw naam Pils staat vast. Een naam wijzigen kan alleen nog in de SQL Editor. De Edge Function `osm-import` is opnieuw uitgerold (versie 2): probeert nu drie Overpass-servers en toont de echte foutreden. Security Advisor: alleen de bekende waarschuwing over gelekte wachtwoorden.
 1. ~~**Migraties.**~~ Gedaan op 6 november 2026: `20261106090000_anonieme_spelers` en `20261106120000_extra_bier` staan op project `yzaootlrhxzyxtvacrot`, met de versies gelijk aan de bestandsnamen. De Security Advisor geeft alleen een waarschuwing over gelekte wachtwoorden; die doet er niet toe, want Bierkoers gebruikt geen wachtwoorden.
-2. **Anonieme accounts.** Supabase, Authentication, Sign In / Providers: zet **Allow anonymous sign-ins** en **Allow manual linking** aan. Zonder deze stap kan niemand nieuw meedoen.
-3. **Mailtemplates.** Authentication, Emails, Templates. Zet bij **Magic Link**, **Change Email Address** en **Confirm signup** het onderwerp `Je code voor Bierkoers` (in `supabase/config.toml`: `Je inlogcode voor Bierkoers`) en de tekst uit `supabase/templates/inlogcode.html` (met `{{ .Token }}`). Zonder deze stap krijgt een speler een link in plaats van een code en kan hij in de app niets invullen.
-4. **Eigen SMTP.** Authentication, Emails, SMTP Settings. Koppel Resend, Postmark of een andere mailprovider met een eigen afzender. Zonder deze stap krijgen alleen leden van je Supabase-team een mail, en maar een paar per uur.
-5. **Rate limits.** Authentication, Rate Limits: zet het aantal mails per uur hoger zodra SMTP gekoppeld is. Nieuwe anonieme accounts staan standaard op 30 per uur per IP-adres; dat is genoeg.
-6. **Adressen.** Authentication, URL Configuration: Site URL `https://bpdb-nl.pages.dev`, Redirect URLs `https://bpdb-nl.pages.dev/**` en `http://localhost:8765/**`.
+2. ~~**Anonieme accounts.**~~ Gedaan: op 10 november 2026 gecontroleerd dat **Allow anonymous sign-ins** en **Allow manual linking** aanstaan.
+3. ~~**Mailrecords in Cloudflare.**~~ Gedaan op 10 november 2026. De mail van Bierkoers loopt via Infomaniak (kSuite, adres `proost@bierkoers.nl`). In Cloudflare staan MX `mta-gw.infomaniak.ch` (prioriteit 5), SPF `v=spf1 include:spf.infomaniak.ch -all` en DKIM op `20261107._domainkey`; publiek gecontroleerd, de DKIM-sleutel is gelijk aan die in Infomaniak.
+4. ~~**Eigen SMTP.**~~ Gedaan op 10 november 2026: afzender `proost@bierkoers.nl` (naam `Bierkoers`), host `mail.infomaniak.com`, poort `465`, gebruikersnaam `proost@bierkoers.nl`. Verandert het wachtwoord van dat adres, vul het dan ook hier opnieuw in (Authentication, Emails, SMTP Settings).
+5. ~~**Mailtemplates.**~~ Gedaan op 10 november 2026: bij **Magic link or OTP**, **Confirm sign up** en **Change email address** het onderwerp `Je code voor Bierkoers` en de tekst uit `supabase/templates/inlogcode.html`.
+6. ~~**Rate limits.**~~ Gedaan: mails staan sinds het koppelen van SMTP op 30 per uur, anonieme accounts op 30 per uur per IP-adres. Verhoog het aantal mails pas als het nodig is, en blijf onder het verzendlimiet van Infomaniak.
+7. **Inloggen testen.** Vraag in de app een code aan met je eigen e-mailadres en kijk of de mail binnenkomt (niet in de spam) en of de code werkt. Test ook een nieuw anoniem account dat een e-mailadres koppelt.
 
 ## Inloggen met Apple en Google
 
@@ -41,14 +42,14 @@ De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze v
 
 ## Menukaartprijzen uit Google-foto's
 
-1. **Run vanaf thuis.** Op je eigen computer, in `tools/google-kroegen`: `npm install`, `npx playwright install chromium`, dan `DEEPSEEK_API_KEY=<sleutel> node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01`. Eerst `node cli.mjs --gemeentecode GM0268` voor dat bestand. Bekijk `menuprijzen.json` en importeer met `--naar-supabase` (met `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY`, nooit in git). Vanuit een cloudsessie toont Google al na een paar kroegen een CAPTCHA.
-2. **DeepSeek-tegoed.** Er staat $0,05 op. Dat is genoeg voor een proef; voor heel Nijmegen ruim een paar dollar opwaarderen. Maak ook een nieuwe sleutel aan: de oude stond in een chat.
+1. **Run vanaf thuis, met de lokale modellen.** Claude draait dit in de sessie op je pc (`node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01`, standaard lokaal sinds 10 november 2026). Jij zorgt alleen dat de pc aan staat en de server van LM Studio draait (poort 1235). Importeren gaat met `--naar-supabase` en `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY`, die jij zelf in je terminal zet, nooit in Git of in de chat. Vanuit een cloudsessie toont Google al na een paar kroegen een CAPTCHA.
+2. **DeepSeek alleen als reserve (niet nodig).** Alleen voor als je echt iets gedaan wilt krijgen en de pc niet draait (`--extern`). Er staat $0,05 op; niet opwaarderen zolang het lokaal lukt. Wil je de reserve houden, maak dan een nieuwe sleutel aan: de oude stond in een chat.
 
 ## Testset voor de menukaartpijplijn
 
 Zie `tools/google-kroegen/testset/README.md`. Alles op je eigen computer, vanaf een thuisverbinding.
 
-1. **Foto-ID's zoeken.** Voor St. Anneke en Café Van Buren: `node testset/haal-fotos.mjs --kandidaten <place_id>`, open `overzicht.html` en zet het `foto_id` van het krijtbord en de drie QR-bordjes in `testset/labels.json`. Stadscafé Jan heeft nog geen Place ID in de database: zoek de kroeg op in Google Maps.
+1. **Foto-ID's zoeken.** Deels gedaan op 10 november 2026: de drie QR-bordjes van Café Van Buren en zeven foto's zonder bierprijzen staan in `testset/labels.json` (nog `gecontroleerd: false`, kijk ze na in `testset/fotos/<sleutel>/1600.jpg`). Nog open: het krijtbord van St. Anneke (2013) zat niet in de eerste 60 foto's, verder bladert Google niet; zoek het op in Google Maps en geef Claude de link. Stadscafé Jan heeft nog geen Place ID in de database: zoek de kroeg op in Google Maps.
 2. **Drankkaart van Café Daen.** Zet de eerste pagina van de pdf als JPEG in `testset/fotos/daen-drankkaart/s0.jpg`.
 3. **Aanvullen tot ongeveer twintig.** Ook foto's zonder kaart (eten, interieur), scheve en donkere foto's, krijtborden en gedrukte kaarten. Controleer elk label met de hand en zet `gecontroleerd` op `true`.
 4. **Ophalen en meten.** `node testset/haal-fotos.mjs`, daarna `node testset/meet.mjs`.
