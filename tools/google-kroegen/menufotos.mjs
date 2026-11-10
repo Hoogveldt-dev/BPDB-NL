@@ -35,14 +35,15 @@ Opties:
   --zichtbaar               browser zichtbaar openen
   --uit menuprijzen.json    standaard menuprijzen.json
   --naar-supabase           ook importeren (SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY nodig)
-  --lokaal                  lokale modellen via LM Studio (of Ollama), zonder limiet:
-                            Gemma 4 schift per foto en geeft een tweede mening,
-                            Qwen3.5 controleert en leest. Zie docs/lokale-vision.md.
+  --extern                  betaald model in plaats van de lokale modellen: DeepSeek
+                            (deepseek-flash) via DEEPSEEK_API_KEY, of een ander model in
+                            het OpenAI-formaat via MENU_MODEL_URL en MENU_MODEL
 
-Model: DeepSeek (deepseek-flash) via DEEPSEEK_API_KEY. Ander model in het
-OpenAI-formaat: MENU_MODEL_URL en MENU_MODEL. Met --lokaal: LOKAAL_URL
-(standaard http://localhost:1235/v1, LM Studio), LOKAAL_SCHIFTER, LOKAAL_LEZER
-en LOKAAL_KIJKER (modelnamen zoals GET /v1/models ze toont).
+Modellen: standaard lokaal via LM Studio (of Ollama), zonder kosten of limiet.
+Gemma 4 schift per foto en geeft een tweede mening, Qwen3.5 controleert en leest.
+LOKAAL_URL (standaard http://localhost:1235/v1, LM Studio), LOKAAL_SCHIFTER,
+LOKAAL_LEZER en LOKAAL_KIJKER (modelnamen zoals GET /v1/models ze toont).
+Zie docs/lokale-vision.md. --lokaal mag nog, maar is niet meer nodig.
 
 Google blokkeert snel vanaf datacenters: draai dit vanaf een thuisverbinding.
 Bij een CAPTCHA stopt de run; wat al gevonden is, wordt bewaard.
@@ -65,6 +66,7 @@ const { values: o } = parseArgs({
     uit: { type: "string", default: "menuprijzen.json" },
     "naar-supabase": { type: "boolean", default: false },
     lokaal: { type: "boolean", default: false },
+    extern: { type: "boolean", default: false },
     hulp: { type: "boolean", short: "h", default: false },
   },
 });
@@ -73,6 +75,11 @@ if (o.hulp || (!o["place-id"] && !o.kroegen)) {
   console.log(HULP);
   process.exit(o.hulp ? 0 : 1);
 }
+if (o.lokaal && o.extern) {
+  console.error("Kies --lokaal of --extern, niet allebei");
+  process.exit(1);
+}
+const lokaal = !o.extern;
 
 let kroegen = [];
 if (o["place-id"]) kroegen = o["place-id"].split(",").map((id) => ({ place_id: id.trim(), naam: id.trim() }));
@@ -80,7 +87,7 @@ else kroegen = JSON.parse(await readFile(o.kroegen, "utf8")).filter((k) => k.pla
 if (o["max-kroegen"]) kroegen = kroegen.slice(0, Number(o["max-kroegen"]));
 
 // Eerst kijken of de lokale modellen er zijn, voordat we Google aanspreken.
-if (o.lokaal) {
+if (lokaal) {
   try {
     await controleerModellen([LOKAAL.schifter, LOKAAL.lezer, LOKAAL.kijker]);
   } catch (e) {
@@ -121,7 +128,7 @@ const rijen = [];
 const verslag = [];
 const gevonden = new Map(); // place_id -> { kroeg, uitkomst } voor nakijken/
 const gevallen = [];
-const modellen = o.lokaal ? { lezer: LOKAAL.lezer.model, kijker: LOKAAL.kijker.model } : { lezer: null, kijker: null };
+const modellen = lokaal ? { lezer: LOKAAL.lezer.model, kijker: LOKAAL.kijker.model } : { lezer: null, kijker: null };
 try {
   for (const k of kroegen) {
     console.log(`${k.naam} (${k.place_id})`);
@@ -131,7 +138,7 @@ try {
       bladPagina ??= await bron.browser.newPage();
       // Lokaal: elke foto apart schiften (kost niets) en een tweede mening van het andere model.
       // Anders: een contactblad per 20 foto's, zuinig met tokens.
-      const stappen = o.lokaal
+      const stappen = lokaal
         ? {
           herken: (miniaturen, opties) => herkenLos(miniaturen, { ...opties, model: LOKAAL.schifter }),
           controleer: (foto, opties) => heeftBierprijzen(foto, { ...opties, model: LOKAAL.lezer }),

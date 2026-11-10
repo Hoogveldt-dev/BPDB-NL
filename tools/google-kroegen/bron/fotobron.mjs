@@ -32,6 +32,8 @@ export class FotoBron {
       throw new Error("Playwright ontbreekt. Installeer met: npm install && npx playwright install chromium");
     }
     this.browser = await playwright.chromium.launch({
+      // PLAYWRIGHT_KANAAL=chrome of msedge: de browser van de computer in plaats van die van Playwright.
+      channel: process.env.PLAYWRIGHT_KANAAL || undefined,
       headless: !this.zichtbaar,
       args: ["--disable-blink-features=AutomationControlled"],
     });

@@ -42,14 +42,14 @@ De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze v
 
 ## Menukaartprijzen uit Google-foto's
 
-1. **Run vanaf thuis.** Op je eigen computer, in `tools/google-kroegen`: `npm install`, `npx playwright install chromium`, dan `DEEPSEEK_API_KEY=<sleutel> node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01`. Eerst `node cli.mjs --gemeentecode GM0268` voor dat bestand. Bekijk `menuprijzen.json` en importeer met `--naar-supabase` (met `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY`, nooit in git). Vanuit een cloudsessie toont Google al na een paar kroegen een CAPTCHA.
-2. **DeepSeek-tegoed.** Er staat $0,05 op. Dat is genoeg voor een proef; voor heel Nijmegen ruim een paar dollar opwaarderen. Maak ook een nieuwe sleutel aan: de oude stond in een chat.
+1. **Run vanaf thuis, met de lokale modellen.** Claude draait dit in de sessie op je pc (`node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01`, standaard lokaal sinds 10 november 2026). Jij zorgt alleen dat de pc aan staat en de server van LM Studio draait (poort 1235). Importeren gaat met `--naar-supabase` en `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY`, die jij zelf in je terminal zet, nooit in Git of in de chat. Vanuit een cloudsessie toont Google al na een paar kroegen een CAPTCHA.
+2. **DeepSeek alleen als reserve (niet nodig).** Alleen voor als je echt iets gedaan wilt krijgen en de pc niet draait (`--extern`). Er staat $0,05 op; niet opwaarderen zolang het lokaal lukt. Wil je de reserve houden, maak dan een nieuwe sleutel aan: de oude stond in een chat.
 
 ## Testset voor de menukaartpijplijn
 
 Zie `tools/google-kroegen/testset/README.md`. Alles op je eigen computer, vanaf een thuisverbinding.
 
-1. **Foto-ID's zoeken.** Voor St. Anneke en Café Van Buren: `node testset/haal-fotos.mjs --kandidaten <place_id>`, open `overzicht.html` en zet het `foto_id` van het krijtbord en de drie QR-bordjes in `testset/labels.json`. Stadscafé Jan heeft nog geen Place ID in de database: zoek de kroeg op in Google Maps.
+1. **Foto-ID's zoeken.** Deels gedaan op 10 november 2026: de drie QR-bordjes van Café Van Buren en zeven foto's zonder bierprijzen staan in `testset/labels.json` (nog `gecontroleerd: false`, kijk ze na in `testset/fotos/<sleutel>/1600.jpg`). Nog open: het krijtbord van St. Anneke (2013) zat niet in de eerste 60 foto's, verder bladert Google niet; zoek het op in Google Maps en geef Claude de link. Stadscafé Jan heeft nog geen Place ID in de database: zoek de kroeg op in Google Maps.
 2. **Drankkaart van Café Daen.** Zet de eerste pagina van de pdf als JPEG in `testset/fotos/daen-drankkaart/s0.jpg`.
 3. **Aanvullen tot ongeveer twintig.** Ook foto's zonder kaart (eten, interieur), scheve en donkere foto's, krijtborden en gedrukte kaarten. Controleer elk label met de hand en zet `gecontroleerd` op `true`.
 4. **Ophalen en meten.** `node testset/haal-fotos.mjs`, daarna `node testset/meet.mjs`.
