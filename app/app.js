@@ -41,7 +41,7 @@ const wanneer = (iso) => {
   if (d < 30) return `${d} dagen geleden`;
   return new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
 };
-const VERSHEID = { fresh: "Vers", stale: "Wordt oud", old: "Oud, controleer", locked: "Op slot", wacht: "Wacht op bevestiging" };
+const VERSHEID = { fresh: "Vers", stale: "Wordt oud", old: "Oud, controleer", locked: "Nog geen prijs", wacht: "Wacht op bevestiging" };
 // Het spel vergelijkt de goedkoopste pils van de tap in een vaasje (25 cl). Schenkt een kroeg geen vaasje,
 // dan meld je het kleinste glas en rekenen we om naar 25 cl.
 const GLAZEN = [{ naam: "Vaasje", cl: 25 }, { naam: "Fluitje", cl: 20 }, { naam: "Fluitje", cl: 22 }, { naam: "Glas", cl: 30 }, { naam: "Glas", cl: 33 }];
@@ -293,7 +293,7 @@ const state = {
   info: null,
   tijdenForm: null,
   mijn: new Map(), // kroeg_id -> { keer, eerste, laatst } uit de view mijn_kroegen (privé)
-  modus: "samen", // kaart: "samen" (gezamenlijke mist) of "mijn" (waar jij hebt ingecheckt)
+  modus: "samen", // kaart: "samen" (de prijzen van iedereen), "koers" of "mijn" (waar jij hebt ingecheckt, onder je eigen mist)
   tocht: null, // { soort: "nieuw" | "goedkoop", aantal, stops: [kroeg], start: [lon, lat], vanaf: "jij" | "centrum" }
   // Koers: prijsgeschiedenis uit kroeg_tijdlijn, punten per kroeg, de Pilsindex en tickercodes (zie koersen())
   // Lijst: alleen kroegen in beeld, een gekozen wijk (vanuit Beurs) en hoeveel rijen er staan
@@ -322,6 +322,8 @@ function spelPrijs(k) {
 // Een prijs van een menukaart: eerste stuk geschiedenis, zonder melder; de kroeg blijft op slot
 const vanMenukaart = (k) => k.open_bron === "menukaart";
 const datumTekst = (d) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+// Alleen de bron zelf ("Drankkaart dekluizenaar.nl"); de datum staat er al naast
+const bronKort = (s) => (s ?? "").split(/[,(]/)[0].trim() || "menukaart";
 
 function toonPrijs(k) {
   if (k.open_prijs_cent) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
@@ -576,8 +578,8 @@ function lichtkrant() {
   // Prijzen die al lang gelijk zijn, verdienen ook een plek
   const vast = prijsvast().filter((x) => Date.now() - x.c.vastSinds > 365 * DAG && !gezien.has(x.k.id)).slice(0, 3);
   for (const { k, c } of vast) items.push(`<button class="tk" data-kroeg="${k.id}"><b>${codeVan(k.id)}</b>${euro(c.nu)} <span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span></button>`);
-  if (s) items.push(`<span class="tk"><b>${esc(STAD.naam.toUpperCase())}</b>${s.vrijgespeeld}/${s.kroegen} <span class="zacht">vrijgespeeld</span></span>`);
-  if (s && s.kroegen - s.vrijgespeeld > 0) items.push(`<span class="tk"><span class="zacht">${s.kroegen - s.vrijgespeeld} kroegen zonder koers · speel ze vrij</span></span>`);
+  if (s) items.push(`<span class="tk"><b>${esc(STAD.naam.toUpperCase())}</b>${s.vrijgespeeld}/${s.kroegen} <span class="zacht">in kaart</span></span>`);
+  if (s && s.kroegen - s.vrijgespeeld > 0) items.push(`<span class="tk"><span class="zacht">${s.kroegen - s.vrijgespeeld} kroegen zonder koers</span></span>`);
   if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
   const een = items.join("");
   const baan = $("#tickerBaan");
@@ -605,6 +607,9 @@ function kleur() {
   const v = (n) => cs.getPropertyValue(n).trim();
   return { fresh: v("--fresh"), stale: v("--stale"), old: v("--old"), locked: v("--locked"), wacht: v("--wacht"), accent: v("--accent"), accentInk: v("--accent-ink"), surface: v("--surface"), blue: v("--blue"), op: v("--op"), af: v("--af") };
 }
+
+// Prijzen pas op de kaart als je op straatniveau kijkt; in de koersstand iets eerder
+const prijsZoom = () => (state.modus === "koers" ? 15 : 16);
 
 function geojson() {
   return {
@@ -750,7 +755,7 @@ function kaartLagen() {
     paint: { "text-color": "#ffffff" },
   });
   map.addLayer({
-    id: "kroeg-prijs", type: "symbol", source: "kroegen", minzoom: state.modus === "koers" ? 13.2 : 14.5,
+    id: "kroeg-prijs", type: "symbol", source: "kroegen", minzoom: prijsZoom(),
     filter: ["!=", ["get", "label"], ""],
     layout: {
       "text-field": ["get", "label"],
@@ -790,12 +795,12 @@ map.on("mousemove", "kroeg-tik", (e) => {
   if (!k) return;
   const prijs = toonPrijsTekst(k);
   muisTip.setLngLat(f.geometry.coordinates)
-    .setHTML(`<b>${codeHtml(k.id)}${esc(k.naam)}</b><span class="muted"> ${prijs ? esc(prijs) : "op slot"}</span>`).addTo(map);
+    .setHTML(`<b>${codeHtml(k.id)}${esc(k.naam)}</b><span class="muted"> ${prijs ? esc(prijs) : "nog geen prijs"}</span>`).addTo(map);
 });
 
 // ---------------------------------------------------------------------------
-// Mist: een stippenraster over de kaart, met een open plek rond elke kroeg met een prijs.
-// Samen: open waar de kroeg is vrijgespeeld. Koers: waar een koers bekend is. Mijn kaart: waar jij hebt ingecheckt.
+// Mist: een stippenraster over de kaart, alleen op Mijn kaart, met een open plek rond elke kroeg waar jij hebt ingecheckt.
+// De gezamenlijke kaart heeft geen mist: die zou na de eerste spelers voor altijd open zijn.
 // Getekend op een eigen canvas boven de kaart, dus de kaart zelf blijft gewoon te bedienen.
 // ---------------------------------------------------------------------------
 
@@ -822,12 +827,7 @@ const mist = (() => {
     patroon = ctx.createPattern(tegel, "repeat");
   }
 
-  function open(k) {
-    if (guinnessAan()) return !!soortIn(k.id);
-    if (state.modus === "mijn") return state.mijn.has(k.id);
-    if (state.modus === "koers") return !!koersVan(k.id);
-    return k.versheid !== "locked";
-  }
+  const open = (k) => state.mijn.has(k.id);
 
   function teken() {
     if (!kleuren) lees();
@@ -839,6 +839,7 @@ const mist = (() => {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, doek.width, doek.height);
+    if (state.modus !== "mijn" || guinnessAan()) return;
     ctx.fillStyle = kleuren.waas; ctx.fillRect(0, 0, doek.width, doek.height);
     if (kleuren.stip && kleuren.stip !== "transparent") { ctx.fillStyle = patroon; ctx.fillRect(0, 0, doek.width, doek.height); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -885,7 +886,7 @@ const mist = (() => {
   };
 })();
 
-// Vrijgespeeld: een gouden kring dijt uit en de mist trekt weg rond de kroeg
+// Een nieuwe kroeg: een gouden kring dijt uit, en op Mijn kaart trekt de mist weg rond de kroeg
 function vierVrij(k) {
   if (!k || !kaartKlaar) return;
   mist.vier(k.id);
@@ -917,8 +918,7 @@ function kaartBijwerken() {
   mist.bij();
   if (map.getLayer("kroeg-halo")) map.setFilter("kroeg-halo", ["==", ["get", "id"], state.selected ?? -1]);
   if (map.getLayer("kroeg-cirkel")) for (const [k, v] of Object.entries(cirkelStijl())) map.setPaintProperty("kroeg-cirkel", k, v);
-  // In de koersstand staan de prijzen al eerder op de kaart
-  if (map.getLayer("kroeg-prijs")) map.setLayerZoomRange("kroeg-prijs", state.modus === "koers" ? 13.2 : 14.5, 24);
+  if (map.getLayer("kroeg-prijs")) map.setLayerZoomRange("kroeg-prijs", prijsZoom(), 24);
 }
 
 // ---------------------------------------------------------------------------
@@ -1014,7 +1014,7 @@ async function laadMijn() {
   hud();
 }
 
-// Beursbord linksboven: de Pilsindex met het verschil met twaalf maanden terug, en hoeveel van de stad vrij is.
+// Beursbord linksboven: de Pilsindex met het verschil met twaalf maanden terug, en hoeveel kroegen een prijs hebben.
 // Op Mijn kaart: jouw index (mediaan van de kroegen waar je was) en hoeveel kroegen je hebt bezocht.
 function hud() {
   const idx = state.koers.index;
@@ -1034,7 +1034,7 @@ function hud() {
   }
   const s = state.stad;
   const pct = s && s.kroegen ? Math.round((s.vrijgespeeld / s.kroegen) * 100) : 0;
-  zetRing(pct, `${STAD.naam} vrijgespeeld`, "Pilsindex", idx?.nu, idx?.delta, idx?.pct);
+  zetRing(pct, `${STAD.naam} in kaart`, "Pilsindex", idx?.nu, idx?.delta, idx?.pct);
 }
 
 function zetRing(pct, sub, label, koers, delta, deltaPct) {
@@ -1127,7 +1127,7 @@ function prijsKolom(k) {
 function lijstView() {
   const F = [
     { id: "alles", naam: "Alles", f: () => true },
-    { id: "slot", naam: "Op slot", f: (k) => k.versheid === "locked" },
+    { id: "slot", naam: "Nog geen prijs", f: (k) => k.versheid === "locked" },
     { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
     { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
     { id: "goedkoop", naam: "Goedkoopst", f: (k) => k.per25_cent },
@@ -1192,22 +1192,18 @@ function detailView() {
   let actie = "";
   if (!kanBijdragen()) {
     // Alleen als anoniem meespelen in Supabase uit staat: een weg naar een account. Daarna kom je hier terug.
-    actie = `<div class="btns"><button class="btn primary" data-doe-mee>${k.versheid === "locked" ? "Doe mee en speel deze kroeg vrij" : "Doe mee en houd de prijs bij"}</button></div>
+    actie = `<div class="btns"><button class="btn primary" data-doe-mee>${k.versheid === "locked" ? "Doe mee en geef de eerste prijs door" : "Doe mee en houd de prijs bij"}</button></div>
       <div class="small muted" style="margin-top:8px">Je begint meteen, zonder wachtwoord. Daarna kom je terug bij deze kroeg.</div>`;
-  } else if (k.open_melding_id && vanMenukaart(k)) {
-    actie = `<div class="small" style="margin-top:8px">Ben je hier? Bevestig de prijs ter plaatse en speel de kroeg vrij zodra een andere speler het ook bevestigt.</div>
-      <div class="btns">
-      <button class="btn primary" data-menuklopt="${k.id}">Klopt, ik ben er</button>
-      <button class="btn" data-form="nieuw">Prijs is anders</button></div>`;
-  } else if (k.open_melding_id) {
-    actie = `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>`;
-  } else if (k.versheid === "locked") {
-    actie = `<div class="btns"><button class="btn primary" data-form="nieuw">Speel vrij met een prijs</button></div>`;
   } else {
-    actie = `<div class="btns">
-      <button class="btn good" data-klopt="${k.id}" ${magControleren() ? "" : "disabled"}>Klopt nog</button>
-      <button class="btn" data-form="nieuw">Prijs is anders</button></div>
-      ${magControleren() ? "" : `<div class="small muted" style="margin-top:8px">Met een account (tabblad Ik) kun je prijzen controleren.</div>`}`;
+    // Inchecken en de prijs doorgeven zijn een handeling: je zit in de kroeg, je hebt je pils en je checkt in met de prijs
+    const vandaag = isVandaag(state.mijn.get(k.id)?.laatst);
+    const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
+    const uitleg = vandaag ? "Je bent hier vandaag ingecheckt."
+      : d != null && d > INCHECK_M ? `Je bent ${meters(d)} hiervandaan; inchecken kan binnen ${INCHECK_M} m.`
+      : "Check in met de prijs van je pils.";
+    actie = `${k.open_melding_id && !vanMenukaart(k) ? `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>` : ""}
+      <div class="btns"><button class="btn primary" data-form="hier">${vandaag ? "Prijs doorgeven" : "Inchecken"}</button></div>
+      <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>`;
   }
   return `<button class="back" data-back>‹ Terug</button>
     <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
@@ -1217,7 +1213,7 @@ function detailView() {
       ${k.open_prijs_cent && vanMenukaart(k) ? `
         <div class="big-price">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
-        <div class="muted small">Volgens de menukaart van ${datumTekst(k.open_op)}${k.open_bron_omschrijving ? ` (${esc(k.open_bron_omschrijving)})` : ""}. Nog door niemand bevestigd.</div>`
+        <div class="muted small">Van de menukaart</div>`
       : k.open_prijs_cent ? `${v === "wacht" ? "" : `<span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
         <div class="big-price"${v === "wacht" ? "" : ` style="margin-top:10px"`}>${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
@@ -1229,7 +1225,7 @@ function detailView() {
         <div class="muted">${glasTekst(k.huidig_merk, k.huidig_volume_cl, k.per25_cent)}</div>
         <div class="muted small">Laatst gecontroleerd ${wanneer(k.laatst_gecontroleerd)}</div>
         ${positieHtml(k)}`
-      : `<div class="big-price muted">€ ?</div><div class="muted" style="margin-top:6px">Nog geen koers. Speel deze kroeg vrij met de prijs van een vaasje.</div>`}
+      : `<div class="big-price muted">€ ?</div><div class="muted" style="margin-top:6px">Nog geen koers. Check in en geef als eerste de prijs van een vaasje door.</div>`}
       ${k.ontdekker ? `<div class="small" style="margin-top:8px">Ontdekt door <b>${esc(k.ontdekker)}</b> ${wanneer(k.ontdekt_op)}</div>` : ""}
       ${actie}
     </div>
@@ -1277,10 +1273,10 @@ function tijdenBlok(info) {
   const vandaag = vandaagDag();
   const bron = !tijden ? "" : melding
     ? `Aangepast door <b>${esc(melding.door ?? "Onbekend")}</b> ${wanneer(melding.op)}${melding.klopt_niet ? " · 1 keer klopt niet" : ""}`
-    : info.openingstijden_bron === "spelers" ? `Door spelers bijgewerkt ${wanneer(info.openingstijden_op)}` : `Uit Google, ${wanneer(info.openingstijden_op)}`;
+    : info.openingstijden_bron === "spelers" ? `Door spelers bijgewerkt ${wanneer(info.openingstijden_op)}` : "";
   return `<h3>Openingstijden</h3>
     ${tijden ? `<ul class="tijden">${DAGEN.map((d) => `<li class="${d === vandaag ? "vandaag" : ""}"><span>${d[0].toUpperCase() + d.slice(1)}</span><span>${tijdenTekst(tijden[d] ?? [])}</span></li>`).join("")}</ul>
-      <div class="small muted">${bron}</div>
+      ${bron ? `<div class="small muted">${bron}</div>` : ""}
       ${melding ? `<div class="btns">${meldingKnoppen(melding)}</div>` : ""}`
     : `<div class="small muted">Nog geen openingstijden bekend.</div>`}
     ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${kanBijdragen() ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
@@ -1389,20 +1385,13 @@ async function beoordeelMelding(id, oordeel) {
   draw();
 }
 
-// Inchecken: persoonlijk, los van de gezamenlijke mist. Alleen ter plaatse, een keer per dag.
+// Mijn kroegen: persoonlijk, los van de gezamenlijke mist. Inchecken zelf zit in de knop Inchecken van de kroeg.
 function incheckHtml(k) {
-  if (!kanBijdragen()) return "";
   const m = state.mijn.get(k.id);
-  const vandaag = m && isVandaag(m.laatst);
-  const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
-  const tekst = m
-    ? `Je was hier ${keer(m.keer)}, ${vandaag ? "vandaag nog" : `laatst ${wanneer(m.laatst)}`}.`
-    : "Je bent hier nog niet ingecheckt. Check in om deze kroeg op jouw kaart te ontgrendelen.";
-  const hint = vandaag ? "" : d != null && d > INCHECK_M ? `Je bent ${meters(d)} hiervandaan; inchecken kan binnen ${INCHECK_M} m.` : "";
-  return `<div class="card incheck ${m ? "bezocht" : ""}">
+  if (!m) return "";
+  return `<div class="card incheck bezocht">
     <span class="ic">${ICON_PIN}</span>
-    <div><div class="t">Mijn kroegen</div><div>${tekst}</div>${hint ? `<div class="t">${hint}</div>` : ""}</div>
-    ${vandaag ? "" : `<button class="btn primary" data-inchecken="${k.id}">Inchecken</button>`}
+    <div><div class="t">Mijn kroegen</div><div>Je was hier ${keer(m.keer)}, ${isVandaag(m.laatst) ? "vandaag nog" : `laatst ${wanneer(m.laatst)}`}.</div></div>
   </div>`;
 }
 
@@ -1497,7 +1486,8 @@ async function laadTijdlijn(id) {
     sb.from("kroeg_tijdlijn").select("*").eq("kroeg_id", id).order("op", { ascending: false }).limit(60),
     bijdragersQuery,
   ]);
-  if (state.selected !== id) return;
+  // Intussen een formulier geopend: dan staat de tijdlijn niet in beeld
+  if (state.selected !== id || !$("#tijdlijn")) return;
   if (error) { $("#tijdlijn").innerHTML = `<div class="muted small">Laden mislukt.</div>`; return; }
   $("#stamgast").innerHTML = data.length && !bijdragersFout ? stamgastHtml(bijdragers ?? [], uid) : "";
   const open = data.find((g) => g.status === "wacht");
@@ -1542,7 +1532,7 @@ function tijdlijnItem(g) {
   if (g.bron === "menukaart") {
     const st = g.status === "wacht" ? " (nog door niemand bevestigd)" : g.status === "bevestigd" ? " (klopte nog)" : " (achterhaald)";
     return `<li class="menukaart"><div class="t-what">Menukaart: ${euro(g.prijs_cent)}${st}</div>
-      <div class="t-meta">${datumTekst(g.op)} · ${esc(g.bron_omschrijving ?? "menukaart")} · ${esc(g.merk)} ${g.volume_cl} cl</div></li>`;
+      <div class="t-meta">${datumTekst(g.op)} · ${esc(bronKort(g.bron_omschrijving))} · ${esc(g.merk)} ${g.volume_cl} cl</div></li>`;
   }
   const wat = g.soort === "eerst" ? `Eerst gemeld: ${euro(g.prijs_cent)}`
     : g.soort === "wijziging" ? `Gewijzigd: ${euro(g.vorige_prijs_cent)} → ${euro(g.prijs_cent)}`
@@ -1633,11 +1623,39 @@ function koersDelta(k) {
     <div class="small muted" style="margin-top:4px">al ${maanden >= 24 ? `${Math.floor(maanden / 12)} jaar` : `${maanden} maanden`}</div></div>` : "";
 }
 
+// De prijs die er nu staat: een openstaande melding of menukaartprijs gaat voor de bevestigde prijs
+function bekendePrijs(k) {
+  if (k.open_prijs_cent) return { merk: k.open_merk, cl: k.open_volume_cl, prijs: k.open_prijs_cent, per25: k.open_per25_cent, soort: vanMenukaart(k) ? "menukaart" : "melding" };
+  if (k.huidig_prijs_cent) return { merk: k.huidig_merk, cl: k.huidig_volume_cl, prijs: k.huidig_prijs_cent, per25: k.per25_cent, soort: "huidig" };
+  return null;
+}
+// Kan de speler met een tik zeggen dat de bekende prijs klopt? Van afstand alleen met een account, en nooit voor de menukaart.
+const snelKlopt = (b, hier) => !!b && (hier || (b.soort !== "menukaart" && magControleren()));
+
 function formView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
   const f = state.form;
+  const b = bekendePrijs(k);
+  const vandaag = isVandaag(state.mijn.get(k.id)?.laatst);
+  const titel = f.hier ? (vandaag ? "Prijs doorgeven" : "Inchecken") : "Prijs doorgeven";
+  const zonder = f.hier && !vandaag ? `<p class="small"><button type="button" class="linkbtn" data-incheck="zonder">Inchecken zonder prijs</button></p>` : "";
+  const locatieTekst = f.hier ? `<p class="small muted">We kijken of je binnen ${INCHECK_M} m van de kroeg bent en bewaren alleen die afstand. Ter plaatse tellen je punten 1,5 keer.</p>` : "";
+  if (snelKlopt(b, f.hier) && !f.anders) {
+    return `<button class="back" data-cancel>‹ Annuleer</button>
+    <h2>${titel}</h2>
+    <div class="muted small">${esc(k.naam)}</div>
+    <p>${f.hier ? "Wat kost je pils hier?" : "Klopt deze prijs nog?"}</p>
+    <form class="form" id="prijsForm">
+      <div class="big-price">${euro(b.prijs)}</div>
+      <div class="muted">${glasTekst(b.merk, b.cl, b.per25)}</div>
+      <div class="btns"><button type="button" class="btn primary" data-incheck="klopt">Klopt</button>
+        <button type="button" class="btn" data-andere-prijs>Andere prijs</button></div>
+      ${zonder}
+      ${locatieTekst}
+    </form>`;
+  }
   return `<button class="back" data-cancel>‹ Annuleer</button>
-    <h2>${k.versheid === "locked" ? "Speel vrij" : "Nieuwe prijs"}</h2>
+    <h2>${titel}</h2>
     <div class="muted small">${esc(k.naam)}</div>
     <p class="small muted">Het spel vergelijkt de goedkoopste pils van de tap in een vaasje. Schenkt deze kroeg geen vaasje, kies dan het kleinste glas; we rekenen om naar een vaasje. Ander bier voeg je toe onder "Ook op de tap".</p>
     <form class="form" id="prijsForm">
@@ -1654,8 +1672,9 @@ function formView() {
       <label>Foto van de prijslijst (optioneel, +5 na bevestiging)</label>
       <input name="foto" type="file" accept="image/*" capture="environment">
       <img class="foto-voorbeeld" id="fotoVoorbeeld" alt="Voorbeeld van je foto" hidden>
-      <label class="check"><input type="checkbox" name="locatie" ${f.locatie ? "checked" : ""}> Ik ben in deze kroeg. Binnen ${INCHECK_M} m tellen de punten 1,5 keer. We bewaren alleen de afstand tot de kroeg.</label>
-      <div class="btns"><button class="btn primary" type="submit" id="verstuur">Versturen</button></div>
+      <div class="btns"><button class="btn primary" type="submit" id="verstuur">${f.hier && !vandaag ? "Inchecken" : "Versturen"}</button></div>
+      ${zonder}
+      ${locatieTekst}
       <p class="small muted">Punten krijg je zodra een andere speler je melding bevestigt.</p>
     </form>`;
 }
@@ -1744,7 +1763,7 @@ async function beursView() {
     const m = mediaan(state.kroegen.filter((k) => k.wijk === w.naam).map((k) => koersVan(k.id)?.nu).filter(Boolean));
     return `<button type="button" class="sector" data-wijk="${esc(w.naam)}" aria-label="${esc(w.naam)} op de kaart tonen">
       <div class="t"><b>${esc(w.naam)}</b><span>${m ? `<span class="price">${euro(m)}</span>` : `<span class="small muted">geen koers</span>`}</span></div>
-      <div class="t small muted"><span>${w.vrijgespeeld} van ${w.kroegen} vrijgespeeld</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
+      <div class="t small muted"><span>${w.vrijgespeeld} van ${w.kroegen} in kaart</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
       <div class="bar"><span style="width:${w.kroegen ? (w.vrijgespeeld / w.kroegen) * 100 : 0}%"></span></div></button>`;
   };
 
@@ -1752,7 +1771,7 @@ async function beursView() {
     const per25 = g.volume_cl ? Math.round((g.prijs_cent * 25) / g.volume_cl) : null;
     const verschil = g.soort === "wijziging" && g.vorige_prijs_cent != null ? g.prijs_cent - g.vorige_prijs_cent : null;
     return `<li><button class="row" data-kroeg="${g.kroeg_id}">
-      <span class="row-main"><span class="row-title">${codeHtml(g.kroeg_id)}${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "speelde" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}${g.soort === "eerst" ? " vrij" : ""}</span>
+      <span class="row-main"><span class="row-title">${codeHtml(g.kroeg_id)}${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "ontdekte" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}</span>
       <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span>
       ${g.soort !== "check" && per25 ? `<span class="price">${euro(g.prijs_cent)}${verschil ? `<small class="delta ${richting(verschil)}">${KOERS_TAAL[richting(verschil)]} ${bedrag(verschil)}</small>` : `<small>${g.volume_cl} cl</small>`}</span>` : ""}</button></li>`;
   };
@@ -1764,15 +1783,15 @@ async function beursView() {
         <div class="uitleg">Wat een vaasje pils in ${esc(STAD.naam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
         ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", lijnLabel: "", kleur: idx.delta > 0 ? "var(--op)" : idx.delta < 0 ? "var(--af)" : "var(--accent)" })}</div>` : ""}`
       : `<div class="stand"><span class="big-price">€ ?</span></div>
-        <div class="uitleg">Nog geen koers. Speel de eerste kroeg vrij en zet de Pilsindex op het bord.</div>`}
+        <div class="uitleg">Nog geen koers. Geef de eerste prijs door en zet de Pilsindex op het bord.</div>`}
     </div>
     <div class="small muted">↗ duurder · ↘ goedkoper · → vast. Rood en groen zoals jij het als klant voelt.</div>
     ${duo}
-    <h3>Samen vrijspelen <span class="muted">${s.vrijgespeeld}/${s.kroegen}</span></h3>
+    <h3>Samen in kaart <span class="muted">${s.vrijgespeeld}/${s.kroegen}</span></h3>
     <div class="card ring-big">
       <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="ring-bg"/><circle cx="50" cy="50" r="42" class="ring-fg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct / 100)}"/></svg>
-      <div><div class="pct">${pct}%</div><div>${STAD.naam} samen vrijgespeeld</div>
-      <div class="small muted">${s.vrijgespeeld} van ${s.kroegen} kroegen${next ? ` · nog ${nodig} tot ${next}%` : " · alles vrijgespeeld!"}</div></div>
+      <div><div class="pct">${pct}%</div><div>van ${STAD.naam} heeft een prijs</div>
+      <div class="small muted">${s.vrijgespeeld} van ${s.kroegen} kroegen${next ? ` · nog ${nodig} tot ${next}%` : " · alles in kaart!"}</div></div>
     </div>
     <div class="milestones">${MS.map((m) => `<span class="${pct >= m ? "done" : ""}">${m}%</span>`).join("")}</div>
     <h3>Deze week, met z'n allen</h3>
@@ -2017,7 +2036,7 @@ function regelsView() {
     <p>Per kroeg houden we de <b>goedkoopste pils van de tap</b> bij, in een vaasje (25 cl). Schenkt een kroeg geen vaasje, dan meld je het kleinste glas en rekenen we om.</p>
     <h3>Punten</h3>
     <div class="card regels">
-      <div><span>Kroeg vrijspelen (eerste prijs)</span><b>+50</b></div>
+      <div><span>Eerste prijs van een kroeg</span><b>+50</b></div>
       <div><span>Nieuwe prijs melden</span><b>+30</b></div>
       <div><span>Melding van een ander bevestigen</span><b>+5</b></div>
       <div><span>Klopt nog</span><b>+5</b></div>
@@ -2086,7 +2105,7 @@ function mijnKroegenHtml() {
     <div class="muted small">Waar jij hebt ingecheckt. Alleen jij ziet dit.</div>`;
   if (!mijn.length) {
     return `${kop}<div class="card"><b>Nog nergens ingecheckt</b>
-      <div class="muted small" style="margin-top:4px">Open een kroeg als je er bent en tik op Inchecken (binnen ${INCHECK_M} m). Een prijs melden of "Klopt nog" ter plaatse telt ook. Zo ontgrendel je de kroeg op jouw eigen kaart.</div>
+      <div class="muted small" style="margin-top:4px">Open een kroeg als je er bent en tik op Inchecken (binnen ${INCHECK_M} m), het liefst met de prijs van je pils. Zo speel je de kroeg vrij op jouw eigen kaart.</div>
       <div class="btns"><button class="btn" data-tocht-open="nieuw">Plan een tocht langs nieuwe kroegen</button></div></div>`;
   }
 
@@ -2197,7 +2216,7 @@ function tochtView() {
       <div class="small muted" style="margin-top:8px">Ongeveer ${meters(totaal)} lopen (hemelsbreed).</div>
       <div class="btns"><button class="btn primary" data-tocht-kaart>Toon op de kaart</button></div>`
     : `<div class="empty">${t.soort === "nieuw" ? "Je bent overal in de buurt al geweest. Knap!" : "Nog geen prijzen in de buurt."}</div>`}
-    <p class="small muted">Check bij elke kroeg in om hem op jouw kaart te ontgrendelen. Geniet, maar drink met mate: inchecken kan ook met een fris.</p>`;
+    <p class="small muted">Check bij elke kroeg in en speel hem vrij op jouw kaart. Geniet, maar drink met mate: inchecken kan ook met een fris.</p>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -2245,99 +2264,107 @@ function setTab(t) {
   else if (!wide() && sheet.dataset.detent === "peek") setDetent("half");
 }
 
-async function verstuurPrijs(form) {
-  const k = state.kroegen.find((x) => x.id === state.selected);
+// Leest het prijsformulier; bij een fout een melding en null
+function leesPrijs(form) {
   const fd = new FormData(form);
   const merk = fd.get("merk") === "_anders" ? String(fd.get("merkAnders") ?? "").trim() : String(fd.get("merk"));
   const prijs = Math.round(parseFloat(String(fd.get("prijs")).replace(",", ".")) * 100);
   const cl = gekozenCl();
-  if (!merk || merk.length < 2) return toast("Vul een merk in");
-  if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl");
-  if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in");
-  const knop = $("#verstuur"); knop.disabled = true; knop.textContent = "Bezig…";
-  if (!(await zorgVoorSpeler())) { knop.disabled = false; knop.textContent = "Versturen"; return; }
-  try {
-    let pos = null;
-    if (fd.get("locatie")) pos = await locatie();
-    let foto_pad = null;
-    const ruw = fd.get("foto");
-    if (ruw && ruw.size) {
-      knop.textContent = "Foto verkleinen…";
-      const file = await verkleinFoto(ruw);
-      knop.textContent = "Bezig…";
-      if (file.size > 5 * 1024 * 1024) throw new Error("De foto is groter dan 5 MB. Kies een kleinere.");
-      const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-      foto_pad = `${state.sessie.user.id}/${k.id}-${Date.now()}.${ext}`;
-      const { error } = await sb.storage.from("prijslijsten").upload(foto_pad, file, { contentType: file.type, upsert: false });
-      if (error) throw error;
-    }
-    const { data, error } = await sb.rpc("meld_prijs", {
-      p_kroeg_id: k.id, p_merk: merk, p_volume_cl: cl, p_prijs_cent: prijs,
-      p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null, p_foto_pad: foto_pad,
-    });
+  if (!merk || merk.length < 2) return toast("Vul een merk in"), null;
+  if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl"), null;
+  if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in"), null;
+  return { merk, cl, prijs, foto: fd.get("foto") };
+}
+
+async function meldPrijs(k, w, pos) {
+  let foto_pad = null;
+  if (w.foto && w.foto.size) {
+    const file = await verkleinFoto(w.foto);
+    if (file.size > 5 * 1024 * 1024) throw new Error("De foto is groter dan 5 MB. Kies een kleinere.");
+    const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    foto_pad = `${state.sessie.user.id}/${k.id}-${Date.now()}.${ext}`;
+    const { error } = await sb.storage.from("prijslijsten").upload(foto_pad, file, { contentType: file.type, upsert: false });
     if (error) throw error;
-    state.form = null;
-    if (data.status === "bevestigd") toast(k.versheid === "locked" ? `${k.naam} vrijgespeeld!` : "Prijs bijgewerkt", data.soort === "eerst" ? 50 : 30);
-    else if (data.soort === "eerst") toast(`${k.naam} vrijgespeeld! Punten volgen na bevestiging`);
-    else toast("Gemeld. Punten volgen na bevestiging");
-    await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
-    if (data.soort === "eerst") vierVrij(k);
-    draw();
-  } catch (e) {
-    toast(await leesFout(e));
-    knop.disabled = false; knop.textContent = "Versturen";
   }
-}
-
-// De prijs van de menukaart klopt nog: alleen ter plaatse. De speler wordt indiener; een andere speler bevestigt.
-async function menukaartKlopt(id, knop) {
-  const k = state.kroegen.find((x) => x.id === id);
-  knop.disabled = true; knop.textContent = "Locatie bepalen…";
-  const pos = await locatie(10000);
-  knop.disabled = false; knop.textContent = "Klopt, ik ben er";
-  if (!pos) return toast("Zet je locatie aan: een prijs van de menukaart bevestig je bij de kroeg");
-  if (!(await zorgVoorSpeler())) return;
-  const { error } = await sb.rpc("meld_prijs", {
-    p_kroeg_id: id, p_merk: k.open_merk, p_volume_cl: k.open_volume_cl, p_prijs_cent: k.open_prijs_cent,
-    p_lat: pos[1], p_lon: pos[0], p_foto_pad: null,
+  const { data, error } = await sb.rpc("meld_prijs", {
+    p_kroeg_id: k.id, p_merk: w.merk, p_volume_cl: w.cl, p_prijs_cent: w.prijs,
+    p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null, p_foto_pad: foto_pad,
   });
-  if (error) return toast(await leesFout(error));
-  toast("Je bent de indiener; nu nog een bevestiging van een andere speler");
-  await Promise.all([laadKroegen(), laadStad()]);
-  vierVrij(k);
-  draw();
+  if (error) throw error;
+  return data;
 }
 
-// Locatie alleen als de speler die al heeft toegestaan: "Klopt nog" mag geen toestemmingsvenster openen
-async function locatieAlsToegestaan() {
+// Inchecken met de prijs van je pils ("klopt", een andere prijs of zonder prijs), of van afstand een prijs doorgeven.
+// Ter plaatse is een melding of "klopt nog" in de database vanzelf ook een check-in; anders checken we hier apart in.
+async function verstuurIncheck(keuze, form, knop) {
+  const k = state.kroegen.find((x) => x.id === state.selected);
+  const hier = state.form.hier, b = bekendePrijs(k);
+  const w = keuze === "prijs" ? leesPrijs(form) : null;
+  if (keuze === "prijs" && !w) return;
+  const tekst = knop.textContent;
+  form.querySelectorAll("button").forEach((x) => (x.disabled = true));
+  const klaar = (msg) => { form.querySelectorAll("button").forEach((x) => (x.disabled = false)); knop.textContent = tekst; if (msg) toast(msg); };
+  let pos = null;
+  if (hier) {
+    knop.textContent = "Locatie zoeken…";
+    pos = await locatie(10000);
+    if (!pos) return klaar("Zet je locatie aan om in te checken");
+    const d = afstand(pos, [k.lon, k.lat]);
+    if (d > INCHECK_M) return klaar(`Je bent ${meters(d)} van deze kroeg. Inchecken kan binnen ${INCHECK_M} m.`);
+  }
+  knop.textContent = "Bezig…";
+  if (!(await zorgVoorSpeler())) return klaar();
+  const was = state.mijn.get(k.id), alIn = isVandaag(was?.laatst);
+  const delen = [];
+  let pts = null, vrij = false;
   try {
-    const p = await navigator.permissions?.query({ name: "geolocation" });
-    if (p?.state === "granted") return await locatie(4000);
-  } catch { /* oude browser: geen vraag stellen */ }
-  return state.pos;
-}
-
-async function kloptNog(id) {
-  const k = state.kroegen.find((x) => x.id === id);
-  const pos = await locatieAlsToegestaan();
-  const { error } = await sb.rpc("klopt_nog", { p_kroeg_id: id, p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null });
-  if (error) return toast(await leesFout(error));
-  toast("Bedankt voor het controleren", dagen(k.laatst_gecontroleerd) >= 90 ? 15 : 5);
-  vernieuw();
-}
-
-async function inchecken(id, knop) {
-  const k = state.kroegen.find((x) => x.id === id);
-  if (knop) { knop.disabled = true; knop.textContent = "Locatie zoeken…"; }
-  const pos = await locatie(10000);
-  if (!pos) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return toast("Zet je locatie aan om in te checken"); }
-  const nieuw = !state.mijn.has(id);
-  if (!(await zorgVoorSpeler())) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return; }
-  const { error } = await sb.rpc("inchecken", { p_kroeg_id: id, p_lat: pos[1], p_lon: pos[0] });
-  if (error) { toast(await leesFout(error)); await laadMijn(); return draw(); }
-  toast(nieuw ? `Ingecheckt! ${k.naam} staat nu op jouw kaart` : `Ingecheckt bij ${k.naam}`);
-  await laadMijn();
+    if (keuze === "prijs") {
+      const data = await meldPrijs(k, w, pos);
+      vrij = data.soort === "eerst";
+      if (data.status === "bevestigd") { delen.push(vrij ? `Eerste prijs van ${k.naam}!` : "Prijs bijgewerkt"); pts = vrij ? 50 : 30; }
+      else delen.push(vrij ? `Eerste prijs van ${k.naam}! Punten volgen na bevestiging` : "Prijs gemeld. Punten volgen na bevestiging");
+    } else if (keuze === "klopt" && b.soort === "menukaart") {
+      await meldPrijs(k, { merk: b.merk, cl: b.cl, prijs: b.prijs }, pos);
+      delen.push("Je bent de indiener; nu nog een bevestiging van een andere speler");
+      vrij = true;
+    } else if (keuze === "klopt" && magControleren()) {
+      const { data, error } = b.soort === "melding"
+        ? await sb.rpc("beoordeel", { p_gebeurtenis: k.open_melding_id, p_oordeel: "klopt" })
+        : await sb.rpc("klopt_nog", { p_kroeg_id: k.id, p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null });
+      // Ter plaatse telt de check-in; is controleren nu niet mogelijk (eigen melding, al gecontroleerd deze week), dan niet erg
+      if (error && !hier) throw error;
+      if (!error) {
+        delen.push(b.soort === "melding" ? (data === "bevestigd" ? "Bevestigd, de prijs staat erop" : "Oordeel opgeslagen") : "Bedankt voor het controleren");
+        pts = b.soort === "melding" ? (data === "wacht" ? null : 5) : dagen(k.laatst_gecontroleerd) >= 90 ? 15 : 5;
+      }
+    }
+  } catch (e) {
+    if (!hier) return klaar(await leesFout(e));
+    delen.push(`Je prijs is niet doorgegeven: ${await leesFout(e)}`);
+  }
+  if (hier && !alIn) {
+    await laadMijn();
+    if (!isVandaag(state.mijn.get(k.id)?.laatst)) {
+      const { error } = await sb.rpc("inchecken", { p_kroeg_id: k.id, p_lat: pos[1], p_lon: pos[0] });
+      if (error) { await laadMijn(); return klaar(await leesFout(error)); }
+    }
+    delen.unshift(was ? `Ingecheckt bij ${k.naam}` : `Ingecheckt! ${k.naam} staat nu op jouw kaart`);
+  }
+  state.form = null;
+  toast(delen.join(". ") || "Bedankt", pts);
+  await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
   draw();
+  // Na een nieuwe check-in naar Mijn kaart: daar trekt de mist rond de kroeg weg
+  if (hier && !alIn) return toonOpMijnKaart(k, !was);
+  if (vrij) vierVrij(k);
+}
+
+function toonOpMijnKaart(k, vier) {
+  setModus("mijn");
+  if (!wide()) setDetent("peek");
+  if (!kaartKlaar) return;
+  map.once("moveend", () => { if (vier) vierVrij(k); });
+  map.easeTo({ center: [k.lon, k.lat], zoom: Math.max(map.getZoom(), 15), duration: 600, padding: wide() ? { left: 400 } : { bottom: innerHeight * 0.2 } });
 }
 
 async function wisMijn() {
@@ -2396,10 +2423,12 @@ body.addEventListener("click", (e) => {
   if (t.dataset.form) {
     const k = state.kroegen.find((x) => x.id === state.selected);
     const cl = k?.huidig_volume_cl ?? k?.open_volume_cl ?? VAASJE;
-    // Locatie staat standaard uit: je deelt hem alleen als je echt in de kroeg bent
-    state.form = { merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl, clAnders: !GLAZEN.some((g) => g.cl === cl), prijs: "", locatie: false };
+    // Inchecken ("hier") vraagt de locatie; van afstand ("afstand") gaat er geen locatie mee
+    state.form = { hier: t.dataset.form === "hier", anders: false, merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl, clAnders: !GLAZEN.some((g) => g.cl === cl), prijs: "" };
     return draw();
   }
+  if (t.dataset.anderePrijs !== undefined && state.form) { state.form.anders = true; return draw(); }
+  if (t.dataset.incheck && state.form) return verstuurIncheck(t.dataset.incheck, t.closest("form"), t);
   if (t.dataset.cl && state.form) {
     state.form.clAnders = t.dataset.cl === "anders";
     if (!state.form.clAnders) state.form.cl = Number(t.dataset.cl);
@@ -2409,9 +2438,6 @@ body.addEventListener("click", (e) => {
     if (state.form.clAnders) veld.focus();
     return prijsVoorbeeld();
   }
-  if (t.dataset.klopt) return kloptNog(Number(t.dataset.klopt));
-  if (t.dataset.menuklopt) return menukaartKlopt(Number(t.dataset.menuklopt), t);
-  if (t.dataset.inchecken) return inchecken(Number(t.dataset.inchecken), t);
   if (t.dataset.wisMijn !== undefined) return wisMijn();
   if (t.dataset.mijnKaart !== undefined) { setModus("mijn"); if (!wide()) setDetent("peek"); return; }
   if (t.dataset.tochtOpen !== undefined) { planTocht(t.dataset.tochtOpen || undefined); draw(); body.scrollTop = 0; return; }
@@ -2475,7 +2501,7 @@ body.addEventListener("input", (e) => {
 body.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
-  if (f.id === "prijsForm") return verstuurPrijs(f);
+  if (f.id === "prijsForm") return verstuurIncheck("prijs", f, $("#verstuur"));
   if (f.id === "aanbodForm") return verstuurAanbod(f);
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
@@ -2625,8 +2651,8 @@ sb.channel("stad")
   .on("postgres_changes", { event: "INSERT", schema: "public", table: "gebeurtenissen" }, (p) => {
     if (p.new.door_id !== state.sessie?.user?.id) {
       const k = state.kroegen.find((x) => x.id === p.new.kroeg_id);
-      if (k) toast(p.new.soort === "check" ? `${k.naam} is net gecontroleerd` : p.new.soort === "eerst" ? `${k.naam} is net vrijgespeeld` : `Nieuwe prijs bij ${k.naam}`);
-      // Een ander speelt een kroeg vrij: ook bij jou trekt de mist daar weg
+      if (k) toast(p.new.soort === "check" ? `${k.naam} is net gecontroleerd` : p.new.soort === "eerst" ? `Eerste prijs bij ${k.naam}` : `Nieuwe prijs bij ${k.naam}`);
+      // Iemand geeft de eerste prijs van een kroeg door: een gouden kring
       if (k && p.new.soort === "eerst") vierVrij(k);
     }
     vernieuw();
