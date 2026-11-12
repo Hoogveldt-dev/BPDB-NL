@@ -322,6 +322,8 @@ function spelPrijs(k) {
 // Een prijs van een menukaart: eerste stuk geschiedenis, zonder melder; de kroeg blijft op slot
 const vanMenukaart = (k) => k.open_bron === "menukaart";
 const datumTekst = (d) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+// Alleen de bron zelf ("Drankkaart dekluizenaar.nl"); de datum staat er al naast
+const bronKort = (s) => (s ?? "").split(/[,(]/)[0].trim() || "menukaart";
 
 function toonPrijs(k) {
   if (k.open_prijs_cent) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
@@ -606,6 +608,9 @@ function kleur() {
   return { fresh: v("--fresh"), stale: v("--stale"), old: v("--old"), locked: v("--locked"), wacht: v("--wacht"), accent: v("--accent"), accentInk: v("--accent-ink"), surface: v("--surface"), blue: v("--blue"), op: v("--op"), af: v("--af") };
 }
 
+// Prijzen pas op de kaart als je op straatniveau kijkt; in de koersstand iets eerder
+const prijsZoom = () => (state.modus === "koers" ? 15 : 16);
+
 function geojson() {
   return {
     type: "FeatureCollection",
@@ -750,7 +755,7 @@ function kaartLagen() {
     paint: { "text-color": "#ffffff" },
   });
   map.addLayer({
-    id: "kroeg-prijs", type: "symbol", source: "kroegen", minzoom: state.modus === "koers" ? 13.2 : 14.5,
+    id: "kroeg-prijs", type: "symbol", source: "kroegen", minzoom: prijsZoom(),
     filter: ["!=", ["get", "label"], ""],
     layout: {
       "text-field": ["get", "label"],
@@ -917,8 +922,7 @@ function kaartBijwerken() {
   mist.bij();
   if (map.getLayer("kroeg-halo")) map.setFilter("kroeg-halo", ["==", ["get", "id"], state.selected ?? -1]);
   if (map.getLayer("kroeg-cirkel")) for (const [k, v] of Object.entries(cirkelStijl())) map.setPaintProperty("kroeg-cirkel", k, v);
-  // In de koersstand staan de prijzen al eerder op de kaart
-  if (map.getLayer("kroeg-prijs")) map.setLayerZoomRange("kroeg-prijs", state.modus === "koers" ? 13.2 : 14.5, 24);
+  if (map.getLayer("kroeg-prijs")) map.setLayerZoomRange("kroeg-prijs", prijsZoom(), 24);
 }
 
 // ---------------------------------------------------------------------------
@@ -1217,7 +1221,7 @@ function detailView() {
       ${k.open_prijs_cent && vanMenukaart(k) ? `
         <div class="big-price">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
-        <div class="muted small">Volgens de menukaart van ${datumTekst(k.open_op)}${k.open_bron_omschrijving ? ` (${esc(k.open_bron_omschrijving)})` : ""}. Nog door niemand bevestigd.</div>`
+        <div class="muted small">Van de menukaart</div>`
       : k.open_prijs_cent ? `${v === "wacht" ? "" : `<span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
         <div class="big-price"${v === "wacht" ? "" : ` style="margin-top:10px"`}>${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
@@ -1277,10 +1281,10 @@ function tijdenBlok(info) {
   const vandaag = vandaagDag();
   const bron = !tijden ? "" : melding
     ? `Aangepast door <b>${esc(melding.door ?? "Onbekend")}</b> ${wanneer(melding.op)}${melding.klopt_niet ? " · 1 keer klopt niet" : ""}`
-    : info.openingstijden_bron === "spelers" ? `Door spelers bijgewerkt ${wanneer(info.openingstijden_op)}` : `Uit Google, ${wanneer(info.openingstijden_op)}`;
+    : info.openingstijden_bron === "spelers" ? `Door spelers bijgewerkt ${wanneer(info.openingstijden_op)}` : "";
   return `<h3>Openingstijden</h3>
     ${tijden ? `<ul class="tijden">${DAGEN.map((d) => `<li class="${d === vandaag ? "vandaag" : ""}"><span>${d[0].toUpperCase() + d.slice(1)}</span><span>${tijdenTekst(tijden[d] ?? [])}</span></li>`).join("")}</ul>
-      <div class="small muted">${bron}</div>
+      ${bron ? `<div class="small muted">${bron}</div>` : ""}
       ${melding ? `<div class="btns">${meldingKnoppen(melding)}</div>` : ""}`
     : `<div class="small muted">Nog geen openingstijden bekend.</div>`}
     ${melding ? "" : `<div class="btns"><button class="btn" data-tijdenform ${kanBijdragen() ? "" : "disabled"}>${tijden ? "Tijden kloppen niet" : "Tijden invullen"}</button></div>`}`;
@@ -1542,7 +1546,7 @@ function tijdlijnItem(g) {
   if (g.bron === "menukaart") {
     const st = g.status === "wacht" ? " (nog door niemand bevestigd)" : g.status === "bevestigd" ? " (klopte nog)" : " (achterhaald)";
     return `<li class="menukaart"><div class="t-what">Menukaart: ${euro(g.prijs_cent)}${st}</div>
-      <div class="t-meta">${datumTekst(g.op)} · ${esc(g.bron_omschrijving ?? "menukaart")} · ${esc(g.merk)} ${g.volume_cl} cl</div></li>`;
+      <div class="t-meta">${datumTekst(g.op)} · ${esc(bronKort(g.bron_omschrijving))} · ${esc(g.merk)} ${g.volume_cl} cl</div></li>`;
   }
   const wat = g.soort === "eerst" ? `Eerst gemeld: ${euro(g.prijs_cent)}`
     : g.soort === "wijziging" ? `Gewijzigd: ${euro(g.vorige_prijs_cent)} → ${euro(g.prijs_cent)}`
