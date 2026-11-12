@@ -1198,20 +1198,16 @@ function detailView() {
     // Alleen als anoniem meespelen in Supabase uit staat: een weg naar een account. Daarna kom je hier terug.
     actie = `<div class="btns"><button class="btn primary" data-doe-mee>${k.versheid === "locked" ? "Doe mee en speel deze kroeg vrij" : "Doe mee en houd de prijs bij"}</button></div>
       <div class="small muted" style="margin-top:8px">Je begint meteen, zonder wachtwoord. Daarna kom je terug bij deze kroeg.</div>`;
-  } else if (k.open_melding_id && vanMenukaart(k)) {
-    actie = `<div class="small" style="margin-top:8px">Ben je hier? Bevestig de prijs ter plaatse en speel de kroeg vrij zodra een andere speler het ook bevestigt.</div>
-      <div class="btns">
-      <button class="btn primary" data-menuklopt="${k.id}">Klopt, ik ben er</button>
-      <button class="btn" data-form="nieuw">Prijs is anders</button></div>`;
-  } else if (k.open_melding_id) {
-    actie = `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>`;
-  } else if (k.versheid === "locked") {
-    actie = `<div class="btns"><button class="btn primary" data-form="nieuw">Speel vrij met een prijs</button></div>`;
   } else {
-    actie = `<div class="btns">
-      <button class="btn good" data-klopt="${k.id}" ${magControleren() ? "" : "disabled"}>Klopt nog</button>
-      <button class="btn" data-form="nieuw">Prijs is anders</button></div>
-      ${magControleren() ? "" : `<div class="small muted" style="margin-top:8px">Met een account (tabblad Ik) kun je prijzen controleren.</div>`}`;
+    // Inchecken en de prijs doorgeven zijn een handeling: je zit in de kroeg, je hebt je pils en je checkt in met de prijs
+    const vandaag = isVandaag(state.mijn.get(k.id)?.laatst);
+    const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
+    const uitleg = vandaag ? "Je bent hier vandaag ingecheckt."
+      : d != null && d > INCHECK_M ? `Je bent ${meters(d)} hiervandaan; inchecken kan binnen ${INCHECK_M} m.`
+      : "Check in met de prijs van je pils.";
+    actie = `${k.open_melding_id && !vanMenukaart(k) ? `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>` : ""}
+      <div class="btns"><button class="btn primary" data-form="hier">${vandaag ? "Prijs doorgeven" : "Inchecken"}</button></div>
+      <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>`;
   }
   return `<button class="back" data-back>‹ Terug</button>
     <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
@@ -1393,20 +1389,13 @@ async function beoordeelMelding(id, oordeel) {
   draw();
 }
 
-// Inchecken: persoonlijk, los van de gezamenlijke mist. Alleen ter plaatse, een keer per dag.
+// Mijn kroegen: persoonlijk, los van de gezamenlijke mist. Inchecken zelf zit in de knop Inchecken van de kroeg.
 function incheckHtml(k) {
-  if (!kanBijdragen()) return "";
   const m = state.mijn.get(k.id);
-  const vandaag = m && isVandaag(m.laatst);
-  const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
-  const tekst = m
-    ? `Je was hier ${keer(m.keer)}, ${vandaag ? "vandaag nog" : `laatst ${wanneer(m.laatst)}`}.`
-    : "Je bent hier nog niet ingecheckt. Check in om deze kroeg op jouw kaart te ontgrendelen.";
-  const hint = vandaag ? "" : d != null && d > INCHECK_M ? `Je bent ${meters(d)} hiervandaan; inchecken kan binnen ${INCHECK_M} m.` : "";
-  return `<div class="card incheck ${m ? "bezocht" : ""}">
+  if (!m) return "";
+  return `<div class="card incheck bezocht">
     <span class="ic">${ICON_PIN}</span>
-    <div><div class="t">Mijn kroegen</div><div>${tekst}</div>${hint ? `<div class="t">${hint}</div>` : ""}</div>
-    ${vandaag ? "" : `<button class="btn primary" data-inchecken="${k.id}">Inchecken</button>`}
+    <div><div class="t">Mijn kroegen</div><div>Je was hier ${keer(m.keer)}, ${isVandaag(m.laatst) ? "vandaag nog" : `laatst ${wanneer(m.laatst)}`}.</div></div>
   </div>`;
 }
 
@@ -1501,7 +1490,8 @@ async function laadTijdlijn(id) {
     sb.from("kroeg_tijdlijn").select("*").eq("kroeg_id", id).order("op", { ascending: false }).limit(60),
     bijdragersQuery,
   ]);
-  if (state.selected !== id) return;
+  // Intussen een formulier geopend: dan staat de tijdlijn niet in beeld
+  if (state.selected !== id || !$("#tijdlijn")) return;
   if (error) { $("#tijdlijn").innerHTML = `<div class="muted small">Laden mislukt.</div>`; return; }
   $("#stamgast").innerHTML = data.length && !bijdragersFout ? stamgastHtml(bijdragers ?? [], uid) : "";
   const open = data.find((g) => g.status === "wacht");
@@ -1637,11 +1627,39 @@ function koersDelta(k) {
     <div class="small muted" style="margin-top:4px">al ${maanden >= 24 ? `${Math.floor(maanden / 12)} jaar` : `${maanden} maanden`}</div></div>` : "";
 }
 
+// De prijs die er nu staat: een openstaande melding of menukaartprijs gaat voor de bevestigde prijs
+function bekendePrijs(k) {
+  if (k.open_prijs_cent) return { merk: k.open_merk, cl: k.open_volume_cl, prijs: k.open_prijs_cent, per25: k.open_per25_cent, soort: vanMenukaart(k) ? "menukaart" : "melding" };
+  if (k.huidig_prijs_cent) return { merk: k.huidig_merk, cl: k.huidig_volume_cl, prijs: k.huidig_prijs_cent, per25: k.per25_cent, soort: "huidig" };
+  return null;
+}
+// Kan de speler met een tik zeggen dat de bekende prijs klopt? Van afstand alleen met een account, en nooit voor de menukaart.
+const snelKlopt = (b, hier) => !!b && (hier || (b.soort !== "menukaart" && magControleren()));
+
 function formView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
   const f = state.form;
+  const b = bekendePrijs(k);
+  const vandaag = isVandaag(state.mijn.get(k.id)?.laatst);
+  const titel = f.hier ? (vandaag ? "Prijs doorgeven" : "Inchecken") : "Prijs doorgeven";
+  const zonder = f.hier && !vandaag ? `<p class="small"><button type="button" class="linkbtn" data-incheck="zonder">Inchecken zonder prijs</button></p>` : "";
+  const locatieTekst = f.hier ? `<p class="small muted">We kijken of je binnen ${INCHECK_M} m van de kroeg bent en bewaren alleen die afstand. Ter plaatse tellen je punten 1,5 keer.</p>` : "";
+  if (snelKlopt(b, f.hier) && !f.anders) {
+    return `<button class="back" data-cancel>‹ Annuleer</button>
+    <h2>${titel}</h2>
+    <div class="muted small">${esc(k.naam)}</div>
+    <p>${f.hier ? "Wat kost je pils hier?" : "Klopt deze prijs nog?"}</p>
+    <form class="form" id="prijsForm">
+      <div class="big-price">${euro(b.prijs)}</div>
+      <div class="muted">${glasTekst(b.merk, b.cl, b.per25)}</div>
+      <div class="btns"><button type="button" class="btn primary" data-incheck="klopt">Klopt</button>
+        <button type="button" class="btn" data-andere-prijs>Andere prijs</button></div>
+      ${zonder}
+      ${locatieTekst}
+    </form>`;
+  }
   return `<button class="back" data-cancel>‹ Annuleer</button>
-    <h2>${k.versheid === "locked" ? "Speel vrij" : "Nieuwe prijs"}</h2>
+    <h2>${titel}</h2>
     <div class="muted small">${esc(k.naam)}</div>
     <p class="small muted">Het spel vergelijkt de goedkoopste pils van de tap in een vaasje. Schenkt deze kroeg geen vaasje, kies dan het kleinste glas; we rekenen om naar een vaasje. Ander bier voeg je toe onder "Ook op de tap".</p>
     <form class="form" id="prijsForm">
@@ -1658,8 +1676,9 @@ function formView() {
       <label>Foto van de prijslijst (optioneel, +5 na bevestiging)</label>
       <input name="foto" type="file" accept="image/*" capture="environment">
       <img class="foto-voorbeeld" id="fotoVoorbeeld" alt="Voorbeeld van je foto" hidden>
-      <label class="check"><input type="checkbox" name="locatie" ${f.locatie ? "checked" : ""}> Ik ben in deze kroeg. Binnen ${INCHECK_M} m tellen de punten 1,5 keer. We bewaren alleen de afstand tot de kroeg.</label>
-      <div class="btns"><button class="btn primary" type="submit" id="verstuur">Versturen</button></div>
+      <div class="btns"><button class="btn primary" type="submit" id="verstuur">${f.hier && !vandaag ? "Inchecken" : "Versturen"}</button></div>
+      ${zonder}
+      ${locatieTekst}
       <p class="small muted">Punten krijg je zodra een andere speler je melding bevestigt.</p>
     </form>`;
 }
@@ -2249,98 +2268,96 @@ function setTab(t) {
   else if (!wide() && sheet.dataset.detent === "peek") setDetent("half");
 }
 
-async function verstuurPrijs(form) {
-  const k = state.kroegen.find((x) => x.id === state.selected);
+// Leest het prijsformulier; bij een fout een melding en null
+function leesPrijs(form) {
   const fd = new FormData(form);
   const merk = fd.get("merk") === "_anders" ? String(fd.get("merkAnders") ?? "").trim() : String(fd.get("merk"));
   const prijs = Math.round(parseFloat(String(fd.get("prijs")).replace(",", ".")) * 100);
   const cl = gekozenCl();
-  if (!merk || merk.length < 2) return toast("Vul een merk in");
-  if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl");
-  if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in");
-  const knop = $("#verstuur"); knop.disabled = true; knop.textContent = "Bezig…";
-  if (!(await zorgVoorSpeler())) { knop.disabled = false; knop.textContent = "Versturen"; return; }
-  try {
-    let pos = null;
-    if (fd.get("locatie")) pos = await locatie();
-    let foto_pad = null;
-    const ruw = fd.get("foto");
-    if (ruw && ruw.size) {
-      knop.textContent = "Foto verkleinen…";
-      const file = await verkleinFoto(ruw);
-      knop.textContent = "Bezig…";
-      if (file.size > 5 * 1024 * 1024) throw new Error("De foto is groter dan 5 MB. Kies een kleinere.");
-      const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-      foto_pad = `${state.sessie.user.id}/${k.id}-${Date.now()}.${ext}`;
-      const { error } = await sb.storage.from("prijslijsten").upload(foto_pad, file, { contentType: file.type, upsert: false });
-      if (error) throw error;
-    }
-    const { data, error } = await sb.rpc("meld_prijs", {
-      p_kroeg_id: k.id, p_merk: merk, p_volume_cl: cl, p_prijs_cent: prijs,
-      p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null, p_foto_pad: foto_pad,
-    });
+  if (!merk || merk.length < 2) return toast("Vul een merk in"), null;
+  if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl"), null;
+  if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in"), null;
+  return { merk, cl, prijs, foto: fd.get("foto") };
+}
+
+async function meldPrijs(k, w, pos) {
+  let foto_pad = null;
+  if (w.foto && w.foto.size) {
+    const file = await verkleinFoto(w.foto);
+    if (file.size > 5 * 1024 * 1024) throw new Error("De foto is groter dan 5 MB. Kies een kleinere.");
+    const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    foto_pad = `${state.sessie.user.id}/${k.id}-${Date.now()}.${ext}`;
+    const { error } = await sb.storage.from("prijslijsten").upload(foto_pad, file, { contentType: file.type, upsert: false });
     if (error) throw error;
-    state.form = null;
-    if (data.status === "bevestigd") toast(k.versheid === "locked" ? `${k.naam} vrijgespeeld!` : "Prijs bijgewerkt", data.soort === "eerst" ? 50 : 30);
-    else if (data.soort === "eerst") toast(`${k.naam} vrijgespeeld! Punten volgen na bevestiging`);
-    else toast("Gemeld. Punten volgen na bevestiging");
-    await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
-    if (data.soort === "eerst") vierVrij(k);
-    draw();
-  } catch (e) {
-    toast(await leesFout(e));
-    knop.disabled = false; knop.textContent = "Versturen";
   }
-}
-
-// De prijs van de menukaart klopt nog: alleen ter plaatse. De speler wordt indiener; een andere speler bevestigt.
-async function menukaartKlopt(id, knop) {
-  const k = state.kroegen.find((x) => x.id === id);
-  knop.disabled = true; knop.textContent = "Locatie bepalen…";
-  const pos = await locatie(10000);
-  knop.disabled = false; knop.textContent = "Klopt, ik ben er";
-  if (!pos) return toast("Zet je locatie aan: een prijs van de menukaart bevestig je bij de kroeg");
-  if (!(await zorgVoorSpeler())) return;
-  const { error } = await sb.rpc("meld_prijs", {
-    p_kroeg_id: id, p_merk: k.open_merk, p_volume_cl: k.open_volume_cl, p_prijs_cent: k.open_prijs_cent,
-    p_lat: pos[1], p_lon: pos[0], p_foto_pad: null,
+  const { data, error } = await sb.rpc("meld_prijs", {
+    p_kroeg_id: k.id, p_merk: w.merk, p_volume_cl: w.cl, p_prijs_cent: w.prijs,
+    p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null, p_foto_pad: foto_pad,
   });
-  if (error) return toast(await leesFout(error));
-  toast("Je bent de indiener; nu nog een bevestiging van een andere speler");
-  await Promise.all([laadKroegen(), laadStad()]);
-  vierVrij(k);
-  draw();
+  if (error) throw error;
+  return data;
 }
 
-// Locatie alleen als de speler die al heeft toegestaan: "Klopt nog" mag geen toestemmingsvenster openen
-async function locatieAlsToegestaan() {
+// Inchecken met de prijs van je pils ("klopt", een andere prijs of zonder prijs), of van afstand een prijs doorgeven.
+// Ter plaatse is een melding of "klopt nog" in de database vanzelf ook een check-in; anders checken we hier apart in.
+async function verstuurIncheck(keuze, form, knop) {
+  const k = state.kroegen.find((x) => x.id === state.selected);
+  const hier = state.form.hier, b = bekendePrijs(k);
+  const w = keuze === "prijs" ? leesPrijs(form) : null;
+  if (keuze === "prijs" && !w) return;
+  const tekst = knop.textContent;
+  form.querySelectorAll("button").forEach((x) => (x.disabled = true));
+  const klaar = (msg) => { form.querySelectorAll("button").forEach((x) => (x.disabled = false)); knop.textContent = tekst; if (msg) toast(msg); };
+  let pos = null;
+  if (hier) {
+    knop.textContent = "Locatie zoeken…";
+    pos = await locatie(10000);
+    if (!pos) return klaar("Zet je locatie aan om in te checken");
+    const d = afstand(pos, [k.lon, k.lat]);
+    if (d > INCHECK_M) return klaar(`Je bent ${meters(d)} van deze kroeg. Inchecken kan binnen ${INCHECK_M} m.`);
+  }
+  knop.textContent = "Bezig…";
+  if (!(await zorgVoorSpeler())) return klaar();
+  const was = state.mijn.get(k.id), alIn = isVandaag(was?.laatst);
+  const delen = [];
+  let pts = null, vrij = false;
   try {
-    const p = await navigator.permissions?.query({ name: "geolocation" });
-    if (p?.state === "granted") return await locatie(4000);
-  } catch { /* oude browser: geen vraag stellen */ }
-  return state.pos;
-}
-
-async function kloptNog(id) {
-  const k = state.kroegen.find((x) => x.id === id);
-  const pos = await locatieAlsToegestaan();
-  const { error } = await sb.rpc("klopt_nog", { p_kroeg_id: id, p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null });
-  if (error) return toast(await leesFout(error));
-  toast("Bedankt voor het controleren", dagen(k.laatst_gecontroleerd) >= 90 ? 15 : 5);
-  vernieuw();
-}
-
-async function inchecken(id, knop) {
-  const k = state.kroegen.find((x) => x.id === id);
-  if (knop) { knop.disabled = true; knop.textContent = "Locatie zoeken…"; }
-  const pos = await locatie(10000);
-  if (!pos) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return toast("Zet je locatie aan om in te checken"); }
-  const nieuw = !state.mijn.has(id);
-  if (!(await zorgVoorSpeler())) { if (knop) { knop.disabled = false; knop.textContent = "Inchecken"; } return; }
-  const { error } = await sb.rpc("inchecken", { p_kroeg_id: id, p_lat: pos[1], p_lon: pos[0] });
-  if (error) { toast(await leesFout(error)); await laadMijn(); return draw(); }
-  toast(nieuw ? `Ingecheckt! ${k.naam} staat nu op jouw kaart` : `Ingecheckt bij ${k.naam}`);
-  await laadMijn();
+    if (keuze === "prijs") {
+      const data = await meldPrijs(k, w, pos);
+      vrij = data.soort === "eerst";
+      if (data.status === "bevestigd") { delen.push(vrij ? `${k.naam} vrijgespeeld!` : "Prijs bijgewerkt"); pts = vrij ? 50 : 30; }
+      else delen.push(vrij ? `${k.naam} vrijgespeeld! Punten volgen na bevestiging` : "Prijs gemeld. Punten volgen na bevestiging");
+    } else if (keuze === "klopt" && b.soort === "menukaart") {
+      await meldPrijs(k, { merk: b.merk, cl: b.cl, prijs: b.prijs }, pos);
+      delen.push("Je bent de indiener; nu nog een bevestiging van een andere speler");
+      vrij = true;
+    } else if (keuze === "klopt" && magControleren()) {
+      const { data, error } = b.soort === "melding"
+        ? await sb.rpc("beoordeel", { p_gebeurtenis: k.open_melding_id, p_oordeel: "klopt" })
+        : await sb.rpc("klopt_nog", { p_kroeg_id: k.id, p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null });
+      // Ter plaatse telt de check-in; is controleren nu niet mogelijk (eigen melding, al gecontroleerd deze week), dan niet erg
+      if (error && !hier) throw error;
+      if (!error) {
+        delen.push(b.soort === "melding" ? (data === "bevestigd" ? "Bevestigd, de prijs staat erop" : "Oordeel opgeslagen") : "Bedankt voor het controleren");
+        pts = b.soort === "melding" ? (data === "wacht" ? null : 5) : dagen(k.laatst_gecontroleerd) >= 90 ? 15 : 5;
+      }
+    }
+  } catch (e) {
+    if (!hier) return klaar(await leesFout(e));
+    delen.push(`Je prijs is niet doorgegeven: ${await leesFout(e)}`);
+  }
+  if (hier && !alIn) {
+    await laadMijn();
+    if (!isVandaag(state.mijn.get(k.id)?.laatst)) {
+      const { error } = await sb.rpc("inchecken", { p_kroeg_id: k.id, p_lat: pos[1], p_lon: pos[0] });
+      if (error) { await laadMijn(); return klaar(await leesFout(error)); }
+    }
+    delen.unshift(was ? `Ingecheckt bij ${k.naam}` : `Ingecheckt! ${k.naam} staat nu op jouw kaart`);
+  }
+  state.form = null;
+  toast(delen.join(". ") || "Bedankt", pts);
+  await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
+  if (vrij) vierVrij(k);
   draw();
 }
 
@@ -2400,10 +2417,12 @@ body.addEventListener("click", (e) => {
   if (t.dataset.form) {
     const k = state.kroegen.find((x) => x.id === state.selected);
     const cl = k?.huidig_volume_cl ?? k?.open_volume_cl ?? VAASJE;
-    // Locatie staat standaard uit: je deelt hem alleen als je echt in de kroeg bent
-    state.form = { merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl, clAnders: !GLAZEN.some((g) => g.cl === cl), prijs: "", locatie: false };
+    // Inchecken ("hier") vraagt de locatie; van afstand ("afstand") gaat er geen locatie mee
+    state.form = { hier: t.dataset.form === "hier", anders: false, merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl, clAnders: !GLAZEN.some((g) => g.cl === cl), prijs: "" };
     return draw();
   }
+  if (t.dataset.anderePrijs !== undefined && state.form) { state.form.anders = true; return draw(); }
+  if (t.dataset.incheck && state.form) return verstuurIncheck(t.dataset.incheck, t.closest("form"), t);
   if (t.dataset.cl && state.form) {
     state.form.clAnders = t.dataset.cl === "anders";
     if (!state.form.clAnders) state.form.cl = Number(t.dataset.cl);
@@ -2413,9 +2432,6 @@ body.addEventListener("click", (e) => {
     if (state.form.clAnders) veld.focus();
     return prijsVoorbeeld();
   }
-  if (t.dataset.klopt) return kloptNog(Number(t.dataset.klopt));
-  if (t.dataset.menuklopt) return menukaartKlopt(Number(t.dataset.menuklopt), t);
-  if (t.dataset.inchecken) return inchecken(Number(t.dataset.inchecken), t);
   if (t.dataset.wisMijn !== undefined) return wisMijn();
   if (t.dataset.mijnKaart !== undefined) { setModus("mijn"); if (!wide()) setDetent("peek"); return; }
   if (t.dataset.tochtOpen !== undefined) { planTocht(t.dataset.tochtOpen || undefined); draw(); body.scrollTop = 0; return; }
@@ -2479,7 +2495,7 @@ body.addEventListener("input", (e) => {
 body.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
-  if (f.id === "prijsForm") return verstuurPrijs(f);
+  if (f.id === "prijsForm") return verstuurIncheck("prijs", f, $("#verstuur"));
   if (f.id === "aanbodForm") return verstuurAanbod(f);
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);

@@ -20,7 +20,7 @@ Alle data in de prototypes is verzonnen. De kaart van Nijmegen is vereenvoudigd 
 
 - Kroegen onder de mist vrijspelen; de dichtstbijzijnde kroeg op slot staat bovenaan.
 - Per kroeg de geschiedenis bekijken: eerst gemeld, wijzigingen en controles, met datum en naam. Bovenaan staat de stamgast: wie hier het vaakst de prijs bijwerkte of bevestigde.
-- "Klopt nog" of "Prijs is anders" melden en zien hoe een andere speler je bevestigt.
+- Inchecken met de prijs van je pils ("Klopt" of een andere prijs) en zien hoe een andere speler je bevestigt.
 - In het tabblad Samen de voortgang van de stad, weekdoelen, voortgang per wijk en recente activiteit bekijken.
 - De ranglijst bekijken: wie draagt het meest bij.
 

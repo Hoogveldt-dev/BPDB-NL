@@ -162,7 +162,7 @@ Naast het gezamenlijke spel heeft elke speler een **eigen kaart**: de kroegen wa
 
 | Regel | Uitwerking |
 |---|---|
-| Hoe | In een kroeg op "Inchecken" tikken. Een prijs melden of "Klopt nog" ter plaatse telt automatisch ook als check-in |
+| Hoe | In de kroeg op "Inchecken" tikken en meteen de prijs van je pils doorgeven: "Klopt" bij de bekende prijs, of een andere prijs. Inchecken en prijs melden zijn een handeling. Zonder prijs inchecken kan ook (bijvoorbeeld met een fris). Wie niet in de kroeg is, geeft een prijs door via "Niet in de kroeg?" |
 | Ter plaatse | Alleen binnen 75 m van de kroeg, dezelfde grens als "ter plaatse" bij melden |
 | Hoe vaak | Hoogstens een keer per kroeg per dag; elke dag telt als bezoek |
 | Punten | Geen. We belonen bijdragen, nooit kroegbezoek of drinken (Reclamecode). Zo is er ook geen reden om je locatie te vervalsen |
