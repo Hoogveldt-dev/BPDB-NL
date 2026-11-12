@@ -11,7 +11,7 @@ Prototypes (open lokaal in een browser, geen build nodig):
 
 | Onderwerp | Besluit | Status |
 |---|---|---|
-| Kroegen vooraf op de kaart onder een mist, vrijspelen met een eerste prijs | Ja | Vast |
+| Kroegen vooraf op de kaart; zonder prijs grijs. De mist staat alleen op je eigen kaart (Mijn kaart) en trekt weg waar je incheckt | Ja | Vast (12 november 2026: mist van de gezamenlijke kaart naar Mijn kaart) |
 | Controle | Peer-to-peer bevestiging met betrouwbaarheidsscore; geen echte blockchain, geen tokens | Vast |
 | Hoe de betrouwbaarheid verandert | Naar verwachting, het idee van Elo zonder tegenstander: beginners stijgen snel, een fout van iemand boven 90% kost bijna 20 punten. Boven 90% pas met ervaring (zie 2.6) | **Voorlopig: Kjell is er nog niet tevreden over** |
 | Kroegen bevestigen zelf hun prijs | Niet in de basis; misschien later, altijd naast P2P | Later |
@@ -93,7 +93,9 @@ Met `veroveringen: true` komen kroegbaas-titels, wijkbezit, de wijkenlaag op de 
 
 ### 2.1 De mist (vast)
 
-Elke kroeg uit OpenStreetMap staat op de kaart, maar onder een stippenraster. Wie als eerste een prijs invult, speelt de kroeg vrij: de mist trekt daar weg en je naam blijft als ontdekker bij de kroeg staan. Zo zie je in één oogopslag waar nog data ontbreekt.
+Elke kroeg uit OpenStreetMap staat op de kaart. Op de gezamenlijke kaart is een kroeg zonder prijs grijs; wie als eerste een prijs invult, brengt de kroeg in kaart (+50) en blijft als ontdekker bij de kroeg staan. Zo zie je in één oogopslag waar nog data ontbreekt.
+
+De mist (een stippenraster) staat alleen op Mijn kaart: elke speler begint met een kaart onder de mist en speelt kroegen vrij door er in te checken. Op de gezamenlijke kaart zou de mist na de eerste fanatieke spelers voor altijd weg zijn; op je eigen kaart blijft hij voor iedereen werken. Na een nieuwe check-in gaat de app naar Mijn kaart, waar de mist rond de kroeg wegtrekt.
 
 ### 2.2 Kroegbaas (uitgeschakeld, voor later)
 
@@ -167,7 +169,7 @@ Naast het gezamenlijke spel heeft elke speler een **eigen kaart**: de kroegen wa
 | Hoe vaak | Hoogstens een keer per kroeg per dag; elke dag telt als bezoek |
 | Punten | Geen. We belonen bijdragen, nooit kroegbezoek of drinken (Reclamecode). Zo is er ook geen reden om je locatie te vervalsen |
 | Privacy | Check-ins zijn locatiegeschiedenis. Alleen jij ziet ze; ze staan niet op de ranglijst of bij de stamgast. Je kunt ze zelf allemaal wissen |
-| Los van de mist | Inchecken speelt een kroeg niet vrij voor de groep. Op jouw kaart is de kroeg open, ook als hij in het gezamenlijke spel nog onder de mist ligt |
+| Eigen mist | Inchecken speelt een kroeg vrij op jouw kaart. Voor de groep telt de prijs die je daarbij doorgeeft |
 
 **Op de kaart** wissel je bovenin tussen *Samen* (kleur is versheid) en *Mijn kaart* (goud waar je was, grijs waar je nog niet was). De ring toont dan hoeveel procent van de kroegen in de stad jij hebt bezocht.
 
@@ -224,7 +226,7 @@ In de database is dit de view `kroeg_stamgast` (op basis van `kroeg_bijdragers`)
 
 - **iPhone eerst.** Kaart over het hele scherm. Een glazen sheet onderin met drie standen (laag, half, vol), zoals in Kaarten op iOS. Zoekveld bovenaan in de sheet. Systeemlettertype (SF Pro) en iOS-kleuren voor groen, oranje en rood.
 - **Kaart in de stijl van Apple Kaarten.** Lichte zandkleur voor land, witte straten, gele hoofdwegen over de bruggen, blauw water, groene parken. In het donker de donkere variant. In het prototype is de kaart van Nijmegen vereenvoudigd nagetekend; in de app komt hier een echte kaart.
-- **Licht futuristisch.** De mist is een fijn stippenraster dat wegtrekt bij het vrijspelen, met een ring die uitdijt vanaf de kroeg. Verder rustig: glas, haarlijnen, geen neon of paarse verlopen.
+- **Licht futuristisch.** De mist op Mijn kaart is een fijn stippenraster dat wegtrekt bij het inchecken, met een ring die uitdijt vanaf de kroeg. Verder rustig: glas, haarlijnen, geen neon of paarse verlopen.
 - **Prijsspelden** met vaste grootte, zoals in Kaarten. Ingezoomd zie je de prijs per 25 cl; uitgezoomd of bij overlap een gekleurde stip. Gouden speld met kroon is jouw titel; een lege kroon betekent dat de titel vrij is.
 - **Kleur is versheid.** Groen tot 30 dagen, oranje tot 90, rood daarna.
 - **Op groot scherm** wordt de sheet een zijbalk links.
