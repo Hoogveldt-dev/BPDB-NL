@@ -539,6 +539,9 @@ function koersen() {
 // Koers van een kroeg. Een prijs blijft meestal lang gelijk, dus het belangrijkste is sinds wanneer.
 // vastSinds: sinds wanneer de prijs dit bedrag is. delta: de laatste stap ten opzichte van het vorige bedrag.
 // recent: die stap was in de afgelopen twaalf maanden; een oudere stap tonen we niet als koersverschil.
+// De prijs per vaasje die de kaart toont: de koers (ook van de menukaart), anders de bevestigde of een wachtende prijs
+const prijsPer25 = (k) => koersVan(k.id)?.nu ?? k.per25_cent ?? k.open_per25_cent ?? null;
+
 function koersVan(id) {
   const p = state.koers.punten.get(id);
   if (!p?.length) return null;
@@ -665,7 +668,7 @@ function geojson() {
         versheid: k.open_melding_id && k.versheid !== "locked" && !k.huidig_prijs_cent ? "wacht" : k.versheid,
         label: state.soort ? (soortIn(k.id)?.prijs_cent ? euro(soortIn(k.id).prijs_cent) : "?") : toonPrijsTekst(k),
         bezocht: state.mijn.has(k.id),
-        per25: koersVan(k.id)?.nu ?? k.per25_cent ?? 0,
+        per25: prijsPer25(k) ?? 0,
       },
     })),
   };
@@ -1091,6 +1094,8 @@ function setModus(m) {
   state.modus = m;
   document.querySelectorAll("#modus button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.modus === m)));
   $("#legenda").hidden = m !== "koers";
+  // In de koersstand staat de lijst op Goedkoopst
+  if (m === "koers" && state.filter !== "goedkoop") { state.filter = "goedkoop"; if (state.tab === "kaart" && state.selected == null && !state.tocht && !bezigMetTypen()) draw(); }
   kaartBijwerken();
   hud();
   if (m === "mijn" && !state.sessie) toast("Check in bij een kroeg en hij komt op jouw kaart");
@@ -1168,7 +1173,7 @@ function lijstView() {
     { id: "slot", naam: "Nog geen prijs", f: (k) => k.versheid === "locked" },
     { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
     { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
-    { id: "goedkoop", naam: "Goedkoopst", f: (k) => k.per25_cent },
+    { id: "goedkoop", naam: "Goedkoopst", f: (k) => prijsPer25(k) != null },
     { id: "prijsvast", naam: "Langst prijsvast", f: (k) => koersVan(k.id) },
     { id: "verhoogd", naam: "Dit jaar verhoogd", f: (k) => koersVan(k.id)?.recent },
     ...(state.sessie ? [{ id: "nieuw", naam: "Nog niet bezocht", f: (k) => !state.mijn.has(k.id) }] : []),
@@ -1176,7 +1181,7 @@ function lijstView() {
   const f = F.find((x) => x.id === state.filter) ?? F[0];
   const q = state.zoek.trim().toLowerCase();
   // Met een soort gekozen: "Goedkoopst" sorteert op de prijs van die soort; kroegen zonder prijs ervan achteraan
-  const prijsVoor = (k) => state.soort ? (perPint(soortIn(k.id)) ?? Infinity) : k.per25_cent;
+  const prijsVoor = (k) => state.soort ? (perPint(soortIn(k.id)) ?? Infinity) : prijsPer25(k);
   const b = state.inBeeld && kaartKlaar ? map.getBounds() : null;
   let rows = zichtbareKroegen()
     .filter((k) => state.soort && state.filter === "goedkoop" ? true : f.f(k))
