@@ -22,7 +22,7 @@
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .14);
   /* Mist: een lichte, egale waas, geen stippen. Licht genoeg dat straten en wijknamen leesbaar blijven,
      zodat je je ook kunt orienteren als er nog weinig is vrijgespeeld. */
-  --mist: rgb(242 242 247 / .42); --mist-stip: transparent;
+  --mist: rgb(242 242 247 / .74); --mist-stip: rgb(60 60 67 / .28);
   --hair: .5px solid var(--sep);
   --f-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
   --f-titel: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
@@ -45,7 +45,7 @@
     --balk: rgb(0 0 0 / .9); --balk-fg: #fff; --balk-muted: rgb(235 235 245 / .6);
     --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
     --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
-    --mist: rgb(0 0 0 / .24);
+    --mist: rgb(0 0 0 / .62); --mist-stip: rgb(235 235 245 / .2);
     color-scheme: dark;
   }
 }
@@ -62,7 +62,7 @@
   --balk: rgb(0 0 0 / .9); --balk-fg: #fff; --balk-muted: rgb(235 235 245 / .6);
   --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
-  --mist: rgb(0 0 0 / .24);
+  --mist: rgb(0 0 0 / .62); --mist-stip: rgb(235 235 245 / .2);
   color-scheme: dark;
 }
 /* Guinness-stand: Iers groen in plaats van biergeel */
@@ -360,7 +360,9 @@ li.row:nth-child(-n+3) .rank { color: var(--accent-text); }
 
 /* Mist en vrijspelen */
 .mist { position: absolute; left: 0; top: 0; pointer-events: none; }
-.kring { position: fixed; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 3px solid var(--accent); pointer-events: none; z-index: 5; animation: kring .9s cubic-bezier(.2,.8,.2,1) forwards; }
+.kring { position: fixed; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 4px solid var(--accent); pointer-events: none; z-index: 5; animation: kring 1.5s cubic-bezier(.2,.8,.2,1) forwards; }
+.kring.twee { animation-delay: .25s; opacity: 0; animation-name: kring-twee; }
+@keyframes kring-twee { from { opacity: 1; } to { transform: scale(11); opacity: 0; } }
 @keyframes kring { to { transform: scale(11); opacity: 0; } }
 .kroeg-tip .maplibregl-popup-content { font: 500 13px/1.3 var(--f-ui); padding: 7px 10px; border-radius: 10px; background: var(--surface); color: var(--fg); box-shadow: var(--shadow-sterk); }
 .kroeg-tip .maplibregl-popup-tip { border-top-color: var(--surface); border-bottom-color: var(--surface); }

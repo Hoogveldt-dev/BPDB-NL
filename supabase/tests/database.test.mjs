@@ -801,6 +801,24 @@ check('samenvoegen weigert als het account een melding van de anonieme speler be
 check('na een weigering blijft de anonieme speler zijn melding houden', (await een(`select door_id from public.gebeurtenissen where id = ${sm2.id}`)).door_id === S2);
 
 // ---------------------------------------------------------------------------
+// Bugs melden: elke speler via meld_bug, alleen beheerders lezen, hoogstens 10 per dag
+// ---------------------------------------------------------------------------
+
+const bug1 = await als(B, `select public.meld_bug('De kaart blijft wit na inchecken', 'kaart, kroeg 3', 'Testbrowser') as id`);
+check('een speler meldt een bug', bug1.rows?.[0]?.id > 0, JSON.stringify(bug1));
+check('een bug zonder inloggen kan niet', !!(await als(null, `select public.meld_bug('Zonder account melden')`)).fout);
+check('een te korte bug wordt geweigerd', /paar woorden/.test((await als(B, `select public.meld_bug('kap')`)).fout ?? ''));
+check('direct in bugmeldingen schrijven kan niet', !!(await als(B, `insert into public.bugmeldingen (door_id, tekst) values ('${B}', 'Rechtstreeks erin')`)).fout);
+const bugLees = await als(B, `select count(*)::int as n from public.bugmeldingen`);
+check('een gewone speler leest geen bugmeldingen, ook niet zijn eigen', bugLees.rows?.[0]?.n === 0, JSON.stringify(bugLees));
+await db.exec(`update public.profielen set is_beheerder = true where id = '${E}'`);
+const bugBeheer = await als(E, `select tekst, scherm, apparaat, door_id from public.bugmeldingen`);
+check('een beheerder leest de bugmeldingen met scherm en browser', bugBeheer.rows?.length === 1 && bugBeheer.rows[0].scherm === 'kaart, kroeg 3' && bugBeheer.rows[0].door_id === B, JSON.stringify(bugBeheer));
+await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
+for (let i = 0; i < 9; i++) await als(B, `select public.meld_bug('Nog een bug nummer ${i}')`);
+check('na 10 bugs op een dag is het genoeg', /al 10 bugs/.test((await als(B, `select public.meld_bug('De elfde bug vandaag')`)).fout ?? ''));
+
+// ---------------------------------------------------------------------------
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);

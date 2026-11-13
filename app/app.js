@@ -30,6 +30,16 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
 // ---------------------------------------------------------------------------
 
 const $ = (s) => document.querySelector(s);
+
+// Taal: Nederlands of Engels (Ik, Taal). Zonder keuze Nederlands als de browser Nederlands kent, anders Engels.
+// In het Engels vertaalt de tekstvervanger hieronder (teksten) elke zichtbare tekst met het woordenboek uit en.js.
+const TAAL = (() => {
+  try { const t = localStorage.getItem("bierkoers-taal"); if (t === "nl" || t === "en") return t; } catch { /* privévenster */ }
+  return (navigator.languages ?? [navigator.language ?? "nl"]).some((l) => /^nl\b/i.test(l)) ? "nl" : "en";
+})();
+const LOCALE = TAAL === "en" ? "en-GB" : "nl-NL";
+const EN = TAAL === "en" ? await import("./en.js").then((m) => m.EN).catch(() => null) : null;
+document.documentElement.lang = TAAL;
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const euro = (cent) => cent == null ? "" : "€ " + (cent / 100).toFixed(2).replace(".", ",");
 const dagen = (iso) => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
@@ -39,7 +49,7 @@ const wanneer = (iso) => {
   if (d === 0) return "vandaag";
   if (d === 1) return "gisteren";
   if (d < 30) return `${d} dagen geleden`;
-  return new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString(LOCALE, { day: "numeric", month: "short", year: "numeric" });
 };
 const VERSHEID = { fresh: "Vers", stale: "Wordt oud", old: "Oud, controleer", locked: "Nog geen prijs", wacht: "Wacht op bevestiging" };
 // Het spel vergelijkt de goedkoopste pils van de tap in een vaasje (25 cl). Schenkt een kroeg geen vaasje,
@@ -132,6 +142,36 @@ const teksten = (() => {
   };
   let bewerken = false, pauze = false;
 
+  // Engels: exacte sleutels, en sleutels met * (tekst die de app invult) als patroon. Wat de * vangt, vertalen we ook.
+  const vertaling = EN ? new Map(Object.entries(EN)) : null;
+  const patronen = !EN ? [] : Object.entries(EN).filter(([k]) => k.includes("*"))
+    .map(([k, en]) => [new RegExp("^" + k.split("*").map((d) => d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("(.+?)") + "$"), en, k.replace(/\*/g, "").length])
+    .sort((a, b) => b[2] - a[2]);
+  function vertaal(sleutel, diepte = 0) {
+    if (vertaling.has(sleutel)) return vertaling.get(sleutel);
+    for (const [re, en] of patronen) {
+      const m = sleutel.match(re);
+      if (!m) continue;
+      let i = 1;
+      return en.replace(/\*/g, () => {
+        const deel = m[i++] ?? "", kern = deel.trim();
+        const v = diepte < 2 && kern ? vertaal(kern, diepte + 1) : null;
+        return v == null ? deel : deel.replace(kern, v);
+      });
+    }
+    return null;
+  }
+  const doelTekst = (orig) => {
+    const sleutel = sleutelVan(orig);
+    let nieuw = vertaling ? vertaal(sleutel) : eigen.get(sleutel);
+    // Regels als "HAAN · Nijmegen-Oost · Nog geen prijs": elk stuk apart vertalen
+    if (nieuw == null && vertaling && sleutel.includes(" · ")) {
+      const delen = sleutel.split(" · "), vertaald = delen.map((d) => vertaal(d) ?? d);
+      if (vertaald.some((d, i) => d !== delen[i])) nieuw = vertaald.join(" · ");
+    }
+    return nieuw == null ? null : vul(nieuw, orig);
+  };
+
   function standaard(node) {
     const nu = node.nodeValue;
     if (gezet.get(node) === nu && bron.has(node)) return bron.get(node);
@@ -142,8 +182,8 @@ const teksten = (() => {
     if (!node.nodeValue || !node.nodeValue.trim() || node.parentElement?.closest(NIET)) return;
     const orig = standaard(node);
     if (!telt(orig)) return;
-    const eigenTekst = eigen.get(sleutelVan(orig));
-    const doel = eigenTekst == null ? orig : orig.match(/^\s*/)[0] + vul(eigenTekst, orig) + orig.match(/\s*$/)[0];
+    const nieuw = doelTekst(orig);
+    const doel = nieuw == null ? orig : orig.match(/^\s*/)[0] + nieuw + orig.match(/\s*$/)[0];
     if (node.nodeValue !== doel) { gezet.set(node, doel); node.nodeValue = doel; }
   }
   function placeholder(el) {
@@ -153,8 +193,7 @@ const teksten = (() => {
       orig = el.getAttribute("placeholder") ?? "";
       el.dataset.standaardPlaceholder = orig;
     }
-    const eigenTekst = eigen.get(sleutelVan(orig));
-    const doel = eigenTekst == null ? orig : vul(eigenTekst, orig);
+    const doel = doelTekst(orig) ?? orig;
     el.dataset.gezetPlaceholder = doel;
     if (el.getAttribute("placeholder") !== doel) el.setAttribute("placeholder", doel);
   }
@@ -167,7 +206,7 @@ const teksten = (() => {
     wortel.querySelectorAll?.("[placeholder]").forEach(placeholder);
   }
   new MutationObserver((lijst) => {
-    if (!eigen.size) return;
+    if (!eigen.size && !vertaling) return;
     for (const m of lijst) {
       if (m.type === "characterData") tekstNode(m.target);
       else if (m.type === "attributes") placeholder(m.target);
@@ -175,7 +214,9 @@ const teksten = (() => {
     }
   }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder"] });
 
+  if (vertaling) loop(document.body);
   async function laad() {
+    if (vertaling) return; // eigen teksten van de beheerder zijn Nederlands
     const { data, error } = await sb.from("app_teksten").select("sleutel,tekst");
     if (error) return; // tabel nog niet live: standaardteksten
     eigen.clear();
@@ -252,7 +293,7 @@ const teksten = (() => {
 const betrouwTekst = (r) => !r || (r.altijd ?? 0) === 0 ? "nieuw, nog weinig bevestigd" : `betrouwbaarheid ${Math.round(r.betrouwbaarheid)}%`;
 
 const meters = (d) => d < 1000 ? `${Math.round(d)} m` : `${(d / 1000).toFixed(1).replace(".", ",")} km`;
-const keer = (n) => (n === 1 ? "1 keer" : `${n} keer`);
+const keer = (n) => (TAAL === "en" ? (n === 1 ? "once" : `${n} times`) : n === 1 ? "1 keer" : `${n} keer`);
 const isVandaag = (iso) => iso && new Date(iso).toDateString() === new Date().toDateString();
 
 function afstand(a, b) {
@@ -321,7 +362,7 @@ function spelPrijs(k) {
 // ranglijst, versheid, goedkoopste) draait alleen om de bevestigde prijs.
 // Een prijs van een menukaart: eerste stuk geschiedenis, zonder melder; de kroeg blijft op slot
 const vanMenukaart = (k) => k.open_bron === "menukaart";
-const datumTekst = (d) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+const datumTekst = (d) => new Date(d).toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" });
 // Alleen de bron zelf ("Drankkaart dekluizenaar.nl"); de datum staat er al naast
 const bronKort = (s) => (s ?? "").split(/[,(]/)[0].trim() || "menukaart";
 
@@ -516,8 +557,8 @@ function koersVan(id) {
   };
 }
 
-const maandJaar = (t) => new Date(t).toLocaleDateString("nl-NL", { month: "short", year: "numeric" }).replace(".", "");
-const maandKort = (t) => new Date(t).toLocaleDateString("nl-NL", { month: "short" }).replace(".", "");
+const maandJaar = (t) => new Date(t).toLocaleDateString(LOCALE, { month: "short", year: "numeric" }).replace(".", "");
+const maandKort = (t) => new Date(t).toLocaleDateString(LOCALE, { month: "short" }).replace(".", "");
 
 // Kroegen met een prijsstap in de afgelopen twaalf maanden, nieuwste eerst
 function bewegers() {
@@ -855,7 +896,7 @@ const mist = (() => {
       let f = 1;
       const t0 = groei.get(k.id);
       if (t0 != null) {
-        const x = Math.min(1, (nu - t0) / 1100);
+        const x = Math.min(1, Math.max(0, (nu - t0) / 1600));
         f = 1 - (1 - x) ** 3;
         if (x < 1) bezig = true; else groei.delete(k.id);
       }
@@ -866,13 +907,7 @@ const mist = (() => {
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
     }
-    // Waar je zelf staat, kun je ook zien
-    if (state.pos) {
-      const p = map.project(state.pos), r = R * 0.7;
-      const g = ctx.createRadialGradient(p.x, p.y, r * 0.3, p.x, p.y, r);
-      g.addColorStop(0, "rgba(0,0,0,.9)"); g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-    }
+    // Geen open plek rond je eigen locatie: daar sta je bij het inchecken, en dan zou je het wegtrekken niet zien
     if (bezig) map.triggerRepaint();
   }
 
@@ -882,22 +917,25 @@ const mist = (() => {
     thema() { kleuren = null; map.triggerRepaint(); },
     bij: () => map.triggerRepaint(),
     // De mist trekt weg rond deze kroeg: de open plek groeit vanuit het midden
-    vier(id) { if (!rustig()) { groei.set(id, performance.now()); map.triggerRepaint(); } },
+    // na: wacht zo veel ms voordat de plek opengaat (de open plek blijft tot dan dicht)
+    vier(id, na = 0) { if (!rustig()) { groei.set(id, performance.now() + na); map.triggerRepaint(); } },
   };
 })();
 
 // Een nieuwe kroeg: een gouden kring dijt uit, en op Mijn kaart trekt de mist weg rond de kroeg
-function vierVrij(k) {
+function vierVrij(k, metMist = true) {
   if (!k || !kaartKlaar) return;
-  mist.vier(k.id);
+  if (metMist) mist.vier(k.id);
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const p = map.project([k.lon, k.lat]), r = map.getContainer().getBoundingClientRect();
-  const kring = document.createElement("div");
-  kring.className = "kring";
-  kring.style.left = r.left + p.x + "px";
-  kring.style.top = r.top + p.y + "px";
-  document.body.appendChild(kring);
-  kring.addEventListener("animationend", () => kring.remove());
+  for (const extra of ["", " twee"]) {
+    const kring = document.createElement("div");
+    kring.className = "kring" + extra;
+    kring.style.left = r.left + p.x + "px";
+    kring.style.top = r.top + p.y + "px";
+    document.body.appendChild(kring);
+    kring.addEventListener("animationend", () => kring.remove());
+  }
 }
 
 map.on("load", () => {
@@ -1086,7 +1124,7 @@ function draw() {
   if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); }
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
-  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) laadBeheerMeldingen();
+  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); }
   // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
   $("#tabIk").textContent = state.profiel && !anoniem() ? state.profiel.naam.slice(0, 10) : "Ik";
 }
@@ -1561,7 +1599,7 @@ function grafiekSvg(pts, { id = "g", lijn = null, kleur = "var(--accent)", tekst
   d += ` H${X(nu)}`;
   const vlak = `${d} V${H - 20} H${X(pts[0].t)} Z`;
   const laatst = pts[pts.length - 1].v;
-  const maand = (t) => new Date(t).toLocaleDateString("nl-NL", { month: "short", year: "2-digit" }).replace(".", "");
+  const maand = (t) => new Date(t).toLocaleDateString(LOCALE, { month: "short", year: "2-digit" }).replace(".", "");
   const lijnPad = lijn?.length > 1 ? lijn.map((p, i) => `${i ? "L" : "M"}${X(p.t)},${Y(p.v)}`).join(" ") : "";
   return `<svg class="grafiek" viewBox="0 0 ${W} ${H}" role="img" aria-label="Koersverloop, nu ${euro(laatst)}">
     <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${kleur}" stop-opacity=".38"/><stop offset="1" stop-color="${kleur}" stop-opacity="0"/></linearGradient></defs>
@@ -1965,7 +2003,9 @@ function ikView() {
   if (!state.sessie && kanAnoniem()) {
     return `<h2>Ik</h2><p class="muted">Nog geen bijdragen. Meld een prijs of check in bij een kroeg en je speelt meteen mee.</p>
       ${accountBlok(null)}
-      <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>`;
+      <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
+      ${bugBlok()}
+      ${taalBlok()}`;
   }
   if (!state.sessie) {
     // Alleen als anoniem meespelen niet kan: anonieme accounts staan in Supabase uit, of aanmaken lukte niet
@@ -2002,7 +2042,7 @@ function ikView() {
   return `<h2>${esc(p?.naam ?? "")}</h2>
     <div class="card saldo">
       <div class="kop">Puntensaldo</div>
-      <div class="big-price">${(p?.altijd ?? 0).toLocaleString("nl-NL")}</div>
+      <div class="big-price">${(p?.altijd ?? 0).toLocaleString(LOCALE)}</div>
       <div class="kv">
         <div>Deze week<b class="${p?.week ? "plus" : ""}">${p?.week ? `↗ +${p.week}` : "0"}</b></div>
         <div>Deze maand<b class="${p?.maand ? "plus" : ""}">${p?.maand ? `+${p.maand}` : "0"}</b></div>
@@ -2016,9 +2056,12 @@ function ikView() {
       <div class="small muted">Je speelt nu als ${esc(p.naam)}. Je kiest je naam een keer; daarna staat hij vast.</div>
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
+    ${bugBlok()}
+    ${taalBlok()}
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
       <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
+      <h3>Bugs</h3><div class="card"><div id="beheerBugs" class="small muted">Bugs laden…</div></div>
       <h3>Teksten</h3><div class="card"><div class="small muted">Pas elke tekst in de app aan. Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen.</div>
       <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
       ${teksten.lijst().length ? `<ul class="list eigen-teksten" data-geen-teksten>${teksten.lijst().map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
@@ -2027,6 +2070,55 @@ function ikView() {
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
       Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p>
     <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
+}
+
+// Taal kiezen. De namen van de talen zelf worden niet vertaald.
+function taalBlok() {
+  return `<h3 data-geen-teksten>Taal / Language</h3>
+    <div class="seg" role="group" aria-label="Taal / Language" data-geen-teksten>
+      <button type="button" data-taal="nl" aria-pressed="${TAAL === "nl"}">Nederlands</button>
+      <button type="button" data-taal="en" aria-pressed="${TAAL === "en"}">English</button></div>`;
+}
+
+// Bug melden: een korte omschrijving; de app stuurt het scherm en de browser mee (functie meld_bug)
+function bugBlok() {
+  if (!kanBijdragen()) return "";
+  return `<details class="klopt-niet bug">
+    <summary>Bug melden</summary>
+    <form class="form" id="bugForm">
+      <label for="bugTekst">Wat ging er mis?</label>
+      <textarea id="bugTekst" name="tekst" rows="4" minlength="5" maxlength="2000" placeholder="Wat deed je, en wat gebeurde er?" required></textarea>
+      <div class="small muted">We sturen mee welk scherm je open had en welke browser je gebruikt. Geen locatie.</div>
+      <div class="btns"><button class="btn primary" type="submit">Versturen</button></div>
+    </form>
+  </details>`;
+}
+
+async function verstuurBug(form) {
+  const tekst = String(new FormData(form).get("tekst") ?? "").trim();
+  if (tekst.length < 5) return toast("Beschrijf de bug in een paar woorden");
+  const knop = form.querySelector("[type=submit]");
+  knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
+  const scherm = [state.tab, state.modus, state.selected != null ? `kroeg ${state.selected}` : "", `${innerWidth}x${innerHeight}`].filter(Boolean).join(", ");
+  const { error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: scherm, p_apparaat: navigator.userAgent });
+  knop.disabled = false;
+  if (error) return toast(await leesFout(error));
+  form.reset();
+  form.closest("details").open = false;
+  toast("Bedankt! We kijken ernaar");
+}
+
+// Bugs voor de beheerder: de nieuwste dertig
+async function laadBeheerBugs() {
+  const { data, error } = await sb.from("bugmeldingen").select("id,tekst,scherm,apparaat,op").order("op", { ascending: false }).limit(30);
+  const el = $("#beheerBugs");
+  if (!el) return;
+  if (error) { el.textContent = "Bugs laden lukte niet."; return; }
+  if (!data.length) { el.textContent = "Geen bugs gemeld."; return; }
+  el.innerHTML = `<ul class="list" data-geen-teksten>${data.map((b) => `<li class="row"><span class="row-main">
+    <span class="row-title" style="white-space:normal">${esc(b.tekst)}</span>
+    <span class="row-sub" style="white-space:normal">${wanneer(b.op)}${b.scherm ? ` · ${esc(b.scherm)}` : ""}${b.apparaat ? ` · ${esc(b.apparaat)}` : ""}</span></span></li>`).join("")}</ul>`;
 }
 
 // Spelregels in het kort; de uitwerking staat in supabase/README.md
@@ -2156,7 +2248,7 @@ function mijnKroegenHtml() {
       <div class="card stat"><b>${checkins}</b><span>check-ins</span></div>
       <div class="card stat"><b>${wijkenBezocht}</b><span>${wijkenBezocht === 1 ? "wijk" : "wijken"}</span></div>
       ${eigenIndex ? `<div class="card stat"><b>${euro(eigenIndex)}</b><span>jouw index${pilsindex ? `, ${deltaHtml(eigenIndex - pilsindex)} t.o.v. de stad` : ""}</span></div>` : ""}
-      <div class="card stat"><b>${eerste ? new Date(eerste).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : ""}</b><span>eerste check-in</span></div>
+      <div class="card stat"><b>${eerste ? new Date(eerste).toLocaleDateString(LOCALE, { day: "numeric", month: "short", year: "numeric" }) : ""}</b><span>eerste check-in</span></div>
     </div>
     ${vaste && vaste.keer > 1 ? `<button class="row" data-kroeg="${vaste.id}"><span class="row-main"><span class="row-sub">Vaste stek</span><span class="row-title">${esc(vaste.naam)}</span></span><span class="price">${vaste.keer}<small>keer</small></span></button>` : ""}
     ${goedkoopst ? `<button class="row" data-kroeg="${goedkoopst.id}"><span class="row-main"><span class="row-sub">Goedkoopste waar je was</span><span class="row-title">${esc(goedkoopst.naam)}</span></span><span class="price">${spelPrijs(goedkoopst)}<small>per vaasje</small></span></button>` : ""}
@@ -2352,18 +2444,23 @@ async function verstuurIncheck(keuze, form, knop) {
   }
   state.form = null;
   toast(delen.join(". ") || "Bedankt", pts);
+  // Na een nieuwe check-in meteen naar Mijn kaart: daar trekt de mist rond de kroeg weg. Herladen gebeurt daarna.
+  if (hier && !alIn) {
+    const nu = new Date().toISOString();
+    state.mijn.set(k.id, { kroeg_id: k.id, keer: (was?.keer ?? 0) + 1, eerste: was?.eerste ?? nu, laatst: nu });
+    draw();
+    toonOpMijnKaart(k, !was);
+  } else if (vrij) vierVrij(k);
   await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
-  draw();
-  // Na een nieuwe check-in naar Mijn kaart: daar trekt de mist rond de kroeg weg
-  if (hier && !alIn) return toonOpMijnKaart(k, !was);
-  if (vrij) vierVrij(k);
+  if (!bezigMetTypen()) draw();
 }
 
 function toonOpMijnKaart(k, vier) {
   setModus("mijn");
   if (!wide()) setDetent("peek");
   if (!kaartKlaar) return;
-  map.once("moveend", () => { if (vier) vierVrij(k); });
+  // De mist blijft dicht tot de kaart bij de kroeg is; dan trekt hij weg en dijt de kring uit
+  if (vier) { mist.vier(k.id, 650); map.once("moveend", () => vierVrij(k, false)); }
   map.easeTo({ center: [k.lon, k.lat], zoom: Math.max(map.getZoom(), 15), duration: 600, padding: wide() ? { left: 400 } : { bottom: innerHeight * 0.2 } });
 }
 
@@ -2439,6 +2536,11 @@ body.addEventListener("click", (e) => {
     return prijsVoorbeeld();
   }
   if (t.dataset.wisMijn !== undefined) return wisMijn();
+  if (t.dataset.taal) {
+    if (t.dataset.taal === TAAL) return;
+    try { localStorage.setItem("bierkoers-taal", t.dataset.taal); } catch { /* privévenster: alleen voor nu */ }
+    return location.reload();
+  }
   if (t.dataset.mijnKaart !== undefined) { setModus("mijn"); if (!wide()) setDetent("peek"); return; }
   if (t.dataset.tochtOpen !== undefined) { planTocht(t.dataset.tochtOpen || undefined); draw(); body.scrollTop = 0; return; }
   if (t.dataset.tochtSluit !== undefined) { state.tocht = null; kaartBijwerken(); return draw(); }
@@ -2505,6 +2607,7 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "aanbodForm") return verstuurAanbod(f);
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
+  if (f.id === "bugForm") return verstuurBug(f);
   if (f.id === "loginForm" || f.id === "koppelForm" || f.id === "aanmeldForm") {
     const fd = new FormData(f);
     const email = String(fd.get("email")).trim().toLowerCase();
