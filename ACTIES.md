@@ -17,7 +17,7 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 ## Bugs melden
 
-1. **Migratie `20261113120000_bugmeldingen`** uitvoeren (SQL Editor of `supabase db push`) en in `supabase_migrations.schema_migrations` de versie gelijkzetten aan `20261113120000`. Draai daarna de Security Advisor. Tot dan geeft "Bug melden" onder Ik een foutmelding. De meldingen lees je in de app onder Ik, Beheer, Bugs, of in de Table Editor (`bugmeldingen`).
+1. ~~**Migratie `20261113120000_bugmeldingen`.**~~ Gedaan op 13 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261113120000`. Security Advisor: alleen de bekende waarschuwingen over anonieme spelers (de leesregel van `bugmeldingen` geldt alleen voor beheerders) en gelekte wachtwoorden. De meldingen lees je in de app onder Ik, Beheer, Bugs, of in de Table Editor (`bugmeldingen`).
 
 ## Inloggen: meteen beginnen, later e-mail koppelen
 
