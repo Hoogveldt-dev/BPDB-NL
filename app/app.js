@@ -855,7 +855,7 @@ const mist = (() => {
       let f = 1;
       const t0 = groei.get(k.id);
       if (t0 != null) {
-        const x = Math.min(1, (nu - t0) / 1100);
+        const x = Math.min(1, Math.max(0, (nu - t0) / 1600));
         f = 1 - (1 - x) ** 3;
         if (x < 1) bezig = true; else groei.delete(k.id);
       }
@@ -866,13 +866,7 @@ const mist = (() => {
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
     }
-    // Waar je zelf staat, kun je ook zien
-    if (state.pos) {
-      const p = map.project(state.pos), r = R * 0.7;
-      const g = ctx.createRadialGradient(p.x, p.y, r * 0.3, p.x, p.y, r);
-      g.addColorStop(0, "rgba(0,0,0,.9)"); g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-    }
+    // Geen open plek rond je eigen locatie: daar sta je bij het inchecken, en dan zou je het wegtrekken niet zien
     if (bezig) map.triggerRepaint();
   }
 
@@ -882,22 +876,25 @@ const mist = (() => {
     thema() { kleuren = null; map.triggerRepaint(); },
     bij: () => map.triggerRepaint(),
     // De mist trekt weg rond deze kroeg: de open plek groeit vanuit het midden
-    vier(id) { if (!rustig()) { groei.set(id, performance.now()); map.triggerRepaint(); } },
+    // na: wacht zo veel ms voordat de plek opengaat (de open plek blijft tot dan dicht)
+    vier(id, na = 0) { if (!rustig()) { groei.set(id, performance.now() + na); map.triggerRepaint(); } },
   };
 })();
 
 // Een nieuwe kroeg: een gouden kring dijt uit, en op Mijn kaart trekt de mist weg rond de kroeg
-function vierVrij(k) {
+function vierVrij(k, metMist = true) {
   if (!k || !kaartKlaar) return;
-  mist.vier(k.id);
+  if (metMist) mist.vier(k.id);
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const p = map.project([k.lon, k.lat]), r = map.getContainer().getBoundingClientRect();
-  const kring = document.createElement("div");
-  kring.className = "kring";
-  kring.style.left = r.left + p.x + "px";
-  kring.style.top = r.top + p.y + "px";
-  document.body.appendChild(kring);
-  kring.addEventListener("animationend", () => kring.remove());
+  for (const extra of ["", " twee"]) {
+    const kring = document.createElement("div");
+    kring.className = "kring" + extra;
+    kring.style.left = r.left + p.x + "px";
+    kring.style.top = r.top + p.y + "px";
+    document.body.appendChild(kring);
+    kring.addEventListener("animationend", () => kring.remove());
+  }
 }
 
 map.on("load", () => {
@@ -2352,18 +2349,23 @@ async function verstuurIncheck(keuze, form, knop) {
   }
   state.form = null;
   toast(delen.join(". ") || "Bedankt", pts);
+  // Na een nieuwe check-in meteen naar Mijn kaart: daar trekt de mist rond de kroeg weg. Herladen gebeurt daarna.
+  if (hier && !alIn) {
+    const nu = new Date().toISOString();
+    state.mijn.set(k.id, { kroeg_id: k.id, keer: (was?.keer ?? 0) + 1, eerste: was?.eerste ?? nu, laatst: nu });
+    draw();
+    toonOpMijnKaart(k, !was);
+  } else if (vrij) vierVrij(k);
   await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
-  draw();
-  // Na een nieuwe check-in naar Mijn kaart: daar trekt de mist rond de kroeg weg
-  if (hier && !alIn) return toonOpMijnKaart(k, !was);
-  if (vrij) vierVrij(k);
+  if (!bezigMetTypen()) draw();
 }
 
 function toonOpMijnKaart(k, vier) {
   setModus("mijn");
   if (!wide()) setDetent("peek");
   if (!kaartKlaar) return;
-  map.once("moveend", () => { if (vier) vierVrij(k); });
+  // De mist blijft dicht tot de kaart bij de kroeg is; dan trekt hij weg en dijt de kring uit
+  if (vier) { mist.vier(k.id, 650); map.once("moveend", () => vierVrij(k, false)); }
   map.easeTo({ center: [k.lon, k.lat], zoom: Math.max(map.getZoom(), 15), duration: 600, padding: wide() ? { left: 400 } : { bottom: innerHeight * 0.2 } });
 }
 
