@@ -15,6 +15,10 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 5. **DNSSEC weer aan**, nu via Cloudflare (DNS, Settings), en zet de DS-record die Cloudflare geeft bij Vimexx.
 6. ~~**Supabase-adressen bijwerken.**~~ Gedaan: op 10 november 2026 gecontroleerd dat de Site URL `https://bierkoers.nl` is en dat de Redirect URLs `https://bpdb-nl.pages.dev/**`, `https://bierkoers.nl/**`, `https://www.bierkoers.nl/**` en `http://localhost:8765/**` zijn. Nog open: bij inloggen met Apple en Google ook het nieuwe domein toevoegen.
 
+## Bugs melden
+
+1. **Migratie `20261113120000_bugmeldingen`** uitvoeren (SQL Editor of `supabase db push`) en in `supabase_migrations.schema_migrations` de versie gelijkzetten aan `20261113120000`. Draai daarna de Security Advisor. Tot dan geeft "Bug melden" onder Ik een foutmelding. De meldingen lees je in de app onder Ik, Beheer, Bugs, of in de Table Editor (`bugmeldingen`).
+
 ## Inloggen: meteen beginnen, later e-mail koppelen
 
 0. ~~**Migratie `20261106220000_betrouwbaarheid_verwachting`.**~~ Gedaan op 6 november 2026: staat op Supabase met versie `20261106220000`. Voorlopig: **Kjell is er nog niet tevreden over** (zie `docs/concept.md`, 2.6). Gecontroleerd: `pas_betrouwbaarheid_aan` gebruikt de nieuwe regel, spelers kunnen `betrouwbaarheid_na` niet zelf aanroepen, er staat nu niemand boven 90%. Security Advisor: alleen de bekende waarschuwing over gelekte wachtwoorden.

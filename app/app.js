@@ -1083,7 +1083,7 @@ function draw() {
   if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); }
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
-  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) laadBeheerMeldingen();
+  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); }
   // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
   $("#tabIk").textContent = state.profiel && !anoniem() ? state.profiel.naam.slice(0, 10) : "Ik";
 }
@@ -1962,7 +1962,8 @@ function ikView() {
   if (!state.sessie && kanAnoniem()) {
     return `<h2>Ik</h2><p class="muted">Nog geen bijdragen. Meld een prijs of check in bij een kroeg en je speelt meteen mee.</p>
       ${accountBlok(null)}
-      <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>`;
+      <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
+      ${bugBlok()}`;
   }
   if (!state.sessie) {
     // Alleen als anoniem meespelen niet kan: anonieme accounts staan in Supabase uit, of aanmaken lukte niet
@@ -2013,9 +2014,11 @@ function ikView() {
       <div class="small muted">Je speelt nu als ${esc(p.naam)}. Je kiest je naam een keer; daarna staat hij vast.</div>
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
+    ${bugBlok()}
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
       <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
+      <h3>Bugs</h3><div class="card"><div id="beheerBugs" class="small muted">Bugs laden…</div></div>
       <h3>Teksten</h3><div class="card"><div class="small muted">Pas elke tekst in de app aan. Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen.</div>
       <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
       ${teksten.lijst().length ? `<ul class="list eigen-teksten" data-geen-teksten>${teksten.lijst().map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
@@ -2024,6 +2027,47 @@ function ikView() {
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
       Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p>
     <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
+}
+
+// Bug melden: een korte omschrijving; de app stuurt het scherm en de browser mee (functie meld_bug)
+function bugBlok() {
+  if (!kanBijdragen()) return "";
+  return `<details class="klopt-niet bug">
+    <summary>Bug melden</summary>
+    <form class="form" id="bugForm">
+      <label for="bugTekst">Wat ging er mis?</label>
+      <textarea id="bugTekst" name="tekst" rows="4" minlength="5" maxlength="2000" placeholder="Wat deed je, en wat gebeurde er?" required></textarea>
+      <div class="small muted">We sturen mee welk scherm je open had en welke browser je gebruikt. Geen locatie.</div>
+      <div class="btns"><button class="btn primary" type="submit">Versturen</button></div>
+    </form>
+  </details>`;
+}
+
+async function verstuurBug(form) {
+  const tekst = String(new FormData(form).get("tekst") ?? "").trim();
+  if (tekst.length < 5) return toast("Beschrijf de bug in een paar woorden");
+  const knop = form.querySelector("[type=submit]");
+  knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
+  const scherm = [state.tab, state.modus, state.selected != null ? `kroeg ${state.selected}` : "", `${innerWidth}x${innerHeight}`].filter(Boolean).join(", ");
+  const { error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: scherm, p_apparaat: navigator.userAgent });
+  knop.disabled = false;
+  if (error) return toast(await leesFout(error));
+  form.reset();
+  form.closest("details").open = false;
+  toast("Bedankt! We kijken ernaar");
+}
+
+// Bugs voor de beheerder: de nieuwste dertig
+async function laadBeheerBugs() {
+  const { data, error } = await sb.from("bugmeldingen").select("id,tekst,scherm,apparaat,op").order("op", { ascending: false }).limit(30);
+  const el = $("#beheerBugs");
+  if (!el) return;
+  if (error) { el.textContent = "Bugs laden lukte niet."; return; }
+  if (!data.length) { el.textContent = "Geen bugs gemeld."; return; }
+  el.innerHTML = `<ul class="list" data-geen-teksten>${data.map((b) => `<li class="row"><span class="row-main">
+    <span class="row-title" style="white-space:normal">${esc(b.tekst)}</span>
+    <span class="row-sub" style="white-space:normal">${wanneer(b.op)}${b.scherm ? ` · ${esc(b.scherm)}` : ""}${b.apparaat ? ` · ${esc(b.apparaat)}` : ""}</span></span></li>`).join("")}</ul>`;
 }
 
 // Spelregels in het kort; de uitwerking staat in supabase/README.md
@@ -2507,6 +2551,7 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "aanbodForm") return verstuurAanbod(f);
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
+  if (f.id === "bugForm") return verstuurBug(f);
   if (f.id === "loginForm" || f.id === "koppelForm" || f.id === "aanmeldForm") {
     const fd = new FormData(f);
     const email = String(fd.get("email")).trim().toLowerCase();

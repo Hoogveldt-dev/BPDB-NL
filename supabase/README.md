@@ -19,6 +19,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Klopt deze kroeg niet? | `migrations/20261107120000_kroeg_klopt_niet.sql` | Ook verkeerde plek en dubbel melden, met een korte toelichting. Een bevestigde dubbele kroeg verdwijnt van de kaart; een verkeerde plek verplaatst een beheerder |
 | Teksten | `migrations/20261107150000_app_teksten.sql` | Tabel `app_teksten` en functie `zet_tekst`: een beheerder herschrijft elke tekst in de app. Sleutel is de standaardtekst met getallen als `#` |
 | Samenvoegen | `migrations/20261110130000_samenvoegen.sql`, `functions/samenvoegen/index.ts` | Een anonieme speler logt in met een bestaand account: meldingen, oordelen, punten, check-ins en ontdekte kroegen gaan over naar het account (`private.voeg_samen`, alleen service_role), daarna wordt de anonieme speler verwijderd. Geweigerd als het account een melding van de anonieme speler beoordeelde |
+| Bugs melden | `migrations/20261113120000_bugmeldingen.sql` | Tabel `bugmeldingen` en functie `meld_bug(tekst, scherm, apparaat)`: elke speler meldt een bug vanuit Ik, hoogstens 10 per dag. Alleen beheerders lezen ze (in de app onder Beheer, Bugs) |
 | Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account. Meldingen en prijzen blijven staan zonder naam |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
@@ -40,6 +41,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `kroeg_meldingen` | Openingstijden of "definitief gesloten" gemeld door een speler, met status `wacht`, `bevestigd` of `weerlegd`. Per kroeg en soort hoogstens een open melding. |
 | `kroegmelding_oordelen` | "Klopt" of "klopt niet" bij zo'n melding, een per speler per melding. |
 | `incheckingen` | Check-ins per speler en kroeg, hoogstens een per dag. Privé: alleen de speler zelf kan ze lezen en wissen. |
+| `bugmeldingen` | Bugs gemeld door spelers: omschrijving, scherm en browser. Alleen beheerders lezen ze; schrijven alleen via `meld_bug`. |
 
 Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`, `kroeg_info`, `kroeg_bijdragers`, `kroeg_stamgast` en `mijn_kroegen` (alleen de eigen check-ins). Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
