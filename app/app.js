@@ -1712,13 +1712,13 @@ function formView() {
       <label>Prijs van dat glas, in euro</label>
       <input name="prijs" inputmode="decimal" placeholder="3,50" required value="${esc(f.prijs ?? "")}">
       <p class="small muted" id="prijsVoorbeeld" aria-live="polite">Vul de prijs in. Je ziet meteen wat dat per vaasje is.</p>
-      <label>Foto van de prijslijst (optioneel, +5 na bevestiging)</label>
+      <label>Foto van de prijslijst (optioneel, +5)</label>
       <input name="foto" type="file" accept="image/*" capture="environment">
       <img class="foto-voorbeeld" id="fotoVoorbeeld" alt="Voorbeeld van je foto" hidden>
       <div class="btns"><button class="btn primary" type="submit" id="verstuur">${f.hier && !vandaag ? "Inchecken" : "Versturen"}</button></div>
       ${zonder}
       ${locatieTekst}
-      <p class="small muted">Punten krijg je zodra een andere speler je melding bevestigt.</p>
+      <p class="small muted">Je krijgt de punten meteen. Wordt je melding weerlegd, dan gaan ze er weer af.</p>
     </form>`;
 }
 
@@ -2142,7 +2142,7 @@ function regelsView() {
       <div><span>Binnen ${INCHECK_M} m van de kroeg</span><b>×1,5</b></div>
       <div><span>Je melding wordt weerlegd</span><b>−20</b></div>
     </div>
-    <p class="small muted">Punten voor een melding krijg je pas als andere spelers hem bevestigen. Meestal zijn dat er twee; bij een melder met een betrouwbaarheid boven 90% is een genoeg. Wijkt een prijs meer dan 40% af van de stad, dan zijn er altijd twee nodig. Twee keer "klopt niet" en de melding is weerlegd.</p>
+    <p class="small muted">Punten krijg je meteen, ook voor bevestigen. Een prijs komt pas vast op de kaart als andere spelers hem bevestigen. Meestal zijn dat er twee; bij een melder met een betrouwbaarheid boven 90% is een genoeg. Wijkt een prijs meer dan 40% af van de stad, dan zijn er altijd twee nodig. Twee keer "klopt niet" en de melding is weerlegd: dan gaan de punten van de melder en van wie "klopt" zei er weer af.</p>
     <h3>Zonder e-mailadres</h3>
     <p class="small muted">Je kunt meteen beginnen en prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas als je een e-mailadres koppelt. Je punten blijven dan bewaard.</p>
     <h3>Geen punten</h3>
@@ -2361,6 +2361,9 @@ function setTab(t) {
   else if (!wide() && sheet.dataset.detent === "peek") setDetent("half");
 }
 
+// Punten voor een melding krijg je meteen (trigger punten_bij_melding); ze gaan eraf als de melding wordt weerlegd
+const meldPunten = (g) => Math.round((g.soort === "eerst" ? 50 : 30) * (g.ter_plaatse ? 1.5 : 1)) + (g.foto_pad ? 5 : 0);
+
 // Leest het prijsformulier; bij een fout een melding en null
 function leesPrijs(form) {
   const fd = new FormData(form);
@@ -2418,11 +2421,12 @@ async function verstuurIncheck(keuze, form, knop) {
     if (keuze === "prijs") {
       const data = await meldPrijs(k, w, pos);
       vrij = data.soort === "eerst";
-      if (data.status === "bevestigd") { delen.push(vrij ? `Eerste prijs van ${k.naam}!` : "Prijs bijgewerkt"); pts = vrij ? 50 : 30; }
-      else delen.push(vrij ? `Eerste prijs van ${k.naam}! Punten volgen na bevestiging` : "Prijs gemeld. Punten volgen na bevestiging");
+      delen.push(vrij ? `Eerste prijs van ${k.naam}!` : "Prijs gemeld");
+      pts = meldPunten(data);
     } else if (keuze === "klopt" && b.soort === "menukaart") {
-      await meldPrijs(k, { merk: b.merk, cl: b.cl, prijs: b.prijs }, pos);
+      const data = await meldPrijs(k, { merk: b.merk, cl: b.cl, prijs: b.prijs }, pos);
       delen.push("Je bent de indiener; nu nog een bevestiging van een andere speler");
+      pts = meldPunten(data);
       vrij = true;
     } else if (keuze === "klopt" && magControleren()) {
       const { data, error } = b.soort === "melding"
@@ -2432,7 +2436,7 @@ async function verstuurIncheck(keuze, form, knop) {
       if (error && !hier) throw error;
       if (!error) {
         delen.push(b.soort === "melding" ? (data === "bevestigd" ? "Bevestigd, de prijs staat erop" : "Oordeel opgeslagen") : "Bedankt voor het controleren");
-        pts = b.soort === "melding" ? (data === "wacht" ? null : 5) : dagen(k.laatst_gecontroleerd) >= 90 ? 15 : 5;
+        pts = b.soort === "melding" ? 5 : dagen(k.laatst_gecontroleerd) >= 90 ? 15 : 5;
       }
     }
   } catch (e) {

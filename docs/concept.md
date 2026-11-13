@@ -124,7 +124,7 @@ Teams zijn groepen spelers die samen punten en titels verzamelen, bijvoorbeeld e
 | Actie | Punten | Voorwaarde |
 |---|---:|---|
 | Kroeg vrijspelen (eerste prijs) | +50 | Ontdekker-badge blijft permanent |
-| Prijswijziging melden | +30 | Pas na bevestiging (met veroveringen: maakt je kroegbaas) |
+| Prijswijziging melden | +30 | Meteen; eraf als de melding wordt weerlegd (met veroveringen: maakt je kroegbaas) |
 | Oude prijs controleren | +15 | Prijs is 90 dagen of ouder |
 | Vrije titel pakken (alleen met veroveringen) | +25 | Kroegbaas checkte 90 dagen niet zelf |
 | "Klopt nog" | +5 | Max. 1 keer per kroeg per 7 dagen |
@@ -132,7 +132,7 @@ Teams zijn groepen spelers die samen punten en titels verzamelen, bijvoorbeeld e
 | Foto van de prijslijst | +5 | Optioneel |
 | Bijdrage weerlegd | -20 | Plus daling betrouwbaarheid |
 
-Punten worden pas uitgekeerd na bevestiging door een andere speler.
+Punten worden meteen uitgekeerd, bij melden en bij bevestigen. Wordt een melding weerlegd, dan gaan de punten van de melder en van wie "klopt" zei er weer af, en krijgt de melder -20 (13 november 2026; daarvoor pas na bevestiging, maar met weinig spelers bleef de ranglijst dan leeg).
 
 ### 2.6 Peer-to-peer bevestiging
 
