@@ -1,30 +1,32 @@
 /* Bierkoers. Ontwerp naar Apple: de systeemletter (SF Pro) ook voor cijfers, met vaste cijferbreedte;
-   de systeemkleuren van iOS; lijsten met haarlijnen in plaats van kaders; koppen in zinsletters;
-   weinig schaduw en geen verlopen. Voorbeelden: Aandelen (koers, groene en rode pil), Kaarten (blad
-   over de kaart, punten met een witte rand) en Weer (grote cijfers). iPhone eerst; vanaf 900px een
-   zijbalk links. Gele tint voor pils; in de Guinness-stand groen. */
+   lijsten met haarlijnen in plaats van kaders; koppen in zinsletters; weinig schaduw en geen verlopen.
+   Voorbeelden: Aandelen (koers, groene en rode pil), Kaarten (blad over de kaart, punten met een witte rand)
+   en Weer (grote cijfers). iPhone eerst; vanaf 900px een zijbalk links.
+   Kleuren van het visitekaartje: inkt #0E0E0E, creme #FFF6E0, warm grijs #D9CFBC en amber #F5B82E.
+   Licht is het kaartje omgekeerd (crème papier met inkt), donker is het kaartje zelf. Statuskleuren (vers, oud, duurder, goedkoper,
+   wachten) blijven die van iOS. In de Guinness-stand is de tint groen. */
 :root {
-  /* Achtergronden zoals iOS: gegroepeerd grijs, cellen wit */
-  --land: #f2f2f7;
-  --surface: #ffffff; --surface-2: rgb(118 118 128 / .12); --surface-3: #f2f2f7;
-  --glass: rgb(249 249 251 / .9);
-  --sep: rgb(60 60 67 / .18);
-  --fg: #000000; --muted: rgb(60 60 67 / .6); --muted-2: rgb(60 60 67 / .3);
-  /* Tint: bier */
+  /* Licht: het kaartje omgekeerd. Crème papier (cellen #FFF6E0, blad en achtergrond een tint dieper),
+     tekst in inkt, invoer en knoppen in het warm grijs. */
+  --land: #efe5cf;
+  --surface: #FFF6E0; --surface-2: rgb(217 207 188 / .55); --surface-3: #f3ead5;
+  --glass: rgb(243 234 213 / .92);
+  --sep: rgb(14 14 14 / .13);
+  --fg: #0E0E0E; --muted: rgb(14 14 14 / .62); --muted-2: rgb(14 14 14 / .32);
   /* Tint: de amber van het visitekaartje. Tekst op wit in een donkerder amber, anders is hij niet leesbaar. */
-  --accent: #F5B82E; --accent-ink: #1c1300; --accent-text: #9a6400; --accent-zacht: rgb(245 184 46 / .16);
+  --accent: #F5B82E; --accent-ink: #0E0E0E; --accent-text: #9a6400; --accent-zacht: rgb(245 184 46 / .16);
   --merk: #F5B82E; /* het logo blijft amber, ook in de Guinness-stand */
   /* Systeemkleuren */
   --fresh: #34c759; --fresh-t: #248a3d; --stale: #ff9500; --stale-t: #c93400; --old: #ff3b30; --old-t: #d70015;
-  --locked: #aeaeb2; --wacht: #007aff; --blue: #007aff;
+  --locked: #ada28c; --wacht: #007aff; --blue: #007aff;
   /* Koers, gezien door de klant: duurder is rood, goedkoper is groen */
-  --op: #ff3b30; --op-t: #d70015; --af: #34c759; --af-t: #248a3d; --gelijk: #8e8e93;
-  --balk: rgb(255 255 255 / .92); --balk-fg: #000; --balk-muted: rgb(60 60 67 / .6);
+  --op: #ff3b30; --op-t: #d70015; --af: #34c759; --af-t: #248a3d; --gelijk: #948e84;
+  --balk: rgb(255 246 224 / .94); --balk-fg: #0E0E0E; --balk-muted: rgb(14 14 14 / .62);
   --shadow: 0 2px 12px rgb(0 0 0 / .08), 0 0 1px rgb(0 0 0 / .12);
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .14);
   /* Mist: een lichte, egale waas, geen stippen. Licht genoeg dat straten en wijknamen leesbaar blijven,
      zodat je je ook kunt orienteren als er nog weinig is vrijgespeeld. */
-  --mist: rgb(242 242 247 / .74); --mist-stip: rgb(60 60 67 / .28);
+  --mist: rgb(245 237 218 / .74); --mist-stip: rgb(14 14 14 / .26);
   --hair: .5px solid var(--sep);
   --f-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
   --f-titel: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
@@ -35,36 +37,36 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --land: #000000;
-    --surface: #1c1c1e; --surface-2: rgb(118 118 128 / .24); --surface-3: #2c2c2e;
-    --glass: rgb(28 28 30 / .88);
-    --sep: rgb(84 84 88 / .6);
-    --fg: #ffffff; --muted: rgb(235 235 245 / .6); --muted-2: rgb(235 235 245 / .3);
-    --accent: #F5B82E; --accent-ink: #1c1300; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
+    --land: #0E0E0E;
+    --surface: #1c1a16; --surface-2: rgb(217 207 188 / .14); --surface-3: #2a2824;
+    --glass: rgb(14 14 14 / .9);
+    --sep: rgb(217 207 188 / .2);
+    --fg: #FFF6E0; --muted: #D9CFBC; --muted-2: rgb(217 207 188 / .45);
+    --accent: #F5B82E; --accent-ink: #0E0E0E; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
     --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
-    --locked: #636366; --wacht: #0a84ff; --blue: #0a84ff;
+    --locked: #6b665d; --wacht: #0a84ff; --blue: #0a84ff;
     --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
-    --balk: rgb(0 0 0 / .9); --balk-fg: #fff; --balk-muted: rgb(235 235 245 / .6);
+    --balk: rgb(14 14 14 / .92); --balk-fg: #FFF6E0; --balk-muted: #D9CFBC;
     --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
     --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
-    --mist: rgb(0 0 0 / .62); --mist-stip: rgb(235 235 245 / .2);
+    --mist: rgb(14 14 14 / .62); --mist-stip: rgb(217 207 188 / .2);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --land: #000000;
-  --surface: #1c1c1e; --surface-2: rgb(118 118 128 / .24); --surface-3: #2c2c2e;
-  --glass: rgb(28 28 30 / .88);
-  --sep: rgb(84 84 88 / .6);
-  --fg: #ffffff; --muted: rgb(235 235 245 / .6); --muted-2: rgb(235 235 245 / .3);
-  --accent: #F5B82E; --accent-ink: #1c1300; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
+  --land: #0E0E0E;
+  --surface: #1c1a16; --surface-2: rgb(217 207 188 / .14); --surface-3: #2a2824;
+  --glass: rgb(14 14 14 / .9);
+  --sep: rgb(217 207 188 / .2);
+  --fg: #FFF6E0; --muted: #D9CFBC; --muted-2: rgb(217 207 188 / .45);
+  --accent: #F5B82E; --accent-ink: #0E0E0E; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
   --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
-  --locked: #636366; --wacht: #0a84ff; --blue: #0a84ff;
+  --locked: #6b665d; --wacht: #0a84ff; --blue: #0a84ff;
   --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
-  --balk: rgb(0 0 0 / .9); --balk-fg: #fff; --balk-muted: rgb(235 235 245 / .6);
+  --balk: rgb(14 14 14 / .92); --balk-fg: #FFF6E0; --balk-muted: #D9CFBC;
   --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
-  --mist: rgb(0 0 0 / .62); --mist-stip: rgb(235 235 245 / .2);
+  --mist: rgb(14 14 14 / .62); --mist-stip: rgb(217 207 188 / .2);
   color-scheme: dark;
 }
 /* Guinness-stand: Iers groen in plaats van biergeel */
@@ -145,7 +147,7 @@ button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 #sheet.dragging { transition: none; }
 .grabber { width: 36px; height: 5px; border-radius: 3px; background: var(--muted-2); margin: 0 auto; padding: 6px 40px 6px; background-clip: content-box; box-sizing: content-box; flex: none; cursor: grab; }
 #tabs { display: flex; gap: 2px; margin: 2px 16px 10px; padding: 2px; background: var(--surface-2); border-radius: 9px; flex: none; }
-#tabs button { flex: 1; border: 0; background: none; padding: 6px 0; border-radius: 7px; font-weight: 500; font-size: 13px; color: var(--fg); }
+#tabs button { flex: 1; min-width: 0; border: 0; background: none; padding: 6px 4px; border-radius: 7px; font-weight: 500; font-size: 13px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #tabs button[aria-pressed="true"] { background: var(--surface); font-weight: 600; box-shadow: 0 1px 4px rgb(0 0 0 / .14), 0 0 0 .5px rgb(0 0 0 / .04); }
 #body { flex: 1; overflow-y: auto; padding: 0 16px calc(env(safe-area-inset-bottom) + 24px); touch-action: pan-y; overscroll-behavior: contain; }
 
@@ -165,7 +167,8 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 
 .search { width: 100%; border: 0; background: var(--surface-2); border-radius: 10px; padding: 8px 12px; margin: 0 0 10px; font-size: 17px; }
 .search::placeholder { color: var(--muted); }
-.chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none; }
+/* Weinig filters: ze lopen door op een tweede regel in plaats van buiten beeld te vallen */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0 8px; }
 .chip { border: 0; background: var(--surface-2); border-radius: 999px; padding: 6px 13px; font-size: 14px; font-weight: 500; white-space: nowrap; }
 .chip[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
 
@@ -227,10 +230,6 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 .btn.aanbieder { display: flex; align-items: center; gap: 10px; background: var(--surface-2); color: var(--fg); text-align: left; }
 .btn.aanbieder svg.logo { width: 18px; height: 18px; flex: none; }
 .btn.aanbieder .naam { flex: 1; }
-.btn.aanbieder.op-slot { opacity: 1; color: var(--muted); }
-.btn.aanbieder.op-slot svg.logo { opacity: .5; }
-.slot { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 13px; font-weight: 500; }
-.slot svg { width: 11px; height: 11px; }
 .of { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 16px 0 4px; }
 .of::before, .of::after { content: ""; flex: 1; border-top: var(--hair); }
 
@@ -245,6 +244,10 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 .seg button { flex: 1; border: 0; background: none; border-radius: 7px; padding: 7px 4px; font-size: 13px; font-weight: 500; line-height: 1.25; }
 .seg button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 4px rgb(0 0 0 / .14); font-weight: 600; }
 .foto-voorbeeld[hidden] { display: none; }
+/* Foto kiezen: een gewone knop; het invoerveld van de browser ("Choose File") is onzichtbaar maar bruikbaar */
+.form label.fotoknop { position: relative; display: flex; justify-content: center; width: 100%; margin: 0; padding: 13px 16px; font-size: 17px; font-weight: 600; color: var(--blue); }
+.fotoknop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.fotoknop:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
 .foto-voorbeeld { display: block; width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; margin-top: 8px; }
 .waarschuwing { color: var(--stale-t); font-weight: 500; }
 
@@ -348,7 +351,7 @@ button.sector:last-child { border-bottom: 0; }
 li.row:nth-child(-n+3) .rank { color: var(--accent-text); }
 .me { background: var(--accent-zacht); border-radius: 10px; }
 
-#toast { position: fixed; left: 50%; top: calc(var(--top) + 64px); transform: translate(-50%, -16px); opacity: 0; background: var(--glass); color: var(--fg); padding: 10px 16px; border-radius: 14px; font-weight: 600; font-size: 15px; z-index: 10; transition: .3s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; box-shadow: var(--shadow-sterk); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); }
+#toast { position: fixed; left: 50%; top: calc(var(--top) + 118px); transform: translate(-50%, -16px); opacity: 0; background: var(--glass); color: var(--fg); padding: 10px 16px; border-radius: 14px; font-weight: 600; font-size: 15px; z-index: 10; transition: .3s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; box-shadow: var(--shadow-sterk); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 #toast .pts { color: var(--accent-text); margin-left: 8px; }
 
@@ -378,14 +381,14 @@ li.row:nth-child(-n+3) .rank { color: var(--accent-text); }
 .kroeg-tip b { font-weight: 600; }
 
 /* Vensters: vraag, uitleg, foto en teksten */
-.laag { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgb(0 0 0 / .4); }
+.laag { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgb(14 14 14 / .45); }
 .laag[hidden], #lightbox[hidden], #tekstBalk[hidden] { display: none; }
 .laag-kaart { width: min(400px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; border-radius: 16px; padding: 20px 18px 16px; }
 .laag-kaart p:first-child { margin-top: 0; }
 .laag-kaart h2 { margin-top: 2px; font-size: 24px; }
 /* Logo zoals op het visitekaartje: glas met koerslijn in amber, woordmerk in de tekstkleur. Altijd amber, ook in de Guinness-stand. */
 .intro-kop { color: var(--fg); margin-bottom: 8px; }
-.logo { display: block; height: 22px; width: auto; }
+.merklogo { display: block; height: 22px; width: auto; }
 .uitleg-lijst { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 10px; font-size: 15px; }
 .uitleg-lijst li { display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: start; }
 .uitleg-lijst .dot { margin-top: 5px; }
