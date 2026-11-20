@@ -71,7 +71,6 @@ export const EN = {
   "Per jaar": "Per year",
 
   // Welkom en uitleg
-  "BIERKOERS": "BIERKOERS",
   "Wat kost een biertje?": "What does a beer cost?",
   "Samen houden we bij wat de goedkoopste pils van de tap kost in elke kroeg van de stad.": "Together we track what the cheapest draught lager costs in every pub in town.",
   "Grijs: hier weet nog niemand de prijs. Check in en geef hem door.": "Grey: nobody knows the price here yet. Check in and add it.",

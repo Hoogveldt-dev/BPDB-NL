@@ -12,6 +12,7 @@
   --fg: #000000; --muted: rgb(60 60 67 / .6); --muted-2: rgb(60 60 67 / .3);
   /* Tint: bier */
   --accent: #f2a900; --accent-ink: #1c1300; --accent-text: #9a6400; --accent-zacht: rgb(242 169 0 / .16);
+  --merk: #E8A317; /* amber van het logo; in de donkere stand die van het kaartje */
   /* Systeemkleuren */
   --fresh: #34c759; --fresh-t: #248a3d; --stale: #ff9500; --stale-t: #c93400; --old: #ff3b30; --old-t: #d70015;
   --locked: #aeaeb2; --wacht: #007aff; --blue: #007aff;
@@ -38,7 +39,7 @@
     --glass: rgb(28 28 30 / .88);
     --sep: rgb(84 84 88 / .6);
     --fg: #ffffff; --muted: rgb(235 235 245 / .6); --muted-2: rgb(235 235 245 / .3);
-    --accent: #ffc426; --accent-ink: #1c1300; --accent-text: #ffd060; --accent-zacht: rgb(255 196 38 / .18);
+    --accent: #ffc426; --accent-ink: #1c1300; --accent-text: #ffd060; --accent-zacht: rgb(255 196 38 / .18); --merk: #F5B82E;
     --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
     --locked: #636366; --wacht: #0a84ff; --blue: #0a84ff;
     --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
@@ -55,7 +56,7 @@
   --glass: rgb(28 28 30 / .88);
   --sep: rgb(84 84 88 / .6);
   --fg: #ffffff; --muted: rgb(235 235 245 / .6); --muted-2: rgb(235 235 245 / .3);
-  --accent: #ffc426; --accent-ink: #1c1300; --accent-text: #ffd060; --accent-zacht: rgb(255 196 38 / .18);
+  --accent: #ffc426; --accent-ink: #1c1300; --accent-text: #ffd060; --accent-zacht: rgb(255 196 38 / .18); --merk: #F5B82E;
   --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
   --locked: #636366; --wacht: #0a84ff; --blue: #0a84ff;
   --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
@@ -381,7 +382,9 @@ li.row:nth-child(-n+3) .rank { color: var(--accent-text); }
 .laag-kaart { width: min(400px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; border-radius: 16px; padding: 20px 18px 16px; }
 .laag-kaart p:first-child { margin-top: 0; }
 .laag-kaart h2 { margin-top: 2px; font-size: 24px; }
-.intro-kop { font-size: 13px; font-weight: 600; color: var(--accent-text); }
+/* Logo zoals op het visitekaartje: glas met koerslijn in amber, woordmerk in de tekstkleur. Altijd amber, ook in de Guinness-stand. */
+.intro-kop { color: var(--fg); margin-bottom: 8px; }
+.logo { display: block; height: 22px; width: auto; }
 .uitleg-lijst { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 10px; font-size: 15px; }
 .uitleg-lijst li { display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: start; }
 .uitleg-lijst .dot { margin-top: 5px; }
