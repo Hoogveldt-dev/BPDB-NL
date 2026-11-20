@@ -1168,7 +1168,7 @@ function draw() {
   else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); laadBeheerSteden(); }
   if (state.selected == null && !state.pagina && state.tab === "ik" && state.sessie) laadBadges();
   // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
-  $("#tabIk").textContent = state.profiel && !anoniem() ? state.profiel.naam.slice(0, 10) : "Ik";
+  $("#tabIk").textContent = state.profiel && !anoniem() && state.profiel.naam_vast ? state.profiel.naam : "Ik";
 }
 
 function kroegVersheid(k) {
@@ -1176,11 +1176,14 @@ function kroegVersheid(k) {
   return k.versheid;
 }
 
+// Versheid in woorden. Een kroeg met alleen een menukaartprijs heeft wel een prijs, maar nog niemand controleerde hem.
+const versheidTekst = (k, v) => (v === "locked" && k.open_prijs_cent && vanMenukaart(k) ? "Nog niet gecontroleerd" : VERSHEID[v]);
+
 function rowHtml(k) {
   const v = kroegVersheid(k);
   const d = state.pos ? Math.round(afstand(state.pos, [k.lon, k.lat])) : null;
   // Zoals in Aandelen: naam vet, daaronder de tickercode en de rest in grijs
-  const sub = [codeVan(k.id), k.wijk, d != null ? meters(d) : null, VERSHEID[v], state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
+  const sub = [codeVan(k.id), k.wijk, d != null ? meters(d) : null, versheidTekst(k, v), state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
   return `<li><button class="row" data-kroeg="${k.id}">
     <span class="dot ${v}"></span>
     <span class="row-main"><span class="row-title">${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
@@ -1229,6 +1232,8 @@ function lijstView() {
   else if (state.filter === "prijsvast") rows.sort((a, b) => koersVan(a.id).vastSinds - koersVan(b.id).vastSinds);
   else if (state.filter === "verhoogd") rows.sort((a, b) => koersVan(b.id).vastSinds - koersVan(a.id).vastSinds);
   else if (state.pos) rows.sort((a, b) => afstand(state.pos, [a.lon, a.lat]) - afstand(state.pos, [b.lon, b.lat]));
+  // Zonder locatie: eerst de kroegen met een prijs (de lijst is anders vooral "Nog geen prijs"), daarna op naam
+  else rows.sort((a, b) => (prijsPer25(a) == null) - (prijsPer25(b) == null));
   const leeg = state.kroegen.length === 0
     ? `<div class="empty">Nog geen kroegen geladen.<br><span class="small">Een beheerder importeert ze via het tabblad Ik.</span></div>`
     : state.soort ? `<div class="empty">Nog geen kroeg met Guinness gemeld.<br><span class="small">Weet je er een? Meld het bij de kroeg onder "Guinness".</span></div>`
@@ -1237,7 +1242,7 @@ function lijstView() {
     : state.inBeeld ? `<div class="empty">Geen kroegen in beeld.<br><span class="small">Schuif of zoom de kaart, of zet "In beeld" uit.</span></div>`
     : `<div class="empty">Niets gevonden.<br><span class="small">Probeer een andere zoekterm of een ander filter.</span></div>`;
   const hint = !state.pos && !["goedkoop", "prijsvast", "verhoogd"].includes(state.filter)
-    ? `<p class="small muted hint">Op naam gesorteerd. <button type="button" class="linkbtn" data-locatie-lijst>Gebruik mijn locatie</button> en de dichtstbijzijnde kroeg staat bovenaan.</p>` : "";
+    ? `<p class="small muted hint">Kroegen met een prijs eerst, daarna op naam. <button type="button" class="linkbtn" data-locatie-lijst>Gebruik mijn locatie</button> en de dichtstbijzijnde kroeg staat bovenaan.</p>` : "";
   const meer = rows.length - state.limiet;
   return `<input class="search" type="search" placeholder="Zoek een kroeg, wijk of straat" value="${esc(state.zoek)}" data-zoek>
     <button class="row tocht-link" data-tocht-open><span class="ic-sm">${ICON_ROUTE}</span><span class="row-main"><span class="row-title">Plan een kroegentocht</span><span class="row-sub">Langs de goedkoopste kroegen of waar je nog niet was</span></span><span class="muted">›</span></button>
@@ -1286,7 +1291,7 @@ function detailView() {
       <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>`;
   }
   return `<button class="back" data-back>‹ Terug</button>
-    <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
+    <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${versheidTekst(k, v)}</span></div>
     <h2>${esc(k.naam)}</h2>
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
@@ -1750,7 +1755,7 @@ function formView() {
       <input name="prijs" inputmode="decimal" placeholder="3,50" required value="${esc(f.prijs ?? "")}">
       <p class="small muted" id="prijsVoorbeeld" aria-live="polite">Vul de prijs in. Je ziet meteen wat dat per vaasje is.</p>
       <label>Foto van de prijslijst (optioneel, +5)</label>
-      <input name="foto" type="file" accept="image/*" capture="environment">
+      <label class="btn fotoknop"><input name="foto" type="file" accept="image/*" capture="environment"><span id="fotoNaam">Foto maken of kiezen</span></label>
       <img class="foto-voorbeeld" id="fotoVoorbeeld" alt="Voorbeeld van je foto" hidden>
       <div class="btns"><button class="btn primary" type="submit" id="verstuur">${f.hier && !vandaag ? "Inchecken" : "Versturen"}</button></div>
       ${zonder}
@@ -1878,7 +1883,7 @@ async function beursView() {
     <div class="card">
       <div><b class="num">${s.bijdragen_week}</b> van ${WEEKDOEL} bijdragen <span class="muted small">· ${s.spelers_week} spelers</span></div>
       <div class="bar"><span style="width:${Math.min(100, (s.bijdragen_week / WEEKDOEL) * 100)}%"></span></div>
-      <div style="margin-top:12px"><b class="num">${s.oud}</b> oude koersen (90+ dagen) om te controleren <span class="muted small">· +15 per controle</span></div>
+      ${s.oud ? `<div style="margin-top:12px"><b class="num">${s.oud}</b> oude koersen (90+ dagen) om te controleren <span class="muted small">· +15 per controle</span></div>` : ""}
       <div style="margin-top:12px"><b class="num">${versPct}%</b> van de koersen is vers</div>
       <div class="bar fresh"><span style="width:${versPct}%"></span></div>
     </div>
@@ -1905,17 +1910,17 @@ async function rangView() {
 const LOGO = {
   apple: `<svg class="logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.28-1.6 2.78-.41 6.9 1.15 9.16.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27z"/></svg>`,
   google: `<svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.27c0-.82-.07-1.6-.2-2.36H12v4.47h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.56-5.17 3.56-8.73z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.9l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.28v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.29 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.28a12 12 0 0 0 0 10.8l4.01-3.1z"/><path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.8l3.44-3.44A11.5 11.5 0 0 0 12 0 12 12 0 0 0 1.28 6.6l4.01 3.1C6.23 6.86 8.88 4.75 12 4.75z"/></svg>`,
-  slot: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 9V7A5 5 0 0 0 7 7v2a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v2H9z"/></svg>`,
 };
 
 // Knoppen voor Apple en Google. Zolang een aanbieder in Supabase uit staat, staat de knop op slot
 // (zie docs/inloggen-met-apple-en-google.md). "koppelen": een anonieme speler maakt er een account van, met
 // behoud van punten en check-ins. "inloggen": met een bestaand account.
 function aanbiederKnoppen(soort = "inloggen") {
+  // Alleen aanbieders die in Supabase aanstaan; een knop die nog niet werkt, verwart alleen
   const werkwoord = soort === "koppelen" ? "Account maken met" : "Doorgaan met";
-  return `<div class="sociaal">${[["apple", "Apple"], ["google", "Google"]].map(([id, naam]) => state.aanbieders[id]
-    ? `<button class="btn aanbieder" data-aanbieder="${id}" data-soort="${soort}">${LOGO[id]}<span class="naam">${werkwoord} ${naam}</span></button>`
-    : `<button class="btn aanbieder op-slot" disabled aria-label="${werkwoord} ${naam}, nog niet beschikbaar">${LOGO[id]}<span class="naam">${werkwoord} ${naam}</span><span class="slot">${LOGO.slot}Binnenkort</span></button>`).join("")}</div>`;
+  const knoppen = [["apple", "Apple"], ["google", "Google"]].filter(([id]) => state.aanbieders[id])
+    .map(([id, naam]) => `<button class="btn aanbieder" data-aanbieder="${id}" data-soort="${soort}">${LOGO[id]}<span class="naam">${werkwoord} ${naam}</span></button>`);
+  return knoppen.length ? `<div class="sociaal">${knoppen.join("")}</div>` : "";
 }
 
 async function inloggenMet(aanbieder, knop) {
@@ -2005,6 +2010,9 @@ function codeFormulier(knop) {
 
 // Account maken en inloggen. Een anonieme speler (of iemand zonder bijdragen) maakt een account: hetzelfde
 // account krijgt een e-mailadres of Google, dus punten en check-ins blijven staan. Daarna kiest hij een eigen naam.
+// Een scheiding "of" alleen als er iets achter staat
+const metOf = (html, woord) => html ? `<div class="of">${woord}</div>${html}` : "";
+
 function accountBlok(p) {
   const code = (soort, knop) => state.inlog?.soort === soort ? codeFormulier(knop) : null;
   return `<h3>Account maken</h3>
@@ -2014,17 +2022,18 @@ function accountBlok(p) {
         <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
         <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
       </form>
-      <div class="of">of</div>
-      ${aanbiederKnoppen("koppelen")}`}
+      ${metOf(aanbiederKnoppen("koppelen"), "of")}`}
     </div>
-    <h3>Al een account?</h3>
-    ${p ? `<p class="small muted">Log in en je bijdragen van nu gaan mee.</p>` : ""}
-    ${code("inloggen", "Inloggen") ?? `${aanbiederKnoppen("inloggen")}
-      <div class="of">of met je e-mailadres</div>
+    ${code("inloggen", "Inloggen") ?? `<details class="klopt-niet inloggen"${onthouden.lees().email ? " open" : ""}>
+      <summary>Al een account? Log in</summary>
+      ${p ? `<p class="small muted">Log in en je bijdragen van nu gaan mee.</p>` : ""}
+      ${aanbiederKnoppen("inloggen")}
+      ${aanbiederKnoppen("inloggen") ? `<div class="of">of met je e-mailadres</div>` : ""}
       <form class="form" id="loginForm">
         <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(onthouden.lees().email ?? "")}" required>
         <div class="btns"><button class="btn" type="submit">Stuur inlogcode</button></div>
-      </form>`}`;
+      </form>
+    </details>`}`;
 }
 
 function ikView() {
@@ -2094,12 +2103,12 @@ function ikView() {
       </div>
       <div class="small muted" style="margin-top:10px">${p?.ontdekt ?? 0} ${(p?.ontdekt ?? 0) === 1 ? "kroeg" : "kroegen"} ontdekt. Punten krijg je voor melden en controleren, nooit voor drinken.</div>
     </div>
-    <div id="badges">${badgesHtml()}</div>
-    ${mijnKroegenHtml()}
-    ${koppelen}
     ${p && !p.naam_vast && !anoniem() ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
       <div class="small muted">Je speelt nu als ${esc(p.naam)}. Je kiest je naam een keer; daarna staat hij vast.</div>
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
+    <div id="badges">${badgesHtml()}</div>
+    ${mijnKroegenHtml()}
+    ${koppelen}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${bugBlok()}
     ${stadKeuzeBlok()}
@@ -2499,8 +2508,8 @@ function tochtView() {
     <h2>Kroegentocht</h2>
     <div class="muted small">${t.vanaf === "jij" ? "Vanaf jouw locatie" : `Vanaf het centrum van ${esc(stadNaam)}`}, kroegen binnen ${meters(TOCHT_STRAAL_M)}.
       ${t.vanaf === "jij" ? "" : `<button class="linkbtn" data-tocht-locatie>Gebruik mijn locatie</button>`}</div>
-    <label class="veld">Langs</label>
-    <div class="seg">${S.map(([id, n]) => `<button type="button" data-tocht-soort="${id}" aria-pressed="${id === t.soort}">${n}</button>`).join("")}</div>
+    ${S.length > 1 ? `<label class="veld">Langs</label>
+    <div class="seg">${S.map(([id, n]) => `<button type="button" data-tocht-soort="${id}" aria-pressed="${id === t.soort}">${n}</button>`).join("")}</div>` : ""}
     <label class="veld">Aantal kroegen</label>
     <div class="seg">${[3, 4, 5, 6].map((n) => `<button type="button" data-tocht-aantal="${n}" aria-pressed="${n === t.aantal}">${n}</button>`).join("")}</div>
     ${t.stops.length ? `<ul class="list" style="margin-top:12px">${rijen}</ul>
@@ -2604,7 +2613,15 @@ async function verstuurIncheck(keuze, form, knop) {
     pos = await locatie(10000);
     if (!pos) return klaar("Zet je locatie aan om in te checken");
     const d = afstand(pos, [k.lon, k.lat]);
-    if (d > INCHECK_M) return klaar(`Je bent ${meters(d)} van deze kroeg. Inchecken kan binnen ${INCHECK_M} m.`);
+    if (d > INCHECK_M) {
+      klaar();
+      const tekst = `Je bent ${meters(d)} van deze kroeg. Inchecken kan binnen ${INCHECK_M} m.`;
+      if (keuze === "zonder") return toast(tekst);
+      // GPS zit er vaak tientallen meters naast. Geef de prijs dan van afstand door, zonder punten voor ter plaatse.
+      if (!(await vraag(`${tekst} Wil je de prijs doorgeven zonder in te checken?`, "Prijs doorgeven", { gevaar: false }))) return;
+      state.form.hier = false;
+      return verstuurIncheck(keuze, form, knop);
+    }
   }
   knop.textContent = "Bezig…";
   if (!(await zorgVoorSpeler())) return klaar();
@@ -2786,6 +2803,7 @@ body.addEventListener("change", (e) => {
     if (img.src) URL.revokeObjectURL(img.src);
     img.hidden = !file;
     if (file) img.src = URL.createObjectURL(file);
+    $("#fotoNaam").textContent = file ? "Andere foto" : "Foto maken of kiezen";
     return;
   }
 });
