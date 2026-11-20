@@ -744,10 +744,27 @@ const DONKERE_KAART = [
   [/^place_/, { "text-color": "#ece4d2", "text-halo-color": "rgba(14,14,14,0.75)" }],
   [/^water_name$/, { "text-color": "#64a0d2", "text-halo-color": "rgba(14,14,14,0.6)" }],
 ];
-function lichtereDonkereKaart() {
-  if (!donker.matches) return;
+// De lichte stijl (Positron) is koel grijs. In de kleuren van het kaartje: crème papier, witte wegen
+// met randen in het warm grijs #D9CFBC, namen in inkt. Water en groen blijven herkenbaar.
+const LICHTE_KAART = [
+  [/^(background|road_area_pier)$/, { "background-color": "#f5edda", "fill-color": "#f5edda" }],
+  [/^road_pier$/, { "line-color": "#f5edda" }],
+  [/^landuse_residential$/, { "fill-color": "#efe5cf" }],
+  [/^building$/, { "fill-color": "#e8dcc3", "fill-outline-color": "#d9cfbc" }],
+  [/^park$/, { "fill-color": "#e2e3cd" }],
+  [/^landcover_wood$/, { "fill-color": "#d9dcc4" }],
+  [/^water$/, { "fill-color": "#c3cdcc" }],
+  [/^highway_path$/, { "line-color": "#e9dfc9" }],
+  [/^highway_minor$/, { "line-color": "#e4d9c2" }],
+  [/^(highway_major_casing|highway_motorway_casing|highway_motorway_bridge_casing|tunnel_motorway_casing)$/, { "line-color": "#d9cfbc" }],
+  [/^(railway|railway_transit|railway_service)$/, { "line-color": "#d9cfbc" }],
+  [/^highway-name/, { "text-color": "#6a665e", "text-halo-color": "#f5edda" }],
+  [/^label_/, { "text-color": "#0e0e0e", "text-halo-color": "#fff6e0" }],
+];
+function kaartKleuren() {
+  const tabel = donker.matches ? DONKERE_KAART : LICHTE_KAART;
   for (const laag of map.getStyle()?.layers ?? []) {
-    for (const [patroon, verf] of DONKERE_KAART) {
+    for (const [patroon, verf] of tabel) {
       if (!patroon.test(laag.id)) continue;
       // Alleen eigenschappen die bij het soort laag horen: fill-color bij een vlak, text-color bij tekst
       const soort = laag.type === "symbol" ? "text" : laag.type;
@@ -758,7 +775,7 @@ function lichtereDonkereKaart() {
 
 function kaartLagen() {
   const c = kleur();
-  lichtereDonkereKaart();
+  kaartKleuren();
   if (map.getSource("kroegen")) return;
   map.addSource("kroegen", { type: "geojson", data: geojson() });
   map.addSource("tocht", { type: "geojson", data: tochtGeojson() });

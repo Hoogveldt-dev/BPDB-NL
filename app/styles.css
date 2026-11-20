@@ -3,29 +3,30 @@
    Voorbeelden: Aandelen (koers, groene en rode pil), Kaarten (blad over de kaart, punten met een witte rand)
    en Weer (grote cijfers). iPhone eerst; vanaf 900px een zijbalk links.
    Kleuren van het visitekaartje: inkt #0E0E0E, creme #FFF6E0, warm grijs #D9CFBC en amber #F5B82E.
-   De grijzen zijn daarvan afgeleid (warm, niet blauwig). Statuskleuren (vers, oud, duurder, goedkoper,
+   Licht is het kaartje omgekeerd (crème papier met inkt), donker is het kaartje zelf. Statuskleuren (vers, oud, duurder, goedkoper,
    wachten) blijven die van iOS. In de Guinness-stand is de tint groen. */
 :root {
-  /* Achtergronden zoals iOS (gegroepeerd grijs, cellen wit), maar warm grijs zoals het kaartje */
-  --land: #f4f1ea;
-  --surface: #ffffff; --surface-2: rgb(120 108 88 / .12); --surface-3: #f4f1ea;
-  --glass: rgb(252 250 245 / .9);
-  --sep: rgb(62 54 40 / .18);
-  --fg: #0E0E0E; --muted: rgb(62 54 40 / .64); --muted-2: rgb(62 54 40 / .32);
+  /* Licht: het kaartje omgekeerd. Crème papier (cellen #FFF6E0, blad en achtergrond een tint dieper),
+     tekst in inkt, invoer en knoppen in het warm grijs. */
+  --land: #efe5cf;
+  --surface: #FFF6E0; --surface-2: rgb(217 207 188 / .55); --surface-3: #f3ead5;
+  --glass: rgb(243 234 213 / .92);
+  --sep: rgb(14 14 14 / .13);
+  --fg: #0E0E0E; --muted: rgb(14 14 14 / .62); --muted-2: rgb(14 14 14 / .32);
   /* Tint: de amber van het visitekaartje. Tekst op wit in een donkerder amber, anders is hij niet leesbaar. */
   --accent: #F5B82E; --accent-ink: #0E0E0E; --accent-text: #9a6400; --accent-zacht: rgb(245 184 46 / .16);
   --merk: #F5B82E; /* het logo blijft amber, ook in de Guinness-stand */
   /* Systeemkleuren */
   --fresh: #34c759; --fresh-t: #248a3d; --stale: #ff9500; --stale-t: #c93400; --old: #ff3b30; --old-t: #d70015;
-  --locked: #b3ada3; --wacht: #007aff; --blue: #007aff;
+  --locked: #ada28c; --wacht: #007aff; --blue: #007aff;
   /* Koers, gezien door de klant: duurder is rood, goedkoper is groen */
   --op: #ff3b30; --op-t: #d70015; --af: #34c759; --af-t: #248a3d; --gelijk: #948e84;
-  --balk: rgb(255 255 255 / .92); --balk-fg: #0E0E0E; --balk-muted: rgb(62 54 40 / .64);
+  --balk: rgb(255 246 224 / .94); --balk-fg: #0E0E0E; --balk-muted: rgb(14 14 14 / .62);
   --shadow: 0 2px 12px rgb(0 0 0 / .08), 0 0 1px rgb(0 0 0 / .12);
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .14);
   /* Mist: een lichte, egale waas, geen stippen. Licht genoeg dat straten en wijknamen leesbaar blijven,
      zodat je je ook kunt orienteren als er nog weinig is vrijgespeeld. */
-  --mist: rgb(244 241 234 / .74); --mist-stip: rgb(62 54 40 / .28);
+  --mist: rgb(245 237 218 / .74); --mist-stip: rgb(14 14 14 / .26);
   --hair: .5px solid var(--sep);
   --f-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
   --f-titel: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
@@ -37,15 +38,15 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --land: #0E0E0E;
-    --surface: #1b1a17; --surface-2: rgb(217 207 188 / .14); --surface-3: #2a2824;
-    --glass: rgb(27 26 23 / .88);
+    --surface: #1c1a16; --surface-2: rgb(217 207 188 / .14); --surface-3: #2a2824;
+    --glass: rgb(14 14 14 / .9);
     --sep: rgb(217 207 188 / .2);
-    --fg: #FFF6E0; --muted: rgb(217 207 188 / .78); --muted-2: rgb(217 207 188 / .38);
+    --fg: #FFF6E0; --muted: #D9CFBC; --muted-2: rgb(217 207 188 / .45);
     --accent: #F5B82E; --accent-ink: #0E0E0E; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
     --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
     --locked: #6b665d; --wacht: #0a84ff; --blue: #0a84ff;
     --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
-    --balk: rgb(14 14 14 / .92); --balk-fg: #FFF6E0; --balk-muted: rgb(217 207 188 / .78);
+    --balk: rgb(14 14 14 / .92); --balk-fg: #FFF6E0; --balk-muted: #D9CFBC;
     --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
     --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
     --mist: rgb(14 14 14 / .62); --mist-stip: rgb(217 207 188 / .2);
@@ -54,15 +55,15 @@
 }
 :root[data-theme="dark"] {
   --land: #0E0E0E;
-  --surface: #1b1a17; --surface-2: rgb(217 207 188 / .14); --surface-3: #2a2824;
-  --glass: rgb(27 26 23 / .88);
+  --surface: #1c1a16; --surface-2: rgb(217 207 188 / .14); --surface-3: #2a2824;
+  --glass: rgb(14 14 14 / .9);
   --sep: rgb(217 207 188 / .2);
-  --fg: #FFF6E0; --muted: rgb(217 207 188 / .78); --muted-2: rgb(217 207 188 / .38);
+  --fg: #FFF6E0; --muted: #D9CFBC; --muted-2: rgb(217 207 188 / .45);
   --accent: #F5B82E; --accent-ink: #0E0E0E; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
   --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
   --locked: #6b665d; --wacht: #0a84ff; --blue: #0a84ff;
   --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
-  --balk: rgb(14 14 14 / .92); --balk-fg: #FFF6E0; --balk-muted: rgb(217 207 188 / .78);
+  --balk: rgb(14 14 14 / .92); --balk-fg: #FFF6E0; --balk-muted: #D9CFBC;
   --shadow: 0 2px 12px rgb(0 0 0 / .4), 0 0 1px rgb(255 255 255 / .1);
   --shadow-sterk: 0 8px 30px rgb(0 0 0 / .5);
   --mist: rgb(14 14 14 / .62); --mist-stip: rgb(217 207 188 / .2);
