@@ -348,7 +348,6 @@ const state = {
   // Koers: prijsgeschiedenis uit kroeg_tijdlijn, punten per kroeg, de Pilsindex en tickercodes (zie koersen())
   // Lijst: alleen kroegen in beeld, een gekozen wijk (vanuit Beurs) en hoeveel rijen er staan
   pagina: null, // "regels": de spelregels
-  inBeeld: false,
   wijk: null,
   limiet: 40,
   // Kroeg waar je naartoe teruggaat na het inloggen
@@ -631,8 +630,9 @@ function lichtkrant() {
   // Prijzen die al lang gelijk zijn, verdienen ook een plek
   const vast = prijsvast().filter((x) => Date.now() - x.c.vastSinds > 365 * DAG && !gezien.has(x.k.id)).slice(0, 3);
   for (const { k, c } of vast) items.push(`<button class="tk" data-kroeg="${k.id}"><b>${codeVan(k.id)}</b>${euro(c.nu)} <span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span></button>`);
-  if (s) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${s.vrijgespeeld}/${s.kroegen} <span class="zacht">in kaart</span></span>`);
-  if (s && s.kroegen - s.vrijgespeeld > 0) items.push(`<span class="tk"><span class="zacht">${s.kroegen - s.vrijgespeeld} kroegen zonder koers</span></span>`);
+  const totaal = state.kroegen.length, metPrijs = inKaart();
+  if (totaal) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${metPrijs}/${totaal} <span class="zacht">in kaart</span></span>`);
+  if (totaal - metPrijs > 0) items.push(`<span class="tk"><span class="zacht">${totaal - metPrijs} kroegen zonder prijs</span></span>`);
   if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
   const een = items.join("");
   const baan = $("#tickerBaan");
@@ -674,7 +674,7 @@ function geojson() {
       properties: {
         id: k.id,
         naam: k.naam,
-        versheid: k.open_melding_id && k.versheid !== "locked" && !k.huidig_prijs_cent ? "wacht" : k.versheid,
+        versheid: kroegVersheid(k),
         label: state.soort ? (soortIn(k.id)?.prijs_cent ? euro(soortIn(k.id).prijs_cent) : "?") : toonPrijsTekst(k),
         bezocht: state.mijn.has(k.id),
         per25: prijsPer25(k) ?? 0,
@@ -1112,8 +1112,7 @@ function hud() {
       "Jouw index", eigen, eigen && idx ? eigen - idx.nu : null);
     return;
   }
-  const s = state.stad;
-  const pct = s && s.kroegen ? Math.round((s.vrijgespeeld / s.kroegen) * 100) : 0;
+  const pct = state.kroegen.length ? Math.round((inKaart() / state.kroegen.length) * 100) : 0;
   zetRing(pct, `${stadNaam} in kaart`, "Pilsindex", idx?.nu, idx?.delta, idx?.pct);
 }
 
@@ -1174,19 +1173,21 @@ function draw() {
   $("#tabIk").textContent = state.profiel && !anoniem() && state.profiel.naam_vast ? state.profiel.naam : "Ik";
 }
 
+// Een prijs die nog op bevestiging wacht (van een speler of van de menukaart) is blauw. Grijs is alleen
+// een kroeg waar nog niemand de prijs van weet; elke andere kroeg is "in kaart" (inKaart()).
 function kroegVersheid(k) {
-  if (k.open_melding_id && !k.huidig_prijs_cent && !vanMenukaart(k)) return "wacht";
+  if (k.open_melding_id && !k.huidig_prijs_cent) return "wacht";
   return k.versheid;
 }
 
-// Versheid in woorden. Een kroeg met alleen een menukaartprijs heeft wel een prijs, maar nog niemand controleerde hem.
-const versheidTekst = (k, v) => (v === "locked" && k.open_prijs_cent && vanMenukaart(k) ? "Nog niet gecontroleerd" : VERSHEID[v]);
+// Hoeveel kroegen in kaart zijn: alle kroegen met een prijs in de app, bevestigd, van de menukaart of nog te bevestigen
+const inKaart = (lijst = state.kroegen) => lijst.filter((k) => prijsPer25(k) != null).length;
 
 function rowHtml(k) {
   const v = kroegVersheid(k);
   const d = state.pos ? Math.round(afstand(state.pos, [k.lon, k.lat])) : null;
   // Zoals in Aandelen: naam vet, daaronder de tickercode en de rest in grijs
-  const sub = [codeVan(k.id), k.wijk, d != null ? meters(d) : null, versheidTekst(k, v), state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
+  const sub = [codeVan(k.id), k.wijk, d != null ? meters(d) : null, v === "wacht" && !state.soort ? null : VERSHEID[v], state.mijn.has(k.id) ? "bezocht" : null].filter(Boolean).join(" · ");
   return `<li><button class="row" data-kroeg="${k.id}">
     <span class="dot ${v}"></span>
     <span class="row-main"><span class="row-title">${esc(k.naam)}</span><span class="row-sub">${esc(sub)}</span></span>
@@ -1214,37 +1215,29 @@ function lijstView() {
   const F = [
     { id: "alles", naam: "Alles", f: () => true },
     { id: "goedkoop", naam: "Goedkoopst", f: (k) => prijsPer25(k) != null },
-    { id: "slot", naam: "Nog geen prijs", f: (k) => k.versheid === "locked" },
-    { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
-    { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
-    { id: "prijsvast", naam: "Langst prijsvast", f: (k) => koersVan(k.id) },
-    { id: "verhoogd", naam: "Dit jaar verhoogd", f: (k) => koersVan(k.id)?.recent },
+    { id: "slot", naam: "Nog geen prijs", f: (k) => prijsPer25(k) == null },
+    // De klussen waarmee je punten verdient: een melding van een ander bevestigen of een oude prijs controleren
+    { id: "controleren", naam: "Te controleren", f: (k) => (k.open_melding_id && !vanMenukaart(k)) || k.versheid === "old" },
     ...(state.sessie ? [{ id: "nieuw", naam: "Nog niet bezocht", f: (k) => !state.mijn.has(k.id) }] : []),
   ];
   const f = F.find((x) => x.id === state.filter) ?? F[0];
   const q = state.zoek.trim().toLowerCase();
   // Met een soort gekozen: "Goedkoopst" sorteert op de prijs van die soort; kroegen zonder prijs ervan achteraan
   const prijsVoor = (k) => state.soort ? (perPint(soortIn(k.id)) ?? Infinity) : prijsPer25(k);
-  const b = state.inBeeld && kaartKlaar ? map.getBounds() : null;
   let rows = zichtbareKroegen()
     .filter((k) => state.soort && state.filter === "goedkoop" ? true : f.f(k))
     .filter((k) => !state.wijk || k.wijk === state.wijk)
-    .filter((k) => !b || (k.lon >= b.getWest() && k.lon <= b.getEast() && k.lat >= b.getSouth() && k.lat <= b.getNorth()))
     .filter((k) => !q || [k.naam, k.wijk, k.adres].some((x) => (x ?? "").toLowerCase().includes(q)));
   if (state.filter === "goedkoop" || (guinnessAan() && !state.pos)) rows.sort((a, b) => prijsVoor(a) - prijsVoor(b));
-  else if (state.filter === "prijsvast") rows.sort((a, b) => koersVan(a.id).vastSinds - koersVan(b.id).vastSinds);
-  else if (state.filter === "verhoogd") rows.sort((a, b) => koersVan(b.id).vastSinds - koersVan(a.id).vastSinds);
   else if (state.pos) rows.sort((a, b) => afstand(state.pos, [a.lon, a.lat]) - afstand(state.pos, [b.lon, b.lat]));
   // Zonder locatie: eerst de kroegen met een prijs (de lijst is anders vooral "Nog geen prijs"), daarna op naam
   else rows.sort((a, b) => (prijsPer25(a) == null) - (prijsPer25(b) == null));
   const leeg = state.kroegen.length === 0
     ? `<div class="empty">Nog geen kroegen geladen.<br><span class="small">Een beheerder importeert ze via het tabblad Ik.</span></div>`
     : state.soort ? `<div class="empty">Nog geen kroeg met Guinness gemeld.<br><span class="small">Weet je er een? Meld het bij de kroeg onder "Guinness".</span></div>`
-    : state.filter === "verhoogd" && !q ? `<div class="empty">Dit jaar heeft nog geen kroeg de prijs verhoogd.<br><span class="small">Of niemand heeft het nog gemeld.</span></div>`
-    : state.filter === "prijsvast" && !q ? `<div class="empty">Nog geen koersen.</div>`
-    : state.inBeeld ? `<div class="empty">Geen kroegen in beeld.<br><span class="small">Schuif of zoom de kaart, of zet "In beeld" uit.</span></div>`
+    : state.filter === "controleren" && !q ? `<div class="empty">Niets te controleren.<br><span class="small">Geen meldingen die wachten en geen prijzen van 90 dagen of ouder.</span></div>`
     : `<div class="empty">Niets gevonden.<br><span class="small">Probeer een andere zoekterm of een ander filter.</span></div>`;
-  const hint = !state.pos && !["goedkoop", "prijsvast", "verhoogd"].includes(state.filter)
+  const hint = !state.pos && state.filter !== "goedkoop"
     ? `<p class="small muted hint">Kroegen met een prijs eerst, daarna op naam.</p>` : "";
   // Zit je in een kroeg, dan is dit de eerste stap: met je locatie staat hij bovenaan
   const bijJou = state.pos ? "" : `<button class="row tocht-link" data-locatie-lijst><span class="ic-sm">${ICON_LOCATIE}</span><span class="row-main"><span class="row-title">Kroegen bij jou</span><span class="row-sub">Zit je in een kroeg? Zet hem bovenaan</span></span><span class="muted">›</span></button>`;
@@ -1252,7 +1245,7 @@ function lijstView() {
   return `<input class="search" type="search" placeholder="Zoek een kroeg, wijk of straat" value="${esc(state.zoek)}" data-zoek>
     ${bijJou}
     <button class="row tocht-link" data-tocht-open><span class="ic-sm">${ICON_ROUTE}</span><span class="row-main"><span class="row-title">Plan een kroegentocht</span><span class="row-sub">Langs de goedkoopste kroegen of waar je nog niet was</span></span><span class="muted">›</span></button>
-    <div class="chips">${state.wijk ? `<button class="chip" data-wis-wijk aria-pressed="true" aria-label="Filter ${esc(state.wijk)} wissen">${esc(state.wijk)} ✕</button>` : ""}<button class="chip" data-in-beeld aria-pressed="${state.inBeeld}">In beeld</button>${F.map((x) => `<button class="chip" data-filter="${x.id}" aria-pressed="${x.id === f.id}">${x.naam}</button>`).join("")}</div>
+    <div class="chips">${state.wijk ? `<button class="chip" data-wis-wijk aria-pressed="true" aria-label="Filter ${esc(state.wijk)} wissen">${esc(state.wijk)} ✕</button>` : ""}${F.map((x) => `<button class="chip" data-filter="${x.id}" aria-pressed="${x.id === f.id}">${x.naam}</button>`).join("")}</div>
     ${guinnessAan() ? `<p class="small guinness-uitleg">Guinness-stand: alleen kroegen met Guinness, goedkoopste pint eerst. <button type="button" class="linkbtn" data-guinness-uit>Terug naar pils</button></p>` : ""}
     ${hint}
     ${rows.length ? `<div class="small muted telling">${rows.length === 1 ? "1 kroeg" : `${rows.length} kroegen`}</div><ul class="list">${rows.slice(0, state.limiet).map(rowHtml).join("")}</ul>
@@ -1261,8 +1254,7 @@ function lijstView() {
 
 // Vanuit Beurs een wijk aantikken: de lijst toont alleen die wijk en de kaart zoomt erop in
 function kiesWijk(naam) {
-  // De wijk vervangt "In beeld": anders valt de wijk buiten beeld zolang de kaart nog schuift
-  state.wijk = naam; state.filter = "alles"; state.limiet = 40; state.inBeeld = false;
+  state.wijk = naam; state.filter = "alles"; state.limiet = 40;
   setTab("kaart");
   const ks = state.kroegen.filter((k) => k.wijk === naam);
   if (ks.length && kaartKlaar) {
@@ -1270,11 +1262,6 @@ function kiesWijk(naam) {
     map.fitBounds(b, { padding: wide() ? { left: 440, top: 80, bottom: 40, right: 40 } : { top: 140, bottom: innerHeight * 0.5, left: 30, right: 30 }, maxZoom: 15.5, duration: 700 });
   }
 }
-
-// Met "In beeld" volgt de lijst de kaart
-map.on("moveend", () => {
-  if (state.inBeeld && state.tab === "kaart" && state.selected == null && !state.tocht && !bezigMetTypen()) draw();
-});
 
 function detailView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
@@ -1297,7 +1284,7 @@ function detailView() {
       <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>`;
   }
   return `<button class="back" data-back>‹ Terug</button>
-    <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${versheidTekst(k, v)}</span></div>
+    <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
     <h2>${esc(k.naam)}</h2>
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
@@ -1823,11 +1810,13 @@ async function beursView() {
     sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").eq("gemeente", stadNaam).order("op", { ascending: false }).limit(15),
   ]);
   if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
-  const s = state.stad ?? { kroegen: 0, vrijgespeeld: 0, vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
-  const pct = s.kroegen ? Math.round((s.vrijgespeeld / s.kroegen) * 100) : 0;
-  const MS = [25, 50, 75, 100], next = MS.find((m) => m > pct), nodig = next ? Math.ceil((next / 100) * s.kroegen) - s.vrijgespeeld : 0;
+  const s = state.stad ?? { vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
+  // Dezelfde telling als op de kaart en in de lichtkrant: elke kroeg met een prijs
+  const totaal = state.kroegen.length, metPrijs = inKaart();
+  const pct = totaal ? Math.round((metPrijs / totaal) * 100) : 0;
+  const MS = [25, 50, 75, 100], next = MS.find((m) => m > pct), nodig = next ? Math.ceil((next / 100) * totaal) - metPrijs : 0;
   const C = 2 * Math.PI * 42;
-  const versPct = s.vrijgespeeld ? Math.round((s.vers / s.vrijgespeeld) * 100) : 0;
+  const versPct = metPrijs ? Math.round((s.vers / metPrijs) * 100) : 0;
   const idx = state.koers.index;
 
   // Bierprijzen dalen bijna nooit en stijgen hooguit een keer per jaar. Daarom geen stijgers en dalers,
@@ -1852,10 +1841,11 @@ async function beursView() {
   // Wijken als sectoren: de mediaan per wijk naast de Pilsindex
   const sector = (w) => {
     const m = mediaan(state.kroegen.filter((k) => k.wijk === w.naam).map((k) => koersVan(k.id)?.nu).filter(Boolean));
+    const wi = inKaart(state.kroegen.filter((k) => k.wijk === w.naam));
     return `<button type="button" class="sector" data-wijk="${esc(w.naam)}" aria-label="${esc(w.naam)} op de kaart tonen">
       <div class="t"><b>${esc(w.naam)}</b><span>${m ? `<span class="price">${euro(m)}</span>` : `<span class="small muted">geen koers</span>`}</span></div>
-      <div class="t small muted"><span>${w.vrijgespeeld} van ${w.kroegen} in kaart</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
-      <div class="bar"><span style="width:${w.kroegen ? (w.vrijgespeeld / w.kroegen) * 100 : 0}%"></span></div></button>`;
+      <div class="t small muted"><span>${wi} van ${w.kroegen} in kaart</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
+      <div class="bar"><span style="width:${w.kroegen ? (wi / w.kroegen) * 100 : 0}%"></span></div></button>`;
   };
 
   const melding = (g) => {
@@ -1872,17 +1862,18 @@ async function beursView() {
       <div class="kop">Pilsindex ${esc(stadNaam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
       ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">in 12 maanden</span>` : ""}</div>
         <div class="uitleg">Wat een vaasje pils in ${esc(stadNaam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
+        ${metPrijs > idx.n ? `<div class="uitleg">Van de ${metPrijs} kroegen met een prijs tellen er ${idx.n} mee. Een nieuwe melding telt mee zodra een andere speler hem bevestigt.</div>` : ""}
         ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", lijnLabel: "", kleur: idx.delta > 0 ? "var(--op)" : idx.delta < 0 ? "var(--af)" : "var(--accent)" })}</div>` : ""}`
       : `<div class="stand"><span class="big-price">€ ?</span></div>
         <div class="uitleg">Nog geen koers. Geef de eerste prijs door en zet de Pilsindex op het bord.</div>`}
     </div>
     <div class="small muted">↗ duurder · ↘ goedkoper · → vast. Rood en groen zoals jij het als klant voelt.</div>
     ${duo}
-    <h3>Samen in kaart <span class="muted">${s.vrijgespeeld}/${s.kroegen}</span></h3>
+    <h3>Samen in kaart <span class="muted">${metPrijs}/${totaal}</span></h3>
     <div class="card ring-big">
       <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="ring-bg"/><circle cx="50" cy="50" r="42" class="ring-fg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct / 100)}"/></svg>
       <div><div class="pct">${pct}%</div><div>van ${esc(stadNaam)} heeft een prijs</div>
-      <div class="small muted">${s.vrijgespeeld} van ${s.kroegen} kroegen${next ? ` · nog ${nodig} tot ${next}%` : " · alles in kaart!"}</div></div>
+      <div class="small muted">${metPrijs} van ${totaal} kroegen${next ? ` · nog ${nodig} tot ${next}%` : " · alles in kaart!"}</div></div>
     </div>
     <div class="milestones">${MS.map((m) => `<span class="${pct >= m ? "done" : ""}">${m}%</span>`).join("")}</div>
     <h3>Deze week, met z'n allen</h3>
@@ -1890,7 +1881,7 @@ async function beursView() {
       <div><b class="num">${s.bijdragen_week}</b> van ${WEEKDOEL} bijdragen <span class="muted small">· ${s.spelers_week} spelers</span></div>
       <div class="bar"><span style="width:${Math.min(100, (s.bijdragen_week / WEEKDOEL) * 100)}%"></span></div>
       ${s.oud ? `<div style="margin-top:12px"><b class="num">${s.oud}</b> oude koersen (90+ dagen) om te controleren <span class="muted small">· +15 per controle</span></div>` : ""}
-      <div style="margin-top:12px"><b class="num">${versPct}%</b> van de koersen is vers</div>
+      <div style="margin-top:12px"><b class="num">${versPct}%</b> van de prijzen is vers</div>
       <div class="bar fresh"><span style="width:${versPct}%"></span></div>
     </div>
     <h3>Sectoren <span class="muted">tik voor de kaart</span></h3>
@@ -2737,7 +2728,6 @@ body.addEventListener("click", (e) => {
   }
   if (t.dataset.oordeelAanbod) return beoordeelAanbod(Number(t.dataset.aanbod), t.dataset.oordeelAanbod);
   if (t.dataset.filter) { state.filter = t.dataset.filter; state.limiet = 40; return draw(); }
-  if (t.dataset.inBeeld !== undefined) { state.inBeeld = !state.inBeeld; state.limiet = 40; return draw(); }
   if (t.dataset.wisWijk !== undefined) { state.wijk = null; state.limiet = 40; return draw(); }
   if (t.dataset.wijk) return kiesWijk(t.dataset.wijk);
   if (t.dataset.meer !== undefined) { state.limiet += 40; return draw(); }

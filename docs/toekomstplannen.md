@@ -21,6 +21,13 @@ Extra bier bij een kroeg (Guinness, witbier, een ander merk pils) levert nu geen
 
 De betrouwbaarheid verandert sinds migratie `20261106220000_betrouwbaarheid_verwachting` naar verwachting (het idee van Elo): zie [concept.md](concept.md), 2.6. Dat staat erin als voorlopige oplossing; **Kjell is er nog niet tevreden over**. Bij een nieuwe versie: nieuwe migratie met `private.betrouwbaarheid_na` en eventueel `private.ervaren_melder`, de tabel in `supabase/README.md`, paragraaf 2.6 en de test.
 
+## Eenvoudiger voor een eerste bezoeker
+
+Opmerkingen uit een rondgang door de app (20 november 2026). Kjell wil ze bewaren, nog niet bouwen.
+
+- **Twee soorten navigatie tegelijk.** Op de kaart staan Stad, Koers en Mijn kaart plus de Guinness-knop, in het blad staan Kaart, Beurs, Ranglijst en Ik. Een nieuwe gebruiker ziet zo zeven knoppen voordat hij iets heeft gedaan. Idee: Koers en Guinness achter een knop "Weergave".
+- **Veel eigen begrippen.** Koers, Pilsindex, in kaart, vrijspelen, ontdekt en tickercodes zijn leuk zodra je het spel kent, maar veel voor een eerste bezoek. Een eerste bezoeker heeft eigenlijk maar een vraag: wat kost hier een biertje? Idee: de beurstaal pas tonen als iemand een keer heeft bijgedragen.
+
 ## Meer beurs bij Bierkoers
 
 De app heeft al een lichtkrant, tickercodes, het koersverschil per kroeg, de Pilsindex (vergeleken met twaalf maanden terug), langst prijsvast en dit jaar verhoogd, een koerskaart, wijken als sectoren en een trapje per rij. Alles daarvan wordt in de app berekend uit `kroeg_tijdlijn` (`koersen()` in `app/app.js`). Ideeën voor later:
