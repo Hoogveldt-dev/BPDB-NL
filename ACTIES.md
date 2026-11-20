@@ -17,8 +17,8 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 ## Terraskaartje (bierkoers.nl/k)
 
-1. **Migratie `20261120143022_kaartscans`** uitvoeren (SQL Editor, of laat Claude het doen via MCP en keur de vraag van Supabase goed) en de versie gelijkzetten aan `20261120143022`. Doe dit voordat de app met `kaartscan.js` live gaat; anders mislukt de telling (de app werkt wel gewoon). Daarna de Security Advisor.
-2. **Na de deploy** op een telefoon `https://bierkoers.nl/k` openen: het adres wordt `bierkoers.nl` en er staat een rij in `kaartscans` (query in `supabase/README.md`, Kaartscans).
+1. ~~**Migratie `20261120143022_kaartscans`.**~~ Gedaan op 20 november 2026 in de SQL Editor. Security Advisor: een nieuwe waarschuwing, `rls_policy_always_true` op `kaartscans` (regel `scan toevoegen`). Die is bewust: iedereen mag een scan toevoegen, niemand mag lezen, wijzigen of wissen. Verder alleen de bekende waarschuwingen over anonieme spelers en gelekte wachtwoorden.
+2. ~~**Testen op de echte site.**~~ Gedaan op 20 november 2026: `https://bierkoers.nl/k` op een telefoon gaf de eerste rij in `kaartscans` (`bron = kaartje`).
 
 ## Punten meteen
 
