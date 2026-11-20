@@ -319,6 +319,7 @@ const state = {
   kroegen: [],
   stad: null,
   badgeTellers: {}, // tellers voor de badges onder Ik (laadBadges)
+  uitgeklapt: new Set(), // namen van open uitklapblokken (data-onthoud), zie uitgeklapt()
   steden: [], // alle steden die meedoen (stad_voortgang), voor de stadskeuze onder Ik
   selected: null,
   form: null,
@@ -2011,26 +2012,18 @@ function codeFormulier(knop) {
 const metOf = (html, woord) => html ? `<div class="of">${woord}</div>${html}` : "";
 
 function accountBlok(p) {
-  const code = (soort, knop) => state.inlog?.soort === soort ? codeFormulier(knop) : null;
-  return `<h3>Account maken</h3>
+  if (state.inlog) return codeFormulier(state.inlog.soort === "koppelen" ? "Account maken" : "Inloggen");
+  const email = onthouden.lees().email ?? "";
+  return `<h3>Inloggen of account maken</h3>
     <div class="card">
-      <div class="small">${p ? `Je speelt nu als <b>${esc(p.naam)}</b>. ` : ""}Maak een account om je eigen spelersnaam te kiezen, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.${p ? " Je punten en check-ins gaan mee." : ""}</div>
-      ${code("koppelen", "Account maken") ?? `<form class="form" id="koppelForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" required>
-        <div class="btns"><button class="btn primary" type="submit">Stuur code</button></div>
-      </form>
-      ${metOf(aanbiederKnoppen("koppelen"), "of")}`}
-    </div>
-    ${code("inloggen", "Inloggen") ?? `<details class="klopt-niet inloggen"${onthouden.lees().email ? " open" : ""}>
-      <summary>Al een account? Log in</summary>
-      ${p ? `<p class="small muted">Log in en je bijdragen van nu gaan mee.</p>` : ""}
-      ${aanbiederKnoppen("inloggen")}
-      ${aanbiederKnoppen("inloggen") ? `<div class="of">of met je e-mailadres</div>` : ""}
+      ${p ? `<div class="small">Je speelt nu als <b>${esc(p.naam)}</b>.</div><div class="small">Je punten en check-ins gaan mee, en met een account kun je prijzen van anderen bevestigen.</div>` : ""}
       <form class="form" id="loginForm">
-        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(onthouden.lees().email ?? "")}" required>
-        <div class="btns"><button class="btn" type="submit">Stuur inlogcode</button></div>
+        <label>E-mailadres</label><input name="email" type="email" autocomplete="email" value="${esc(email)}" required>
+        <div class="btns"><button class="btn primary" type="submit">Ga verder</button></div>
       </form>
-    </details>`}`;
+      <div class="small muted" style="margin-top:8px">Je krijgt een code per mail, geen wachtwoord. Hoort er nog geen account bij je e-mailadres, dan maken we er een.</div>
+      ${metOf(aanbiederKnoppen(p ? "koppelen" : "inloggen"), "of")}
+    </div>`;
 }
 
 function ikView() {
@@ -2049,7 +2042,9 @@ function ikView() {
   }
   // Nog niets bijgedragen: nog geen account. Je speelt mee vanaf je eerste bijdrage, of je maakt hier meteen een account.
   if (!state.sessie && kanAnoniem()) {
-    return `<h2>Ik</h2><p class="muted">Nog geen bijdragen. Meld een prijs of check in bij een kroeg en je speelt meteen mee.</p>
+    const terug = !!onthouden.lees().email;
+    return `<h2>${terug ? "Welkom terug" : "Ik"}</h2>
+      <p class="muted">${terug ? "Log in en je punten en badges staan er weer." : "Je speelt mee zodra je een prijs meldt of incheckt. Met een account bewaar je je punten."}</p>
       ${accountBlok(null)}
       <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
       ${bugBlok()}
@@ -2120,9 +2115,9 @@ function ikView() {
       <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
       ${teksten.lijst().length ? `<ul class="list eigen-teksten" data-geen-teksten>${teksten.lijst().map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
         <button type="button" class="mini" data-tekst-wis="${esc(sleutel)}">Standaard</button></li>`).join("")}</ul>` : `<div class="small muted" style="margin-top:8px">Nog geen eigen teksten.</div>`}</div>` : ""}
-    <h3>Jouw gegevens</h3>
+    <details class="uitklap" data-onthoud="gegevens"${uitgeklapt("gegevens")}><summary><span class="uitklap-kop">Jouw gegevens</span></summary>
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
-      Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p>
+      Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p></details>
     <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
 }
 
@@ -2367,14 +2362,23 @@ function badgeTellers() {
   return { checkins, kroegen: state.mijn.size, ontdekt: state.profiel?.ontdekt ?? 0, ...state.badgeTellers };
 }
 
+// Ingeklapt een strook met je behaalde badges; uitgeklapt alle badges met je voortgang
 function badgesHtml() {
   const t = badgeTellers();
   const lijst = BADGES.map((b) => ({ ...b, n: t[b.tel] ?? 0 })).map((b) => ({ ...b, behaald: b.n >= b.doel }));
-  return `<h3>Badges · ${lijst.filter((b) => b.behaald).length} van ${lijst.length}</h3>
+  const behaald = lijst.filter((b) => b.behaald);
+  const icoon = (b) => `<span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true">${b.icoon}</svg></span>`;
+  return `<details class="uitklap awards-blok" data-onthoud="badges"${uitgeklapt("badges")}>
+    <summary><span class="uitklap-kop">Badges · ${behaald.length} van ${lijst.length}</span>
+      <span class="awards-strook" aria-hidden="true">${behaald.map((b) => `<span class="award behaald klein" title="${esc(b.naam)}">${icoon(b)}</span>`).join("")}</span></summary>
     <div class="awards">${lijst.map((b) => `<div class="award${b.behaald ? " behaald" : ""}">
-      <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true">${b.icoon}</svg></span>
-      <b>${b.naam}</b><span>${b.uitleg}</span>${!b.behaald && b.doel > 1 ? `<span class="vg">${b.n}/${b.doel}</span>` : ""}</div>`).join("")}</div>`;
+      ${icoon(b)}
+      <b>${b.naam}</b><span>${b.uitleg}</span>${!b.behaald && b.doel > 1 ? `<span class="vg">${b.n}/${b.doel}</span>` : ""}</div>`).join("")}</div>
+  </details>`;
 }
+
+// Uitklapblokken met data-onthoud blijven open als het scherm opnieuw wordt getekend (bijvoorbeeld door realtime)
+const uitgeklapt = (naam) => (state.uitgeklapt.has(naam) ? " open" : "");
 
 // Tellers die de app nog niet heeft, met een telling per soort bijdrage. Hooguit eens per 15 seconden.
 let badgesGeladen = 0;
@@ -2437,24 +2441,19 @@ function mijnKroegenHtml() {
     : [];
 
   return `${kop}
-    <div class="tegels">
-      <div class="tegel goud"><div class="getal">${mijn.length}</div><div>${mijn.length === 1 ? "kroeg" : "kroegen"}</div></div>
-      <div class="tegel nacht"><div class="getal">${pct}%</div><div>van ${esc(stadNaam)}</div></div>
-    </div>
-    <div class="btns"><button class="btn" data-mijn-kaart>Toon op mijn kaart</button></div>
-
-    <h3>Wijken bezocht · ${wijkenBezocht} van ${wijken.length}</h3>
-    ${wijken.length ? `<div class="card" style="padding:4px 14px">${wijken.map((w) => `<div class="wijkrij ${w.bezocht ? "" : "leeg"}">
-      <div style="display:flex;justify-content:space-between"><span>${esc(w.naam)}</span><span class="small muted">${w.bezocht}/${w.kroegen}</span></div>
-      <div class="bar"><span style="width:${(w.bezocht / w.kroegen) * 100}%"></span></div></div>`).join("")}</div>` : `<div class="muted small">Nog geen wijken geladen.</div>`}
-
-    <h3>Alle stats</h3>
-    <div class="statgrid">
+    <div class="statgrid" style="margin-top:12px">
+      <div class="card stat"><b class="goud">${mijn.length}</b><span>${mijn.length === 1 ? "kroeg" : "kroegen"}, ${pct}% van ${esc(stadNaam)}</span></div>
       <div class="card stat"><b>${checkins}</b><span>check-ins</span></div>
-      <div class="card stat"><b>${wijkenBezocht}</b><span>${wijkenBezocht === 1 ? "wijk" : "wijken"}</span></div>
       ${eigenIndex ? `<div class="card stat"><b>${euro(eigenIndex)}</b><span>jouw index${pilsindex ? `, ${deltaHtml(eigenIndex - pilsindex)} t.o.v. de stad` : ""}</span></div>` : ""}
       <div class="card stat"><b>${eerste ? new Date(eerste).toLocaleDateString(LOCALE, { day: "numeric", month: "short", year: "numeric" }) : ""}</b><span>eerste check-in</span></div>
     </div>
+    <div class="btns"><button class="btn" data-mijn-kaart>Toon op mijn kaart</button></div>
+    ${wijken.length ? `<details class="uitklap" data-onthoud="wijken"${uitgeklapt("wijken")}>
+      <summary><span class="uitklap-kop">Wijken bezocht · ${wijkenBezocht} van ${wijken.length}</span></summary>
+      <div class="card" style="padding:4px 14px">${wijken.map((w) => `<div class="wijkrij ${w.bezocht ? "" : "leeg"}">
+      <div style="display:flex;justify-content:space-between"><span>${esc(w.naam)}</span><span class="small muted">${w.bezocht}/${w.kroegen}</span></div>
+      <div class="bar"><span style="width:${(w.bezocht / w.kroegen) * 100}%"></span></div></div>`).join("")}</div>
+    </details>` : ""}
     ${vaste && vaste.keer > 1 ? `<button class="row" data-kroeg="${vaste.id}"><span class="row-main"><span class="row-sub">Vaste stek</span><span class="row-title">${esc(vaste.naam)}</span></span><span class="price">${vaste.keer}<small>keer</small></span></button>` : ""}
     ${goedkoopst ? `<button class="row" data-kroeg="${goedkoopst.id}"><span class="row-main"><span class="row-sub">Goedkoopste waar je was</span><span class="row-title">${esc(goedkoopst.naam)}</span></span><span class="price">${spelPrijs(goedkoopst)}<small>per vaasje</small></span></button>` : ""}
 
@@ -2794,6 +2793,12 @@ body.addEventListener("focusin", (e) => {
   setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 400);
 });
 
+// "toggle" bubbelt niet, maar is in de capture-fase wel te volgen
+body.addEventListener("toggle", (e) => {
+  const naam = e.target.dataset?.onthoud;
+  if (naam) e.target.open ? state.uitgeklapt.add(naam) : state.uitgeklapt.delete(naam);
+}, true);
+
 body.addEventListener("change", (e) => {
   if (e.target.id === "stadKeuze") return kiesStad(e.target.value);
   if (e.target.name === "foto" && e.target.closest("#prijsForm")) {
@@ -2831,13 +2836,13 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
   if (f.id === "bugForm") return verstuurBug(f);
   if (f.id === "stadForm") return verstuurStad(f);
-  if (f.id === "loginForm" || f.id === "koppelForm" || f.id === "aanmeldForm") {
+  if (f.id === "loginForm" || f.id === "aanmeldForm") {
     const fd = new FormData(f);
     const email = String(fd.get("email")).trim().toLowerCase();
     const naam = fd.has("naam") ? String(fd.get("naam")).trim() : undefined;
     onthouden.schrijf({ ...onthouden.lees(), email, ...(naam ? { naam } : {}) });
-    const soort = { loginForm: "inloggen", koppelForm: "koppelen", aanmeldForm: "aanmelden" }[f.id];
-    if (soort === "koppelen" && !(await zorgVoorSpeler())) return;
+    // Een formulier voor inloggen en account maken: bestaat het account niet, dan biedt stuurCode er een aan (nieuwAdres)
+    const soort = f.id === "aanmeldForm" ? "aanmelden" : "inloggen";
     return stuurCode(email, soort, f.querySelector("button[type=submit]"), naam);
   }
   // Nieuw account vanuit inloggen: hetzelfde als Account maken met dit e-mailadres. Het anonieme account
