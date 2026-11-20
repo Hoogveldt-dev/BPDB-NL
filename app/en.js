@@ -504,7 +504,9 @@ export const EN = {
   "Prijs van # dagen of ouder controleren": "Check a price # days or older",
   "Binnen * m van de kroeg": "Within * m of the pub",
   "Je melding wordt weerlegd": "Your report is refuted",
-  "Punten krijg je meteen, ook voor bevestigen. Een prijs komt pas vast op de kaart als andere spelers hem bevestigen. Meestal zijn dat er twee; bij een melder met een betrouwbaarheid boven #% is een genoeg. Wijkt een prijs meer dan #% af van de stad, dan zijn er altijd twee nodig. Twee keer \"klopt niet\" en de melding is weerlegd: dan gaan de punten van de melder en van wie \"klopt\" zei er weer af.": "You get points right away, also for confirming. A price only sticks on the map once other players confirm it. Usually two; for a reporter with reliability above #% one is enough. If a price differs more than #% from the city, two are always needed. Two times \"not correct\" and the report is refuted: then the points of the reporter and of those who said \"correct\" are taken off again.",
+  "Punten krijg je meteen, ook voor bevestigen.": "You get points right away, also for confirming.",
+  "Een prijs komt pas vast op de kaart als andere spelers hem bevestigen, meestal twee. Zo voorkomen we koersmanipulatie.": "A price only becomes firm on the map once other players confirm it, usually two. That is how we prevent price manipulation.",
+  "Zeggen twee spelers \"klopt niet\", dan is de melding weerlegd en gaan de punten eraf.": "If two players say \"not right\", the report is refuted and the points are taken back.",
   "Hoe punten werken": "How points work",
 
   // Beheer
