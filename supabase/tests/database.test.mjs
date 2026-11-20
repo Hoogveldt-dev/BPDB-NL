@@ -827,6 +827,28 @@ for (let i = 0; i < 9; i++) await als(B, `select public.meld_bug('Nog een bug nu
 check('na 10 bugs op een dag is het genoeg', /al 10 bugs/.test((await als(B, `select public.meld_bug('De elfde bug vandaag')`)).fout ?? ''));
 
 // ---------------------------------------------------------------------------
+// Nieuwe stad aanvragen: elke speler via vraag_stad_aan, alleen beheerders lezen en behandelen
+// ---------------------------------------------------------------------------
+
+const stad1 = await als(B, `select public.vraag_stad_aan('Arnhem') as id`);
+check('een speler vraagt een stad aan', stad1.rows?.[0]?.id > 0, JSON.stringify(stad1));
+check('een stad zonder inloggen aanvragen kan niet', !!(await als(null, `select public.vraag_stad_aan('Tiel')`)).fout);
+check('dezelfde stad twee keer aanvragen wordt geweigerd', /al aangevraagd/.test((await als(B, `select public.vraag_stad_aan(' arnhem ')`)).fout ?? ''));
+check('een stad die al meedoet wordt geweigerd', /doet al mee/.test((await als(B, `select public.vraag_stad_aan('Nijmegen')`)).fout ?? ''));
+check('een ongeldige stadsnaam wordt geweigerd', /naam van een stad/.test((await als(B, `select public.vraag_stad_aan('x<script>')`)).fout ?? ''));
+check('direct in stadsaanvragen schrijven kan niet', !!(await als(B, `insert into public.stadsaanvragen (door_id, stad) values ('${B}', 'Zwolle')`)).fout);
+check('een gewone speler leest geen stadsaanvragen', (await als(B, `select count(*)::int as n from public.stadsaanvragen`)).rows?.[0]?.n === 0);
+await als(A, `select public.vraag_stad_aan('Arnhem')`);
+check('een gewone speler behandelt geen aanvraag', /beheerders/.test((await als(B, `select public.zet_stadsaanvraag('Arnhem', 'goedgekeurd')`)).fout ?? ''));
+await db.exec(`update public.profielen set is_beheerder = true where id = '${E}'`);
+const aanv = await als(E, `select count(*)::int as n from public.stadsaanvragen where stad_sleutel = 'arnhem' and status = 'open'`);
+check('een beheerder ziet twee open aanvragen voor een stad', aanv.rows?.[0]?.n === 2, JSON.stringify(aanv));
+const gezet = await als(E, `select public.zet_stadsaanvraag('Arnhem', 'goedgekeurd') as n`);
+check('goedkeuren zet alle aanvragen voor die stad om', gezet.rows?.[0]?.n === 2, JSON.stringify(gezet));
+check('een onbekende status wordt geweigerd', /Onbekende status/.test((await als(E, `select public.zet_stadsaanvraag('Arnhem', 'open')`)).fout ?? ''));
+await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
+
+// ---------------------------------------------------------------------------
 // Kaartscans: iedereen voegt een scan toe, niemand leest, wijzigt of wist via de API
 // ---------------------------------------------------------------------------
 
