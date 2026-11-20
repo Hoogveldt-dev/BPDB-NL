@@ -43,6 +43,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `kroegmelding_oordelen` | "Klopt" of "klopt niet" bij zo'n melding, een per speler per melding. |
 | `incheckingen` | Check-ins per speler en kroeg, hoogstens een per dag. Privé: alleen de speler zelf kan ze lezen en wissen. |
 | `bugmeldingen` | Bugs gemeld door spelers: omschrijving, scherm en browser. Alleen beheerders lezen ze; schrijven alleen via `meld_bug`. |
+| `kaartscans` | Een rij per bezoek via een gedrukte QR-code, zoals `bierkoers.nl/k` op het terraskaartje: alleen `bron` en tijdstip `op`, geen persoonsgegevens. Zie Kaartscans hieronder. |
 
 Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`, `kroeg_info`, `kroeg_bijdragers`, `kroeg_stamgast` en `mijn_kroegen` (alleen de eigen check-ins). Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.
 
@@ -120,6 +121,20 @@ update public.profielen set is_beheerder = true where naam = 'JOUW_SPELERSNAAM';
 **5b. Kroegen uit Google Maps aanvullen (optioneel).** Pas eerst de migraties `20261106170000` tot en met `20261106190000` toe. Draai daarna lokaal `tools/google-kroegen` met `--naar-supabase` (zie de README daar). Openingstijden komen bij de bestaande OSM-kroegen; kroegen die in OSM ontbreken worden toegevoegd. Een kroeg die alleen uit Google komt gaat dicht na 2 volledige runs waarin hij niet meer voorkomt.
 
 **6. Controleren.** Dashboard → Advisors → Security Advisor moet schoon zijn. Waarschuwingen over de PostGIS-tabel `spatial_ref_sys` kun je negeren.
+
+## Kaartscans
+
+Het terraskaartje heeft een QR-code naar `https://bierkoers.nl/k`. `app/kaartscan.js` draait voor `app.js`: het zet het adres terug naar `/` en voegt een rij toe aan `kaartscans` met de bron (`kaartje`). Verversen telt dus niet opnieuw. Een nieuwe drukwerkversie krijgt een eigen pad in `BRONNEN` in `app/kaartscan.js`.
+
+Iedereen mag een rij toevoegen (alleen de kolom `bron`), niemand mag via de API lezen, wijzigen of wissen. Uitlezen in de SQL Editor:
+
+```sql
+select date_trunc('day', op at time zone 'Europe/Amsterdam')::date as dag, count(*)
+from public.kaartscans
+where bron = 'kaartje'
+group by 1
+order by 1 desc;
+```
 
 ## Beveiliging
 

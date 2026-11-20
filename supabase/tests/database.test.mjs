@@ -827,6 +827,19 @@ for (let i = 0; i < 9; i++) await als(B, `select public.meld_bug('Nog een bug nu
 check('na 10 bugs op een dag is het genoeg', /al 10 bugs/.test((await als(B, `select public.meld_bug('De elfde bug vandaag')`)).fout ?? ''));
 
 // ---------------------------------------------------------------------------
+// Kaartscans: iedereen voegt een scan toe, niemand leest, wijzigt of wist via de API
+// ---------------------------------------------------------------------------
+
+check('anoniem een kaartscan toevoegen', !(await als(null, `insert into public.kaartscans (bron) values ('kaartje')`)).fout);
+check('ingelogd een kaartscan toevoegen', !(await als(A, `insert into public.kaartscans (bron) values ('kaartje')`)).fout);
+check('een ongeldige bron wordt geweigerd', /kaartscans_bron_check/.test((await als(null, `insert into public.kaartscans (bron) values ('Kaartje!')`)).fout ?? ''));
+check('zelf een tijdstip invullen kan niet', !!(await als(null, `insert into public.kaartscans (bron, op) values ('kaartje', now() - interval '1 year')`)).fout);
+check('anoniem kaartscans lezen kan niet', !!(await als(null, `select count(*) from public.kaartscans`)).fout);
+check('ingelogd kaartscans lezen kan niet', !!(await als(A, `select count(*) from public.kaartscans`)).fout);
+check('kaartscans wijzigen kan niet', !!(await als(null, `update public.kaartscans set bron = 'anders'`)).fout);
+check('kaartscans wissen kan niet', !!(await als(A, `delete from public.kaartscans`)).fout);
+const scans = await een(`select count(*)::int as n, bool_and(bron = 'kaartje') as goed from public.kaartscans`);
+check('de beheerder telt twee scans in de SQL Editor', scans.n === 2 && scans.goed === true, JSON.stringify(scans));
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);

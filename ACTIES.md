@@ -15,6 +15,11 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 5. **DNSSEC weer aan**, nu via Cloudflare (DNS, Settings), en zet de DS-record die Cloudflare geeft bij Vimexx.
 6. ~~**Supabase-adressen bijwerken.**~~ Gedaan: op 10 november 2026 gecontroleerd dat de Site URL `https://bierkoers.nl` is en dat de Redirect URLs `https://bpdb-nl.pages.dev/**`, `https://bierkoers.nl/**`, `https://www.bierkoers.nl/**` en `http://localhost:8765/**` zijn. Nog open: bij inloggen met Apple en Google ook het nieuwe domein toevoegen.
 
+## Terraskaartje (bierkoers.nl/k)
+
+1. **Migratie `20261120143022_kaartscans`** uitvoeren (SQL Editor, of laat Claude het doen via MCP en keur de vraag van Supabase goed) en de versie gelijkzetten aan `20261120143022`. Doe dit voordat de app met `kaartscan.js` live gaat; anders mislukt de telling (de app werkt wel gewoon). Daarna de Security Advisor.
+2. **Na de deploy** op een telefoon `https://bierkoers.nl/k` openen: het adres wordt `bierkoers.nl` en er staat een rij in `kaartscans` (query in `supabase/README.md`, Kaartscans).
+
 ## Punten meteen
 
 1. **Migratie `20261113180000_punten_meteen`** uitvoeren (SQL Editor, of laat Claude het doen via MCP en keur de vraag van Supabase goed) en de versie gelijkzetten aan `20261113180000`. Daarna de Security Advisor. De wachtende meldingen van Guinness123 en de bevestigingen van Pilsbaas024 krijgen dan meteen hun punten.
