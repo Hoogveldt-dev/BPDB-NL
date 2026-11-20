@@ -317,6 +317,7 @@ const state = {
   tab: "kaart",
   kroegen: [],
   stad: null,
+  badgeTellers: {}, // tellers voor de badges onder Ik (laadBadges)
   steden: [], // alle steden die meedoen (stad_voortgang), voor de stadskeuze onder Ik
   selected: null,
   form: null,
@@ -1147,6 +1148,7 @@ function draw() {
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
   else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); laadBeheerSteden(); }
+  if (state.selected == null && !state.pagina && state.tab === "ik" && state.sessie) laadBadges();
   // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
   $("#tabIk").textContent = state.profiel && !anoniem() ? state.profiel.naam.slice(0, 10) : "Ik";
 }
@@ -2074,6 +2076,7 @@ function ikView() {
       </div>
       <div class="small muted" style="margin-top:10px">${p?.ontdekt ?? 0} ${(p?.ontdekt ?? 0) === 1 ? "kroeg" : "kroegen"} ontdekt. Punten krijg je voor melden en controleren, nooit voor drinken.</div>
     </div>
+    <div id="badges">${badgesHtml()}</div>
     ${mijnKroegenHtml()}
     ${koppelen}
     ${p && !p.naam_vast && !anoniem() ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
@@ -2315,6 +2318,63 @@ addEventListener("keydown", (e) => {
 });
 
 // Mijn kroegen: persoonlijk overzicht van waar je hebt ingecheckt, los van het gezamenlijke spel.
+// Badges onder Ik: alleen weergave, berekend uit wat de speler deed. Geen punten.
+// tel: de teller uit badgeTellers(), doel: hoeveel er nodig is. Elke badge heeft een eigen icoon (24 x 24, lijnen).
+const BADGES = [
+  { naam: "Eerste check-in", tel: "checkins", doel: 1, uitleg: "1 check-in", icoon: '<path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>' },
+  { naam: "Kroegloper", tel: "checkins", doel: 10, uitleg: "10 check-ins", icoon: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>' },
+  { naam: "Kroegveteraan", tel: "checkins", doel: 50, uitleg: "50 check-ins", icoon: '<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>' },
+  { naam: "Wereldburger", tel: "kroegen", doel: 10, uitleg: "10 verschillende kroegen", icoon: '<path d="M3.5 6.5L9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>' },
+  { naam: "Eerste koers", tel: "prijzen", doel: 1, uitleg: "1 prijs doorgegeven", icoon: '<path d="M3.5 12.5v-8a1 1 0 0 1 1-1h8l8 8-9 9z"/><circle cx="8" cy="8" r="1.5"/>' },
+  { naam: "Koersmaker", tel: "prijzen", doel: 25, uitleg: "25 prijzen doorgegeven", icoon: '<path d="M4 20h16"/><path d="M5 16l4-5 4 3 6-8"/>' },
+  { naam: "Ontdekker", tel: "ontdekt", doel: 1, uitleg: "Eerste prijs van een kroeg", icoon: '<circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>' },
+  { naam: "Pionier", tel: "ontdekt", doel: 10, uitleg: "Eerste prijs van 10 kroegen", icoon: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>' },
+  { naam: "Controleur", tel: "controles", doel: 10, uitleg: "10 keer klopt nog", icoon: '<circle cx="12" cy="12" r="8.5"/><path d="M8 12.5l2.7 2.7L16 9.5"/>' },
+  { naam: "Bevestiger", tel: "gegeven", doel: 10, uitleg: "10 meldingen bevestigd", icoon: '<path d="M2.5 13l4 4 7-8"/><path d="M10.5 16l1 1 9-10"/>' },
+  { naam: "Betrouwbaar", tel: "ontvangen", doel: 10, uitleg: "10 keer bevestigd door anderen", icoon: '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.2-7.5 9.5-4.3-1.3-7.5-5-7.5-9.5V6z"/><path d="M8.8 12l2.2 2.2 4.2-4.4"/>' },
+  { naam: "Fotograaf", tel: "fotos", doel: 5, uitleg: "5 foto's van prijslijsten", icoon: '<path d="M4 8h3.5L9 5.5h6L16.5 8H20v11H4z"/><circle cx="12" cy="13.2" r="3.3"/>' },
+  { naam: "Guinnesskenner", tel: "guinness", doel: 1, uitleg: "Een Guinnessprijs doorgegeven", icoon: '<path d="M7 4h10l-1.5 16h-7z"/><path d="M7.4 8.5h9.2"/>' },
+];
+
+// Tellers voor de badges. Check-ins en ontdekte kroegen heeft de app al; de rest komt uit laadBadges().
+function badgeTellers() {
+  let checkins = 0;
+  for (const m of state.mijn.values()) checkins += m.keer;
+  return { checkins, kroegen: state.mijn.size, ontdekt: state.profiel?.ontdekt ?? 0, ...state.badgeTellers };
+}
+
+function badgesHtml() {
+  const t = badgeTellers();
+  const lijst = BADGES.map((b) => ({ ...b, n: t[b.tel] ?? 0 })).map((b) => ({ ...b, behaald: b.n >= b.doel }));
+  return `<h3>Badges · ${lijst.filter((b) => b.behaald).length} van ${lijst.length}</h3>
+    <div class="awards">${lijst.map((b) => `<div class="award${b.behaald ? " behaald" : ""}">
+      <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true">${b.icoon}</svg></span>
+      <b>${b.naam}</b><span>${b.uitleg}</span>${!b.behaald && b.doel > 1 ? `<span class="vg">${b.n}/${b.doel}</span>` : ""}</div>`).join("")}</div>`;
+}
+
+// Tellers die de app nog niet heeft, met een telling per soort bijdrage. Hooguit eens per 15 seconden.
+let badgesGeladen = 0;
+async function laadBadges() {
+  const uid = state.sessie?.user?.id;
+  if (!uid || Date.now() - badgesGeladen < 15000) return;
+  badgesGeladen = Date.now();
+  const tel = (q) => q.then(({ count }) => count ?? 0);
+  const melding = () => sb.from("gebeurtenissen").select("id", { count: "exact", head: true }).eq("door_id", uid);
+  const [prijzen, controles, fotos, gegeven, ontvangen, guinness] = await Promise.all([
+    tel(melding().in("soort", ["eerst", "wijziging"])),
+    tel(melding().eq("soort", "check")),
+    tel(melding().not("foto_pad", "is", null)),
+    tel(sb.from("bevestigingen").select("id", { count: "exact", head: true }).eq("door_id", uid).eq("oordeel", "klopt")),
+    // Hoe vaak anderen jouw meldingen bevestigden
+    tel(sb.from("bevestigingen").select("id, gebeurtenissen!inner(door_id)", { count: "exact", head: true })
+      .eq("gebeurtenissen.door_id", uid).eq("oordeel", "klopt").neq("door_id", uid)),
+    tel(sb.from("kroeg_aanbod").select("id", { count: "exact", head: true }).eq("door_id", uid).eq("soort", "guinness")),
+  ]);
+  state.badgeTellers = { prijzen, controles, fotos, gegeven, ontvangen, guinness };
+  const el = $("#badges");
+  if (el) { const html = badgesHtml(); if (el.innerHTML !== html) el.innerHTML = html; }
+}
+
 function mijnKroegenHtml() {
   const alle = state.kroegen;
   const mijn = alle.filter((k) => state.mijn.has(k.id)).map((k) => ({ ...k, ...state.mijn.get(k.id) }));
@@ -2351,7 +2411,6 @@ function mijnKroegenHtml() {
   const nieuwInBuurt = state.pos
     ? alle.filter((k) => !state.mijn.has(k.id)).map((k) => ({ k, d: afstand(state.pos, [k.lon, k.lat]) })).sort((a, b) => a.d - b.d).slice(0, 3)
     : [];
-  const initialen = (n) => n.replace(/^(de|het|'t|café|cafe|bar|eetcafé)\s+/i, "").split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
   return `${kop}
     <div class="tegels">
@@ -2364,10 +2423,6 @@ function mijnKroegenHtml() {
     ${wijken.length ? `<div class="card" style="padding:4px 14px">${wijken.map((w) => `<div class="wijkrij ${w.bezocht ? "" : "leeg"}">
       <div style="display:flex;justify-content:space-between"><span>${esc(w.naam)}</span><span class="small muted">${w.bezocht}/${w.kroegen}</span></div>
       <div class="bar"><span style="width:${(w.bezocht / w.kroegen) * 100}%"></span></div></div>`).join("")}</div>` : `<div class="muted small">Nog geen wijken geladen.</div>`}
-
-    <h3>Verzamelde kroegen</h3>
-    <div class="verzameld">${[...mijn].sort((a, b) => new Date(b.laatst) - new Date(a.laatst)).map((k) =>
-      `<button class="munt" data-kroeg="${k.id}" title="${esc(k.naam)}" aria-label="${esc(k.naam)}, ${keer(k.keer)}">${esc(initialen(k.naam) || "?")}${k.keer > 1 ? `<span class="n">${k.keer}</span>` : ""}</button>`).join("")}</div>
 
     <h3>Alle stats</h3>
     <div class="statgrid">

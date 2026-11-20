@@ -267,9 +267,16 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 .wijkrij { padding: 10px 0; border-bottom: var(--hair); }
 .wijkrij:last-child { border-bottom: 0; }
 .wijkrij.leeg { color: var(--muted); }
-.verzameld { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 12px; }
-.munt { position: relative; aspect-ratio: 1; border-radius: 50%; border: 0; background: linear-gradient(180deg, #a5abb8, #858994); color: #fff; font: 600 15px/1 var(--f-titel); padding: 0; }
-.munt .n { position: absolute; right: -3px; bottom: -3px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font: 600 11px/18px var(--f-ui); padding: 0 4px; border: 2px solid var(--surface); }
+/* Badges onder Ik: behaald in de tint, nog niet behaald grijs */
+.awards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 8px; margin-top: 6px; }
+.award { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; min-width: 0; }
+.award .ic { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--muted-2); margin-bottom: 2px; }
+.award.behaald .ic { background: var(--accent); color: var(--accent-ink); }
+.award svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.award b { font: 600 13px/1.2 var(--f-ui); }
+.award:not(.behaald) b { color: var(--muted); }
+.award span:not(.ic) { font-size: 12px; line-height: 1.25; color: var(--muted); font-variant-numeric: tabular-nums; }
+.award .vg { color: var(--muted-2); }
 .statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .statgrid .card { margin: 0; }
 .stat b { display: block; font: 600 22px/1.15 var(--f-titel); letter-spacing: -.02em; }
