@@ -657,7 +657,7 @@ let kaartKlaar = false;
 function kleur() {
   const cs = getComputedStyle(document.documentElement);
   const v = (n) => cs.getPropertyValue(n).trim();
-  return { fresh: v("--fresh"), stale: v("--stale"), old: v("--old"), locked: v("--locked"), wacht: v("--wacht"), accent: v("--accent"), accentInk: v("--accent-ink"), surface: v("--surface"), blue: v("--blue"), op: v("--op"), af: v("--af") };
+  return { fg: v("--fg"), fresh: v("--fresh"), stale: v("--stale"), old: v("--old"), locked: v("--locked"), wacht: v("--wacht"), accent: v("--accent"), accentInk: v("--accent-ink"), surface: v("--surface"), blue: v("--blue"), op: v("--op"), af: v("--af") };
 }
 
 // Prijzen pas op de kaart als je op straatniveau kijkt; in de koersstand iets eerder
@@ -726,22 +726,23 @@ function tochtGeojson() {
 
 // De donkere stijl van OpenFreeMap is bijna zwart: straten, water en namen vallen weg, zeker onder de mist.
 // Daarom zetten we hem lichter, naar de donkere stand van Kaarten: grijze straten, blauw water, leesbare namen.
-// Zo kun je je oriënteren, ook als er nog weinig is vrijgespeeld.
+// De grijzen zijn warm, zoals de inkt en het grijs van het visitekaartje. Zo kun je je oriënteren,
+// ook als er nog weinig is vrijgespeeld.
 const DONKERE_KAART = [
-  [/^background$/, { "background-color": "#1c1c1e" }],
+  [/^background$/, { "background-color": "#1b1a17" }],
   [/^(water|waterway)$/, { "fill-color": "#14304a", "line-color": "#14304a" }],
-  [/^(landuse_park|landcover_wood)$/, { "fill-color": "#1e2c22" }],
-  [/^landuse_residential$/, { "fill-color": "#222224" }],
-  [/^building$/, { "fill-color": "#2a2a2d", "fill-outline-color": "#323235" }],
-  [/^highway_path$/, { "line-color": "#323235" }],
-  [/^(highway_minor|highway_motorway_subtle)$/, { "line-color": "#3e3e42" }],
-  [/^(highway_major_inner|highway_major_subtle)$/, { "line-color": "#4e4e52" }],
-  [/^highway_motorway_inner$/, { "line-color": "#636366" }],
-  [/^railway(_transit|_minor)?$/, { "line-color": "#48484a" }],
-  [/^railway.*_dashline$/, { "line-color": "#1c1c1e" }],
-  [/^highway_name/, { "text-color": "#aeaeb2", "text-halo-color": "#1c1c1e" }],
-  [/^place_/, { "text-color": "#e5e5ea", "text-halo-color": "rgba(0,0,0,0.75)" }],
-  [/^water_name$/, { "text-color": "#64a0d2", "text-halo-color": "rgba(0,0,0,0.6)" }],
+  [/^(landuse_park|landcover_wood)$/, { "fill-color": "#1e2b20" }],
+  [/^landuse_residential$/, { "fill-color": "#22201c" }],
+  [/^building$/, { "fill-color": "#2b2924", "fill-outline-color": "#34312b" }],
+  [/^highway_path$/, { "line-color": "#34312b" }],
+  [/^(highway_minor|highway_motorway_subtle)$/, { "line-color": "#403d36" }],
+  [/^(highway_major_inner|highway_major_subtle)$/, { "line-color": "#504c44" }],
+  [/^highway_motorway_inner$/, { "line-color": "#6b665d" }],
+  [/^railway(_transit|_minor)?$/, { "line-color": "#4a4740" }],
+  [/^railway.*_dashline$/, { "line-color": "#1b1a17" }],
+  [/^highway_name/, { "text-color": "#b3ada3", "text-halo-color": "#1b1a17" }],
+  [/^place_/, { "text-color": "#ece4d2", "text-halo-color": "rgba(14,14,14,0.75)" }],
+  [/^water_name$/, { "text-color": "#64a0d2", "text-halo-color": "rgba(14,14,14,0.6)" }],
 ];
 function lichtereDonkereKaart() {
   if (!donker.matches) return;
@@ -816,7 +817,7 @@ function kaartLagen() {
       "text-offset": [0, -1.4],
       "text-allow-overlap": false,
     },
-    paint: { "text-color": donker.matches ? "#f2f2f7" : "#1c1c1e", "text-halo-color": c.surface, "text-halo-width": 1.6 },
+    paint: { "text-color": c.fg, "text-halo-color": c.surface, "text-halo-width": 1.6 },
   });
   // Onzichtbare, grotere tikplek per kroeg: een stip van 9 px is met een duim lastig te raken
   map.addLayer({
