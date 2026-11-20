@@ -282,6 +282,20 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 .award:not(.behaald) b { color: var(--muted); }
 .award span:not(.ic) { font-size: 12px; line-height: 1.25; color: var(--muted); font-variant-numeric: tabular-nums; }
 .award .vg { color: var(--muted-2); }
+/* Uitklapblok met een kop (Badges, Wijken bezocht, Jouw gegevens): de kop is de knop, het pijltje draait open */
+.uitklap { margin: 26px 0 8px; }
+.uitklap > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.uitklap > summary::-webkit-details-marker { display: none; }
+.uitklap-kop { font: 600 20px/1.2 var(--f-titel); letter-spacing: -.02em; color: var(--fg); }
+.uitklap-kop::after { content: "›"; display: inline-block; margin-left: 8px; color: var(--muted); transition: transform .2s; }
+.uitklap[open] .uitklap-kop::after { transform: rotate(90deg); }
+.uitklap > summary + * { margin-top: 12px; }
+/* Ingeklapt: een strook met de behaalde badges */
+.awards-strook { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.awards-strook:empty, .awards-blok[open] .awards-strook { display: none; }
+.award.klein .ic { width: 32px; height: 32px; margin: 0; }
+.award.klein svg { width: 17px; height: 17px; }
+.stat b.goud { color: var(--accent-text); }
 .statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .statgrid .card { margin: 0; }
 .stat b { display: block; font: 600 22px/1.15 var(--f-titel); letter-spacing: -.02em; }
