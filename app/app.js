@@ -2215,11 +2215,7 @@ function regelsView() {
       <div><span>Binnen ${INCHECK_M} m van de kroeg</span><b>×1,5</b></div>
       <div><span>Je melding wordt weerlegd</span><b>−20</b></div>
     </div>
-    <p class="small muted">Punten krijg je meteen, ook voor bevestigen. Een prijs komt pas vast op de kaart als andere spelers hem bevestigen. Meestal zijn dat er twee; bij een melder met een betrouwbaarheid boven 90% is een genoeg. Wijkt een prijs meer dan 40% af van de stad, dan zijn er altijd twee nodig. Twee keer "klopt niet" en de melding is weerlegd: dan gaan de punten van de melder en van wie "klopt" zei er weer af.</p>
-    <h3>Zonder e-mailadres</h3>
-    <p class="small muted">Je kunt meteen beginnen en prijzen melden. Bevestigen, weerleggen en "klopt nog" kan pas als je een e-mailadres koppelt. Je punten blijven dan bewaard.</p>
-    <h3>Geen punten</h3>
-    <p class="small muted">Extra bier, openingstijden, een gesloten, verplaatste of dubbele kroeg melden en inchecken leveren geen punten op. We belonen bijdragen, nooit drinken.</p>`;
+    <p class="small muted">Punten krijg je meteen, ook voor bevestigen. Een prijs komt pas vast op de kaart als andere spelers hem bevestigen. Meestal zijn dat er twee; bij een melder met een betrouwbaarheid boven 90% is een genoeg. Wijkt een prijs meer dan 40% af van de stad, dan zijn er altijd twee nodig. Twee keer "klopt niet" en de melding is weerlegd: dan gaan de punten van de melder en van wie "klopt" zei er weer af.</p>`;
 }
 
 // Meldingen over kroegen die niet kloppen, voor de beheerder: verkeerde plek, dubbel en gesloten

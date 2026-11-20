@@ -492,8 +492,6 @@ export const EN = {
   "Deze manier van inloggen staat nog niet aan. Gebruik voorlopig je e-mailadres.": "This way of logging in isn't enabled yet. Use your email address for now.",
   "Meteen beginnen staat nog niet aan. Probeer het later opnieuw.": "Starting right away isn't enabled yet. Try again later.",
   "Nieuwe accounts kunnen nu niet worden aangemaakt.": "New accounts can't be created right now.",
-  "Zonder e-mailadres": "Without an email address",
-  "Je kunt meteen beginnen en prijzen melden. Bevestigen, weerleggen en \"klopt nog\" kan pas als je een e-mailadres koppelt. Je punten blijven dan bewaard.": "You can start right away and report prices. Confirming, refuting and \"still correct\" are possible once you link an email address. Your points are kept.",
 
   // Spelregels
   "Per kroeg houden we de": "For each pub we track the",
@@ -507,8 +505,6 @@ export const EN = {
   "Binnen * m van de kroeg": "Within * m of the pub",
   "Je melding wordt weerlegd": "Your report is refuted",
   "Punten krijg je meteen, ook voor bevestigen. Een prijs komt pas vast op de kaart als andere spelers hem bevestigen. Meestal zijn dat er twee; bij een melder met een betrouwbaarheid boven #% is een genoeg. Wijkt een prijs meer dan #% af van de stad, dan zijn er altijd twee nodig. Twee keer \"klopt niet\" en de melding is weerlegd: dan gaan de punten van de melder en van wie \"klopt\" zei er weer af.": "You get points right away, also for confirming. A price only sticks on the map once other players confirm it. Usually two; for a reporter with reliability above #% one is enough. If a price differs more than #% from the city, two are always needed. Two times \"not correct\" and the report is refuted: then the points of the reporter and of those who said \"correct\" are taken off again.",
-  "Geen punten": "No points",
-  "Extra bier, openingstijden, een gesloten, verplaatste of dubbele kroeg melden en inchecken leveren geen punten op. We belonen bijdragen, nooit drinken.": "Extra beer, opening hours, reporting a closed, moved or duplicate pub, and checking in earn no points. We reward contributions, never drinking.",
   "Hoe punten werken": "How points work",
 
   // Beheer
