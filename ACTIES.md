@@ -24,6 +24,12 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 1. **Migratie `20261113180000_punten_meteen`** uitvoeren (SQL Editor, of laat Claude het doen via MCP en keur de vraag van Supabase goed) en de versie gelijkzetten aan `20261113180000`. Daarna de Security Advisor. De wachtende meldingen van Guinness123 en de bevestigingen van Pilsbaas024 krijgen dan meteen hun punten.
 
+## Nieuwe stad aanvragen
+
+1. **Migratie `20261120170000_stadsaanvragen`** uitvoeren (SQL Editor, of via MCP) en de versie gelijkzetten aan `20261120170000`. Daarna de Security Advisor.
+2. **Edge Function `osm-import` opnieuw uitrollen** (`supabase functions deploy osm-import`, of via MCP): ze zoekt nu zelf de gemeentecode op als die ontbreekt.
+3. Aanvragen staan in de app onder Ik, Beheer, Stadsaanvragen. Goedkeuren laadt de kroegen en wijken. De app laat nog alleen Nijmegen zien; een stad kiezen is een vervolgstap.
+
 ## Bugs melden
 
 1. ~~**Migratie `20261113120000_bugmeldingen`.**~~ Gedaan op 13 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261113120000`. Security Advisor: alleen de bekende waarschuwingen over anonieme spelers (de leesregel van `bugmeldingen` geldt alleen voor beheerders) en gelekte wachtwoorden. De meldingen lees je in de app onder Ik, Beheer, Bugs, of in de Table Editor (`bugmeldingen`).

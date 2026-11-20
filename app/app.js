@@ -1129,7 +1129,7 @@ function draw() {
   if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); }
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
-  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); }
+  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); laadBeheerSteden(); }
   // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
   $("#tabIk").textContent = state.profiel && !anoniem() ? state.profiel.naam.slice(0, 10) : "Ik";
 }
@@ -2010,6 +2010,7 @@ function ikView() {
       ${accountBlok(null)}
       <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
       ${bugBlok()}
+      ${stadBlok()}
       ${taalBlok()}`;
   }
   if (!state.sessie) {
@@ -2062,10 +2063,12 @@ function ikView() {
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${bugBlok()}
+    ${stadBlok()}
     ${taalBlok()}
     ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
       <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
+      <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
       <h3>Bugs</h3><div class="card"><div id="beheerBugs" class="small muted">Bugs laden…</div></div>
       <h3>Teksten</h3><div class="card"><div class="small muted">Pas elke tekst in de app aan. Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen.</div>
       <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
@@ -2124,6 +2127,76 @@ async function laadBeheerBugs() {
   el.innerHTML = `<ul class="list" data-geen-teksten>${data.map((b) => `<li class="row"><span class="row-main">
     <span class="row-title" style="white-space:normal">${esc(b.tekst)}</span>
     <span class="row-sub" style="white-space:normal">${wanneer(b.op)}${b.scherm ? ` · ${esc(b.scherm)}` : ""}${b.apparaat ? ` · ${esc(b.apparaat)}` : ""}</span></span></li>`).join("")}</ul>`;
+}
+
+// Nieuwe stad aanvragen: elke speler kan een stad voorstellen; een beheerder keurt goed (functie vraag_stad_aan)
+function stadBlok() {
+  if (!kanBijdragen()) return "";
+  return `<details class="klopt-niet bug">
+    <summary>Nieuwe stad aanvragen</summary>
+    <form class="form" id="stadForm">
+      <label for="stadNaam">Welke stad wil je vrijspelen?</label>
+      <input id="stadNaam" name="stad" minlength="2" maxlength="60" placeholder="Bijvoorbeeld Arnhem" required>
+      <div class="small muted">Als genoeg spelers een stad willen, laden we de kroegen in.</div>
+      <div class="btns"><button class="btn primary" type="submit">Aanvragen</button></div>
+    </form>
+  </details>`;
+}
+
+async function verstuurStad(form) {
+  const stad = String(new FormData(form).get("stad") ?? "").trim();
+  if (stad.length < 2) return toast("Vul de naam van een stad in");
+  const knop = form.querySelector("[type=submit]");
+  knop.disabled = true;
+  if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
+  const { error } = await sb.rpc("vraag_stad_aan", { p_stad: stad });
+  knop.disabled = false;
+  if (error) return toast(await leesFout(error));
+  form.reset();
+  form.closest("details").open = false;
+  toast("Bedankt! We kijken of we deze stad kunnen openen");
+}
+
+// Open stadsaanvragen voor de beheerder, per stad geteld
+async function laadBeheerSteden() {
+  const { data, error } = await sb.from("stadsaanvragen").select("stad,stad_sleutel").eq("status", "open").order("op");
+  const el = $("#beheerSteden");
+  if (!el) return;
+  if (error) { el.textContent = "Aanvragen laden lukte niet."; return; }
+  const perStad = new Map();
+  for (const r of data) {
+    const s = perStad.get(r.stad_sleutel) ?? { naam: r.stad, n: 0 };
+    s.n++;
+    perStad.set(r.stad_sleutel, s);
+  }
+  if (!perStad.size) { el.textContent = "Geen open aanvragen."; return; }
+  el.innerHTML = `<ul class="list" data-geen-teksten>${[...perStad.values()].sort((a, b) => b.n - a.n).map((s) => `<li class="row"><span class="row-main">
+    <span class="row-title">${esc(s.naam)}</span>
+    <span class="row-sub">${s.n} ${s.n === 1 ? "speler" : "spelers"}</span></span>
+    <button type="button" class="mini" data-stad-ok="${esc(s.naam)}">Goedkeuren</button>
+    <button type="button" class="mini" data-stad-nee="${esc(s.naam)}">Afwijzen</button></li>`).join("")}</ul>`;
+}
+
+// Goedkeuren: eerst de kroegen en wijken laden, daarna de aanvraag afhandelen
+async function keurStad(knop, stad) {
+  knop.disabled = true; knop.textContent = "Bezig…";
+  const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeente: stad } });
+  if (error) {
+    const reden = await error.context?.json?.().then((b) => b?.fout).catch(() => null);
+    toast("Import mislukt: " + (reden ?? "de importfunctie gaf geen antwoord"));
+    return laadBeheerSteden();
+  }
+  const { error: zetFout } = await sb.rpc("zet_stadsaanvraag", { p_stad: stad, p_status: "goedgekeurd" });
+  if (zetFout) toast(await leesFout(zetFout));
+  else toast(`${data.gemeente}: ${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
+  laadBeheerSteden();
+}
+
+async function wijsStadAf(knop, stad) {
+  knop.disabled = true;
+  const { error } = await sb.rpc("zet_stadsaanvraag", { p_stad: stad, p_status: "afgewezen" });
+  if (error) toast(await leesFout(error));
+  laadBeheerSteden();
 }
 
 // Spelregels in het kort; de uitwerking staat in supabase/README.md
@@ -2567,6 +2640,8 @@ body.addEventListener("click", (e) => {
   if (t.dataset.aanbieder) return inloggenMet(t.dataset.aanbieder, t);
   if (t.dataset.anderadres !== undefined) { state.inlog = null; state.nieuwAdres = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
+  if (t.dataset.stadOk !== undefined) return keurStad(t, t.dataset.stadOk);
+  if (t.dataset.stadNee !== undefined) return wijsStadAf(t, t.dataset.stadNee);
   if (t.dataset.foto) return openFoto(t.dataset.foto);
   if (t.dataset.tekstenBewerken !== undefined) { teksten.zetBewerken(true); return toast("Tik op een tekst om hem aan te passen"); }
   if (t.dataset.tekstWis !== undefined) return teksten.wis(t.dataset.tekstWis).then(() => draw());
@@ -2617,6 +2692,7 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
   if (f.id === "bugForm") return verstuurBug(f);
+  if (f.id === "stadForm") return verstuurStad(f);
   if (f.id === "loginForm" || f.id === "koppelForm" || f.id === "aanmeldForm") {
     const fd = new FormData(f);
     const email = String(fd.get("email")).trim().toLowerCase();

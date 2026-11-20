@@ -21,6 +21,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Samenvoegen | `migrations/20261110130000_samenvoegen.sql`, `functions/samenvoegen/index.ts` | Een anonieme speler logt in met een bestaand account: meldingen, oordelen, punten, check-ins en ontdekte kroegen gaan over naar het account (`private.voeg_samen`, alleen service_role), daarna wordt de anonieme speler verwijderd. Geweigerd als het account een melding van de anonieme speler beoordeelde |
 | Punten meteen | `migrations/20261113180000_punten_meteen.sql` | Punten bij melden en bij "klopt" meteen (triggers `punten_bij_melding` en `punten_bij_bevestiging`); `rond_af` trekt ze in als een melding wordt weerlegd. Wachtende meldingen kregen hun punten bij het uitvoeren |
 | Bugs melden | `migrations/20261113120000_bugmeldingen.sql` | Tabel `bugmeldingen` en functie `meld_bug(tekst, scherm, apparaat)`: elke speler meldt een bug vanuit Ik, hoogstens 10 per dag. Alleen beheerders lezen ze (in de app onder Beheer, Bugs) |
+| Nieuwe stad aanvragen | `migrations/20261120170000_stadsaanvragen.sql` | Tabel `stadsaanvragen`, `vraag_stad_aan(stad)` (elke speler, hoogstens 5 per dag, een stad een keer per speler) en `zet_stadsaanvraag(stad, status)` (alleen beheerders). Alleen beheerders lezen de aanvragen. Goedkeuren in de app (Ik, Beheer, Stadsaanvragen) roept `osm-import` aan zonder gemeentecode; de functie zoekt hem dan op bij PDOK |
 | Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account. Meldingen en prijzen blijven staan zonder naam |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
@@ -43,6 +44,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `kroegmelding_oordelen` | "Klopt" of "klopt niet" bij zo'n melding, een per speler per melding. |
 | `incheckingen` | Check-ins per speler en kroeg, hoogstens een per dag. Privé: alleen de speler zelf kan ze lezen en wissen. |
 | `bugmeldingen` | Bugs gemeld door spelers: omschrijving, scherm en browser. Alleen beheerders lezen ze; schrijven alleen via `meld_bug`. |
+| `stadsaanvragen` | Steden die spelers willen vrijspelen, met status open, goedgekeurd of afgewezen. Alleen beheerders lezen ze; schrijven alleen via `vraag_stad_aan` en `zet_stadsaanvraag`. |
 | `kaartscans` | Een rij per bezoek via een gedrukte QR-code, zoals `bierkoers.nl/k` op het terraskaartje: alleen `bron` en tijdstip `op`, geen persoonsgegevens. Zie Kaartscans hieronder. |
 
 Overzichten voor de app (alle met `security_invoker`): `kroeg_kaart`, `kroeg_tijdlijn`, `ranglijst`, `stad_voortgang`, `wijk_voortgang`, `aanbod_overzicht`, `kroeg_info`, `kroeg_bijdragers`, `kroeg_stamgast` en `mijn_kroegen` (alleen de eigen check-ins). Plus de functie `kroegen_in_de_buurt(lat, lon, straal_m)`.

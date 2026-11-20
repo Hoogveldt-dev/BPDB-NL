@@ -4,6 +4,7 @@
 // Aanroep (met de sessie van een ingelogde beheerder):
 //   POST /functions/v1/osm-import
 //   { "gemeente": "Nijmegen", "gemeentecode": "GM0268", "soorten": ["pub", "bar", "biergarten"] }
+// De gemeentecode mag wegblijven: dan zoekt de functie hem op bij de PDOK-locatieserver.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
@@ -15,6 +16,7 @@ const OVERPASS = [
 ];
 const USER_AGENT = "BPDB-NL kroegimport (https://bpdb-nl.pages.dev)";
 const PDOK_WIJKEN = "https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0";
+const PDOK_ZOEK = "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free";
 const TOEGESTANE_SOORTEN = ["pub", "bar", "biergarten", "cafe", "nightclub"];
 
 const cors = {
@@ -98,11 +100,22 @@ async function importeer(req: Request): Promise<Response> {
 
   // 2. Invoer controleren
   const invoer = await req.json().catch(() => ({}));
-  const gemeente = String(invoer.gemeente ?? "Nijmegen").trim();
-  const gemeentecode = String(invoer.gemeentecode ?? "GM0268").trim().toUpperCase();
+  let gemeente = String(invoer.gemeente ?? "Nijmegen").trim();
+  let gemeentecode = String(invoer.gemeentecode ?? (invoer.gemeente ? "" : "GM0268")).trim().toUpperCase();
   const soorten: string[] = (Array.isArray(invoer.soorten) ? invoer.soorten : ["pub", "bar", "biergarten"])
     .filter((s: unknown) => TOEGESTANE_SOORTEN.includes(String(s)));
   if (!/^[\p{L} .'-]{2,60}$/u.test(gemeente)) return antwoord({ fout: "Ongeldige gemeente" }, 400);
+  // Zonder gemeentecode (een door spelers aangevraagde stad) zoeken we hem op bij de PDOK-locatieserver.
+  if (!gemeentecode) {
+    const zoek = new URL(PDOK_ZOEK);
+    zoek.search = new URLSearchParams({ q: gemeente, fq: "type:gemeente", rows: "1", fl: "gemeentecode,gemeentenaam" }).toString();
+    const zoekRes = await fetch(zoek, { headers: { "User-Agent": USER_AGENT } });
+    if (!zoekRes.ok) return antwoord({ fout: `Gemeente opzoeken (PDOK) gaf ${zoekRes.status}` }, 502);
+    const doc = (await zoekRes.json())?.response?.docs?.[0];
+    if (!doc?.gemeentecode) return antwoord({ fout: `Geen gemeente gevonden met de naam ${gemeente}` }, 404);
+    gemeentecode = `GM${doc.gemeentecode}`;
+    gemeente = String(doc.gemeentenaam ?? gemeente);
+  }
   if (!/^GM\d{4}$/.test(gemeentecode)) return antwoord({ fout: "Ongeldige gemeentecode" }, 400);
   if (soorten.length === 0) return antwoord({ fout: "Geen geldige soorten" }, 400);
 
@@ -163,5 +176,5 @@ out center tags;`;
   });
   if (kroegFout) return antwoord({ fout: kroegFout.message }, 500);
 
-  return antwoord({ gemeente, wijken, kroegen: aantal });
+  return antwoord({ gemeente, gemeentecode, wijken, kroegen: aantal });
 }
