@@ -26,8 +26,8 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 ## Nieuwe stad aanvragen
 
-1. **Migratie `20261120170000_stadsaanvragen`** uitvoeren (SQL Editor, of via MCP) en de versie gelijkzetten aan `20261120170000`. Daarna de Security Advisor.
-2. **Edge Function `osm-import` opnieuw uitrollen** (`supabase functions deploy osm-import`, of via MCP): ze zoekt nu zelf de gemeentecode op als die ontbreekt.
+1. ~~**Migratie `20261120170000_stadsaanvragen`.**~~ Gedaan op 20 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261120170000`. Security Advisor: een nieuwe waarschuwing over anonieme spelers (de leesregel van `stadsaanvragen` geldt alleen voor beheerders), verder de bekende.
+2. ~~**Edge Function `osm-import` opnieuw uitrollen.**~~ Gedaan op 20 november 2026 (versie 3, via MCP): ze zoekt nu zelf de gemeentecode op als die ontbreekt.
 3. Aanvragen staan in de app onder Ik, Beheer, Stadsaanvragen. Goedkeuren laadt de kroegen en wijken. De app laat nog alleen Nijmegen zien; een stad kiezen is een vervolgstap.
 
 ## Bugs melden
