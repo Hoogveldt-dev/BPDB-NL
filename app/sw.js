@@ -1,9 +1,9 @@
 // Eenvoudige service worker: app-schil offline beschikbaar, data altijd vers van het netwerk.
-const CACHE = "bierkoers-v47";
+const CACHE = "bierkoers-v49";
 const SCHIL = ["./", "index.html", "styles.css", "app.js", "kaartscan.js", "en.js", "config.js", "icon.svg", "icon-180.png", "icon-512.png", "icon-maskable-512.png", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SCHIL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SCHIL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -14,8 +14,10 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   // Alleen de eigen app-bestanden; Supabase, kaarttegels en CDN's gaan direct naar het netwerk.
   if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
+  // Vraag de server altijd of een bestand nog klopt; anders levert de browsercache een oude app.js.
+  const verzoek = e.request.mode === "navigate" ? e.request : new Request(e.request, { cache: "no-cache" });
   e.respondWith(
-    fetch(e.request)
+    fetch(verzoek)
       .then((r) => { const kopie = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, kopie)); return r; })
       .catch(() => caches.match(e.request)),
   );

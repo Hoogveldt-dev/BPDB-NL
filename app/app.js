@@ -1342,7 +1342,7 @@ function meldingKnoppen(m) {
   const uid = state.sessie?.user?.id;
   if (!state.sessie) return "";
   if (m.door_id === uid) return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Intrekken</button>`;
-  if (anoniem()) return `<div class="small muted">Met een account (tabblad Ik) kun je dit bevestigen.</div>`;
+  if (anoniem()) return "";
   return `<button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt">Klopt</button><button class="mini" data-melding="${m.id}" data-oordeel-melding="klopt_niet">Klopt niet</button>`;
 }
 
@@ -1579,7 +1579,7 @@ async function laadTijdlijn(id) {
       ${open.foto_pad ? `<div class="small"><button type="button" class="linkbtn" data-foto="${esc(fotoUrl(open.foto_pad))}">Foto van de prijslijst</button></div>` : ""}
       ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door andere spelers.</div>`
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
-        : !magControleren() ? `<div class="small muted" style="margin-top:8px">Met een account (tabblad Ik) kun je meldingen van anderen bevestigen.</div>`
+        : !magControleren() ? ""
         : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}">Klopt</button>
              <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}">Klopt niet</button></div>`}`;
   }

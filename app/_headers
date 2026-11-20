@@ -1,0 +1,9 @@
+# Cloudflare Pages: laat de browser de app-bestanden bij elk bezoek controleren (met de ETag, dus zonder opnieuw te
+# downloaden als er niets veranderde). Anders bewaart hij app.js en styles.css tot 4 uur en ziet een speler een update
+# pas later, of een mengsel van oud en nieuw.
+/*.js
+  Cache-Control: no-cache
+/*.css
+  Cache-Control: no-cache
+/*.webmanifest
+  Cache-Control: no-cache

@@ -187,8 +187,6 @@ export const EN = {
   "Foto van de prijslijst": "Photo of the price list",
   "Wacht op bevestiging door andere spelers.": "Waiting for confirmation by other players.",
   "Je hebt deze melding al beoordeeld.": "You already reviewed this report.",
-  "Met een account (tabblad Ik) kun je meldingen van anderen bevestigen.": "With an account (Me tab) you can confirm reports by others.",
-  "Met een account (tabblad Ik) kun je dit bevestigen.": "With an account (Me tab) you can confirm this.",
   "Klopt": "Correct",
   "Klopt niet": "Not correct",
   "Klopt nog": "Still correct",
