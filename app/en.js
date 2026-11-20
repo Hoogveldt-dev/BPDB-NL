@@ -365,7 +365,7 @@ export const EN = {
 
   // Ranglijst
   "Koersmakers": "Price makers",
-  "Wie de koers van * het best bijhoudt. Punten voor melden en controleren, nooit voor drinken.": "Who keeps the prices of * up to date best. Points for reporting and checking, never for drinking.",
+  "Wie de koers het best bijhoudt. Punten voor melden en controleren, nooit voor drinken.": "Who keeps the prices up to date best. Points for reporting and checking, never for drinking.",
   "Nog niemand heeft punten in deze periode.": "Nobody has points in this period yet.",
   "betrouwbaarheid *%": "reliability *%",
   "nieuw, nog weinig bevestigd": "new, few confirmations yet",
@@ -520,6 +520,7 @@ export const EN = {
   "Meldingen laden lukte niet.": "Loading reports failed.",
   "Geen meldingen over kroegen.": "No reports about pubs.",
   "Kroeg * (niet meer op de kaart)": "Pub * (no longer on the map)",
+  "Stad": "City",
   "Nieuwe stad aanvragen": "Request a new city",
   "Welke stad wil je vrijspelen?": "Which city do you want to unlock?",
   "Bijvoorbeeld Arnhem": "For example Arnhem",

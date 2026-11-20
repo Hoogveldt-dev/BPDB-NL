@@ -8,6 +8,12 @@ import { SUPABASE_URL, SUPABASE_KEY, STAD, KAARTSTIJL } from "./config.js";
 
 const maplibregl = window.maplibregl;
 
+// Stad: de gekozen stad (Ik, Stad), bewaard in localStorage als bierkoers-stad. Standaard de pilotstad uit config.js.
+// De lijst met steden komt uit stad_voortgang: elke gemeente met kroegen doet mee.
+let stadNaam = (() => { try { return localStorage.getItem("bierkoers-stad") || STAD.naam; } catch { return STAD.naam; } })();
+// Bij een andere stad dan de pilotstad springt de kaart naar het midden van de kroegen zodra die geladen zijn
+let kaartNaarStad = stadNaam !== STAD.naam;
+
 // Een fout van een inloglink staat in de adresbalk (#error_code=otp_expired of ?error_code=...).
 // Lees die uit voordat Supabase de adresbalk bijwerkt.
 const urlFout = (() => {
@@ -311,6 +317,7 @@ const state = {
   tab: "kaart",
   kroegen: [],
   stad: null,
+  steden: [], // alle steden die meedoen (stad_voortgang), voor de stadskeuze onder Ik
   selected: null,
   form: null,
   filter: "alles",
@@ -590,9 +597,9 @@ async function laadKoers() {
   // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee.
   // Daarnaast de laatste activiteit van spelers voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen.
   const [{ data, error }, { data: recent }] = await Promise.all([
-    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
+    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron").eq("gemeente", stadNaam)
       .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(5000),
-    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: false }).limit(20),
+    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("gemeente", stadNaam).eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: false }).limit(20),
   ]);
   if (error) { console.error(error); return; }
   state.koersRuw = data ?? [];
@@ -622,7 +629,7 @@ function lichtkrant() {
   // Prijzen die al lang gelijk zijn, verdienen ook een plek
   const vast = prijsvast().filter((x) => Date.now() - x.c.vastSinds > 365 * DAG && !gezien.has(x.k.id)).slice(0, 3);
   for (const { k, c } of vast) items.push(`<button class="tk" data-kroeg="${k.id}"><b>${codeVan(k.id)}</b>${euro(c.nu)} <span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span></button>`);
-  if (s) items.push(`<span class="tk"><b>${esc(STAD.naam.toUpperCase())}</b>${s.vrijgespeeld}/${s.kroegen} <span class="zacht">in kaart</span></span>`);
+  if (s) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${s.vrijgespeeld}/${s.kroegen} <span class="zacht">in kaart</span></span>`);
   if (s && s.kroegen - s.vrijgespeeld > 0) items.push(`<span class="tk"><span class="zacht">${s.kroegen - s.vrijgespeeld} kroegen zonder koers</span></span>`);
   if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
   const een = items.join("");
@@ -1022,18 +1029,28 @@ function setDetent(d) {
 // ---------------------------------------------------------------------------
 
 async function laadKroegen() {
-  const { data, error } = await sb.from("kroeg_kaart").select("*").eq("gemeente", STAD.naam).eq("open", true).order("naam");
+  const { data, error } = await sb.from("kroeg_kaart").select("*").eq("gemeente", stadNaam).eq("open", true).order("naam");
   if (error) { console.error(error); toast("Kroegen laden mislukt"); return; }
   state.kroegen = data;
   state.codes = maakCodes(data);
+  if (kaartNaarStad && data.length) { kaartNaarStad = false; map.jumpTo({ center: stadCentrum(), zoom: STAD.zoom }); }
   koersen();
   kaartBijwerken();
   lichtkrant();
 }
 
+// Midden van de stad: de mediaan van de kroegen, zodat losse kroegen in de dorpen eromheen het niet verschuiven
+function stadCentrum() {
+  if (stadNaam === STAD.naam || !state.kroegen.length) return STAD.centrum;
+  return [mediaan(state.kroegen.map((k) => k.lon)), mediaan(state.kroegen.map((k) => k.lat))];
+}
+
 async function laadStad() {
-  const { data } = await sb.from("stad_voortgang").select("*").eq("gemeente", STAD.naam).maybeSingle();
-  state.stad = data;
+  const { data } = await sb.from("stad_voortgang").select("*").order("gemeente");
+  state.steden = data ?? [];
+  state.stad = state.steden.find((s) => s.gemeente === stadNaam) ?? null;
+  // De bewaarde stad doet niet (meer) mee: terug naar de pilotstad
+  if (!state.stad && data?.length && stadNaam !== STAD.naam) return kiesStad(STAD.naam);
   hud();
   lichtkrant();
 }
@@ -1075,7 +1092,7 @@ function hud() {
   }
   const s = state.stad;
   const pct = s && s.kroegen ? Math.round((s.vrijgespeeld / s.kroegen) * 100) : 0;
-  zetRing(pct, `${STAD.naam} in kaart`, "Pilsindex", idx?.nu, idx?.delta, idx?.pct);
+  zetRing(pct, `${stadNaam} in kaart`, "Pilsindex", idx?.nu, idx?.delta, idx?.pct);
 }
 
 function zetRing(pct, sub, label, koers, delta, deltaPct) {
@@ -1510,7 +1527,7 @@ async function beoordeelAanbod(id, oordeel) {
 
 async function laadAanbod() {
   const [{ data: aanbod, error }, soorten] = await Promise.all([
-    sb.from("aanbod_overzicht").select("*").eq("gemeente", STAD.naam),
+    sb.from("aanbod_overzicht").select("*").eq("gemeente", stadNaam),
     state.biersoorten.length ? { data: state.biersoorten } : sb.from("biersoorten").select("*").order("volgorde"),
   ]);
   // Bestaat de tabel nog niet (migratie nog niet uitgevoerd), dan blijft de app gewoon werken zonder extra's
@@ -1771,8 +1788,8 @@ async function verkleinFoto(file) {
 
 async function beursView() {
   const [{ data: wijken }, { data: recent }] = await Promise.all([
-    sb.from("wijk_voortgang").select("*").eq("gemeente", STAD.naam).order("naam"),
-    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").order("op", { ascending: false }).limit(15),
+    sb.from("wijk_voortgang").select("*").eq("gemeente", stadNaam).order("naam"),
+    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").eq("gemeente", stadNaam).order("op", { ascending: false }).limit(15),
   ]);
   if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
   const s = state.stad ?? { kroegen: 0, vrijgespeeld: 0, vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
@@ -1821,9 +1838,9 @@ async function beursView() {
 
   body.innerHTML = `
     <div class="indexkaart">
-      <div class="kop">Pilsindex ${esc(STAD.naam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
+      <div class="kop">Pilsindex ${esc(stadNaam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
       ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">in 12 maanden</span>` : ""}</div>
-        <div class="uitleg">Wat een vaasje pils in ${esc(STAD.naam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
+        <div class="uitleg">Wat een vaasje pils in ${esc(stadNaam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
         ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", lijnLabel: "", kleur: idx.delta > 0 ? "var(--op)" : idx.delta < 0 ? "var(--af)" : "var(--accent)" })}</div>` : ""}`
       : `<div class="stand"><span class="big-price">€ ?</span></div>
         <div class="uitleg">Nog geen koers. Geef de eerste prijs door en zet de Pilsindex op het bord.</div>`}
@@ -1833,7 +1850,7 @@ async function beursView() {
     <h3>Samen in kaart <span class="muted">${s.vrijgespeeld}/${s.kroegen}</span></h3>
     <div class="card ring-big">
       <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="ring-bg"/><circle cx="50" cy="50" r="42" class="ring-fg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct / 100)}"/></svg>
-      <div><div class="pct">${pct}%</div><div>van ${STAD.naam} heeft een prijs</div>
+      <div><div class="pct">${pct}%</div><div>van ${esc(stadNaam)} heeft een prijs</div>
       <div class="small muted">${s.vrijgespeeld} van ${s.kroegen} kroegen${next ? ` · nog ${nodig} tot ${next}%` : " · alles in kaart!"}</div></div>
     </div>
     <div class="milestones">${MS.map((m) => `<span class="${pct >= m ? "done" : ""}">${m}%</span>`).join("")}</div>
@@ -1857,7 +1874,7 @@ async function rangView() {
   if (state.tab !== "rang" || state.selected != null || state.pagina) return;
   const uid = state.sessie?.user?.id;
   const P = [["week", "Week"], ["maand", "Maand"], ["altijd", "Altijd"]];
-  body.innerHTML = `<h2>Koersmakers</h2><p class="muted small" style="margin-top:0">Wie de koers van ${esc(STAD.naam)} het best bijhoudt. Punten voor melden en controleren, nooit voor drinken. <button type="button" class="linkbtn" data-regels>Hoe punten werken</button></p>
+  body.innerHTML = `<h2>Koersmakers</h2><p class="muted small" style="margin-top:0">Wie de koers het best bijhoudt. Punten voor melden en controleren, nooit voor drinken. <button type="button" class="linkbtn" data-regels>Hoe punten werken</button></p>
     <div class="chips">${P.map(([id, n]) => `<button class="chip" data-periode="${id}" aria-pressed="${id === kolom}">${n}</button>`).join("")}</div>
     ${(data ?? []).length ? `<ul class="list">${data.map((r, i) => `<li class="row ${r.id === uid ? "me" : ""}">
       <span class="rank">${i + 1}</span>
@@ -2010,6 +2027,7 @@ function ikView() {
       ${accountBlok(null)}
       <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
       ${bugBlok()}
+      ${stadKeuzeBlok()}
       ${stadBlok()}
       ${taalBlok()}`;
   }
@@ -2063,9 +2081,10 @@ function ikView() {
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${bugBlok()}
+    ${stadKeuzeBlok()}
     ${stadBlok()}
     ${taalBlok()}
-    ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${STAD.naam}.</div>
+    ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${esc(stadNaam)}.</div>
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
       <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
       <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
@@ -2078,6 +2097,29 @@ function ikView() {
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
       Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p>
     <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
+}
+
+// Stad kiezen: alleen als er meer dan een stad meedoet
+function stadKeuzeBlok() {
+  const steden = state.steden ?? [];
+  if (steden.length < 2) return "";
+  return `<h3>Stad</h3>
+    <div class="form"><select id="stadKeuze" aria-label="Stad" data-geen-teksten>${steden.map((s) =>
+      `<option value="${esc(s.gemeente)}"${s.gemeente === stadNaam ? " selected" : ""}>${esc(s.gemeente)} (${s.kroegen})</option>`).join("")}</select></div>`;
+}
+
+function kiesStad(naam) {
+  if (naam === stadNaam) return;
+  stadNaam = naam;
+  try { localStorage.setItem("bierkoers-stad", naam); } catch { /* privévenster */ }
+  kaartNaarStad = true;
+  state.selected = null;
+  state.tocht = null;
+  state.kroegen = [];
+  state.koersRuw = [];
+  state.stad = state.steden?.find((s) => s.gemeente === naam) ?? null;
+  vernieuw();
+  draw();
 }
 
 // Taal kiezen. De namen van de talen zelf worden niet vertaald.
@@ -2180,16 +2222,24 @@ async function laadBeheerSteden() {
 // Goedkeuren: eerst de kroegen en wijken laden, daarna de aanvraag afhandelen
 async function keurStad(knop, stad) {
   knop.disabled = true; knop.textContent = "Bezig…";
-  const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeente: stad } });
-  if (error) {
-    const reden = await error.context?.json?.().then((b) => b?.fout).catch(() => null);
-    toast("Import mislukt: " + (reden ?? "de importfunctie gaf geen antwoord"));
-    return laadBeheerSteden();
+  const data = await importeerStad(stad);
+  if (data) {
+    const { error } = await sb.rpc("zet_stadsaanvraag", { p_stad: stad, p_status: "goedgekeurd" });
+    if (error) toast(await leesFout(error));
+    else toast(`${data.gemeente}: ${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
+    laadStad();
   }
-  const { error: zetFout } = await sb.rpc("zet_stadsaanvraag", { p_stad: stad, p_status: "goedgekeurd" });
-  if (zetFout) toast(await leesFout(zetFout));
-  else toast(`${data.gemeente}: ${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
   laadBeheerSteden();
+}
+
+// Kroegen en wijken van een gemeente laden (Edge Function osm-import). De functie zoekt de gemeentecode zelf op.
+async function importeerStad(gemeente) {
+  const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeente } });
+  if (!error) return data;
+  // De functie geeft de echte reden in het antwoord ({ fout }); supabase-js zegt alleen "non-2xx status code".
+  const reden = await error.context?.json?.().then((b) => b?.fout).catch(() => null);
+  toast("Import mislukt: " + (reden ?? "de importfunctie gaf geen antwoord"));
+  return null;
 }
 
 async function wijsStadAf(knop, stad) {
@@ -2306,7 +2356,7 @@ function mijnKroegenHtml() {
   return `${kop}
     <div class="tegels">
       <div class="tegel goud"><div class="getal">${mijn.length}</div><div>${mijn.length === 1 ? "kroeg" : "kroegen"}</div></div>
-      <div class="tegel nacht"><div class="getal">${pct}%</div><div>van ${esc(STAD.naam)}</div></div>
+      <div class="tegel nacht"><div class="getal">${pct}%</div><div>van ${esc(stadNaam)}</div></div>
     </div>
     <div class="btns"><button class="btn" data-mijn-kaart>Toon op mijn kaart</button></div>
 
@@ -2332,7 +2382,7 @@ function mijnKroegenHtml() {
     <h3>Volgende kroegentocht</h3>
     <div class="card nacht-kaart">
       <div>Laatste check-in ${sindsDagen === 0 ? "vandaag" : sindsDagen === 1 ? "gisteren" : `${sindsDagen} dagen geleden`}</div>
-      <div class="small">Nog ${alle.length - mijn.length} kroegen in ${esc(STAD.naam)} waar je niet bent geweest.</div>
+      <div class="small">Nog ${alle.length - mijn.length} kroegen in ${esc(stadNaam)} waar je niet bent geweest.</div>
       <div class="btns"><button class="btn primary" data-tocht-open="nieuw">Plan een tocht langs nieuwe kroegen</button></div>
     </div>
     ${nieuwInBuurt.length ? `<div class="muted small" style="margin-top:4px">Dichtbij en nog niet bezocht</div>
@@ -2345,7 +2395,7 @@ function mijnKroegenHtml() {
 // Kroegentocht: een route langs de goedkoopste kroegen of langs kroegen waar je nog niet was.
 function planTocht(soort = state.tocht?.soort ?? "goedkoop", aantal = state.tocht?.aantal ?? 4) {
   if (soort === "nieuw" && !state.sessie) soort = "goedkoop";
-  const start = state.pos ?? STAD.centrum;
+  const start = state.pos ?? stadCentrum();
   let kandidaten = state.kroegen.filter((k) => afstand(start, [k.lon, k.lat]) <= TOCHT_STRAAL_M);
   if (soort === "goedkoop") kandidaten = kandidaten.filter((k) => k.per25_cent).sort((a, b) => a.per25_cent - b.per25_cent).slice(0, aantal);
   else kandidaten = kandidaten.filter((k) => !state.mijn.has(k.id));
@@ -2374,7 +2424,7 @@ function tochtView() {
   }).join("");
   return `<button class="back" data-tocht-sluit>‹ Terug</button>
     <h2>Kroegentocht</h2>
-    <div class="muted small">${t.vanaf === "jij" ? "Vanaf jouw locatie" : `Vanaf het centrum van ${esc(STAD.naam)}`}, kroegen binnen ${meters(TOCHT_STRAAL_M)}.
+    <div class="muted small">${t.vanaf === "jij" ? "Vanaf jouw locatie" : `Vanaf het centrum van ${esc(stadNaam)}`}, kroegen binnen ${meters(TOCHT_STRAAL_M)}.
       ${t.vanaf === "jij" ? "" : `<button class="linkbtn" data-tocht-locatie>Gebruik mijn locatie</button>`}</div>
     <label class="veld">Langs</label>
     <div class="seg">${S.map(([id, n]) => `<button type="button" data-tocht-soort="${id}" aria-pressed="${id === t.soort}">${n}</button>`).join("")}</div>
@@ -2657,6 +2707,7 @@ body.addEventListener("focusin", (e) => {
 });
 
 body.addEventListener("change", (e) => {
+  if (e.target.id === "stadKeuze") return kiesStad(e.target.value);
   if (e.target.name === "foto" && e.target.closest("#prijsForm")) {
     const img = $("#fotoVoorbeeld"), file = e.target.files?.[0];
     if (img.src) URL.revokeObjectURL(img.src);
@@ -2800,13 +2851,9 @@ async function stuurCode(email, soort, knop, naam) {
 
 async function importeer(knop) {
   knop.disabled = true; knop.textContent = "Bezig met importeren…";
-  const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeente: STAD.naam, gemeentecode: STAD.gemeentecode } });
+  const data = await importeerStad(stadNaam);
   knop.disabled = false; knop.textContent = "Kroegen en wijken importeren";
-  if (error) {
-    // De functie geeft de echte reden in het antwoord ({ fout }); supabase-js zegt alleen "non-2xx status code".
-    const reden = await error.context?.json?.().then((b) => b?.fout).catch(() => null);
-    return toast("Import mislukt: " + (reden ?? "de importfunctie gaf geen antwoord"));
-  }
+  if (!data) return;
   toast(`${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
   vernieuw();
 }
