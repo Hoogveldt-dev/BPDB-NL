@@ -11,8 +11,9 @@
   --sep: rgb(60 60 67 / .18);
   --fg: #000000; --muted: rgb(60 60 67 / .6); --muted-2: rgb(60 60 67 / .3);
   /* Tint: bier */
-  --accent: #f2a900; --accent-ink: #1c1300; --accent-text: #9a6400; --accent-zacht: rgb(242 169 0 / .16);
-  --merk: #E8A317; /* amber van het logo; in de donkere stand die van het kaartje */
+  /* Tint: de amber van het visitekaartje. Tekst op wit in een donkerder amber, anders is hij niet leesbaar. */
+  --accent: #F5B82E; --accent-ink: #1c1300; --accent-text: #9a6400; --accent-zacht: rgb(245 184 46 / .16);
+  --merk: #F5B82E; /* het logo blijft amber, ook in de Guinness-stand */
   /* Systeemkleuren */
   --fresh: #34c759; --fresh-t: #248a3d; --stale: #ff9500; --stale-t: #c93400; --old: #ff3b30; --old-t: #d70015;
   --locked: #aeaeb2; --wacht: #007aff; --blue: #007aff;
@@ -39,7 +40,7 @@
     --glass: rgb(28 28 30 / .88);
     --sep: rgb(84 84 88 / .6);
     --fg: #ffffff; --muted: rgb(235 235 245 / .6); --muted-2: rgb(235 235 245 / .3);
-    --accent: #ffc426; --accent-ink: #1c1300; --accent-text: #ffd060; --accent-zacht: rgb(255 196 38 / .18); --merk: #F5B82E;
+    --accent: #F5B82E; --accent-ink: #1c1300; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
     --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
     --locked: #636366; --wacht: #0a84ff; --blue: #0a84ff;
     --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
@@ -56,7 +57,7 @@
   --glass: rgb(28 28 30 / .88);
   --sep: rgb(84 84 88 / .6);
   --fg: #ffffff; --muted: rgb(235 235 245 / .6); --muted-2: rgb(235 235 245 / .3);
-  --accent: #ffc426; --accent-ink: #1c1300; --accent-text: #ffd060; --accent-zacht: rgb(255 196 38 / .18); --merk: #F5B82E;
+  --accent: #F5B82E; --accent-ink: #1c1300; --accent-text: #F5B82E; --accent-zacht: rgb(245 184 46 / .18);
   --fresh: #30d158; --fresh-t: #30d158; --stale: #ff9f0a; --stale-t: #ff9f0a; --old: #ff453a; --old-t: #ff6961;
   --locked: #636366; --wacht: #0a84ff; --blue: #0a84ff;
   --op: #ff453a; --op-t: #ff6961; --af: #30d158; --af-t: #30d158;
