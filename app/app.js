@@ -68,6 +68,7 @@ const STAMGAST_MIN = 2; // gelijk aan de drempel in de view kroeg_stamgast
 const INCHECK_M = 75; // gelijk aan de grens in private.inchecken
 const TOCHT_STRAAL_M = 2000;
 const ICON_PIN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><path d="m9 10 2 2 4-4"/></svg>`;
+const ICON_LOCATIE = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.6 3.4 3.9 10.2c-.9.4-.8 1.6.1 1.9l6.6 1.9 1.9 6.6c.3.9 1.5 1 1.9.1l6.8-16.7c.3-.7-.4-1.4-1.1-1.1z"/></svg>`;
 const ICON_ROUTE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H16"/></svg>`;
 const ICON_GLAS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h10v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M16 8h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M9 9v8M12.5 9v8"/></svg>`;
 
@@ -1056,6 +1057,7 @@ async function laadKroegen() {
   koersen();
   kaartBijwerken();
   lichtkrant();
+  hud(); // de bovenbalk rekent met de kroegen (stand, jouw index), dus ook bijwerken als die binnenkomen
 }
 
 // Midden van de stad: de mediaan van de kroegen, zodat losse kroegen in de dorpen eromheen het niet verschuiven
@@ -1104,7 +1106,8 @@ function hud() {
   }
   if (state.modus === "mijn") {
     const totaal = state.kroegen.length, mijn = state.kroegen.filter((k) => state.mijn.has(k.id));
-    const eigen = mediaan(mijn.map((k) => koersVan(k.id)?.nu).filter(Boolean));
+    // De bekende prijs van elke kroeg waar je was, ook als hij nog op bevestiging wacht: je ziet je bijdrage meteen
+    const eigen = mediaan(mijn.map((k) => prijsPer25(k)).filter(Boolean));
     zetRing(totaal ? Math.round((mijn.length / totaal) * 100) : 0, `${mijn.length} van ${totaal} kroegen bezocht`,
       "Jouw index", eigen, eigen && idx ? eigen - idx.nu : null);
     return;
@@ -1210,10 +1213,10 @@ function prijsKolom(k) {
 function lijstView() {
   const F = [
     { id: "alles", naam: "Alles", f: () => true },
-    { id: "slot", naam: "Nog geen prijs", f: (k) => k.versheid === "locked" },
-    { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
-    { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
     { id: "goedkoop", naam: "Goedkoopst", f: (k) => prijsPer25(k) != null },
+    { id: "slot", naam: "Nog geen prijs", f: (k) => k.versheid === "locked" },
+    { id: "wacht", naam: "Te bevestigen", f: (k) => k.open_melding_id && !vanMenukaart(k) },
+    { id: "oud", naam: "Oud (90+ d)", f: (k) => k.versheid === "old" },
     { id: "prijsvast", naam: "Langst prijsvast", f: (k) => koersVan(k.id) },
     { id: "verhoogd", naam: "Dit jaar verhoogd", f: (k) => koersVan(k.id)?.recent },
     ...(state.sessie ? [{ id: "nieuw", naam: "Nog niet bezocht", f: (k) => !state.mijn.has(k.id) }] : []),
@@ -1242,9 +1245,12 @@ function lijstView() {
     : state.inBeeld ? `<div class="empty">Geen kroegen in beeld.<br><span class="small">Schuif of zoom de kaart, of zet "In beeld" uit.</span></div>`
     : `<div class="empty">Niets gevonden.<br><span class="small">Probeer een andere zoekterm of een ander filter.</span></div>`;
   const hint = !state.pos && !["goedkoop", "prijsvast", "verhoogd"].includes(state.filter)
-    ? `<p class="small muted hint">Kroegen met een prijs eerst, daarna op naam. <button type="button" class="linkbtn" data-locatie-lijst>Gebruik mijn locatie</button> en de dichtstbijzijnde kroeg staat bovenaan.</p>` : "";
+    ? `<p class="small muted hint">Kroegen met een prijs eerst, daarna op naam.</p>` : "";
+  // Zit je in een kroeg, dan is dit de eerste stap: met je locatie staat hij bovenaan
+  const bijJou = state.pos ? "" : `<button class="row tocht-link" data-locatie-lijst><span class="ic-sm">${ICON_LOCATIE}</span><span class="row-main"><span class="row-title">Kroegen bij jou</span><span class="row-sub">Zit je in een kroeg? Zet hem bovenaan</span></span><span class="muted">›</span></button>`;
   const meer = rows.length - state.limiet;
   return `<input class="search" type="search" placeholder="Zoek een kroeg, wijk of straat" value="${esc(state.zoek)}" data-zoek>
+    ${bijJou}
     <button class="row tocht-link" data-tocht-open><span class="ic-sm">${ICON_ROUTE}</span><span class="row-main"><span class="row-title">Plan een kroegentocht</span><span class="row-sub">Langs de goedkoopste kroegen of waar je nog niet was</span></span><span class="muted">›</span></button>
     <div class="chips">${state.wijk ? `<button class="chip" data-wis-wijk aria-pressed="true" aria-label="Filter ${esc(state.wijk)} wissen">${esc(state.wijk)} ✕</button>` : ""}<button class="chip" data-in-beeld aria-pressed="${state.inBeeld}">In beeld</button>${F.map((x) => `<button class="chip" data-filter="${x.id}" aria-pressed="${x.id === f.id}">${x.naam}</button>`).join("")}</div>
     ${guinnessAan() ? `<p class="small guinness-uitleg">Guinness-stand: alleen kroegen met Guinness, goedkoopste pint eerst. <button type="button" class="linkbtn" data-guinness-uit>Terug naar pils</button></p>` : ""}
@@ -1742,18 +1748,18 @@ function formView() {
   return `<button class="back" data-cancel>‹ Annuleer</button>
     <h2>${titel}</h2>
     <div class="muted small">${esc(k.naam)}</div>
-    <p class="small muted">Het spel vergelijkt de goedkoopste pils van de tap in een vaasje. Schenkt deze kroeg geen vaasje, kies dan het kleinste glas; we rekenen om naar een vaasje. Ander bier voeg je toe onder "Ook op de tap".</p>
     <form class="form" id="prijsForm">
-      <label>Merk pils</label>
-      <select name="merk">${MERKEN.map((m) => `<option ${m === f.merk ? "selected" : ""}>${m}</option>`).join("")}<option value="_anders" ${MERKEN.includes(f.merk) ? "" : "selected"}>Anders…</option></select>
-      <input name="merkAnders" placeholder="Ander merk" style="margin-top:6px;${MERKEN.includes(f.merk) ? "display:none" : ""}" value="${MERKEN.includes(f.merk) ? "" : esc(f.merk)}">
+      <label>Wat kost je pils? In euro</label>
+      <input name="prijs" inputmode="decimal" placeholder="3,50" required value="${esc(f.prijs ?? "")}">
+      <p class="small muted" id="prijsVoorbeeld" aria-live="polite">Vul de prijs in. Je ziet meteen wat dat per vaasje is.</p>
       <label>Glas</label>
       <div class="seg">${GLAZEN.map((g) => `<button type="button" data-cl="${g.cl}" aria-pressed="${!f.clAnders && g.cl === f.cl}">${g.naam}<br><span class="small muted">${g.cl} cl</span></button>`).join("")}
         <button type="button" data-cl="anders" aria-pressed="${!!f.clAnders}">Ander glas<br><span class="small muted">zelf invullen</span></button></div>
       <input name="clAnders" type="number" min="15" max="100" inputmode="numeric" placeholder="Inhoud in cl, bijvoorbeeld 28" style="margin-top:6px" ${f.clAnders ? "" : "hidden"} value="${f.clAnders ? esc(f.cl) : ""}">
-      <label>Prijs van dat glas, in euro</label>
-      <input name="prijs" inputmode="decimal" placeholder="3,50" required value="${esc(f.prijs ?? "")}">
-      <p class="small muted" id="prijsVoorbeeld" aria-live="polite">Vul de prijs in. Je ziet meteen wat dat per vaasje is.</p>
+      <p class="small muted">Geen vaasje? Kies het kleinste glas, we rekenen om naar een vaasje.</p>
+      <label>Merk pils</label>
+      <select name="merk">${MERKEN.map((m) => `<option ${m === f.merk ? "selected" : ""}>${m}</option>`).join("")}<option value="_anders" ${MERKEN.includes(f.merk) ? "" : "selected"}>Anders…</option></select>
+      <input name="merkAnders" placeholder="Ander merk" style="margin-top:6px;${MERKEN.includes(f.merk) ? "display:none" : ""}" value="${MERKEN.includes(f.merk) ? "" : esc(f.merk)}">
       <label>Foto van de prijslijst (optioneel, +5)</label>
       <label class="btn fotoknop"><input name="foto" type="file" accept="image/*" capture="environment"><span id="fotoNaam">Foto maken of kiezen</span></label>
       <img class="foto-voorbeeld" id="fotoVoorbeeld" alt="Voorbeeld van je foto" hidden>
@@ -2430,7 +2436,7 @@ function mijnKroegenHtml() {
   const metPrijs = mijn.filter((k) => k.per25_cent);
   const goedkoopst = [...metPrijs].sort((a, b) => a.per25_cent - b.per25_cent)[0];
   // Jouw index: de mediaan van de kroegen waar je was, naast de Pilsindex van de stad
-  const eigenIndex = mediaan(mijn.map((k) => koersVan(k.id)?.nu).filter(Boolean));
+  const eigenIndex = mediaan(mijn.map((k) => prijsPer25(k)).filter(Boolean));
   const pilsindex = state.koers.index?.nu;
   const eerste = mijn.reduce((a, k) => (!a || k.eerste < a ? k.eerste : a), null);
   const laatst = mijn.reduce((a, k) => (!a || k.laatst > a ? k.laatst : a), null);
@@ -2742,9 +2748,11 @@ body.addEventListener("click", (e) => {
     const cl = k?.huidig_volume_cl ?? k?.open_volume_cl ?? VAASJE;
     // Inchecken ("hier") vraagt de locatie; van afstand ("afstand") gaat er geen locatie mee
     state.form = { hier: t.dataset.form === "hier", anders: false, merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl, clAnders: !GLAZEN.some((g) => g.cl === cl), prijs: "" };
+    // Het formulier helemaal open, zodat de prijs en de knop zonder scrollen in beeld zijn
+    if (!wide()) setDetent("full");
     return draw();
   }
-  if (t.dataset.anderePrijs !== undefined && state.form) { state.form.anders = true; return draw(); }
+  if (t.dataset.anderePrijs !== undefined && state.form) { state.form.anders = true; if (!wide()) setDetent("full"); return draw(); }
   if (t.dataset.incheck && state.form) return verstuurIncheck(t.dataset.incheck, t.closest("form"), t);
   if (t.dataset.cl && state.form) {
     state.form.clAnders = t.dataset.cl === "anders";
