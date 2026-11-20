@@ -848,6 +848,11 @@ check('goedkeuren zet alle aanvragen voor die stad om', gezet.rows?.[0]?.n === 2
 check('een onbekende status wordt geweigerd', /Onbekende status/.test((await als(E, `select public.zet_stadsaanvraag('Arnhem', 'open')`)).fout ?? ''));
 await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
 
+// Stadskeuze: de tijdlijn kent de gemeente van de kroeg, zodat de app de koers per stad laadt
+const tlStad = await een(`select count(*)::int as n, bool_and(t.gemeente = k.gemeente) as goed
+  from public.kroeg_tijdlijn t join public.kroegen k on k.id = t.kroeg_id`);
+check('kroeg_tijdlijn heeft de gemeente van de kroeg', tlStad.n > 0 && tlStad.goed === true, JSON.stringify(tlStad));
+
 // ---------------------------------------------------------------------------
 // Kaartscans: iedereen voegt een scan toe, niemand leest, wijzigt of wist via de API
 // ---------------------------------------------------------------------------

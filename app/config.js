@@ -4,9 +4,9 @@
 export const SUPABASE_URL = "https://yzaootlrhxzyxtvacrot.supabase.co";
 export const SUPABASE_KEY = "sb_publishable_Nc0p9wvcJJWZN6rRYiBOyA_2QW3IPKs";
 
+// Pilotstad: de standaard zolang een speler onder Ik geen andere stad kiest. Andere steden komen uit de database.
 export const STAD = {
   naam: "Nijmegen",
-  gemeentecode: "GM0268",
   centrum: [5.8638, 51.8426],
   zoom: 13.2,
 };

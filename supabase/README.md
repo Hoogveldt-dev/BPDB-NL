@@ -22,6 +22,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Punten meteen | `migrations/20261113180000_punten_meteen.sql` | Punten bij melden en bij "klopt" meteen (triggers `punten_bij_melding` en `punten_bij_bevestiging`); `rond_af` trekt ze in als een melding wordt weerlegd. Wachtende meldingen kregen hun punten bij het uitvoeren |
 | Bugs melden | `migrations/20261113120000_bugmeldingen.sql` | Tabel `bugmeldingen` en functie `meld_bug(tekst, scherm, apparaat)`: elke speler meldt een bug vanuit Ik, hoogstens 10 per dag. Alleen beheerders lezen ze (in de app onder Beheer, Bugs) |
 | Nieuwe stad aanvragen | `migrations/20261120170000_stadsaanvragen.sql` | Tabel `stadsaanvragen`, `vraag_stad_aan(stad)` (elke speler, hoogstens 5 per dag, een stad een keer per speler) en `zet_stadsaanvraag(stad, status)` (alleen beheerders). Alleen beheerders lezen de aanvragen. Goedkeuren in de app (Ik, Beheer, Stadsaanvragen) roept `osm-import` aan zonder gemeentecode; de functie zoekt hem dan op bij PDOK |
+| Stadskeuze | `migrations/20261120190000_tijdlijn_gemeente.sql` | Kolom `gemeente` achteraan op `kroeg_tijdlijn`, zodat de app de koers per gekozen stad laadt |
 | Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account. Meldingen en prijzen blijven staan zonder naam |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
