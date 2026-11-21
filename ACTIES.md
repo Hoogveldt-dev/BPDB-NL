@@ -36,7 +36,7 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 Een foto van de kaart bij een kroeg toevoegen, los van een prijs: +5 punten voor de eerste foto per kroeg, en je eigen foto verwijderen.
 
 1. ~~**Migratie `20261121180000_kaartfotos`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121180000`. Gecontroleerd: RLS staat aan op `kroeg_fotos`, `anon` en `authenticated` mogen alleen lezen, `meld_foto` mag alleen `authenticated` (niet `anon`). Security Advisor: alleen de bekende waarschuwingen.
-2. **Migratie `20261121200000_kaartfotos_punten_verwijderen`**: punten en verwijderen. Zie de pull request.
+2. ~~**Migratie `20261121200000_kaartfotos_punten_verwijderen`** (punten en verwijderen).~~ Gedaan op 21 november 2026: door Kjell uitgevoerd in de SQL Editor, de versie daarna door Claude in `schema_migrations` gezet (`20261121200000`). Gecontroleerd: kolommen `punten` en `verwijderd_op` op `kroeg_fotos`, `punten.kaartfoto_id`, `verwijder_foto` alleen voor `authenticated`, leesregel `verwijderd_op is null`. Security Advisor: alleen de bekende waarschuwingen.
 3. **Een ongepaste foto van een ander verwijderen** (spelers verwijderen alleen hun eigen foto) in de SQL Editor; de punten gaan er dan ook af. Daarna het bestand in Storage (bucket `prijslijsten`) verwijderen via het pad uit de eerste query:
    ```sql
    select id, pad, door_id from public.kroeg_fotos where verwijderd_op is null order by op desc;
