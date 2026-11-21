@@ -1832,10 +1832,40 @@ function prijsVoorbeeld() {
 }
 
 // Een foto van de telefoon is vaak 4 tot 12 MB. Verklein hem naar hoogstens 1600 px als JPEG: sneller en zuiniger.
+// HEIC (de standaard van veel telefoons) laat Chrome op Android niet zien. Kan de browser het niet zelf lezen, dan
+// zetten we het om naar JPEG met heic2any (MIT, 1,3 MB, vastgepind met een controlesom). Alleen dan wordt het geladen.
+const HEIC2ANY = { url: "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js", sri: "sha384-OTofQ0MEeiSgh62havBcemCIK0gqj809wX6UA0uPISNMRnR6NZyCdGzX3SbLrgwL" };
+let heicLader = null;
+function laadHeic2any() {
+  heicLader ??= new Promise((resolve, reject) => {
+    if (window.heic2any) return resolve(window.heic2any);
+    const el = document.createElement("script");
+    el.src = HEIC2ANY.url; el.integrity = HEIC2ANY.sri; el.crossOrigin = "anonymous";
+    el.onload = () => (window.heic2any ? resolve(window.heic2any) : reject(new Error("heic2any ontbreekt")));
+    el.onerror = () => { heicLader = null; reject(new Error("heic2any laden mislukt")); };
+    document.head.append(el);
+  });
+  return heicLader;
+}
+const isHeic = (f) => /heic|heif/i.test(f?.type ?? "") || /\.(heic|heif)$/i.test(f?.name ?? "");
+
+// Verklein een foto naar hoogstens 1600 px als JPEG. Een HEIC-foto wordt altijd JPEG, zodat iedereen hem kan zien.
 async function verkleinFoto(file) {
-  if (!file?.type?.startsWith("image/") || /heic|heif/i.test(file.type)) return file;
+  if (!file?.type?.startsWith("image/") && !isHeic(file)) return file;
+  let bron = file;
+  if (isHeic(file)) {
+    const leesbaar = await createImageBitmap(file).then((b) => (b.close?.(), true), () => false);
+    if (!leesbaar) {
+      try {
+        const uit = await (await laadHeic2any())({ blob: file, toType: "image/jpeg", quality: 0.85 });
+        bron = new File([Array.isArray(uit) ? uit[0] : uit], "prijslijst.jpg", { type: "image/jpeg" });
+      } catch {
+        throw new Error("Deze HEIC-foto kan niet worden omgezet. Kies een JPEG-foto of zet je camera op JPEG.");
+      }
+    }
+  }
   try {
-    const bmp = await createImageBitmap(file);
+    const bmp = await createImageBitmap(bron);
     const schaal = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
     const c = document.createElement("canvas");
     c.width = Math.max(1, Math.round(bmp.width * schaal));
@@ -1843,9 +1873,9 @@ async function verkleinFoto(file) {
     c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
     bmp.close?.();
     const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.82));
-    return blob && blob.size < file.size ? new File([blob], "prijslijst.jpg", { type: "image/jpeg" }) : file;
+    return blob && (isHeic(file) || blob.size < file.size) ? new File([blob], "prijslijst.jpg", { type: "image/jpeg" }) : bron;
   } catch {
-    return file;
+    return bron;
   }
 }
 
