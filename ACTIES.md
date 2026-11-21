@@ -6,7 +6,7 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 
 Op volgorde van belang. Alles is op 21 november 2026 gecontroleerd tegen de live site, DNS of database.
 
-1. **Pull request van 21 november mergen** (privacyverklaring, deelplaatje, foto's zonder EXIF, samenvoegen). Daarna staat `https://bierkoers.nl/privacy` live.
+1. ~~**Pull request van 21 november mergen.**~~ Gedaan: PR #47 gemerged. Live gecontroleerd op 21 november 2026: `https://bierkoers.nl/privacy`, het deelplaatje `og.png`, 204 op `/api/sessie` en `CACHE` `bierkoers-v57`.
 2. **Migratie `20261121220000_samenvoegen_fotos`** uitvoeren: plak het bestand uit `supabase/migrations/` in de SQL Editor, of laat Claude het via MCP doen. Zet daarna de versie gelijk en draai de Security Advisor (er komt geen nieuwe waarschuwing bij: alleen de functie `voeg_samen` verandert):
    ```sql
    insert into supabase_migrations.schema_migrations (version, name)

@@ -4,10 +4,10 @@ Voor de volgende sessie. Lees eerst `CLAUDE.md` (werkafspraken) en `ACTIES.md` (
 
 ## 1. Repository
 
-- `main` staat op `1904760` (PR #46). Het werk van deze avond staat in de pull request van branch `ccr-83383a99-2ujfpm`; die is nog niet gemerged. Begin een nieuwe taak vanaf de nieuwste `main`.
+- Het werk van deze avond is gemerged in PR #47 (`main` op `4c7eb12`) en staat live: `/privacy`, `og.png` en 204 op `/api/sessie` zijn op bierkoers.nl gecontroleerd. Begin een nieuwe taak vanaf de nieuwste `main`.
 - Standaardbranch op GitHub is `main` (gecontroleerd met `git ls-remote --symref origin HEAD`).
 - Tests: `npm run check` en `npm run test:db` (324 goed in `database.test.mjs`, 10 in `melding-mail.test.mjs`). Geen CI behalve de build van Cloudflare Pages.
-- Service worker `CACHE`: `bierkoers-v57` in de pull request (`v56` op `main`).
+- Service worker `CACHE`: `bierkoers-v57` (live gecontroleerd).
 
 ## 2. Wat deze avond is gedaan
 
