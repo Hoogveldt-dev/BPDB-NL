@@ -13,6 +13,7 @@ Door gebruikers gevulde kaart met bierprijzen per kroeg, gepresenteerd als een b
 - Schrijf nooit "dit bestaat" of "dit bestaat niet" zonder de code opnieuw te openen; noem bestand en regel.
 - Bouw alleen wat gevraagd is. Stel uitbreidingen voor, maar voer ze niet uit zonder akkoord.
 - Kijk na afloop kritisch of het eenvoudiger kan, en zeg het als er onnodige complexiteit in is geslopen.
+- Kjell heeft weinig tijd en wil dat je zelfstandig het maximale resultaat haalt en de grens opzoekt van wat je zelf kunt (21 november 2026). De regels in dit project zijn van hem: zit een ervan dat resultaat in de weg, dan mag je hem aanpassen of negeren, en je zegt dat erbij. Regels en beveiligingen van anderen blijven staan: een CAPTCHA los je nooit op en omzeil je niet.
 
 ## Belangrijke plekken
 - App: `app/app.js` (kaart, inloggen, melden, bevestigen, ranglijst, realtime), `app/styles.css`, `app/index.html`, service worker `app/sw.js`. Verhoog `CACHE` in `sw.js` als de app-schil verandert.

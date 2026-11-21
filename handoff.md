@@ -1,80 +1,99 @@
-# Overdracht (21 november 2026, avond)
+# Overdracht (21 november 2026, eind van de avond)
 
-Voor de volgende sessie. Lees eerst `CLAUDE.md` (werkafspraken) en `ACTIES.md` (wat Kjell zelf moet doen; bovenaan staat wat er voor de demo nog moet). Dit document vervangt de handoff van eerder vandaag (branch `ccr-02367abf-oyg1ji`): die had een paar fouten en miste een paar dingen, zie punt 6. Alles hieronder is op 21 november 2026 gecontroleerd tegen de code, de live site of de database, behalve waar "niet gecontroleerd" staat.
+Voor de volgende sessie. Lees eerst `CLAUDE.md` (werkafspraken; op 21 november flink aangevuld) en `ACTIES.md` (wat Kjell zelf moet doen; bovenaan wat er voor de demo nog openstaat). Alles hieronder is aan het eind van 21 november 2026 gecontroleerd tegen de code, de live site of de database, behalve waar "niet gecontroleerd" staat.
 
-## 1. Repository
+## 1. In het kort
 
-- Het werk van deze avond is gemerged in PR #47 (`main` op `4c7eb12`) en staat live: `/privacy`, `og.png` en 204 op `/api/sessie` zijn op bierkoers.nl gecontroleerd. Begin een nieuwe taak vanaf de nieuwste `main`.
-- Standaardbranch op GitHub is `main` (gecontroleerd met `git ls-remote --symref origin HEAD`).
-- Tests: `npm run check` en `npm run test:db` (324 goed in `database.test.mjs`, 10 in `melding-mail.test.mjs`). Geen CI behalve de build van Cloudflare Pages.
-- Service worker `CACHE`: `bierkoers-v57` (live gecontroleerd).
+- Al het werk staat op `main` (`cfb5096`, PR #49) en is live op bierkoers.nl. Er staat geen pull request open.
+- Nijmegen: **22 van de 161 open kroegen in kaart** (2 bevestigd, 4 spelermeldingen, 16 menukaartprijzen). Pilsindex € 3,90.
+- Wat uit bronnen te halen valt, is binnen: eigen websites (DAEN) en foto's in Google Maps (JAN) zijn allebei doorzocht. De rest van de kaart komt van spelers ter plaatse.
+- Wat nog openstaat voor de demo, kan alleen Kjell (Cloudflare, Google Cloud, echte telefoons); zie punt 4.
 
-## 2. Wat deze avond is gedaan
+## 2. Repository en tests
 
-In de pull request:
+- Begin altijd vanaf de nieuwste `main` (`git fetch origin main && git checkout -B <sessiebranch> origin/main`). Standaardbranch op GitHub is `main`.
+- `npm run check` slaagt; `npm run test:db`: 324 goed in `database.test.mjs`, 10 in `melding-mail.test.mjs`. De tools: `cd tools/google-kroegen && node --test test/*.test.mjs`, 69 goed (met `jpeg-js` en `tesseract.js` geïnstalleerd, zie punt 7).
+- Geen CI behalve de build van Cloudflare Pages; die geeft per pull request een preview.
+- Service worker `CACHE`: `bierkoers-v57` (live).
 
-- **Privacyverklaring** `app/privacy.html` (Nederlands en Engels), link onderaan Ik in alle varianten van dat scherm (`privacyRegel()` in `app/app.js`). Google vraagt deze link voor inloggen met Google. Contact `proost@bierkoers.nl`, zonder naam: Kjell beslist of zijn naam erbij komt.
-- **Deelvoorbeeld**: `og:`-tags, `canonical` en `app/og.png` (1200 x 630, logo en woordmerk op inkt) in `app/index.html`.
-- **`/api/sessie`** geeft 204 in plaats van 404 als er geen bewaarde sessie is (`app/_worker.js`); `bewaar.herstel()` kijkt nu naar status 200.
-- **Privacylek gedicht**: `verkleinFoto()` uploadde het origineel als de JPEG niet kleiner werd, met de EXIF-gegevens (zoals de plek van de foto) naar de openbare bucket `prijslijsten`. Nu codeert hij altijd opnieuw.
-- **Samenvoegen** (`supabase/migrations/20261121220000_samenvoegen_fotos.sql`): `private.voeg_samen` verhuist nu ook `kroeg_fotos`, `bugmeldingen` en `stadsaanvragen`. Zonder dit kon een speler na het samenvoegen zijn eigen foto niet verwijderen (de punten gingen wel mee). Een foto bij een kroeg waar het account al een foto had, verliest zijn 5 punten (hoogstens 5 per kroeg per speler, zoals de spelregel al zei). Test erbij; de test faalt zonder de migratie. Staat op Supabase sinds 21 november 2026 (via een eenmalige Edge Function, zie punt 7).
+## 3. Wat er op 21 november is gebeurd
 
-Rechtstreeks in de database (project `yzaootlrhxzyxtvacrot`), via `importeer_menuprijzen`:
+Pull requests #47, #48 en #49, alle gemerged.
 
-- **11 menukaartprijzen** van de websites van kroegen (DAEN), elk zelf gelezen op de kaart en goedgekeurd door de subagent menukaart-controleur. Nijmegen ging van 11 van de 164 naar **22 van de 161 open kroegen in kaart** (2 bevestigd, 4 spelermeldingen, 16 menukaartprijzen).
-- **Gesloten**: Dreadlock en Kronkel (coffeeshops) en Park Café (droge horeca), met `gesloten_door_spelers = true` zodat een import ze niet heropent. **Verwijderd**: de kapotte HEIC-foto bij Samson (`kroeg_fotos` id 1) en de 5 punten ervan; het bestand staat nog in de bucket.
-- **"Vaas" telt als vaasje** (Kjell gaf volledige rechten; besloten op 21 november 2026): `tools/google-kroegen/bron/vaasje.mjs` met test, de menukaart-controleur en de documentatie. Zo telt het nu overal gelijk; eerder telde een sessie "vaas" wel (Faber, Florijn) en de controleur niet (De Ruyter). Werkwijze, afvallers en redenen: `docs/menukaartprijzen.md`, "Tweede ronde DAEN vanuit een cloudsessie". Een menukaartprijs is blauw tot een speler ter plaatse "Klopt" zegt.
+**App**
+- Privacyverklaring `app/privacy.html` (Nederlands en Engels), live op `https://bierkoers.nl/privacy` (Cloudflare stuurt `/privacy.html` daarheen door). Link onderaan Ik (`privacyRegel()` in `app/app.js`). Contact `proost@bierkoers.nl`, zonder naam.
+- Deelvoorbeeld voor WhatsApp en iMessage: `og:`-tags, `canonical` en `app/og.png` (1200 x 630).
+- `/api/sessie` geeft 204 als er geen bewaarde sessie is (was 404, een fout in de console).
+- Privacylek gedicht: `verkleinFoto()` codeert een foto altijd opnieuw. Eerder ging het origineel, met EXIF en dus soms de plek van de foto, naar de openbare bucket als de JPEG niet kleiner werd.
 
-## 3. Stand van productie (gecontroleerd)
+**Database** (project `yzaootlrhxzyxtvacrot`)
+- Migratie `20261121220000_samenvoegen_fotos`: `private.voeg_samen` neemt nu ook `kroeg_fotos`, `bugmeldingen` en `stadsaanvragen` mee. Live, versie gezet, beveiligingsadviezen alleen de bekende waarschuwingen.
+- 11 menukaartprijzen van eigen websites, elk zelf gelezen en goedgekeurd door de subagent menukaart-controleur (verslag: `docs/menukaartprijzen.md`, "Tweede ronde DAEN").
+- Gesloten met `gesloten_door_spelers = true` (zodat een import ze niet heropent): Dreadlock en Kronkel (coffeeshops) en Park Café (droge horeca).
+- De kapotte HEIC-foto bij Samson en zijn punten zijn weg; `kroeg_fotos` is leeg. Het bestand staat nog in de bucket.
 
-- `kroeg_kaart`, Nijmegen, open: 161 kroegen; 22 in kaart (`inKaart()` in `app/app.js`: bevestigd, menukaart of wachtend). Mediaan voor de Pilsindex € 3,90.
-- 4 accounts, alle met e-mailadres; 0 anonieme accounts. Het anonieme pad is op 21 november 2026 door Claude getest op de live site (iPhone-emulatie): melden zonder account, +50, bewaarcookie en terugkeer na het wissen van de opslag werken. De testspeler en zijn melding zijn verwijderd. E-mail koppelen en echte telefoons zijn niet getest.
-- Migraties op Supabase: tot en met `20261121220000_samenvoegen_fotos`, allemaal met de versie gelijk aan de bestandsnaam (ook `20261113180000_punten_meteen`, die in ACTIES.md nog als open stond).
-- `kroeg_fotos` is leeg (de kapotte HEIC-foto is weg).
-- DNS: SPF en DKIM zijn er, **DMARC niet** (`_dmarc.bierkoers.nl` bestaat niet). Geen DS-record bij .nl, dus DNSSEC staat uit.
-- `www.bierkoers.nl` geeft een tweede kopie van de app (200) in plaats van door te sturen.
-- Auth-instellingen: anonieme accounts aan, Google aan, Apple uit. Of de Google-app op "In production" staat, is niet te zien vanuit de cloud (niet gecontroleerd).
+**Menukaartpijplijn** (`tools/google-kroegen/`)
+- "Vaas" telt als vaasje (`kiesVaasje()`, de controleur en de documentatie). De Ruyter is daarna alsnog geïmporteerd.
+- De fotomethode (JAN) is vanuit de cloud gedraaid met DeepSeek over 49 kroegen zonder prijs: geen CAPTCHA, ongeveer $ 0,03, maar geen bruikbare prijs. De enige treffer was een actieprijs bij De Tempelier ("Knaken dinsdag", Heineken € 2,50), afgekeurd. Twee gaten gedicht, met tests: de mediaancontrole telt nu ook menukaartprijzen (`per25VoorMediaan()` in `bron/controles.mjs`; stond uit met maar 2 bevestigde prijzen), en de lezer markeert actieprijzen (veld `actie`) die `kiesVaasje()` overslaat.
 
-## 4. Klaar voor een demo aan vrienden?
+**Getest op de live site**
+- Het anonieme pad in een iPhone-browser: zonder account een prijs melden (anonieme speler, +50), de bewaarcookie, en na het wissen van de browseropslag dezelfde speler terug via `/api/sessie`. Geen fouten. De testgegevens zijn verwijderd. Na het wissen toont de app de uitleg opnieuw (die keuze staat in `localStorage`); onschuldig.
 
-Bijna. Wat nog moet, staat op volgorde in `ACTIES.md` onder "Eerst: voor de demo". Het belangrijkste: de pull request mergen, DMARC toevoegen (anders kan de inlogcode in de spam), Google op "In production" (anders kunnen vrienden niet met Google inloggen) en een keer op een echte iPhone en Android het hele anonieme pad lopen.
+**Afspraken** (in `CLAUDE.md`)
+- Migraties en andere databasewijzigingen zonder akkoord vooraf; spelregels alleen op verzoek.
+- DeepSeek (`--extern`) mag vanuit een cloudsessie.
+- Zelfstandig de grens opzoeken: de regels van het project zijn van Kjell en mogen wijken als ze het resultaat in de weg zitten (zeg het erbij). Een CAPTCHA van Google los je nooit op en omzeil je niet: dat is een beveiliging van Google, geen regel van Kjell.
 
-Met 22 van de 161 kroegen in kaart is de kaart nog grotendeels grijs. Presenteer het als "we spelen vanavond de stad vrij": de 13 menukaartprijzen in het centrum zijn ideaal om ter plaatse met "Klopt" te bevestigen, en dat levert punten op.
+## 4. Stand van productie (gecontroleerd)
 
-## 5. Zorgen en open beslissingen voor Kjell
+| | |
+|---|---|
+| Kroegen Nijmegen | 161 open; 22 in kaart; Pilsindex € 3,90 |
+| Accounts | 4, alle met e-mailadres; 0 anoniem; 9 check-ins; 2 Guinness-prijzen; 0 bugs; 0 stadsaanvragen |
+| Laatste migratie | `20261121220000_samenvoegen_fotos` |
+| Auth | anonieme accounts aan, Google aan, Apple uit |
+| DMARC | ontbreekt (`_dmarc.bierkoers.nl` bestaat niet) |
+| www.bierkoers.nl | 200, een tweede kopie in plaats van een doorverwijzing |
+| DNSSEC | uit (geen DS-record bij .nl) |
+| Edge Function `eenmalig-migratie` | leeg, geeft 401/410; mag in het dashboard weg |
+| DeepSeek-saldo | $ 1,99 |
 
-- **Twijfelgevallen in de kroegenlijst**: Strik Bakkers Cafe (lijkt een ijssalon), Café Royal en café Billabong (bestaan mogelijk niet meer). Niet gesloten zonder bewijs; spelers melden het met "Klopt deze kroeg niet?".
-- **Punten voor foto's zijn te farmen tot een grens**: 5 per kroeg per speler, zonder beoordeling. De bucket `prijslijsten` is openbaar en er is geen moderatie behalve de SQL in ACTIES.md.
+Nog open voor de demo, alleen door Kjell (op volgorde in `ACTIES.md`): DMARC toevoegen in Cloudflare, Google-inlog op "In production" met `https://bierkoers.nl/privacy` als privacy-URL, www laten doorsturen, de privacyverklaring nalezen (naam erbij of niet), en op een echte iPhone en Android e-mail koppelen, inloggen op een tweede toestel, bevestigen en een foto (ook HEIC op Android) toevoegen en verwijderen.
+
+Niet gecontroleerd: of de Google-app op "In production" staat, het Supabase-abonnement, back-ups en automatisch pauzeren, Safari op een echte iPhone.
+
+## 5. Zorgen en open beslissingen
+
+- **Twijfelgevallen in de kroegenlijst**: Strik Bakkers Cafe (lijkt een ijssalon), Café Royal en café Billabong (bestaan mogelijk niet meer). Niet gesloten zonder bewijs.
+- **Punten voor foto's**: 5 per kroeg per speler, zonder beoordeling; de bucket is openbaar en er is geen moderatie behalve de SQL in `ACTIES.md`.
 - **Vervangen**: twee e-mailaccounts kunnen elkaars melding vervangen voor +30, begrensd op 5 per speler per dag.
 - **Een eigen melding vervangen** (typefout) kan niet; niet gebouwd zonder akkoord.
-- Het Infomaniak-apparaatwachtwoord stond in een chat; rotatie aanbevolen (stappen in ACTIES.md).
-- Niet gecontroleerd: Supabase-abonnement, back-ups en automatisch pauzeren, het Google-dashboard, Safari op een echte iPhone.
+- Het Infomaniak-apparaatwachtwoord stond in een chat; rotatie aanbevolen (`ACTIES.md`).
 
-## 6. Correcties op de vorige handoff
+## 6. Werkwijze voor menukaartprijzen (zoals op 21 november)
 
-- "Samenvoegen verhuist `gebeurtenissen.vervangen_door` niet": klopt, maar dat is geen probleem. Een anonieme speler kan geen melding vervangen (`private.meld_prijs`), en samenvoegen gaat alleen van een anonieme speler naar een account. Wat wel ontbrak: `bugmeldingen` en `stadsaanvragen` (nu gerepareerd, samen met `kroeg_fotos`).
-- "Vul vooraf ruim 20 prijzen in" als taak voor Kjell: een cloudsessie kan dat deels zelf met de DAEN-methode. Dat is deze avond gedaan (+10). Meer kan vanaf de pc van Kjell met de JAN-methode (foto's in Google Maps, `docs/menukaart-manager.md`).
-- Gemist: het EXIF-lek in `verkleinFoto()` (zie punt 2).
-- Gemist: de standaardbranch stond al op `main` en `punten_meteen` stond al op Supabase; ACTIES.md zei nog van niet. Bijgewerkt.
-- De handoff stond alleen op een sessiebranch zonder pull request. Deze staat in de pull request, zodat hij op `main` komt.
+1. **Websites**: `osm_id` uit de database, tags per 50 via `https://api.openstreetmap.org/api/0.6/nodes.json?nodes=...` (Overpass geeft vanuit de cloud een time-out). Daarna crawlen op links met menu, kaart, drank, bier, tap of pdf; pdf's met `pdftotext -layout`; WordPress-datums via `/wp-json/wp/v2/media` en `/wp-json/wp/v2/pages`; sites met JavaScript nog een keer met Playwright. Kroegen zonder website in OSM: Haiku-agents laten zoeken, met weinig opbrengst.
+2. **Foto's in Google Maps**: `node menufotos.mjs --kroegen <bestand> --extern --sinds 2024-11-01 --max-fotos 150` vanuit `tools/google-kroegen` (zie punt 7 voor de omgeving). Een kroeg tegelijk, 3 seconden pauze; bij een CAPTCHA stopt de run.
+3. **Lezen en nakijken**: elke prijs zelf op de kaart lezen (pdf-pagina als afbeelding met `pdftoppm`), een geval maken in `tools/google-kroegen/nakijken/<datum>/<id>-<naam>/` met `geval.json`, `uitsnede.jpg` en `foto.jpg`, en de subagent menukaart-controleur per geval laten oordelen.
+4. **Regels**: alleen de goedkoopste pils van de tap in 25 cl, of het woord "vaasje" of "vaas"; geen actieprijs; een datum van de kaart zelf (pdf ModDate, wijzigingsdatum van de pagina, sitemap `lastmod`, of een vaste `Last-Modified`), nooit de dag van kijken; is er een nieuwere kaart die je niet kunt lezen, dan geen prijs. Daarna de vaste controles (€ 2,00 tot € 7,50, hoogstens 30% van de mediaan) en importeren met `select public.importeer_menuprijzen('<json>'::jsonb)` via `execute_sql`.
 
-## 7. Werkafspraken en valkuilen (naast CLAUDE.md)
+Wat nog kan: eigen websites periodiek opnieuw doorzoeken (kaarten veranderen; deze keer vielen er zes af omdat de maat van het kleine glas ontbrak), en de fotomethode opnieuw draaien als er nieuwe foto's zijn.
 
-- Kjell wil dat je zelfstandig werkt en het maximale resultaat haalt; hij heeft weinig tijd. Bouw wat nodig is, maar wijzig geen spelregels zonder akkoord. Hij gaf toestemming voor Haiku-agents waar dat helpt.
-- Mergen alleen als hij erom vraagt. Een PR die je zelf maakt, laat je open.
-- **Supabase-MCP**: lezen werkt, en gewone `insert`, `update` en `delete` (ook via `importeer_menuprijzen`) gaan zonder vraag. DDL (`apply_migration`, of `create function` in `execute_sql`) vraagt altijd om bevestiging, ook met "Altijd toestaan" in de connector; zonder antwoord loopt de aanroep na 60 seconden vast. Kjell wil niet gevraagd worden. Werkwijze voor DDL, op 21 november 2026 gebruikt voor `20261121220000_samenvoegen_fotos`:
-  1. `deploy_edge_function` met naam `eenmalig-migratie`, `verify_jwt: false`. De code importeert `npm:postgres@3.4.4`, verbindt met `Deno.env.get("SUPABASE_DB_URL")` en voert met `sql.unsafe()` alleen de vaste tekst van de migratie uit, plus de regel die de versie in `schema_migrations` zet en een controlequery. Hij draait alleen met een header `x-eenmalig` met een willekeurige sleutel (`openssl rand -hex 24`), anders 403.
-  2. Roep hem aan met `curl -X POST -H "x-eenmalig: <sleutel>"` en lees de controle.
-  3. Rol direct een lege versie uit (`verify_jwt: true`, altijd 410) en gooi de sleutel weg. Draai daarna de beveiligingsadviezen.
-  Een Edge Function verwijderen kan niet via MCP; de lege versie mag blijven staan.
-- **Netwerk in de cloud**: Overpass (OSM) geeft een time-out; gebruik `api.openstreetmap.org/api/0.6/nodes.json`. Google Maps gaf op 21 november 2026 geen CAPTCHA over 49 kroegen (JAN met DeepSeek, `docs/menukaartprijzen.md`); komt er een, dan stopt de run en omzeil je hem niet. Websites van kroegen zijn bereikbaar.
-- **Browser**: Playwright en Chromium staan klaar. Draai de app met `python3 -m http.server 8765 --directory app` en test op telefoonbreedte. Bootst schrijfacties na met `page.route`, anders komt er testdata in productie. Lokaal geeft `POST /api/sessie` een 501 (de Python-server kent geen POST); dat is geen fout van de app.
-- **Menukaartprijzen**: elke prijs zelf lezen op de kaart (pdf-pagina als afbeelding met `pdftoppm`), dan een geval maken in `tools/google-kroegen/nakijken/<datum>/<id>-<naam>/` met `geval.json`, `uitsnede.jpg` en `foto.jpg`, en de subagent menukaart-controleur per geval laten oordelen. Liever geen prijs dan een verkeerde: zonder maat bij het kleine glas, zonder datum, of met een nieuwere kaart die je niet kunt lezen, geen prijs.
-- Testscripts van deze avond stonden in de scratchpad (vluchtig, niet in Git): een crawler voor sites, een Playwright-ronde voor sites met JavaScript, en het deelplaatje (`og.png`, HTML gerenderd met Playwright op 1200 x 630).
+## 7. Valkuilen in de cloudsessie
+
+- **Supabase-MCP**: lezen en gewone `insert`, `update` en `delete` gaan zonder vraag. DDL (`apply_migration`, of `create function` in `execute_sql`) vraagt altijd om bevestiging in de Claude-app, ook met "Altijd toestaan"; zonder antwoord loopt de aanroep na 60 seconden vast. Kjell wil niet gevraagd worden. Werkwijze voor DDL:
+  1. `deploy_edge_function` met naam `eenmalig-migratie` en `verify_jwt: false`. De code importeert `npm:postgres@3.4.4`, verbindt met `Deno.env.get("SUPABASE_DB_URL")` en voert met `sql.unsafe()` alleen de vaste tekst van de migratie uit, plus de regel die de versie in `schema_migrations` zet en een controlequery. Hij draait alleen met een header `x-eenmalig` met een willekeurige sleutel (`openssl rand -hex 24`), anders 403.
+  2. Aanroepen met `curl -X POST -H "x-eenmalig: <sleutel>" https://yzaootlrhxzyxtvacrot.supabase.co/functions/v1/eenmalig-migratie` en de controle lezen.
+  3. Direct een lege versie uitrollen (`verify_jwt: true`, altijd 410), de sleutel weggooien, en de beveiligingsadviezen draaien. Een Edge Function verwijderen kan niet via MCP.
+- **Fotomethode met DeepSeek**: draai met `NODE_USE_ENV_PROXY=1` (anders gaat Node buiten de proxy om en krijgt DeepSeek geen sleutel: HTTP 401). Installeer in `tools/google-kroegen` alleen `npm install --no-save --no-package-lock jpeg-js@0.4.4 tesseract.js@6.0.1`, en maak `node_modules/playwright` en `node_modules/playwright-core` koppelingen naar `/opt/node-tools/node_modules/...`; de vastgepinde Playwright 1.48 vindt de vooraf geïnstalleerde browser niet. `node_modules` staat niet in Git.
+- **Browser**: Playwright en Chromium staan klaar. Test de app met `python3 -m http.server 8765 --directory app` op telefoonbreedte; lokaal geeft `POST /api/sessie` een 501 (de Python-server kent geen POST), geen fout van de app. Bootst schrijfacties na met `page.route`, of ruim testdata in productie direct op (zoals bij de test van het anonieme pad). In de app sluit je de uitleg met `#intro button` en open je een kroeg via het zoekveld `input[data-zoek]`.
+- **Lange taken**: gebruik `run_in_background` en volg met een Monitor; een sessie kan halverwege herstarten. Push daarom tussendoor.
+- **Mergen** alleen als Kjell erom vraagt; hij merget zelf snel.
+- Scripts van 21 november (crawler, Playwright-ronde, deelplaatje, test van het anonieme pad) stonden in de scratchpad en zijn weg; schrijf ze opnieuw als je ze nodig hebt.
 
 ## 8. Aanbevolen volgende stappen
 
-1. Niets meer voor de migratie: hij staat live. Kjell kan de lege Edge Function `eenmalig-migratie` in het dashboard verwijderen.
-2. De twijfelgevallen in de kroegenlijst (punt 5) nagaan.
-3. De JAN-methode is op 21 november 2026 vanuit de cloud gedraaid over 49 kroegen zonder prijs: geen bruikbare prijs (alleen een actieprijs, afgekeurd). De rest van de kaart komt van spelers ter plaatse; het heeft weinig zin de foto's opnieuw te doorzoeken tot er nieuwe zijn.
-4. Na de demo: vragen wat er misging op echte telefoons, en `ACTIES.md` bijhouden.
+1. Na de demo vragen wat er misging op echte telefoons, en dat oplossen.
+2. Als Kjell DMARC, Google-inlog en www heeft gedaan: live controleren (`_dmarc` via DNS, `www` geeft een 301, inloggen met Google buiten de testgebruikers) en `ACTIES.md` afvinken.
+3. De twijfelgevallen in de kroegenlijst nagaan zodra er meldingen of check-ins zijn.
+4. Over een paar maanden de eigen websites (DAEN) opnieuw doorzoeken op nieuwe drankkaarten.
