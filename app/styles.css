@@ -340,6 +340,7 @@ button.sector:last-child { border-bottom: 0; }
 .timeline li.wacht::before { background: var(--wacht); }
 .timeline li.menukaart::before { background: var(--locked); }
 .timeline li.weerlegd::before { background: var(--old); }
+.timeline li.vervangen::before { background: var(--muted-2); }
 .timeline li.check::before { background: var(--muted-2); }
 .timeline .t-what { font-weight: 600; }
 .timeline .t-meta { font-size: 13px; color: var(--muted); }

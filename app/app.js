@@ -413,8 +413,8 @@ function setGuinness(aan) {
 const aanbodVan = (kroegId) => state.aanbod.filter((a) => a.kroeg_id === kroegId);
 
 // Bij een filter op soort: het goedkoopste bier van die soort in deze kroeg (met prijs), anders het eerste
-function soortIn(kroegId) {
-  const lijst = aanbodVan(kroegId).filter((a) => a.soort === state.soort);
+function soortIn(kroegId, soort = state.soort) {
+  const lijst = aanbodVan(kroegId).filter((a) => a.soort === soort);
   return lijst.filter((a) => a.prijs_cent).sort((a, b) => a.prijs_cent - b.prijs_cent)[0] ?? lijst[0] ?? null;
 }
 
@@ -1478,10 +1478,12 @@ function incheckHtml(k) {
 function aanbodBlok(k) {
   const a = aanbodVan(k.id).find((x) => x.soort === GUINNESS);
   const uid = state.sessie?.user?.id;
-  const knoppen = !a || !state.sessie ? ""
+  // Is de prijs gestegen, dan klopte de oude destijds wel: "Nieuwe prijs" vervangt hem zonder "klopt niet"
+  const nieuw = a?.prijs_cent && kanBijdragen() ? `<button class="mini" data-aanbodform="nieuw" data-glas="${a.volume_cl}">Nieuwe prijs</button>` : "";
+  const knoppen = nieuw + (!a || !state.sessie ? ""
     : a.door_id === uid ? `<button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt_niet">Intrekken</button>`
     : anoniem() ? ""
-    : `<button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt">Klopt</button><button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt_niet">Klopt niet</button>`;
+    : `<button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt">Klopt</button><button class="mini" data-aanbod="${a.id}" data-oordeel-aanbod="klopt_niet">Klopt niet</button>`);
   return `<h3>Guinness</h3>
     ${a ? `<div class="aanbod">
       <div class="aanbod-main"><b>Guinness van de tap</b>${a.volume_cl ? ` <span class="muted">${a.volume_cl === PINT ? "pint" : `${a.volume_cl} cl`}</span>` : ""}
@@ -1501,15 +1503,16 @@ function aanbodFormView() {
   return `<button class="back" data-cancel>‹ Annuleer</button>
     <h2>Guinness</h2>
     <div class="muted small">${esc(k.naam)}</div>
+    ${f.nieuw ? `<p class="small muted">Is de prijs gewijzigd? Jouw prijs vervangt de oude. Dat telt niet als "klopt niet" voor wie de oude prijs meldde.</p>` : ""}
     <form class="form" id="aanbodForm">
       <input type="hidden" name="soort" value="${GUINNESS}">
       <label>Glas</label>
       <div class="seg">${GLAS.map(([cl, naam, sub]) => `<button type="button" data-glas-guinness="${cl || "anders"}" aria-pressed="${(f.cl ?? 0) === cl}">${naam}<br><span class="small muted">${sub}</span></button>`).join("")}</div>
-      <input name="cl" inputmode="numeric" placeholder="Inhoud in cl, bijvoorbeeld 57" style="margin-top:6px" ${f.cl ? "hidden" : ""}>
-      <label>Prijs in euro (optioneel)</label>
-      <input name="prijs" inputmode="decimal" placeholder="6,50">
+      <input name="cl" inputmode="numeric" placeholder="Inhoud in cl, bijvoorbeeld 57" style="margin-top:6px" value="${f.cl ? "" : esc(f.clTekst ?? "")}" ${f.cl ? "hidden" : ""}>
+      <label>${f.nieuw ? "Nieuwe prijs in euro" : "Prijs in euro (optioneel)"}</label>
+      <input name="prijs" inputmode="decimal" placeholder="6,50" ${f.nieuw ? "required" : ""}>
       <div class="btns"><button class="btn primary" type="submit">Opslaan</button></div>
-      <p class="small muted">Weet je de prijs niet, meld dan toch dat ze Guinness hebben: dan staat de kroeg in de Guinness-stand. Guinness levert geen punten op.</p>
+      <p class="small muted">${f.nieuw ? "Guinness levert geen punten op." : "Weet je de prijs niet, meld dan toch dat ze Guinness hebben: dan staat de kroeg in de Guinness-stand. Guinness levert geen punten op."}</p>
     </form>`;
 }
 
@@ -1573,6 +1576,9 @@ async function laadTijdlijn(id) {
   const el = $("#openMelding");
   if (el && open) {
     const eigen = open.door_id === uid;
+    // Ter plaatse (vandaag ingecheckt of binnen bereik) geef je de nieuwe prijs door met inchecken, anders van afstand
+    const kr = state.kroegen.find((x) => x.id === id);
+    const dichtbij = isVandaag(state.mijn.get(id)?.laatst) || (!!kr && !!state.pos && afstand(state.pos, [kr.lon, kr.lat]) <= INCHECK_M);
     const al = state.profiel && [...open.bevestigd_door, ...open.weerlegd_door].includes(state.profiel.naam);
     el.innerHTML = `<div><b>${esc(open.door)}</b> meldt ${euro(open.prijs_cent)} voor ${esc(open.merk)} ${open.volume_cl} cl</div>
       <div class="muted small">${wanneer(open.op)}${open.ter_plaatse ? " · ter plaatse" : ""}${open.uitschieter ? " · wijkt sterk af, twee bevestigingen nodig" : ""}</div>
@@ -1581,7 +1587,8 @@ async function laadTijdlijn(id) {
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
         : !magControleren() ? ""
         : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}">Klopt</button>
-             <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}">Klopt niet</button></div>`}`;
+             <button class="btn bad" data-oordeel="klopt_niet" data-g="${open.id}">Klopt niet</button></div>
+           <div class="small" style="margin-top:8px"><button type="button" class="linkbtn" data-form="${dichtbij ? "hier" : "afstand"}" data-soort="pils" data-anders>Is de prijs gewijzigd? Geef de nieuwe prijs door</button></div>`}`;
   }
   $("#tijdlijn").innerHTML = data.length ? `<ul class="timeline">${data.map(tijdlijnItem).join("")}</ul>` : `<div class="muted small">Nog niets gebeurd.</div>`;
   $("#spark").innerHTML = spark(data);
@@ -1616,7 +1623,7 @@ function tijdlijnItem(g) {
   const wat = g.soort === "eerst" ? `Eerst gemeld: ${euro(g.prijs_cent)}`
     : g.soort === "wijziging" ? `Gewijzigd: ${euro(g.vorige_prijs_cent)} → ${euro(g.prijs_cent)}`
     : `Gecontroleerd: klopt nog`;
-  const status = g.status === "wacht" ? " (wacht op bevestiging)" : g.status === "weerlegd" ? " (weerlegd)" : "";
+  const status = g.status === "wacht" ? " (wacht op bevestiging)" : g.status === "weerlegd" ? " (weerlegd)" : g.status === "vervangen" ? " (vervangen)" : "";
   const meta = [`${wanneer(g.op)} door ${esc(g.door ?? "onbekend")}`];
   if (g.soort !== "check") meta.push(`${esc(g.merk)} ${g.volume_cl} cl`);
   if (g.bevestigd_door.length) meta.push(`bevestigd door ${g.bevestigd_door.map(esc).join(", ")}`);
@@ -1711,31 +1718,65 @@ function bekendePrijs(k) {
 // Kan de speler met een tik zeggen dat de bekende prijs klopt? Van afstand alleen met een account, en nooit voor de menukaart.
 const snelKlopt = (b, hier) => !!b && (hier || (b.soort !== "menukaart" && magControleren()));
 
+// De glazen om uit te kiezen: bij pils de gewone glazen, bij Guinness de pint en de halve pint
+const glazenVoor = (soort) => soort === GUINNESS ? [{ naam: "Pint", cl: PINT }, { naam: "Halve pint", cl: 25 }] : GLAZEN;
+
+// Het begin van het prijsformulier voor pils of Guinness; het glas begint bij wat er al bekend is
+function prijsFormulier(k, hier, soort) {
+  const cl = soort === GUINNESS ? (soortIn(k.id, GUINNESS)?.volume_cl ?? PINT) : (k.huidig_volume_cl ?? k.open_volume_cl ?? VAASJE);
+  return { hier, soort, anders: false, merk: k.huidig_merk ?? k.open_merk ?? "Heineken", cl, clAnders: !glazenVoor(soort).some((g) => g.cl === cl), prijs: "" };
+}
+
 function formView() {
   const k = state.kroegen.find((x) => x.id === state.selected);
   const f = state.form;
-  const b = bekendePrijs(k);
+  const guinness = f.soort === GUINNESS;
+  const b = guinness ? null : bekendePrijs(k);
+  const a = guinness ? soortIn(k.id, GUINNESS) : null;
   const vandaag = isVandaag(state.mijn.get(k.id)?.laatst);
   const titel = f.hier ? (vandaag ? "Prijs doorgeven" : "Inchecken") : "Prijs doorgeven";
   const zonder = f.hier && !vandaag ? `<p class="small"><button type="button" class="linkbtn" data-incheck="zonder">Inchecken zonder prijs</button></p>` : "";
-  const locatieTekst = f.hier ? `<p class="small muted">We kijken of je binnen ${INCHECK_M} m van de kroeg bent en bewaren alleen die afstand. Ter plaatse tellen je punten 1,5 keer.</p>` : "";
-  if (snelKlopt(b, f.hier) && !f.anders) {
+  const locatieTekst = f.hier ? `<p class="small muted">We kijken of je binnen ${INCHECK_M} m van de kroeg bent en bewaren alleen die afstand.${guinness ? "" : " Ter plaatse tellen je punten 1,5 keer."}</p>` : "";
+  const keuze = `<div class="seg" role="group" aria-label="Welk bier?" style="margin:12px 0 4px">${[["pils", "Pils"], [GUINNESS, "Guinness"]].map(([s, n]) => `<button type="button" data-soort-form="${s}" aria-pressed="${f.soort === s}">${n}</button>`).join("")}</div>`;
+  // Met een tik "klopt" zeggen kan als er al een prijs bekend is. Bij Guinness nooit op je eigen melding.
+  const snel = guinness ? !!a?.prijs_cent && (f.hier || (a.door_id !== state.sessie?.user?.id && magControleren())) : snelKlopt(b, f.hier);
+  if (snel && !f.anders) {
     return `<button class="back" data-cancel>‹ Annuleer</button>
     <h2>${titel}</h2>
     <div class="muted small">${esc(k.naam)}</div>
-    <p>${f.hier ? "Wat kost je pils hier?" : "Klopt deze prijs nog?"}</p>
+    ${keuze}
+    <p>${f.hier ? (guinness ? "Wat kost je Guinness hier?" : "Wat kost je pils hier?") : "Klopt deze prijs nog?"}</p>
     <form class="form" id="prijsForm">
-      <div class="big-price">${euro(b.prijs)}</div>
-      <div class="muted">${glasTekst(b.merk, b.cl, b.per25)}</div>
+      <div class="big-price">${euro(guinness ? a.prijs_cent : b.prijs)}</div>
+      <div class="muted">${guinness ? `Guinness · ${a.volume_cl === PINT ? "pint" : `${a.volume_cl} cl`}` : glasTekst(b.merk, b.cl, b.per25)}</div>
       <div class="btns"><button type="button" class="btn primary" data-incheck="klopt">Klopt</button>
         <button type="button" class="btn" data-andere-prijs>Andere prijs</button></div>
       ${zonder}
       ${locatieTekst}
     </form>`;
   }
+  if (guinness) {
+    return `<button class="back" data-cancel>‹ Annuleer</button>
+    <h2>${titel}</h2>
+    <div class="muted small">${esc(k.naam)}</div>
+    ${keuze}
+    <form class="form" id="prijsForm">
+      <label>Wat kost je Guinness? In euro</label>
+      <input name="prijs" inputmode="decimal" placeholder="6,50" required value="${esc(f.prijs ?? "")}">
+      <label>Glas</label>
+      <div class="seg">${glazenVoor(GUINNESS).map((g) => `<button type="button" data-cl="${g.cl}" aria-pressed="${!f.clAnders && g.cl === f.cl}">${g.naam}<br><span class="small muted">${g.cl} cl</span></button>`).join("")}
+        <button type="button" data-cl="anders" aria-pressed="${!!f.clAnders}">Ander glas<br><span class="small muted">zelf invullen</span></button></div>
+      <input name="clAnders" type="number" min="15" max="100" inputmode="numeric" placeholder="Inhoud in cl, bijvoorbeeld 57" style="margin-top:6px" ${f.clAnders ? "" : "hidden"} value="${f.clAnders ? esc(f.cl) : ""}">
+      <div class="btns"><button class="btn primary" type="submit" id="verstuur">${f.hier && !vandaag ? "Inchecken" : "Versturen"}</button></div>
+      ${zonder}
+      ${locatieTekst}
+      <p class="small muted">Guinness levert geen punten op.</p>
+    </form>`;
+  }
   return `<button class="back" data-cancel>‹ Annuleer</button>
     <h2>${titel}</h2>
     <div class="muted small">${esc(k.naam)}</div>
+    ${keuze}
     <form class="form" id="prijsForm">
       <label>Wat kost je pils? In euro</label>
       <input name="prijs" inputmode="decimal" placeholder="3,50" required value="${esc(f.prijs ?? "")}">
@@ -1854,7 +1895,7 @@ async function beursView() {
     const verschil = g.soort === "wijziging" && g.vorige_prijs_cent != null ? g.prijs_cent - g.vorige_prijs_cent : null;
     return `<li><button class="row" data-kroeg="${g.kroeg_id}">
       <span class="row-main"><span class="row-title">${codeHtml(g.kroeg_id)}${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "ontdekte" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}</span>
-      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span>
+      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : g.status === "vervangen" ? " · vervangen" : ""}</span></span>
       ${g.soort !== "check" && per25 ? `<span class="price">${euro(g.prijs_cent)}${verschil ? `<small class="delta ${richting(verschil)}">${KOERS_TAAL[richting(verschil)]} ${bedrag(verschil)}</small>` : `<small>${g.volume_cl} cl</small>`}</span>` : ""}</button></li>`;
   };
 
@@ -2152,7 +2193,7 @@ function taalBlok() {
       <button type="button" data-taal="en" aria-pressed="${TAAL === "en"}">English</button></div>`;
 }
 
-// Bug melden: een korte omschrijving; de app stuurt het scherm en de browser mee (functie meld_bug)
+// Bug melden: een korte omschrijving; de app stuurt de schermgrootte en de browser mee (functie meld_bug)
 function bugBlok() {
   if (!kanBijdragen()) return "";
   return `<details class="klopt-niet bug">
@@ -2160,10 +2201,16 @@ function bugBlok() {
     <form class="form" id="bugForm">
       <label for="bugTekst">Wat ging er mis?</label>
       <textarea id="bugTekst" name="tekst" rows="4" minlength="5" maxlength="2000" placeholder="Wat deed je, en wat gebeurde er?" required></textarea>
-      <div class="small muted">We sturen mee welk scherm je open had en welke browser je gebruikt. Geen locatie.</div>
+      <div class="small muted">We sturen je browser en schermgrootte mee.</div>
       <div class="btns"><button class="btn primary" type="submit">Versturen</button></div>
     </form>
   </details>`;
+}
+
+// Laat de beheerder per mail weten dat er een bug of stadsaanvraag is (Edge Function melding-mail). Stil:
+// mislukt het, dan staat de melding toch onder Beheer.
+function mailMelding(soort, id) {
+  if (id) sb.functions.invoke("melding-mail", { body: { soort, id } }).catch(() => {});
 }
 
 async function verstuurBug(form) {
@@ -2172,10 +2219,10 @@ async function verstuurBug(form) {
   const knop = form.querySelector("[type=submit]");
   knop.disabled = true;
   if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
-  const scherm = [state.tab, state.modus, state.selected != null ? `kroeg ${state.selected}` : "", `${innerWidth}x${innerHeight}`].filter(Boolean).join(", ");
-  const { error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: scherm, p_apparaat: navigator.userAgent });
+  const { data, error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: `${innerWidth}x${innerHeight}`, p_apparaat: navigator.userAgent });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
+  mailMelding("bug", data);
   form.reset();
   form.closest("details").open = false;
   toast("Bedankt! We kijken ernaar");
@@ -2213,9 +2260,10 @@ async function verstuurStad(form) {
   const knop = form.querySelector("[type=submit]");
   knop.disabled = true;
   if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
-  const { error } = await sb.rpc("vraag_stad_aan", { p_stad: stad });
+  const { data, error } = await sb.rpc("vraag_stad_aan", { p_stad: stad });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
+  mailMelding("stad", data);
   form.reset();
   form.closest("details").open = false;
   toast("Bedankt! We kijken of we deze stad kunnen openen");
@@ -2289,7 +2337,8 @@ function regelsView() {
     </div>
     <p class="small muted">Punten krijg je meteen, ook voor bevestigen.</p>
     <p class="small muted">Een prijs komt pas vast op de kaart als andere spelers hem bevestigen, meestal twee. Zo voorkomen we koersmanipulatie.</p>
-    <p class="small muted">Zeggen twee spelers "klopt niet", dan is de melding weerlegd en gaan de punten eraf.</p>`;
+    <p class="small muted">Zeggen twee spelers "klopt niet", dan is de melding weerlegd en gaan de punten eraf. Gebruik dat voor een prijs die overduidelijk fout is.</p>
+    <p class="small muted">Is de prijs gewijzigd? Geef dan de nieuwe prijs door. Die vervangt een melding die nog op bevestiging wacht, zonder straf voor de melder. Dat kan met een e-mailadres, hoogstens vijf keer per dag.</p>`;
 }
 
 // Meldingen over kroegen die niet kloppen, voor de beheerder: verkeerde plek, dubbel en gesloten
@@ -2566,13 +2615,14 @@ const meldPunten = (g) => Math.round((g.soort === "eerst" ? 50 : 30) * (g.ter_pl
 // Leest het prijsformulier; bij een fout een melding en null
 function leesPrijs(form) {
   const fd = new FormData(form);
-  const merk = fd.get("merk") === "_anders" ? String(fd.get("merkAnders") ?? "").trim() : String(fd.get("merk"));
+  const guinness = state.form?.soort === GUINNESS;
+  const merk = guinness ? "Guinness" : fd.get("merk") === "_anders" ? String(fd.get("merkAnders") ?? "").trim() : String(fd.get("merk"));
   const prijs = Math.round(parseFloat(String(fd.get("prijs")).replace(",", ".")) * 100);
   const cl = gekozenCl();
   if (!merk || merk.length < 2) return toast("Vul een merk in"), null;
   if (!cl) return toast("Vul de inhoud van het glas in, tussen 15 en 100 cl"), null;
   if (!Number.isFinite(prijs) || prijs < 50 || prijs > 2500) return toast("Vul een prijs tussen €0,50 en €25 in"), null;
-  return { merk, cl, prijs, foto: fd.get("foto") };
+  return { merk, cl, prijs, foto: guinness ? null : fd.get("foto") };
 }
 
 async function meldPrijs(k, w, pos) {
@@ -2597,7 +2647,8 @@ async function meldPrijs(k, w, pos) {
 // Ter plaatse is een melding of "klopt nog" in de database vanzelf ook een check-in; anders checken we hier apart in.
 async function verstuurIncheck(keuze, form, knop) {
   const k = state.kroegen.find((x) => x.id === state.selected);
-  const hier = state.form.hier, b = bekendePrijs(k);
+  const guinness = state.form.soort === GUINNESS;
+  const hier = state.form.hier, b = guinness ? null : bekendePrijs(k);
   const w = keuze === "prijs" ? leesPrijs(form) : null;
   if (keuze === "prijs" && !w) return;
   const tekst = knop.textContent;
@@ -2625,10 +2676,22 @@ async function verstuurIncheck(keuze, form, knop) {
   const delen = [];
   let pts = null, vrij = false;
   try {
-    if (keuze === "prijs") {
+    if (guinness) {
+      // Guinness levert geen punten op (meld_aanbod, beoordeel_aanbod); een nieuwe prijs vervangt de oude
+      const a = soortIn(k.id, GUINNESS);
+      if (keuze === "prijs") {
+        const { error } = await sb.rpc("meld_aanbod", { p_kroeg_id: k.id, p_soort: GUINNESS, p_merk: null, p_volume_cl: w.cl, p_prijs_cent: w.prijs });
+        if (error) throw error;
+        delen.push("Guinness-prijs gemeld");
+      } else if (keuze === "klopt" && a?.prijs_cent && a.door_id !== state.sessie?.user?.id && magControleren()) {
+        const { error } = await sb.rpc("beoordeel_aanbod", { p_aanbod_id: a.id, p_oordeel: "klopt" });
+        if (error && !hier) throw error;
+        if (!error) delen.push("Bedankt voor het controleren");
+      }
+    } else if (keuze === "prijs") {
       const data = await meldPrijs(k, w, pos);
       vrij = data.soort === "eerst";
-      delen.push(vrij ? `Eerste prijs van ${k.naam}!` : "Prijs gemeld");
+      delen.push(vrij ? `Eerste prijs van ${k.naam}!` : b?.soort === "melding" ? "Prijs gemeld, de vorige melding is vervangen" : "Prijs gemeld");
       pts = meldPunten(data);
     } else if (keuze === "klopt" && b.soort === "menukaart") {
       const data = await meldPrijs(k, { merk: b.merk, cl: b.cl, prijs: b.prijs }, pos);
@@ -2667,7 +2730,7 @@ async function verstuurIncheck(keuze, form, knop) {
     draw();
     toonOpMijnKaart(k, !was);
   } else if (vrij) vierVrij(k);
-  await Promise.all([laadKroegen(), laadStad(), laadMijn()]);
+  await Promise.all([laadKroegen(), laadStad(), laadMijn(), guinness ? laadAanbod() : null]);
   if (!bezigMetTypen()) draw();
 }
 
@@ -2698,7 +2761,7 @@ function toonTochtOpKaart() {
 }
 
 async function beoordeel(g, oordeel) {
-  if (oordeel === "klopt_niet" && !(await vraag("Klopt deze prijs niet? Wordt de melding weerlegd, dan verliest de melder 20 punten. Weet je de juiste prijs, meld die dan daarna.", "Klopt niet"))) return;
+  if (oordeel === "klopt_niet" && !(await vraag("Is deze prijs overduidelijk fout? Wordt de melding weerlegd, dan verliest de melder 20 punten. Is de prijs gewijzigd? Kies dan Andere prijs: die vervangt de melding zonder straf.", "Klopt niet"))) return;
   const { data, error } = await sb.rpc("beoordeel", { p_gebeurtenis: g, p_oordeel: oordeel });
   if (error) return toast(await leesFout(error));
   toast(data === "bevestigd" ? "Bevestigd, de prijs staat erop" : data === "weerlegd" ? "Weerlegd" : "Oordeel opgeslagen", data === "wacht" ? null : 5);
@@ -2715,7 +2778,12 @@ body.addEventListener("click", (e) => {
   if (t.dataset.tijdenform !== undefined) { state.tijdenForm = {}; return draw(); }
   if (t.dataset.doeMee !== undefined) { state.terugNaar = state.selected; return setTab("ik"); }
   if (t.dataset.oordeelMelding) return beoordeelMelding(Number(t.dataset.melding), t.dataset.oordeelMelding);
-  if (t.dataset.aanbodform !== undefined) { state.aanbodForm = { soort: GUINNESS, cl: PINT }; return draw(); }
+  if (t.dataset.aanbodform !== undefined) {
+    // "Nieuwe prijs" begint bij het glas van de oude prijs; een ander glas dan pint of halve pint staat in het cl-veld
+    const nieuw = t.dataset.aanbodform === "nieuw", cl = Number(t.dataset.glas) || PINT, gewoon = [PINT, 25].includes(cl);
+    state.aanbodForm = { soort: GUINNESS, cl: gewoon ? cl : null, clTekst: gewoon ? "" : String(cl), nieuw };
+    return draw();
+  }
   if (t.dataset.guinnessUit !== undefined) return setGuinness(false);
   if (t.dataset.glasGuinness && state.aanbodForm) {
     state.aanbodForm.cl = Number(t.dataset.glasGuinness) || null;
@@ -2734,11 +2802,17 @@ body.addEventListener("click", (e) => {
   if (t.dataset.periode) { state.periode = t.dataset.periode; return rangView(); }
   if (t.dataset.form) {
     const k = state.kroegen.find((x) => x.id === state.selected);
-    const cl = k?.huidig_volume_cl ?? k?.open_volume_cl ?? VAASJE;
-    // Inchecken ("hier") vraagt de locatie; van afstand ("afstand") gaat er geen locatie mee
-    state.form = { hier: t.dataset.form === "hier", anders: false, merk: k?.huidig_merk ?? k?.open_merk ?? "Heineken", cl, clAnders: !GLAZEN.some((g) => g.cl === cl), prijs: "" };
+    // Inchecken ("hier") vraagt de locatie; van afstand ("afstand") gaat er geen locatie mee.
+    // In de Guinness-stand begint het formulier bij Guinness, anders bij pils.
+    state.form = prijsFormulier(k, t.dataset.form === "hier", t.dataset.soort ?? (guinnessAan() ? GUINNESS : "pils"));
+    // Vanuit een openstaande melding ("prijs gewijzigd") meteen naar de nieuwe prijs
+    if (t.dataset.anders !== undefined) state.form.anders = true;
     // Het formulier helemaal open, zodat de prijs en de knop zonder scrollen in beeld zijn
     if (!wide()) setDetent("full");
+    return draw();
+  }
+  if (t.dataset.soortForm && state.form) {
+    if (t.dataset.soortForm !== state.form.soort) state.form = prijsFormulier(state.kroegen.find((x) => x.id === state.selected), state.form.hier, t.dataset.soortForm);
     return draw();
   }
   if (t.dataset.anderePrijs !== undefined && state.form) { state.form.anders = true; if (!wide()) setDetent("full"); return draw(); }

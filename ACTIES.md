@@ -31,6 +31,23 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 3. Aanvragen staan in de app onder Ik, Beheer, Stadsaanvragen. Goedkeuren laadt de kroegen en wijken; daarna staat de stad onder Ik, Stad.
 4. ~~**Migratie `20261120190000_tijdlijn_gemeente`** (stadskeuze).~~ Gedaan op 20 november 2026 via MCP, versie gelijkgezet. Security Advisor: geen nieuwe waarschuwingen.
 
+## Prijs vervangen (zonder "klopt niet")
+
+Een andere prijs vervangt een openstaande melding, zonder straf voor de melder. De migratie staat op Supabase; de app-wijziging zit in de pull request en werkt pas zodra die gemerged is.
+
+1. ~~**Migratie `20261121140000_prijs_vervangen`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121140000`. Gecontroleerd: `gebeurtenis_status` heeft nu `vervangen`, kolom `vervangen_door` en de nieuwe `meld_prijs` staan erin, rechten onveranderd (`authenticated` ja, `anon` nee). Security Advisor: alleen de bekende waarschuwingen.
+2. **Controleren op de echte site.** Open een kroeg met een melding die op bevestiging wacht, kies "Is de prijs gewijzigd? Geef de nieuwe prijs door" en geef een andere prijs door. De oude melding moet in de geschiedenis als "vervangen" staan en de melder houdt zijn punten.
+
+## Mail bij een nieuwe bug of stadsaanvraag
+
+De app mailt je zodra een speler een bug meldt of een stad aanvraagt, naar `proost@bierkoers.nl` (Infomaniak). Gedaan op 21 november 2026 en getest.
+
+1. ~~**Migratie `20261121100000_meldingen_mailen`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121100000`. `claim_melding_mail` mag alleen de `service_role` aanroepen. Security Advisor: alleen de bekende waarschuwingen over anonieme spelers (nu ook voor `bugmeldingen` en `stadsaanvragen`, bewust: alleen beheerders lezen) en gelekte wachtwoorden.
+2. ~~**Apparaatwachtwoord.**~~ Gedaan op 21 november 2026: apparaat "Meldingen" bij de mailbox `proost@bierkoers.nl` in Infomaniak. Dit wachtwoord is per ongeluk in een gesprek met Claude terechtgekomen (screenshot). Wil je het vervangen: nieuw apparaat aanmaken, het oude intrekken en het secret opnieuw zetten (stap 3).
+3. ~~**Secret `SMTP_WACHTWOORD`.**~~ Gedaan op 21 november 2026 (Supabase, Edge Functions, Secrets). Optioneel `MELDING_NAAR`, `SMTP_GEBRUIKER` en `SMTP_HOST`; zonder die staat alles op `proost@bierkoers.nl` en `mail.infomaniak.com`.
+4. ~~**Edge Function `melding-mail` uitrollen.**~~ Gedaan op 21 november 2026 (versie 1, via MCP, `verify_jwt` aan).
+5. ~~**Testen.**~~ Gedaan op 21 november 2026 met een tijdelijke anonieme speler en een testbug: de functie antwoordde `verstuurd: true` en de melding stond daarna als gemaild. De testgegevens zijn verwijderd. Nog te doen door jou: kijk of de mail "Bierkoers: nieuwe bug gemeld" in `proost@bierkoers.nl` stond. Daarna werkt het voor elke bug en stadsaanvraag zodra de app uit de pull request live staat.
+
 ## Bugs melden
 
 1. ~~**Migratie `20261113120000_bugmeldingen`.**~~ Gedaan op 13 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261113120000`. Security Advisor: alleen de bekende waarschuwingen over anonieme spelers (de leesregel van `bugmeldingen` geldt alleen voor beheerders) en gelekte wachtwoorden. De meldingen lees je in de app onder Ik, Beheer, Bugs, of in de Table Editor (`bugmeldingen`).

@@ -385,3 +385,7 @@ verify_jwt = true
 [functions.samenvoegen]
 enabled = true
 verify_jwt = true
+
+[functions.melding-mail]
+enabled = true
+verify_jwt = true
