@@ -26,6 +26,16 @@ export function afwijkingVanMediaan(prijsCent, mediaanCent) {
   return `prijs wijkt ${Math.round(af * 100)}% af van de mediaan van de stad (€ ${(mediaanCent / 100).toFixed(2)})`;
 }
 
+/**
+ * Prijs per 25 cl van een rij uit kroeg_kaart voor de mediaan van de stad: de bevestigde prijs, anders een
+ * menukaartprijs (die telt ook mee in de Pilsindex). Een wachtende melding van een speler telt niet mee.
+ */
+export function per25VoorMediaan(rij) {
+  if (Number.isFinite(rij?.per25_cent)) return rij.per25_cent;
+  if (rij?.open_bron === "menukaart" && Number.isFinite(rij.open_per25_cent)) return rij.open_per25_cent;
+  return null;
+}
+
 const dag = (d) => (d ? String(d).slice(0, 10) : null);
 
 /**

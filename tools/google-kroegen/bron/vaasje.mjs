@@ -1,6 +1,6 @@
 // Kies uit de bierregels van een kaart de spelprijs: de goedkoopste pils van de tap
 // in een vaasje (25 cl). Andere maten rekenen we hier niet om: liever geen prijs
-// dan een verkeerde. Zonder maat telt alleen het woord "vaasje" of "vaas" (hetzelfde glas op Nederlandse kaarten,
+// dan een verkeerde. Een actieprijs (happy hour, dagaanbieding) telt niet. Zonder maat telt alleen het woord "vaasje" of "vaas" (hetzelfde glas op Nederlandse kaarten,
 // naast "fluit" voor het kleinere glas).
 
 const PILS = /\b(hertog jan|heineken|grolsch|amstel|brand|jupiler|bavaria|warsteiner|gulpener|lindeboom|alfa|budels|dommelsch|pils|pilsner|lager|stella)\b/i;
@@ -19,6 +19,7 @@ export function kiesVaasje(regels) {
     const prijsCent = Math.round(prijs * 100);
     if (prijsCent < 150 || prijsCent > 1200) continue; // geen vaasje
     if (r.tap === false) continue;
+    if (r.actie === true) continue; // happy hour of dagaanbieding: niet de gewone prijs
     const isPils = r.pils === true || (r.pils !== false && PILS.test(naam));
     if (!isPils || NIET_PILS.test(naam)) continue;
     const cl = r.cl == null ? null : Number(r.cl);

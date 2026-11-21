@@ -67,7 +67,7 @@ Met 22 van de 161 kroegen in kaart is de kaart nog grotendeels grijs. Presenteer
   2. Roep hem aan met `curl -X POST -H "x-eenmalig: <sleutel>"` en lees de controle.
   3. Rol direct een lege versie uit (`verify_jwt: true`, altijd 410) en gooi de sleutel weg. Draai daarna de beveiligingsadviezen.
   Een Edge Function verwijderen kan niet via MCP; de lege versie mag blijven staan.
-- **Netwerk in de cloud**: Overpass (OSM) geeft een time-out; gebruik `api.openstreetmap.org/api/0.6/nodes.json`. Google Maps geeft al snel een CAPTCHA. Websites van kroegen zijn bereikbaar.
+- **Netwerk in de cloud**: Overpass (OSM) geeft een time-out; gebruik `api.openstreetmap.org/api/0.6/nodes.json`. Google Maps gaf op 21 november 2026 geen CAPTCHA over 49 kroegen (JAN met DeepSeek, `docs/menukaartprijzen.md`); komt er een, dan stopt de run en omzeil je hem niet. Websites van kroegen zijn bereikbaar.
 - **Browser**: Playwright en Chromium staan klaar. Draai de app met `python3 -m http.server 8765 --directory app` en test op telefoonbreedte. Bootst schrijfacties na met `page.route`, anders komt er testdata in productie. Lokaal geeft `POST /api/sessie` een 501 (de Python-server kent geen POST); dat is geen fout van de app.
 - **Menukaartprijzen**: elke prijs zelf lezen op de kaart (pdf-pagina als afbeelding met `pdftoppm`), dan een geval maken in `tools/google-kroegen/nakijken/<datum>/<id>-<naam>/` met `geval.json`, `uitsnede.jpg` en `foto.jpg`, en de subagent menukaart-controleur per geval laten oordelen. Liever geen prijs dan een verkeerde: zonder maat bij het kleine glas, zonder datum, of met een nieuwere kaart die je niet kunt lezen, geen prijs.
 - Testscripts van deze avond stonden in de scratchpad (vluchtig, niet in Git): een crawler voor sites, een Playwright-ronde voor sites met JavaScript, en het deelplaatje (`og.png`, HTML gerenderd met Playwright op 1200 x 630).
@@ -76,5 +76,5 @@ Met 22 van de 161 kroegen in kaart is de kaart nog grotendeels grijs. Presenteer
 
 1. Niets meer voor de migratie: hij staat live. Kjell kan de lege Edge Function `eenmalig-migratie` in het dashboard verwijderen.
 2. De twijfelgevallen in de kroegenlijst (punt 5) nagaan.
-3. Op de pc van Kjell de JAN-methode draaien voor de rest van Nijmegen (`docs/menukaart-manager.md`): de meeste kroegen zonder prijs hebben geen eigen website.
+3. De JAN-methode is op 21 november 2026 vanuit de cloud gedraaid over 49 kroegen zonder prijs: geen bruikbare prijs (alleen een actieprijs, afgekeurd). De rest van de kaart komt van spelers ter plaatse; het heeft weinig zin de foto's opnieuw te doorzoeken tot er nieuwe zijn.
 4. Na de demo: vragen wat er misging op echte telefoons, en `ACTIES.md` bijhouden.
