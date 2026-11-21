@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy · Bierkoers</title>
+<meta name="description" content="Welke gegevens Bierkoers bewaart, waarom en hoe je ze laat verwijderen.">
+<link rel="canonical" href="https://bierkoers.nl/privacy.html">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#FFF6E0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0E0E" media="(prefers-color-scheme: dark)">
+<style>
+  /* Kleuren van het visitekaartje, zoals in styles.css: licht is crème met inkt, donker is inkt met crème */
+  :root { --bg: #FFF6E0; --fg: #0E0E0E; --muted: rgb(14 14 14 / .62); --sep: rgb(14 14 14 / .13); --accent: #9a6400; color-scheme: light; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #0E0E0E; --fg: #FFF6E0; --muted: #D9CFBC; --sep: rgb(217 207 188 / .2); --accent: #F5B82E; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #0E0E0E; --fg: #FFF6E0; --muted: #D9CFBC; --sep: rgb(217 207 188 / .2); --accent: #F5B82E; color-scheme: dark; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 48px); }
+  h1 { font-size: 30px; line-height: 1.2; margin: 16px 0 4px; letter-spacing: -.01em; }
+  h2 { font-size: 20px; margin: 32px 0 8px; padding-top: 16px; border-top: .5px solid var(--sep); }
+  p, li { margin: 0 0 10px; }
+  ul { padding-left: 20px; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); font-size: 15px; }
+  .terug { display: inline-block; margin-bottom: 8px; text-decoration: none; font-weight: 600; }
+  .taal { float: right; font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+<a class="terug" href="./">‹ Bierkoers</a><a class="taal" href="#en" lang="en">English</a>
+
+<h1>Privacyverklaring</h1>
+<p class="muted">Bijgewerkt op 21 november 2026</p>
+
+<p>Bierkoers (bierkoers.nl) is een kaart met bierprijzen per kroeg, die spelers samen bijhouden. We bewaren zo weinig mogelijk over jou: genoeg om je bijdragen en punten bij te houden, en niets om je te volgen. Geen advertenties, geen trackers, en we verkopen niets.</p>
+<p>Vragen of een verzoek over je gegevens: <a href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a>.</p>
+
+<h2>Wat we bewaren</h2>
+<ul>
+  <li><b>Kijken zonder mee te doen:</b> niets op onze server. Je browser onthoudt alleen je keuzes, zoals taal en stad.</li>
+  <li><b>Meedoen zonder e-mailadres:</b> bij je eerste bijdrage krijg je een speler met een willekeurige naam (zoals dorstige-zebra). Daarbij bewaren we je bijdragen: prijzen, check-ins, bevestigingen, foto's, meldingen over kroegen en je punten.</li>
+  <li><b>Met een account:</b> daarnaast je e-mailadres en de spelersnaam die je kiest. Log je in met Google, dan geeft Google ons je e-mailadres, je naam en je profielfoto; we gebruiken alleen het e-mailadres om je te herkennen.</li>
+  <li><b>Locatie:</b> bij inchecken en bij een prijs ter plaatse stuurt de app eenmalig je locatie mee om te controleren of je binnen 75 meter van de kroeg bent. We bewaren alleen de afstand tot de kroeg, nooit waar je was.</li>
+  <li><b>Foto's:</b> een foto van een prijslijst of kaart is voor iedereen te zien, zodat anderen de prijs kunnen nakijken. De app verkleint de foto voor het versturen en haalt daarbij de verborgen gegevens eruit, zoals de plek waar hij is gemaakt.</li>
+  <li><b>Bug melden of een stad aanvragen:</b> je tekst, de stad, en bij een bug ook je schermgrootte en browser, zodat we de fout kunnen vinden.</li>
+  <li><b>QR-code op een kaartje:</b> we tellen hoe vaak iemand zo binnenkomt, zonder iets over jou.</li>
+</ul>
+
+<h2>Wat anderen zien</h2>
+<p>Andere spelers zien je spelersnaam, je punten, je bijdragen en je foto's. Nooit je e-mailadres of je locatie.</p>
+
+<h2>Cookie en opslag in je browser</h2>
+<p>We gebruiken een cookie, <code>bk_sessie</code>, zodat je ingelogd blijft, ook als je browser zijn opslag wist. Die is alleen voor inloggen, wordt niet gedeeld en geldt hoogstens 400 dagen; hij verdwijnt als je uitlogt. Verder bewaart je browser je inlogsessie, taal, stad en, als je eerder inlogde, je e-mailadres, zodat je dat niet opnieuw hoeft te typen. Omdat dit alleen nodig is om de app te laten werken, vragen we er geen toestemming voor.</p>
+
+<h2>Waarom</h2>
+<p>We gebruiken je gegevens alleen om het spel te laten werken: je bijdragen en punten bijhouden, je laten inloggen, misbruik tegengaan (bijvoorbeeld dat je je eigen prijs bevestigt) en fouten oplossen. De grondslag is dat je meedoet aan het spel, en ons gerechtvaardigd belang bij een eerlijke kaart.</p>
+
+<h2>Diensten die we gebruiken</h2>
+<ul>
+  <li><b>Supabase</b>: database, inloggen en opslag van foto's, op servers in de EU (Parijs).</li>
+  <li><b>Cloudflare</b>: de website en het domein.</li>
+  <li><b>Infomaniak</b> (Zwitserland): de mail met je inlogcode.</li>
+  <li><b>OpenFreeMap</b>: de kaart. Je browser haalt de kaart daar zelf op.</li>
+  <li><b>jsDelivr en unpkg</b>: onderdelen van de app die je browser daar ophaalt.</li>
+  <li><b>Google</b>: alleen als je met Google inlogt.</li>
+</ul>
+<p>Deze diensten zien je IP-adres als je browser iets bij ze ophaalt. Ze gebruiken je gegevens niet voor ons spel.</p>
+
+<h2>Hoe lang</h2>
+<p>Zolang je speler of account bestaat. Je verwijdert je account zelf onder Ik, Account verwijderen. Dan zijn je e-mailadres, naam, punten en check-ins weg. Prijzen, meldingen en foto's blijven staan zonder naam, omdat ze bij de prijsgeschiedenis van een kroeg horen. Wil je ook die weg, mail ons dan.</p>
+
+<h2>Je rechten</h2>
+<p>Je mag je gegevens inzien, laten verbeteren of laten verwijderen, en bezwaar maken. Mail naar <a href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a>; we antwoorden binnen een maand. Ben je het niet met ons eens, dan kun je een klacht indienen bij de <a href="https://autoriteitpersoonsgegevens.nl">Autoriteit Persoonsgegevens</a>.</p>
+
+<section id="en" lang="en">
+<h2>Privacy statement (English)</h2>
+<p class="muted">Updated 21 November 2026</p>
+<p>Bierkoers (bierkoers.nl) is a map of beer prices per pub, kept up to date by players together. We keep as little about you as possible: enough to track your contributions and points, and nothing to follow you. No ads, no trackers, and we sell nothing. Questions or requests about your data: <a href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a>.</p>
+<ul>
+  <li><b>Just looking:</b> nothing on our server. Your browser only remembers your choices, such as language and city.</li>
+  <li><b>Playing without an email address:</b> your first contribution creates a player with a random name. We keep your contributions: prices, check-ins, confirmations, photos, reports about pubs and your points.</li>
+  <li><b>With an account:</b> also your email address and the player name you choose. If you sign in with Google, Google gives us your email address, name and profile picture; we only use the email address to recognise you.</li>
+  <li><b>Location:</b> when you check in or report a price on the spot, the app sends your location once to check that you are within 75 metres of the pub. We only keep the distance to the pub, never where you were.</li>
+  <li><b>Photos</b> of price lists and menus are public, so others can check the price. The app shrinks a photo before sending it and removes hidden data such as where it was taken.</li>
+  <li><b>Bug reports and city requests:</b> your text, the city, and for a bug your screen size and browser.</li>
+</ul>
+<p>Other players see your player name, points, contributions and photos. Never your email address or location.</p>
+<p>We use one cookie, <code>bk_sessie</code>, to keep you signed in, even if your browser clears its storage. It is only for signing in, is not shared, lasts at most 400 days and is removed when you sign out. Your browser also stores your session, language, city and, if you signed in before, your email address. Because this is needed for the app to work, we do not ask for consent.</p>
+<p>We use your data only to run the game: keep your contributions and points, sign you in, prevent abuse and fix bugs. Services: Supabase (database, sign-in and photo storage, servers in the EU), Cloudflare (website and domain), Infomaniak (Switzerland, sign-in emails), OpenFreeMap (map), jsDelivr and unpkg (app components) and Google (only if you sign in with Google). They see your IP address when your browser fetches something from them.</p>
+<p>We keep your data as long as your player or account exists. Delete your account under Me, Delete account: your email address, name, points and check-ins are removed. Prices, reports and photos stay without a name, because they are part of a pub's price history; email us if you want those removed too. You may access, correct or delete your data and object to its use. If you disagree with us, you can complain to the Dutch Data Protection Authority (Autoriteit Persoonsgegevens).</p>
+</section>
+</main>
+</body>
+</html>
