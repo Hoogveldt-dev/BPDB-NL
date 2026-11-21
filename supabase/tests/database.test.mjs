@@ -184,8 +184,8 @@ check('eerste prijs melden', g1?.soort === 'eerst' && g1?.status === 'wacht', JS
 check('ter plaatse binnen 75 m', g1?.ter_plaatse === true && g1?.afstand_m < 75, JSON.stringify(g1));
 const k1 = await een(`select ontdekker_id, huidig_prijs_cent from public.kroegen where id = ${K1}`);
 check('kroeg is vrijgespeeld, prijs nog niet bevestigd', k1.ontdekker_id === A && k1.huidig_prijs_cent === null, JSON.stringify(k1));
-const r12 = await als(B, `select * from public.meld_prijs(${K1}, 'Amstel', 25, 330)`);
-check('tweede open melding voor dezelfde kroeg kan niet', /al een melding open/.test(r12.fout ?? ''), JSON.stringify(r12));
+const r12 = await als(B, `select * from public.meld_prijs(${K1}, 'Heineken', 25, 320)`);
+check('dezelfde prijs als de open melding is geen nieuwe melding', /staat al open/.test(r12.fout ?? ''), JSON.stringify(r12));
 const r13 = await als(A, `select public.beoordeel(${g1.id}, 'klopt')`);
 check('eigen melding beoordelen kan niet', /eigen melding/.test(r13.fout ?? ''), JSON.stringify(r13));
 check('punten meteen bij melden: 50 x 1,5 = 75, nog voor iemand bevestigt', (await een(`select altijd from public.ranglijst where id = '${A}'`)).altijd === 75);
@@ -847,6 +847,53 @@ const gezet = await als(E, `select public.zet_stadsaanvraag('Arnhem', 'goedgekeu
 check('goedkeuren zet alle aanvragen voor die stad om', gezet.rows?.[0]?.n === 2, JSON.stringify(gezet));
 check('een onbekende status wordt geweigerd', /Onbekende status/.test((await als(E, `select public.zet_stadsaanvraag('Arnhem', 'open')`)).fout ?? ''));
 await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
+
+// Een nieuwe prijs vervangt een openstaande melding, zonder straf voor de melder
+await db.query(`select private.importeer_kroegen($1, 'Vervangstad')`, [JSON.stringify(
+  [1, 2, 3, 4, 5, 6, 7].map((n) => ({ osm_id: `node/97${n}`, naam: `Vervang ${n}`, soort: 'pub', lat: 51.8500 + n / 10000, lon: 5.8500 + n / 10000 })))]);
+const VK = Object.fromEntries((await db.query(`select osm_id, id from public.kroegen where gemeente = 'Vervangstad'`)).rows.map((r) => [r.osm_id, r.id]));
+const X = 'c1c1c1c1-0000-0000-0000-000000000001';
+await db.exec(`insert into auth.users (id, email, raw_user_meta_data, is_anonymous) values ('${X}', null, '{}', true)`);
+const stand = async (wie) => (await een(`select altijd, betrouwbaarheid::float as b from public.ranglijst where id = '${wie}'`));
+const va = (await als(A, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 350)`)).rows[0];
+await als(B, `select public.beoordeel(${va.id}, 'klopt')`);
+const voorA = await stand(A), voorB = await stand(B);
+const vx = await als(X, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 380)`);
+check('een anonieme speler vervangt een melding niet', /e-mailadres/.test(vx.fout ?? ''), JSON.stringify(vx));
+check('je eigen melding vervang je niet', /eigen melding/.test((await als(A, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 380)`)).fout ?? ''));
+check('dezelfde prijs als de open melding vervangt niet', /staat al open/.test((await als(C, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 350)`)).fout ?? ''));
+check('na die weigeringen wacht de melding nog', (await een(`select status from public.gebeurtenissen where id = ${va.id}`)).status === 'wacht');
+const vc = (await als(C, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 380)`)).rows?.[0];
+check('een andere prijs vervangt de openstaande melding', !!vc && (await een(`select status, vervangen_door from public.gebeurtenissen where id = ${va.id}`)).status === 'vervangen', JSON.stringify(vc));
+const vOud = await een(`select vervangen_door, afgerond_op from public.gebeurtenissen where id = ${va.id}`);
+check('er staat wie vervangen heeft', vOud.vervangen_door === C && vOud.afgerond_op !== null, JSON.stringify(vOud));
+check('de nieuwe melding wacht op bevestiging', vc?.status === 'wacht' && vc?.door_id === C, JSON.stringify(vc));
+const naA = await stand(A), naB = await stand(B);
+check('de vervangen melder houdt punten en betrouwbaarheid', naA.altijd === voorA.altijd && naA.b === voorA.b, JSON.stringify({ voorA, naA }));
+check('wie "klopt" zei bij de oude melding houdt punten en betrouwbaarheid', naB.altijd === voorB.altijd && naB.b === voorB.b, JSON.stringify({ voorB, naB }));
+check('een vervangen melding beoordelen kan niet meer', /al afgerond/.test((await als(D, `select public.beoordeel(${va.id}, 'klopt')`)).fout ?? ''));
+const vk = await als(null, `select open_prijs_cent, huidig_prijs_cent from public.kroeg_kaart where id = ${VK['node/971']}`);
+check('op de kaart staat de nieuwe prijs als wachtend', vk.rows?.[0]?.open_prijs_cent === 380 && vk.rows[0].huidig_prijs_cent === null, JSON.stringify(vk));
+const vt = await als(null, `select status from public.kroeg_tijdlijn where id = ${va.id}`);
+check('de geschiedenis toont de oude melding als vervangen', vt.rows?.[0]?.status === 'vervangen', JSON.stringify(vt));
+await klopt(vc.id, A, D);
+check('de nieuwe prijs wordt bevestigd en komt op de kroeg', (await een(`select huidig_prijs_cent from public.kroegen where id = ${VK['node/971']}`)).huidig_prijs_cent === 380);
+// Klopt niet werkt nog: twee spelers weerleggen een valse prijs, en de melder verliest punten en betrouwbaarheid
+const vb = (await als(B, `select * from public.meld_prijs(${VK['node/972']}, 'Heineken', 25, 99)`)).rows[0];
+const voorVB = await stand(B);
+await als(A, `select public.beoordeel(${vb.id}, 'klopt_niet')`);
+const vWeerlegd = await als(D, `select public.beoordeel(${vb.id}, 'klopt_niet') as s`);
+const naVB = await stand(B);
+check('klopt niet weerlegt nog steeds een valse prijs, met straf voor de melder', vWeerlegd.rows?.[0]?.s === 'weerlegd' && naVB.altijd < voorVB.altijd && naVB.b < voorVB.b, JSON.stringify({ voorVB, naVB, vWeerlegd }));
+// Hoogstens 5 vervangingen per dag
+for (let n = 3; n <= 7; n++) {
+  await als(A, `select * from public.meld_prijs(${VK[`node/97${n}`]}, 'Heineken', 25, 350)`);
+  await als(D, `select * from public.meld_prijs(${VK[`node/97${n}`]}, 'Heineken', 25, 360)`);
+}
+check('vijf vervangingen op een dag lukken', (await een(`select count(*)::int as n from public.gebeurtenissen where vervangen_door = '${D}'`)).n === 5);
+await als(A, `select * from public.meld_prijs(${VK['node/972']}, 'Heineken', 25, 350)`);
+const zesde = await als(D, `select * from public.meld_prijs(${VK['node/972']}, 'Heineken', 25, 370)`);
+check('de zesde vervanging op een dag wordt geweigerd', /al 5 meldingen/.test(zesde.fout ?? ''), JSON.stringify(zesde));
 
 // Mail naar de beheerder: claim_melding_mail geeft de gegevens voor de mail, hoogstens een keer, alleen aan de melder
 const bugId = bug1.rows[0].id;

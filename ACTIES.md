@@ -31,6 +31,13 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 3. Aanvragen staan in de app onder Ik, Beheer, Stadsaanvragen. Goedkeuren laadt de kroegen en wijken; daarna staat de stad onder Ik, Stad.
 4. ~~**Migratie `20261120190000_tijdlijn_gemeente`** (stadskeuze).~~ Gedaan op 20 november 2026 via MCP, versie gelijkgezet. Security Advisor: geen nieuwe waarschuwingen.
 
+## Prijs vervangen (zonder "klopt niet")
+
+Een andere prijs vervangt een openstaande melding, zonder straf voor de melder. Staat gebouwd in de pull request, maar werkt pas als de migratie op Supabase staat.
+
+1. **Migratie `20261121140000_prijs_vervangen`** uitvoeren (laat Claude het doen via MCP, of de SQL Editor) en de versie gelijkzetten aan `20261121140000`. Het zijn twee dingen: een nieuwe waarde `vervangen` voor `gebeurtenis_status` (kan niet meer terug) en een aangepaste `meld_prijs`. Daarna de Security Advisor.
+2. **Controleren op de echte site.** Open een kroeg met een melding die op bevestiging wacht, kies "Is de prijs gewijzigd? Geef de nieuwe prijs door" en geef een andere prijs door. De oude melding moet in de geschiedenis als "vervangen" staan en de melder houdt zijn punten.
+
 ## Mail bij een nieuwe bug of stadsaanvraag
 
 De app mailt je zodra een speler een bug meldt of een stad aanvraagt, naar `proost@bierkoers.nl` (Infomaniak). Tot je dit doet, gebeurt er niets bijzonders: de melding staat gewoon onder Ik, Beheer.
