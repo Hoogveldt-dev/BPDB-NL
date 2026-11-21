@@ -914,14 +914,14 @@ await db.exec(`update public.bugmeldingen set op = now() - interval '1 hour', ge
 check('een oude melding wordt niet meer gemaild', (await alsService(`select public.claim_melding_mail('bug', ${bugId}, '${B}') as r`)).rows?.[0]?.r === null);
 check('een onbekende soort wordt geweigerd', /Onbekende soort/.test((await alsService(`select public.claim_melding_mail('iets', 1, '${B}')`)).fout ?? ''));
 
-// Een foto van de kaart, los van een prijsmelding: meld_foto, geen punten, hoogstens 10 per dag
-const fotoPad = (wie, n) => `${wie}/${K1}-17000000000${String(n).padStart(2, '0')}.jpg`;
-const uploadFoto = (wie, n) => als(wie, `insert into storage.objects (bucket_id, name) values ('prijslijsten', '${fotoPad(wie, n)}')`);
+// Een foto van de kaart, los van een prijsmelding: meld_foto, +5 voor de eerste foto per kroeg, eigen foto verwijderen
+const fotoPad = (wie, n, kroeg = K1) => `${wie}/${kroeg}-17000000000${String(n).padStart(2, '0')}.jpg`;
+const uploadFoto = (wie, n, kroeg = K1) => als(wie, `insert into storage.objects (bucket_id, name) values ('prijslijsten', '${fotoPad(wie, n, kroeg)}')`);
 await uploadFoto(A, 1);
 const punten0 = await stand(A);
 const f1 = await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, 1)}')`);
 check('een speler zet een foto van de kaart bij een kroeg', f1.rows?.[0]?.kroeg_id === K1 && f1.rows[0].door_id === A, JSON.stringify(f1));
-check('een foto van de kaart levert geen punten op', JSON.stringify(await stand(A)) === JSON.stringify(punten0));
+check('de eerste foto bij een kroeg levert 5 punten', f1.rows?.[0]?.punten === 5 && (await stand(A)).altijd === punten0.altijd + 5, JSON.stringify({ f1: f1.rows?.[0], punten0, nu: await stand(A) }));
 check('een foto zonder inloggen kan niet', !!(await als(null, `select * from public.meld_foto(${K1}, '${fotoPad(A, 1)}')`)).fout);
 check('een foto in de map van een ander kan niet', /hoort niet bij jou/.test((await als(B, `select * from public.meld_foto(${K1}, '${fotoPad(A, 1)}')`)).fout ?? ''));
 check('een foto die niet is geüpload kan niet', /niet aangekomen/.test((await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, 2)}')`)).fout ?? ''));
@@ -932,9 +932,29 @@ check('direct in kroeg_fotos schrijven kan niet', !!(await als(A, `insert into p
 check('een foto wijzigen of wissen kan niet', !!(await als(A, `update public.kroeg_fotos set kroeg_id = ${K2}`)).fout && !!(await als(A, `delete from public.kroeg_fotos`)).fout);
 const fo = await als(null, `select door, pad from public.kroeg_foto_overzicht where kroeg_id = ${K1}`);
 check('iedereen ziet de foto met alleen de spelersnaam', fo.rows?.length === 1 && fo.rows[0].door === 'Anna' && fo.rows[0].pad === fotoPad(A, 1), JSON.stringify(fo));
-for (let n = 2; n <= 10; n++) { await uploadFoto(A, n); await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, n)}')`); }
+// Een tweede foto bij dezelfde kroeg levert niets op, een eerste foto bij een andere kroeg weer 5
+await uploadFoto(A, 2);
+const f2 = await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, 2)}')`);
+check('een tweede foto bij dezelfde kroeg levert geen punten op', f2.rows?.[0]?.punten === 0 && (await stand(A)).altijd === punten0.altijd + 5, JSON.stringify(f2));
+await uploadFoto(A, 3, K2);
+const f3 = await als(A, `select * from public.meld_foto(${K2}, '${fotoPad(A, 3, K2)}')`);
+check('de eerste foto bij een andere kroeg levert weer 5 punten op', f3.rows?.[0]?.punten === 5 && (await stand(A)).altijd === punten0.altijd + 10, JSON.stringify(f3));
+// Verwijderen: alleen je eigen foto, de punten gaan eraf, hij verdwijnt voor iedereen
+check('een ander verwijdert jouw foto niet', /eigen foto/.test((await als(B, `select public.verwijder_foto(${f1.rows[0].id})`)).fout ?? ''));
+check('een foto verwijderen zonder inloggen kan niet', !!(await als(null, `select public.verwijder_foto(${f1.rows[0].id})`)).fout);
+const weg = await als(A, `select public.verwijder_foto(${f1.rows[0].id}) as pad`);
+check('je verwijdert je eigen foto en krijgt het pad terug', weg.rows?.[0]?.pad === fotoPad(A, 1), JSON.stringify(weg));
+check('de punten van de verwijderde foto gaan eraf', (await stand(A)).altijd === punten0.altijd + 5, JSON.stringify(await stand(A)));
+check('een verwijderde foto is voor niemand meer te zien', (await als(null, `select count(*)::int as n from public.kroeg_foto_overzicht where id = ${f1.rows[0].id}`)).rows?.[0]?.n === 0 && (await als(null, `select count(*)::int as n from public.kroeg_fotos where id = ${f1.rows[0].id}`)).rows?.[0]?.n === 0);
+check('een verwijderde foto nog eens verwijderen kan niet', /bestaat niet/.test((await als(A, `select public.verwijder_foto(${f1.rows[0].id})`)).fout ?? ''));
+// Verwijderen en opnieuw uploaden bij dezelfde kroeg levert niets op: de eerdere foto telt mee
+await uploadFoto(A, 4);
+const f4 = await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, 4)}')`);
+check('opnieuw uploaden na verwijderen levert geen punten op', f4.rows?.[0]?.punten === 0 && (await stand(A)).altijd === punten0.altijd + 5, JSON.stringify(f4));
+// De daglimiet telt verwijderde foto's mee: tot nu toe 4 foto's (een verwijderd), nog 6 erbij
+for (let n = 5; n <= 10; n++) { await uploadFoto(A, n); await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, n)}')`); }
 await uploadFoto(A, 11);
-check('na 10 foto\'s op een dag is het genoeg', /al 10 foto/.test((await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, 11)}')`)).fout ?? ''));
+check('na 10 foto\'s op een dag is het genoeg, een verwijderde telt mee', /al 10 foto/.test((await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, 11)}')`)).fout ?? ''));
 
 // Stadskeuze: de tijdlijn kent de gemeente van de kroeg, zodat de app de koers per stad laadt
 const tlStad = await een(`select count(*)::int as n, bool_and(t.gemeente = k.gemeente) as goed

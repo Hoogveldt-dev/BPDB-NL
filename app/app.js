@@ -2335,6 +2335,7 @@ function regelsView() {
       <div><span>Klopt nog</span><b>+5</b></div>
       <div><span>Prijs van 90 dagen of ouder controleren</span><b>+15</b></div>
       <div><span>Foto van de prijslijst</span><b>+5</b></div>
+      <div><span>Foto van de kaart bij een kroeg (de eerste per kroeg)</span><b>+5</b></div>
       <div><span>Binnen ${INCHECK_M} m van de kroeg</span><b>×1,5</b></div>
       <div><span>Je melding wordt weerlegd</span><b>−20</b></div>
     </div>
@@ -2652,10 +2653,11 @@ async function verstuurKaartFoto(invoer) {
   try {
     if (!(await zorgVoorSpeler())) return;
     pad = await uploadFoto(k, bestand);
-    const { error } = await sb.rpc("meld_foto", { p_kroeg_id: k.id, p_pad: pad });
+    const { data, error } = await sb.rpc("meld_foto", { p_kroeg_id: k.id, p_pad: pad });
     if (error) throw error;
     pad = null;
-    toast("Foto toegevoegd, bedankt");
+    toast("Foto toegevoegd, bedankt", data?.punten || null);
+    if (data?.punten) laadProfiel(); // het saldo onder Ik klopt dan meteen
   } catch (e) {
     if (pad) sb.storage.from("prijslijsten").remove([pad]); // niet vastgelegd: de upload weer opruimen
     toast(await leesFout(e));
@@ -2666,12 +2668,25 @@ async function verstuurKaartFoto(invoer) {
 
 // De foto's van de kaart bij een kroeg, nieuwste eerst
 async function laadKaartFotos(id) {
-  const { data, error } = await sb.from("kroeg_foto_overzicht").select("id,pad,op,door").eq("kroeg_id", id).order("op", { ascending: false }).limit(12);
+  const { data, error } = await sb.from("kroeg_foto_overzicht").select("id,pad,op,door,door_id").eq("kroeg_id", id).order("op", { ascending: false }).limit(12);
   const el = $("#kaartfotos");
   // Bestaat het overzicht nog niet (migratie nog niet uitgevoerd), dan blijft de app gewoon werken
-  if (state.selected !== id || !el || error || !data?.length) return;
-  el.innerHTML = `<h3>Foto's van de kaart</h3><div class="kaartfotos">${data.map((f) => `<button type="button" class="kaartfoto" data-foto="${esc(fotoUrl(f.pad))}">
-    <img src="${esc(fotoUrl(f.pad))}" alt="Foto van de kaart" loading="lazy"><span class="small muted">${esc(f.door ?? "Onbekend")}, ${wanneer(f.op)}</span></button>`).join("")}</div>`;
+  if (state.selected !== id || !el || error) return;
+  if (!data?.length) { el.innerHTML = ""; return; }
+  const uid = state.sessie?.user?.id;
+  el.innerHTML = `<h3>Foto's van de kaart</h3><div class="kaartfotos">${data.map((f) => `<div class="kaartfoto"><button type="button" data-foto="${esc(fotoUrl(f.pad))}">
+    <img src="${esc(fotoUrl(f.pad))}" alt="Foto van de kaart" loading="lazy"><span class="small muted">${esc(f.door ?? "Onbekend")}, ${wanneer(f.op)}</span></button>
+    ${uid && f.door_id === uid ? `<button type="button" class="linkbtn small" data-foto-weg="${f.id}">Verwijderen</button>` : ""}</div>`).join("")}</div>`;
+}
+
+// Je eigen foto van de kaart verwijderen (verwijder_foto); de punten ervoor gaan eraf, het bestand gaat uit de opslag
+async function verwijderKaartFoto(id) {
+  if (!(await vraag("Deze foto verwijderen? Kreeg je er punten voor, dan gaan die eraf.", "Verwijderen"))) return;
+  const { data: pad, error } = await sb.rpc("verwijder_foto", { p_id: id });
+  if (error) return toast(await leesFout(error));
+  if (pad) sb.storage.from("prijslijsten").remove([pad]); // niet wachten: het bestand opruimen mag mislukken
+  toast("Foto verwijderd");
+  await Promise.all([laadKaartFotos(state.selected), laadProfiel()]);
 }
 
 async function meldPrijs(k, w, pos) {
@@ -2894,6 +2909,7 @@ body.addEventListener("click", (e) => {
   if (t.dataset.stadOk !== undefined) return keurStad(t, t.dataset.stadOk);
   if (t.dataset.stadNee !== undefined) return wijsStadAf(t, t.dataset.stadNee);
   if (t.dataset.kaartfoto !== undefined) return $("#kaartFotoInvoer")?.click();
+  if (t.dataset.fotoWeg) return verwijderKaartFoto(Number(t.dataset.fotoWeg));
   if (t.dataset.foto) return openFoto(t.dataset.foto);
   if (t.dataset.tekstenBewerken !== undefined) { teksten.zetBewerken(true); return toast("Tik op een tekst om hem aan te passen"); }
   if (t.dataset.tekstWis !== undefined) return teksten.wis(t.dataset.tekstWis).then(() => draw());
