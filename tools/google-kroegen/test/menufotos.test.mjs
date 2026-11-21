@@ -78,6 +78,9 @@ test("vaasje: geen maat alleen bij het woord vaasje of vaas; anders liever niets
   assert.equal(vaas.prijs_cent, 350);
   assert.equal(vaas.merk, "Grolsch");
   assert.equal(kiesVaasje([{ merk: "Grolsch fluit", cl: null, prijs: 3.3, tap: true }]), null);
+  // De Tempelier, 21 november 2026: "Knaken dinsdag: Heineken vaas voor 2,5 vanaf 20.00 uur" is geen gewone prijs
+  assert.equal(kiesVaasje([{ merk: "Heineken vaas", omschrijving: "Knaken dinsdag, vanaf 20.00 uur", cl: null, prijs: 2.5, tap: true, actie: true }]), null);
+  assert.equal(kiesVaasje([{ merk: "Heineken", cl: 25, prijs: 2.5, tap: true, actie: true }, { merk: "Heineken", cl: 25, prijs: 3.8, tap: true, actie: false }]).prijs_cent, 380);
   assert.equal(kiesVaasje([{ merk: "Heineken", cl: 25, prijs: 0.5, tap: true }]), null);
   assert.equal(kiesVaasje([{ merk: "Heineken", cl: 25, prijs: 3.5, tap: false }]), null);
   assert.equal(kiesVaasje([{ merk: "Brand weizen", cl: 25, prijs: 4.5, tap: true }]), null);

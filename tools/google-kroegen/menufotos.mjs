@@ -8,7 +8,7 @@ import { FotoBron } from "./bron/fotobron.mjs";
 import { Geblokkeerd } from "./bron/transport.mjs";
 import { naarMenuImport, zoekMenuprijs } from "./bron/menuprijs.mjs";
 import { Ocr } from "./bron/ocr.mjs";
-import { mediaan, scheidUitschieters } from "./bron/controles.mjs";
+import { mediaan, per25VoorMediaan, scheidUitschieters } from "./bron/controles.mjs";
 import { SUPABASE_KEY, SUPABASE_URL } from "../../app/config.js";
 import { maakBlad } from "./bron/contactblad.mjs";
 import { kiesSteekproef, nieuweMap, schrijfGevallen } from "./bron/nakijken.mjs";
@@ -108,15 +108,15 @@ if (!["volgorde", "filter"].includes(o.ocr)) {
 }
 const ocr = o["zonder-ocr"] ? null : new Ocr({ log: console.log });
 
-/** Mediaan per 25 cl van de kroegen met een prijs in de database (openbaar leesbaar), of null. */
+/** Mediaan per 25 cl van de kroegen met een bevestigde of menukaartprijs in de database (openbaar), of null. */
 async function mediaanUitDatabase() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/kroeg_kaart?select=per25_cent&per25_cent=not.is.null`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/kroeg_kaart?select=per25_cent,open_per25_cent,open_bron&open=is.true`, {
       headers: { apikey: SUPABASE_KEY }, signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) return null;
-    const rijen = await res.json();
-    return rijen.length >= 5 ? mediaan(rijen.map((r) => r.per25_cent)) : null;
+    const prijzen = (await res.json()).map(per25VoorMediaan).filter((p) => p != null);
+    return prijzen.length >= 5 ? mediaan(prijzen) : null;
   } catch {
     return null;
   }

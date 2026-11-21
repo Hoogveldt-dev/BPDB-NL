@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { afwijkingVanMediaan, kiesDatum, mediaan, prijsBuitenBereik, scheidUitschieters } from "../bron/controles.mjs";
+import { afwijkingVanMediaan, kiesDatum, mediaan, per25VoorMediaan, prijsBuitenBereik, scheidUitschieters } from "../bron/controles.mjs";
 import { vindBedragen } from "../bron/ocr.mjs";
 import { dHash, hamming, kanBeelden } from "../bron/beeld.mjs";
 import { naarMenuImport, zoekMenuprijs } from "../bron/menuprijs.mjs";
@@ -130,4 +130,16 @@ test("zoekMenuprijs: prijs buiten bereik gaat naar twijfels; verkeerde klok en o
   const omschrijving = naarMenuImport("PID", p).bron_omschrijving;
   assert.equal(omschrijving, "Kaartfoto Google Maps, geupload 2013-06-04 (cameraklok fout, 10+ jaar oud)");
   assert.ok(omschrijving.length <= 80, "de database staat hoogstens 80 tekens toe");
+});
+
+test("mediaan van de stad: bevestigde prijzen en menukaartprijzen, geen wachtende spelermeldingen", () => {
+  assert.equal(per25VoorMediaan({ per25_cent: 380, open_per25_cent: null, open_bron: null }), 380);
+  assert.equal(per25VoorMediaan({ per25_cent: null, open_per25_cent: 390, open_bron: "menukaart" }), 390);
+  assert.equal(per25VoorMediaan({ per25_cent: null, open_per25_cent: 370, open_bron: "speler" }), null);
+  assert.equal(per25VoorMediaan({ per25_cent: null, open_per25_cent: null, open_bron: null }), null);
+  // Nijmegen op 21 november 2026: 2 bevestigd en 16 menukaart. Alleen bevestigd was te weinig voor een mediaan.
+  const rijen = [380, 390].map((p) => ({ per25_cent: p })).concat([410, 380, 390, 360, 395, 380, 390, 390].map((p) => ({ per25_cent: null, open_per25_cent: p, open_bron: "menukaart" })));
+  const m = mediaan(rijen.map(per25VoorMediaan).filter((p) => p != null));
+  assert.equal(m, 390);
+  assert.match(afwijkingVanMediaan(250, m), /36%/);
 });

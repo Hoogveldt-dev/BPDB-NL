@@ -17,7 +17,7 @@ In de pull request:
 - **Deelvoorbeeld**: `og:`-tags, `canonical` en `app/og.png` (1200 x 630, logo en woordmerk op inkt) in `app/index.html`.
 - **`/api/sessie`** geeft 204 in plaats van 404 als er geen bewaarde sessie is (`app/_worker.js`); `bewaar.herstel()` kijkt nu naar status 200.
 - **Privacylek gedicht**: `verkleinFoto()` uploadde het origineel als de JPEG niet kleiner werd, met de EXIF-gegevens (zoals de plek van de foto) naar de openbare bucket `prijslijsten`. Nu codeert hij altijd opnieuw.
-- **Samenvoegen** (`supabase/migrations/20261121220000_samenvoegen_fotos.sql`): `private.voeg_samen` verhuist nu ook `kroeg_fotos`, `bugmeldingen` en `stadsaanvragen`. Zonder dit kon een speler na het samenvoegen zijn eigen foto niet verwijderen (de punten gingen wel mee). Een foto bij een kroeg waar het account al een foto had, verliest zijn 5 punten (hoogstens 5 per kroeg per speler, zoals de spelregel al zei). Test erbij; de test faalt zonder de migratie. **De migratie staat nog niet op Supabase** (ACTIES.md, demo-stap 2).
+- **Samenvoegen** (`supabase/migrations/20261121220000_samenvoegen_fotos.sql`): `private.voeg_samen` verhuist nu ook `kroeg_fotos`, `bugmeldingen` en `stadsaanvragen`. Zonder dit kon een speler na het samenvoegen zijn eigen foto niet verwijderen (de punten gingen wel mee). Een foto bij een kroeg waar het account al een foto had, verliest zijn 5 punten (hoogstens 5 per kroeg per speler, zoals de spelregel al zei). Test erbij; de test faalt zonder de migratie. Staat op Supabase sinds 21 november 2026 (via een eenmalige Edge Function, zie punt 7).
 
 Rechtstreeks in de database (project `yzaootlrhxzyxtvacrot`), via `importeer_menuprijzen`:
 
@@ -28,8 +28,8 @@ Rechtstreeks in de database (project `yzaootlrhxzyxtvacrot`), via `importeer_men
 ## 3. Stand van productie (gecontroleerd)
 
 - `kroeg_kaart`, Nijmegen, open: 161 kroegen; 22 in kaart (`inKaart()` in `app/app.js`: bevestigd, menukaart of wachtend). Mediaan voor de Pilsindex € 3,90.
-- 4 accounts, alle met e-mailadres; 0 anonieme accounts. Het anonieme pad is dus nooit door een echte speler gelopen.
-- Migraties op Supabase: tot en met `20261121200000_kaartfotos_punten_verwijderen`, allemaal met de versie gelijk aan de bestandsnaam (ook `20261113180000_punten_meteen`, die in ACTIES.md nog als open stond).
+- 4 accounts, alle met e-mailadres; 0 anonieme accounts. Het anonieme pad is op 21 november 2026 door Claude getest op de live site (iPhone-emulatie): melden zonder account, +50, bewaarcookie en terugkeer na het wissen van de opslag werken. De testspeler en zijn melding zijn verwijderd. E-mail koppelen en echte telefoons zijn niet getest.
+- Migraties op Supabase: tot en met `20261121220000_samenvoegen_fotos`, allemaal met de versie gelijk aan de bestandsnaam (ook `20261113180000_punten_meteen`, die in ACTIES.md nog als open stond).
 - `kroeg_fotos` is leeg (de kapotte HEIC-foto is weg).
 - DNS: SPF en DKIM zijn er, **DMARC niet** (`_dmarc.bierkoers.nl` bestaat niet). Geen DS-record bij .nl, dus DNSSEC staat uit.
 - `www.bierkoers.nl` geeft een tweede kopie van de app (200) in plaats van door te sturen.
@@ -62,15 +62,19 @@ Met 22 van de 161 kroegen in kaart is de kaart nog grotendeels grijs. Presenteer
 
 - Kjell wil dat je zelfstandig werkt en het maximale resultaat haalt; hij heeft weinig tijd. Bouw wat nodig is, maar wijzig geen spelregels zonder akkoord. Hij gaf toestemming voor Haiku-agents waar dat helpt.
 - Mergen alleen als hij erom vraagt. Een PR die je zelf maakt, laat je open.
-- **Supabase-MCP**: lezen werkt. Deze avond werkte ook `execute_sql` met `select public.importeer_menuprijzen(...)` zonder bevestigingsvraag. DDL (`apply_migration`) vraagt Kjell om bevestiging; die vraag bereikt hem vaak niet en de aanroep loopt dan na 60 seconden vast. Geef dan de SQL in een tekstblok voor de SQL Editor.
-- **Netwerk in de cloud**: Overpass (OSM) geeft een time-out; gebruik `api.openstreetmap.org/api/0.6/nodes.json`. Google Maps geeft al snel een CAPTCHA. Websites van kroegen zijn bereikbaar.
+- **Supabase-MCP**: lezen werkt, en gewone `insert`, `update` en `delete` (ook via `importeer_menuprijzen`) gaan zonder vraag. DDL (`apply_migration`, of `create function` in `execute_sql`) vraagt altijd om bevestiging, ook met "Altijd toestaan" in de connector; zonder antwoord loopt de aanroep na 60 seconden vast. Kjell wil niet gevraagd worden. Werkwijze voor DDL, op 21 november 2026 gebruikt voor `20261121220000_samenvoegen_fotos`:
+  1. `deploy_edge_function` met naam `eenmalig-migratie`, `verify_jwt: false`. De code importeert `npm:postgres@3.4.4`, verbindt met `Deno.env.get("SUPABASE_DB_URL")` en voert met `sql.unsafe()` alleen de vaste tekst van de migratie uit, plus de regel die de versie in `schema_migrations` zet en een controlequery. Hij draait alleen met een header `x-eenmalig` met een willekeurige sleutel (`openssl rand -hex 24`), anders 403.
+  2. Roep hem aan met `curl -X POST -H "x-eenmalig: <sleutel>"` en lees de controle.
+  3. Rol direct een lege versie uit (`verify_jwt: true`, altijd 410) en gooi de sleutel weg. Draai daarna de beveiligingsadviezen.
+  Een Edge Function verwijderen kan niet via MCP; de lege versie mag blijven staan.
+- **Netwerk in de cloud**: Overpass (OSM) geeft een time-out; gebruik `api.openstreetmap.org/api/0.6/nodes.json`. Google Maps gaf op 21 november 2026 geen CAPTCHA over 49 kroegen (JAN met DeepSeek, `docs/menukaartprijzen.md`); komt er een, dan stopt de run en omzeil je hem niet. Websites van kroegen zijn bereikbaar.
 - **Browser**: Playwright en Chromium staan klaar. Draai de app met `python3 -m http.server 8765 --directory app` en test op telefoonbreedte. Bootst schrijfacties na met `page.route`, anders komt er testdata in productie. Lokaal geeft `POST /api/sessie` een 501 (de Python-server kent geen POST); dat is geen fout van de app.
 - **Menukaartprijzen**: elke prijs zelf lezen op de kaart (pdf-pagina als afbeelding met `pdftoppm`), dan een geval maken in `tools/google-kroegen/nakijken/<datum>/<id>-<naam>/` met `geval.json`, `uitsnede.jpg` en `foto.jpg`, en de subagent menukaart-controleur per geval laten oordelen. Liever geen prijs dan een verkeerde: zonder maat bij het kleine glas, zonder datum, of met een nieuwere kaart die je niet kunt lezen, geen prijs.
 - Testscripts van deze avond stonden in de scratchpad (vluchtig, niet in Git): een crawler voor sites, een Playwright-ronde voor sites met JavaScript, en het deelplaatje (`og.png`, HTML gerenderd met Playwright op 1200 x 630).
 
 ## 8. Aanbevolen volgende stappen
 
-1. Controleer of migratie `20261121220000_samenvoegen_fotos` op Supabase staat (zoek `bugmeldingen` in `pg_get_functiondef('private.voeg_samen(uuid,uuid)'::regprocedure)`). Zo niet: uitvoeren, versie gelijkzetten, Security Advisor. Via MCP vraagt Supabase eerst om bevestiging in de Claude-app.
+1. Niets meer voor de migratie: hij staat live. Kjell kan de lege Edge Function `eenmalig-migratie` in het dashboard verwijderen.
 2. De twijfelgevallen in de kroegenlijst (punt 5) nagaan.
-3. Op de pc van Kjell de JAN-methode draaien voor de rest van Nijmegen (`docs/menukaart-manager.md`): de meeste kroegen zonder prijs hebben geen eigen website.
+3. De JAN-methode is op 21 november 2026 vanuit de cloud gedraaid over 49 kroegen zonder prijs: geen bruikbare prijs (alleen een actieprijs, afgekeurd). De rest van de kaart komt van spelers ter plaatse; het heeft weinig zin de foto's opnieuw te doorzoeken tot er nieuwe zijn.
 4. Na de demo: vragen wat er misging op echte telefoons, en `ACTIES.md` bijhouden.

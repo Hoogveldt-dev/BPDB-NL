@@ -66,8 +66,8 @@ Antwoord alleen met JSON:
 {"leesbaar": true/false,
  "datum_op_kaart": "tekst of null",
  "kop": [links, boven, rechts, onder] of null,
- "bieren": [{"merk": "Hertog Jan", "omschrijving": "zoals op de kaart", "cl": 25 of null, "prijs": 3.9, "tap": true/false/null, "pils": true/false, "vak": [links, boven, rechts, onder]}]}
-Regels: "cl" alleen als de maat er staat (0,25l = 25; 0,5 = 50). Staan er twee prijzen voor twee maten ("0,25/0,5 4/8"), maak dan twee regels. "tap" is true bij "van de tap", "fust" of "tap"; false bij "fles". "vak" is waar de regel met deze prijs op de foto staat, en "kop" de kop boven de bierlijst (zoals "Bier van de tap"), beide als fractie van de breedte en hoogte van de foto (0 tot 1). Verzin niets: wat je niet kunt lezen, laat je weg.`;
+ "bieren": [{"merk": "Hertog Jan", "omschrijving": "zoals op de kaart", "cl": 25 of null, "prijs": 3.9, "tap": true/false/null, "pils": true/false, "actie": true/false, "vak": [links, boven, rechts, onder]}]}
+Regels: "cl" alleen als de maat er staat (0,25l = 25; 0,5 = 50). Staan er twee prijzen voor twee maten ("0,25/0,5 4/8"), maak dan twee regels. "tap" is true bij "van de tap", "fust" of "tap"; false bij "fles". "actie" is true bij een tijdelijke of bijzondere prijs, zoals happy hour, een dagaanbieding ("dinsdag", "vanaf 20.00 uur"), een studentenprijs of een weekkalender. "vak" is waar de regel met deze prijs op de foto staat, en "kop" de kop boven de bierlijst (zoals "Bier van de tap"), beide als fractie van de breedte en hoogte van de foto (0 tot 1). Verzin niets: wat je niet kunt lezen, laat je weg.`;
 
 /** Opgeteld verbruik van deze run (verzoeken en tokens). */
 export const verbruik = { verzoeken: 0, in: 0, uit: 0 };

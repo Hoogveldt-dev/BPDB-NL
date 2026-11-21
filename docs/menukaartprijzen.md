@@ -67,7 +67,7 @@ Een foto van een speler werkt hetzelfde: datum uit EXIF, prijs met het model.
 
 - Automatisch uitlezen van Google Maps is in strijd met de gebruiksvoorwaarden van Google (zie `docs/google-maps-bronnen.md`). We doen het met mate: een kroeg tegelijk, ongeveer 3 seconden tussen verzoeken, een run per paar maanden.
 - Google stuurt bij te veel verzoeken naar een CAPTCHA. Dan stopt de run meteen en bewaart wat al gevonden is. De CAPTCHA lossen we niet op en we proberen niet opnieuw.
-- Vanaf een datacenter (zoals een cloudsessie) volgt die CAPTCHA al na een paar kroegen. Draai de tool vanaf een thuisverbinding.
+- Vanaf een datacenter (zoals een cloudsessie) volgde die CAPTCHA op 6 november al na een paar kroegen. Op 21 november 2026 liep een cloudsessie 49 kroegen zonder CAPTCHA (zie hieronder). Komt er een, dan stopt de run; we lossen hem niet op en omzeilen hem niet.
 - We bewaren alleen prijs en datum, niet de foto of de naam van de maker.
 
 ## Onderzoek: alleen de categorie Menu ophalen
@@ -108,6 +108,25 @@ node -e "const f=require('fs').readFileSync(0,'utf8').trim();const a=JSON.parse(
 ### Uitslag
 
 Nog niet onderzocht. Lukt het, dan bouwt een volgende sessie `--alleen-menu` (standaard als eerste ronde, met de volledige fotolijst als terugval) en meet hoeveel minder foto's en verzoeken het kost. Lukt het niet, dan komt hier wat er geprobeerd is.
+
+## JAN vanuit een cloudsessie met DeepSeek (21 november 2026)
+
+`node menufotos.mjs --kroegen <bestand> --extern --sinds 2024-11-01 --max-fotos 150`, met `NODE_USE_ENV_PROXY=1` (anders gaat Node buiten de proxy om en ontbreekt de DeepSeek-sleutel) en `tools/google-kroegen/node_modules/playwright` als koppeling naar de vooraf geïnstalleerde Playwright. 49 kroegen zonder prijs, de klassieke cafés in het centrum eerst.
+
+| | |
+|---|---|
+| Kroegen | 49, geen CAPTCHA, ongeveer 30 minuten |
+| Zonder foto's sinds november 2024 | 16 |
+| Foto's bekeken | 336, waarvan 82 als kaart aangemerkt |
+| DeepSeek | 136 verzoeken, 68.452 tokens in, 35.100 uit, ongeveer $ 0,03 |
+| Prijzen | 1, afgekeurd |
+
+De enige prijs was De Tempelier, "Heineken 25 cl € 2,50": een weekkalender met "Knaken dinsdag: Heineken vaas voor € 2,5 vanaf 20.00 uur". Een actieprijs, geen gewone prijs. Twee fouten in de pijplijn lieten hem door, beide gerepareerd:
+
+- `mediaanUitDatabase()` in `menufotos.mjs` telde alleen bevestigde prijzen (2 in Nijmegen, minder dan de 5 die nodig zijn), dus de controle op 30% van de mediaan stond uit. Nu tellen menukaartprijzen mee, zoals in de Pilsindex (`per25VoorMediaan()` in `bron/controles.mjs`, met test): 18 prijzen, mediaan € 3,90, en € 2,50 wijkt 36% af.
+- De lezer kende geen actieprijzen. Het veld `actie` in de opdracht van de lezer (`bron/menulezer.mjs`) markeert happy hour, dagaanbiedingen en weekkalenders, en `kiesVaasje()` slaat ze over (met test). De menukaart-controleur keurt een actieprijs ook af.
+
+Conclusie: de meeste Nijmeegse kroegen zonder prijs hebben in Google Maps geen leesbare kaart met de pils van de tap. Wat overblijft, komt van spelers ter plaatse.
 
 ## Proef: DAEN vanuit een cloudsessie (9 november 2026)
 
