@@ -21,14 +21,16 @@ In de pull request:
 
 Rechtstreeks in de database (project `yzaootlrhxzyxtvacrot`), via `importeer_menuprijzen`:
 
-- **10 menukaartprijzen** van de websites van kroegen (DAEN), elk zelf gelezen op de kaart en goedgekeurd door de subagent menukaart-controleur. Nijmegen ging van 11 naar **21 van de 164 open kroegen in kaart** (2 bevestigd, 4 spelermeldingen, 15 menukaartprijzen). Werkwijze, afvallers en redenen: `docs/menukaartprijzen.md`, "Tweede ronde DAEN vanuit een cloudsessie". Een menukaartprijs is blauw tot een speler ter plaatse "Klopt" zegt.
+- **11 menukaartprijzen** van de websites van kroegen (DAEN), elk zelf gelezen op de kaart en goedgekeurd door de subagent menukaart-controleur. Nijmegen ging van 11 van de 164 naar **22 van de 161 open kroegen in kaart** (2 bevestigd, 4 spelermeldingen, 16 menukaartprijzen).
+- **Gesloten**: Dreadlock en Kronkel (coffeeshops) en Park Café (droge horeca), met `gesloten_door_spelers = true` zodat een import ze niet heropent. **Verwijderd**: de kapotte HEIC-foto bij Samson (`kroeg_fotos` id 1) en de 5 punten ervan; het bestand staat nog in de bucket.
+- **"Vaas" telt als vaasje** (Kjell gaf volledige rechten; besloten op 21 november 2026): `tools/google-kroegen/bron/vaasje.mjs` met test, de menukaart-controleur en de documentatie. Zo telt het nu overal gelijk; eerder telde een sessie "vaas" wel (Faber, Florijn) en de controleur niet (De Ruyter). Werkwijze, afvallers en redenen: `docs/menukaartprijzen.md`, "Tweede ronde DAEN vanuit een cloudsessie". Een menukaartprijs is blauw tot een speler ter plaatse "Klopt" zegt.
 
 ## 3. Stand van productie (gecontroleerd)
 
-- `kroeg_kaart`, Nijmegen, open: 164 kroegen; 21 in kaart (`inKaart()` in `app/app.js`: bevestigd, menukaart of wachtend). Mediaan voor de Pilsindex € 3,90.
+- `kroeg_kaart`, Nijmegen, open: 161 kroegen; 22 in kaart (`inKaart()` in `app/app.js`: bevestigd, menukaart of wachtend). Mediaan voor de Pilsindex € 3,90.
 - 4 accounts, alle met e-mailadres; 0 anonieme accounts. Het anonieme pad is dus nooit door een echte speler gelopen.
 - Migraties op Supabase: tot en met `20261121200000_kaartfotos_punten_verwijderen`, allemaal met de versie gelijk aan de bestandsnaam (ook `20261113180000_punten_meteen`, die in ACTIES.md nog als open stond).
-- `kroeg_fotos` id 1 (HEIC bij Samson) staat er nog en toont kapot.
+- `kroeg_fotos` is leeg (de kapotte HEIC-foto is weg).
 - DNS: SPF en DKIM zijn er, **DMARC niet** (`_dmarc.bierkoers.nl` bestaat niet). Geen DS-record bij .nl, dus DNSSEC staat uit.
 - `www.bierkoers.nl` geeft een tweede kopie van de app (200) in plaats van door te sturen.
 - Auth-instellingen: anonieme accounts aan, Google aan, Apple uit. Of de Google-app op "In production" staat, is niet te zien vanuit de cloud (niet gecontroleerd).
@@ -37,12 +39,11 @@ Rechtstreeks in de database (project `yzaootlrhxzyxtvacrot`), via `importeer_men
 
 Bijna. Wat nog moet, staat op volgorde in `ACTIES.md` onder "Eerst: voor de demo". Het belangrijkste: de pull request mergen, DMARC toevoegen (anders kan de inlogcode in de spam), Google op "In production" (anders kunnen vrienden niet met Google inloggen) en een keer op een echte iPhone en Android het hele anonieme pad lopen.
 
-Met 21 van de 164 kroegen in kaart is de kaart nog grotendeels grijs. Presenteer het als "we spelen vanavond de stad vrij": de 13 menukaartprijzen in het centrum zijn ideaal om ter plaatse met "Klopt" te bevestigen, en dat levert punten op.
+Met 22 van de 161 kroegen in kaart is de kaart nog grotendeels grijs. Presenteer het als "we spelen vanavond de stad vrij": de 13 menukaartprijzen in het centrum zijn ideaal om ter plaatse met "Klopt" te bevestigen, en dat levert punten op.
 
 ## 5. Zorgen en open beslissingen voor Kjell
 
-- **"Vaas" telt niet als vaasje** volgens de controleur (De Ruyter, Grolsch vaas € 3,50 afgekeurd), maar bij Café Faber en Brouwerij Florijn telde een eerdere sessie "vaas" wel. Ongelijk; Kjell beslist. Advies: "vaas" telt als vaasje, dat is in Nederlandse kroegen hetzelfde glas.
-- **De kroegenlijst bevat zaken die geen kroeg zijn**: Dreadlock en Kronkel (coffeeshops), Park Café (droge horeca), Strik Bakkers Cafe (ijssalon); Café Royal en café Billabong bestaan mogelijk niet meer. Alleen Park Café staat in ACTIES.md met SQL; voor de rest eerst nagaan. Ze maken de voortgang kleiner dan hij is.
+- **Twijfelgevallen in de kroegenlijst**: Strik Bakkers Cafe (lijkt een ijssalon), Café Royal en café Billabong (bestaan mogelijk niet meer). Niet gesloten zonder bewijs; spelers melden het met "Klopt deze kroeg niet?".
 - **Punten voor foto's zijn te farmen tot een grens**: 5 per kroeg per speler, zonder beoordeling. De bucket `prijslijsten` is openbaar en er is geen moderatie behalve de SQL in ACTIES.md.
 - **Vervangen**: twee e-mailaccounts kunnen elkaars melding vervangen voor +30, begrensd op 5 per speler per dag.
 - **Een eigen melding vervangen** (typefout) kan niet; niet gebouwd zonder akkoord.
@@ -69,8 +70,7 @@ Met 21 van de 164 kroegen in kaart is de kaart nog grotendeels grijs. Presenteer
 
 ## 8. Aanbevolen volgende stappen
 
-1. Na de merge: migratie `20261121220000_samenvoegen_fotos` op Supabase (met akkoord van Kjell), versie gelijkzetten, Security Advisor.
-2. Kjells beslissing over "vaas" vragen; is het ja, dan De Ruyter (€ 3,50, kaart van 19 september 2026) alsnog importeren.
-3. De kroegen die geen kroeg zijn (punt 5) met Kjell doorlopen en sluiten.
-4. Op de pc van Kjell de JAN-methode draaien voor de rest van Nijmegen (`docs/menukaart-manager.md`): de meeste kroegen zonder prijs hebben geen eigen website.
-5. Na de demo: vragen wat er misging op echte telefoons, en `ACTIES.md` bijhouden.
+1. Controleer of migratie `20261121220000_samenvoegen_fotos` op Supabase staat (zoek `bugmeldingen` in `pg_get_functiondef('private.voeg_samen(uuid,uuid)'::regprocedure)`). Zo niet: uitvoeren, versie gelijkzetten, Security Advisor. Via MCP vraagt Supabase eerst om bevestiging in de Claude-app.
+2. De twijfelgevallen in de kroegenlijst (punt 5) nagaan.
+3. Op de pc van Kjell de JAN-methode draaien voor de rest van Nijmegen (`docs/menukaart-manager.md`): de meeste kroegen zonder prijs hebben geen eigen website.
+4. Na de demo: vragen wat er misging op echte telefoons, en `ACTIES.md` bijhouden.

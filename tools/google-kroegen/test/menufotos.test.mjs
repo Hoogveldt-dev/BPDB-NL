@@ -71,9 +71,13 @@ test("vaasje: goedkoopste pils van de tap in 25 cl", () => {
   assert.deepEqual(v, { merk: "Jupiler", volume_cl: 25, prijs_cent: 390, zekerheid: "hoog" });
 });
 
-test("vaasje: geen maat alleen bij het woord vaasje; anders liever niets", () => {
+test("vaasje: geen maat alleen bij het woord vaasje of vaas; anders liever niets", () => {
   assert.equal(kiesVaasje([{ merk: "Hertog Jan", omschrijving: "medium", cl: null, prijs: 3.9, tap: true }]), null);
   assert.equal(kiesVaasje([{ merk: "Grolsch", omschrijving: "vaasje", cl: null, prijs: 3.6 }]).zekerheid, "middel");
+  const vaas = kiesVaasje([{ merk: "Grolsch vaas", cl: null, prijs: 3.5, tap: true }, { merk: "Grolsch fluit", cl: null, prijs: 3.3, tap: true }]);
+  assert.equal(vaas.prijs_cent, 350);
+  assert.equal(vaas.merk, "Grolsch");
+  assert.equal(kiesVaasje([{ merk: "Grolsch fluit", cl: null, prijs: 3.3, tap: true }]), null);
   assert.equal(kiesVaasje([{ merk: "Heineken", cl: 25, prijs: 0.5, tap: true }]), null);
   assert.equal(kiesVaasje([{ merk: "Heineken", cl: 25, prijs: 3.5, tap: false }]), null);
   assert.equal(kiesVaasje([{ merk: "Brand weizen", cl: 25, prijs: 4.5, tap: true }]), null);
