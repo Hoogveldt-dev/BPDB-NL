@@ -29,7 +29,7 @@ Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufot
 3. **Schiften (ruim, goedkoop).** Per 20 foto's, nieuwste upload eerst, een contactblad: miniaturen van 240 px met een nummer in een afbeelding. Het model noemt zonder na te denken de nummers waarop een kaart of krijtbord te zien is.
 4. **Controleren (streng, goedkoop).** Elke kandidaat apart op 768 px, zonder nadenken: staan er bierprijzen op die je kunt lezen? QR-bordjes, eten en sfeerfoto's vallen hier af.
 5. **Datum.** Van wat overblijft haalt de tool het origineel (`=s0`). Google laat daarin de EXIF-gegevens van de maker staan: `DateTimeOriginal` is het moment van de foto. Zonder EXIF telt de uploaddatum. Ligt de EXIF-datum na de upload of in de toekomst, dan stond de klok van de camera verkeerd en telt de uploaddatum. Een foto ouder dan tien jaar houden we, met een markering in de omschrijving.
-6. **Lezen (duur, alleen als het moet).** Een leesbare versie (1600 px) gaat naar het model, nu met nadenken (zonder leest het slordig: in de proef werd €3,50 dan €2,30). `kiesVaasje` kiest de goedkoopste pils van de tap in 25 cl; zonder maat alleen bij het woord "vaasje". Twijfel ("medium") = geen prijs. Een prijs buiten € 2,00 tot € 7,50, of meer dan 30% van de mediaan van de stad af, gaat naar `twijfels`.
+6. **Lezen (duur, alleen als het moet).** Een leesbare versie (1600 px) gaat naar het model, nu met nadenken (zonder leest het slordig: in de proef werd €3,50 dan €2,30). `kiesVaasje` kiest de goedkoopste pils van de tap in 25 cl; zonder maat alleen bij het woord "vaasje" of "vaas" (sinds 21 november 2026: op Nederlandse kaarten is een vaas hetzelfde glas, naast de kleinere fluit). Twijfel ("medium") = geen prijs. Een prijs buiten € 2,00 tot € 7,50, of meer dan 30% van de mediaan van de stad af, gaat naar `twijfels`.
 7. **Stoppen.** Levert een groep een vaasjesprijs op, dan kijken we niet verder naar oudere foto's.
 8. **Nieuwste kaart wint.** Per kroeg de prijs met de nieuwste datum, als rij voor `importeer_menuprijzen`.
 
@@ -152,19 +152,20 @@ Geïmporteerd (allemaal goedgekeurd door de controleur en door de vaste controle
 | Blonde Pater | Grolsch Pilsner 25 cl € 3,80 | 2026-11-09 | pdf (ModDate) |
 | Café De Deut | Brand vaasje € 3,90 | 2025-04-08 | pdf (ModDate) |
 | Café De Opera | Brand 0,25 l € 3,90 | 2025-08-18 | pdf (ModDate) |
+| De Ruyter | Grolsch vaas € 3,50 | 2026-09-19 | pdf (ModDate en bestandsnaam); na het gelijktrekken van de regel voor "vaas" opnieuw nagekeken |
 | HOLT | Swinckels 0,25 l € 3,90 | 2026-03-20 | pdf (ModDate); gevonden door een Haiku-agent |
 | Funkenstein | Gulpener 0,25 L € 3,80 | 2026-11-02 | `modified` van de pagina in `/wp-json/wp/v2/pages`; gevonden door een Haiku-agent |
 
-Uitslag: 10 kroegen erbij. Nijmegen ging van 11 naar 21 kroegen in kaart (van 164 open kroegen), waarvan 15 menukaartprijzen.
+Uitslag: 11 kroegen erbij. Nijmegen ging van 11 van de 164 naar 22 van de 161 open kroegen in kaart (drie zaken die geen kroeg zijn, zijn gesloten, zie hieronder), waarvan 16 menukaartprijzen.
 
 Afgevallen, met reden:
 
-- **De Ruyter**: "Grolsch vaas 3,5" zonder maat; de controleur keurt "vaas" af, omdat de regel alleen het woord "vaasje" accepteert. Let op: bij Café Faber en Brouwerij Florijn (9 november) is "vaas" wel als vaasje geteld. Kjell beslist of "vaas" voortaan meetelt; tot dan geen prijs.
+- **De Ruyter**: "Grolsch vaas 3,5" zonder maat; de controleur keurde "vaas" eerst af, omdat de regel alleen het woord "vaasje" accepteerde, terwijl bij Café Faber en Brouwerij Florijn (9 november) "vaas" wel als vaasje telde. Daarna is de regel gelijkgetrokken: "vaas" telt als vaasje (in `vaasje.mjs`, de controleur en dit document). Opnieuw nagekeken en geïmporteerd.
 - **Geen maat bij het kleine glas**: Café Eten en Drinken Lent (Peroni 3,80), Freddy's (Heineken S/M/L 3,8/4/7,2), Tierney's (Heineken glass/pint 3,9/7,6), Bar Socio (Peroni 3,8), Café Piet Huisman (Heineken 3,8, met 18 en 50 cl apart), Atelier (Stella Artois 3,9).
 - **Grand Café Moenen**: Hertog Jan 0,25 L € 4,00 op de kaart van najaar 2025, maar er is een nieuwere kaart (zomer 2026, geüpload 1 september 2026) waarvan de bladzijde met tapbieren niet online staat. De nieuwste kaart wint, en die kennen we niet.
 - **Geen tapprijs op de kaart**: Brouwtoren ("kijk op het scherm"), Café Jos (tapbieren met maat maar zonder prijs), PAAK (alleen fles), Frowijn (alleen een huisbier zonder maat).
 
-Bevindingen over de kroegenlijst zelf (niet aangepast, zie `ACTIES.md`): Dreadlock en Kronkel aan de Vlaamsegas zijn coffeeshops; Park Café heeft een vergunning voor droge horeca; op Hertogstraat 127 (Café Royal) zit volgens In Your Pocket nu 't Hoofdkantoor; Strik Bakkers Cafe is een ijssalon.
+Bevindingen over de kroegenlijst zelf: Dreadlock en Kronkel aan de Vlaamsegas zijn coffeeshops en Park Café heeft een vergunning voor droge horeca; die drie zijn op 21 november 2026 gesloten (`open = false`, `gesloten_door_spelers = true`, zodat een nieuwe import ze niet weer opent). Nog niet aangepast: op Hertogstraat 127 (Café Royal) zit volgens In Your Pocket nu 't Hoofdkantoor; Strik Bakkers Cafe is een ijssalon.
 
 ## Proef: Café Van Buren (Molenstraat 89)
 

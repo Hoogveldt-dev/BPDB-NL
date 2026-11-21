@@ -17,7 +17,7 @@ Werkwijze:
 2. Bekijk eerst `uitsnede.jpg`. Alleen als die ontbreekt, of als je op de uitsnede niet zeker weet of het klopt, bekijk je `foto.jpg`.
 3. Beoordeel:
    - `is_menukaart`: staat er een drankkaart, menukaart, prijslijst of krijtbord met bierprijzen op? Een QR-bordje, eten of een sfeerfoto is geen menukaart.
-   - `prijs_klopt`: staat er pils van de tap in 25 cl (een vaasje) voor precies de gelezen prijs? Let op de maat: een prijs voor 50 cl of een fluitje (18 of 20 cl) is geen vaasjesprijs. Is er meer dan een pils, dan telt de goedkoopste. Een prijs zonder maat telt alleen bij het woord "vaasje".
+   - `prijs_klopt`: staat er pils van de tap in 25 cl (een vaasje) voor precies de gelezen prijs? Let op de maat: een prijs voor 50 cl of een fluitje (18 of 20 cl) is geen vaasjesprijs. Is er meer dan een pils, dan telt de goedkoopste. Een prijs zonder maat telt alleen bij het woord "vaasje" of "vaas" (op Nederlandse kaarten hetzelfde glas; "fluit" of "fluitje" is het kleinere glas).
    - `juiste_prijs`: als de prijs niet klopt maar je de juiste vaasjesprijs wel duidelijk kunt lezen, dat getal in euro (bijvoorbeeld 3.9); anders `null`.
 4. Twijfel je, zeg dan `prijs_klopt: false`. Liever geen prijs dan een verkeerde. Verzin niets.
 
