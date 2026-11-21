@@ -35,10 +35,10 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 De app mailt je zodra een speler een bug meldt of een stad aanvraagt, naar `proost@bierkoers.nl` (Infomaniak). Tot je dit doet, gebeurt er niets bijzonders: de melding staat gewoon onder Ik, Beheer.
 
-1. **Migratie `20261121100000_meldingen_mailen`** uitvoeren (SQL Editor, of laat Claude het doen via MCP) en de versie gelijkzetten aan `20261121100000`. Daarna de Security Advisor.
+1. ~~**Migratie `20261121100000_meldingen_mailen`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121100000`. `claim_melding_mail` mag alleen de `service_role` aanroepen. Security Advisor: alleen de bekende waarschuwingen over anonieme spelers (nu ook voor `bugmeldingen` en `stadsaanvragen`, bewust: alleen beheerders lezen) en gelekte wachtwoorden.
 2. **Apparaatwachtwoord voor deze mails.** Infomaniak, mailbox `proost@bierkoers.nl`, nieuw apparaatwachtwoord (bijvoorbeeld "Bierkoers meldingen"). Hergebruik niet dat van "Supabase Bierkoers", dan kun je ze los van elkaar intrekken.
 3. **Secret zetten.** Supabase, Edge Functions, Secrets: `SMTP_WACHTWOORD` met dat wachtwoord. Optioneel `MELDING_NAAR` als de mail ergens anders heen moet; standaard gaat hij naar dezelfde mailbox.
-4. **Edge Function `melding-mail` uitrollen** (`supabase functions deploy melding-mail`, of laat Claude het doen via MCP; neem `index.ts` en `mail.ts` allebei mee). `verify_jwt` staat aan.
+4. ~~**Edge Function `melding-mail` uitrollen.**~~ Gedaan op 21 november 2026 (versie 1, via MCP, `verify_jwt` aan). Zonder `SMTP_WACHTWOORD` antwoordt ze 500 "De functie mist haar instellingen" en claimt ze niets; zo gecontroleerd.
 5. **Testen op de echte site.** Meld onder Ik een bug en vraag een stad aan. Binnen een minuut moet er een mail van `Bierkoers <proost@bierkoers.nl>` staan. Komt er niets, kijk dan in Supabase, Edge Functions, `melding-mail`, Logs. Dit is niet lokaal getest: er was geen Deno en geen wachtwoord, alleen de mailtekst en de databaseregels zijn getest.
 
 ## Bugs melden
