@@ -82,6 +82,7 @@ export const EN = {
   "De Pilsindex is het gemiddelde van de stad.": "The Lager index is the average price in town.",
   "Hoe werkt het?": "How does it work?",
   "Spelregels": "Rules",
+  "Privacyverklaring": "Privacy statement",
   "We belonen bijdragen, nooit drinken.": "We reward contributions, never drinking.",
 
   // Bord, lichtkrant en versheid

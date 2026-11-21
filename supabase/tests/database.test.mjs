@@ -956,6 +956,44 @@ for (let n = 5; n <= 10; n++) { await uploadFoto(A, n); await als(A, `select * f
 await uploadFoto(A, 11);
 check('na 10 foto\'s op een dag is het genoeg, een verwijderde telt mee', /al 10 foto/.test((await als(A, `select * from public.meld_foto(${K1}, '${fotoPad(A, 11)}')`)).fout ?? ''));
 
+// Samenvoegen neemt ook foto's van de kaart, bugmeldingen en stadsaanvragen mee (20261121220000_samenvoegen_fotos)
+const S3 = 'a3a3a3a3-0000-0000-0000-000000000003';
+await db.exec(`insert into auth.users (id, email, raw_user_meta_data, is_anonymous) values ('${S3}', null, '{}', true)`);
+const KS1 = SV['node/961'], KS2 = SV['node/962'];
+await uploadFoto(R, 1, KS1);
+await als(R, `select * from public.meld_foto(${KS1}, '${fotoPad(R, 1, KS1)}')`);
+await uploadFoto(S3, 1, KS1); await uploadFoto(S3, 2, KS2);
+const fs1 = (await als(S3, `select * from public.meld_foto(${KS1}, '${fotoPad(S3, 1, KS1)}')`)).rows?.[0];
+const fs2 = (await als(S3, `select * from public.meld_foto(${KS2}, '${fotoPad(S3, 2, KS2)}')`)).rows?.[0];
+const bugS3 = (await als(S3, `select public.meld_bug('Bug van een anonieme speler') as id`)).rows?.[0]?.id;
+await als(R, `select public.vraag_stad_aan('Deventer')`);
+await als(S3, `select public.vraag_stad_aan('Deventer')`);
+const stadS3 = (await als(S3, `select public.vraag_stad_aan('Zutphen') as id`)).rows?.[0]?.id;
+check('samenvoegen: de anonieme speler heeft twee foto\'s met punten, een bug en twee stadsaanvragen',
+  fs1?.punten === 5 && fs2?.punten === 5 && bugS3 > 0 && stadS3 > 0, JSON.stringify({ fs1, fs2, bugS3, stadS3 }));
+const voorS3 = (await een(`select coalesce(sum(punten), 0)::int as n from public.punten where gebruiker_id = '${R}'`)).n;
+const sv3 = await alsService(`select public.voeg_samen('${S3}', '${R}') as r`);
+check('samenvoegen meldt hoeveel foto\'s meegaan', sv3.rows?.[0]?.r?.fotos === 2, JSON.stringify(sv3));
+const naS3 = await een(`select
+  (select count(*)::int from public.kroeg_fotos where door_id = '${R}') as fotos,
+  (select count(*)::int from public.kroeg_fotos where door_id = '${S3}') as fotos_oud,
+  (select punten from public.kroeg_fotos where id = ${fs1.id}) as punten_dubbel,
+  (select punten from public.kroeg_fotos where id = ${fs2.id}) as punten_nieuw,
+  (select coalesce(sum(punten), 0)::int from public.punten where gebruiker_id = '${R}') as punten,
+  (select door_id from public.bugmeldingen where id = ${bugS3}) as bug,
+  (select count(*)::int from public.stadsaanvragen where door_id = '${R}' and stad_sleutel = 'deventer') as deventer,
+  (select door_id from public.stadsaanvragen where id = ${stadS3}) as zutphen,
+  (select count(*)::int from public.stadsaanvragen where door_id = '${S3}') as steden_oud`);
+check('de foto\'s staan nu onder het account', naS3.fotos === 3 && naS3.fotos_oud === 0, JSON.stringify(naS3));
+check('een foto bij een kroeg waar het account al een foto had, levert geen punten meer op; de andere wel',
+  naS3.punten_dubbel === 0 && naS3.punten_nieuw === 5 && naS3.punten === voorS3 + 5, JSON.stringify({ voorS3, naS3 }));
+check('bugmelding en stadsaanvraag staan onder het account, een dubbele aanvraag vervalt',
+  naS3.bug === R && naS3.deventer === 1 && naS3.zutphen === R && naS3.steden_oud === 0, JSON.stringify(naS3));
+const wegS3 = await als(R, `select public.verwijder_foto(${fs2.id}) as pad`);
+check('na samenvoegen verwijdert het account de foto van zijn anonieme speler, en de punten gaan eraf',
+  wegS3.rows?.[0]?.pad === fotoPad(S3, 2, KS2) && (await een(`select coalesce(sum(punten), 0)::int as n from public.punten where gebruiker_id = '${R}'`)).n === voorS3,
+  JSON.stringify(wegS3));
+
 // Stadskeuze: de tijdlijn kent de gemeente van de kroeg, zodat de app de koers per stad laadt
 const tlStad = await een(`select count(*)::int as n, bool_and(t.gemeente = k.gemeente) as goed
   from public.kroeg_tijdlijn t join public.kroegen k on k.id = t.kroeg_id`);

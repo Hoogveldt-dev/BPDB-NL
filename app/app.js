@@ -1850,6 +1850,8 @@ function laadHeic2any() {
 const isHeic = (f) => /heic|heif/i.test(f?.type ?? "") || /\.(heic|heif)$/i.test(f?.name ?? "");
 
 // Verklein een foto naar hoogstens 1600 px als JPEG. Een HEIC-foto wordt altijd JPEG, zodat iedereen hem kan zien.
+// Altijd opnieuw coderen, ook als dat niet kleiner wordt: zo gaan de EXIF-gegevens (zoals de plek van de foto)
+// nooit mee naar de openbare opslag.
 async function verkleinFoto(file) {
   if (!file?.type?.startsWith("image/") && !isHeic(file)) return file;
   let bron = file;
@@ -1873,7 +1875,7 @@ async function verkleinFoto(file) {
     c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
     bmp.close?.();
     const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.82));
-    return blob && (isHeic(file) || blob.size < file.size) ? new File([blob], "prijslijst.jpg", { type: "image/jpeg" }) : bron;
+    return blob ? new File([blob], "prijslijst.jpg", { type: "image/jpeg" }) : bron;
   } catch {
     return bron;
   }
@@ -2031,7 +2033,7 @@ const bewaar = {
   async herstel() {
     try {
       const r = await fetch("/api/sessie", { method: "POST" });
-      if (!r.ok) return null;
+      if (r.status !== 200) return null; // 204: geen bewaarde sessie
       const s = await r.json();
       if (!s?.access_token || !s.refresh_token) return null;
       const { data, error } = await sb.auth.setSession({ access_token: s.access_token, refresh_token: s.refresh_token });
@@ -2124,7 +2126,8 @@ function ikView() {
       ${bugBlok()}
       ${stadKeuzeBlok()}
       ${stadBlok()}
-      ${taalBlok()}`;
+      ${taalBlok()}
+      ${privacyRegel()}`;
   }
   if (!state.sessie) {
     // Alleen als anoniem meespelen niet kan: anonieme accounts staan in Supabase uit, of aanmaken lukte niet
@@ -2147,14 +2150,16 @@ function ikView() {
       return `<h2>Welkom terug</h2><p class="muted">Log in met je account. Je naam en punten staan erin.</p>
       ${inloggen}
       <h3>Nieuw hier?</h3>${beginnen}
-      <p class="small muted">We belonen bijdragen, nooit drinken.</p>`;
+      <p class="small muted">We belonen bijdragen, nooit drinken.</p>
+      ${privacyRegel()}`;
     }
     const terug = state.terugNaar != null ? state.kroegen.find((k) => k.id === state.terugNaar) : null;
     return `<h2>Account maken</h2>${terug ? `<p class="small">Daarna ga je terug naar <b>${esc(terug.naam)}</b>.</p>` : ""}${beginnen}
       <p class="small muted">We belonen bijdragen, nooit drinken.</p>
       <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
       <h3>Al een account?</h3>
-      ${inloggen}`;
+      ${inloggen}
+      ${privacyRegel()}`;
   }
   const p = state.profiel;
   const koppelen = anoniem() ? accountBlok(p) : "";
@@ -2192,8 +2197,12 @@ function ikView() {
     <details class="uitklap" data-onthoud="gegevens"${uitgeklapt("gegevens")}><summary><span class="uitklap-kop">Jouw gegevens</span></summary>
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
       Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p></details>
-    <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>`;
+    <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>
+    ${privacyRegel()}`;
 }
+
+// De privacyverklaring is een losse pagina (app/privacy.html), zodat Google en anderen er ook naar kunnen linken
+const privacyRegel = () => `<p class="small muted privacy-regel"><a href="privacy.html" target="_blank" rel="noopener">Privacyverklaring</a></p>`;
 
 // Stad kiezen: alleen als er meer dan een stad meedoet
 function stadKeuzeBlok() {

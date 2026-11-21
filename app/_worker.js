@@ -5,6 +5,7 @@
 //
 // PUT    { refresh_token }  bewaar de vernieuwingssleutel van de huidige sessie in de cookie
 // POST                      herstel: vernieuw de sessie bij Supabase met de cookie en geef hem terug
+//                           (204 zonder inhoud als er geen cookie is: dat is geen fout, gewoon een nieuwe bezoeker)
 // DELETE                    wis de cookie (uitloggen)
 
 // Gelijk aan app/config.js: openbare instellingen, geen geheimen
@@ -42,7 +43,7 @@ export default {
     if (request.method !== "POST") return antwoord(405, { fout: "Niet toegestaan" });
 
     const token = (request.headers.get("Cookie") ?? "").split(/;\s*/).find((c) => c.startsWith(KOEK + "="))?.slice(KOEK.length + 1);
-    if (!geldig(token)) return antwoord(404, { fout: "Geen bewaarde sessie" });
+    if (!geldig(token)) return antwoord(204);
     const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
