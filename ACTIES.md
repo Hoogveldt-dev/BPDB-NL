@@ -1,10 +1,29 @@
 # Wat Kjell zelf nog moet doen
 
-Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md`, stap 3. Doe stap 1 tot en met 4 voordat de nieuwe app live gaat.
+Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md`, stap 3.
 
-## GitHub: main als standaardbranch
+## Eerst: voor de demo aan vrienden (stand 21 november 2026)
 
-1. **Standaardbranch.** GitHub, repository BPDB-NL, Settings, General, Default branch: kies `main` (nu staat `claude/bpdb-concept-design-6gjlr6` als standaard). Nieuwe sessies beginnen dan vanaf `main` en pull requests gaan vanzelf naar `main`.
+Op volgorde van belang. Alles is op 21 november 2026 gecontroleerd tegen de live site, DNS of database.
+
+1. **Pull request van 21 november mergen** (privacyverklaring, deelplaatje, foto's zonder EXIF, samenvoegen). Daarna staat `https://bierkoers.nl/privacy.html` live.
+2. **Migratie `20261121220000_samenvoegen_fotos`** uitvoeren: plak het bestand uit `supabase/migrations/` in de SQL Editor, of laat Claude het via MCP doen. Zet daarna de versie gelijk en draai de Security Advisor (er komt geen nieuwe waarschuwing bij: alleen de functie `voeg_samen` verandert):
+   ```sql
+   insert into supabase_migrations.schema_migrations (version, name)
+   select '20261121220000', 'samenvoegen_fotos'
+   where not exists (select 1 from supabase_migrations.schema_migrations where version = '20261121220000');
+   ```
+3. **DMARC in Cloudflare** (DNS, Records, Add record): type `TXT`, naam `_dmarc`, inhoud `v=DMARC1; p=none; rua=mailto:proost@bierkoers.nl`. Nu is er geen DMARC-record, en Gmail en Outlook zetten mail zonder DMARC eerder in de spam. Stuur daarna een inlogcode naar een Gmail-, iCloud- en Outlook-adres en kijk of hij in de inbox komt. Na een paar weken zonder problemen kun je `p=none` vervangen door `p=quarantine`.
+4. **Inloggen met Google naar productie.** Google Cloud Console, APIs & Services, OAuth consent screen (Branding): vul bij Privacy policy `https://bierkoers.nl/privacy.html` in en bij Application home page `https://bierkoers.nl`; zet bij Audience de status op **In production**. Zolang hij op Testing staat, kunnen alleen testgebruikers met Google inloggen; vrienden krijgen dan een foutmelding. De knop staat al aan in de app (`external.google: true`). Niet te controleren vanuit een cloudsessie.
+5. **www.bierkoers.nl doorsturen naar bierkoers.nl.** Nu geeft `www` een tweede kopie van de app (200). Cloudflare, Rules, Redirect Rules, Create rule, sjabloon "Redirect from WWW to root". Inloggen werkt daarna gewoon: de Redirect URL van `www` mag blijven staan.
+6. **De kapotte HEIC-foto bij Samson** (`kroeg_fotos` id 1) staat er nog. Open Samson in de app, verwijder de foto onder "Foto's van de kaart" en draai daarna in de SQL Editor `delete from public.kroeg_fotos where id = 1 and verwijderd_op is not null;`, anders levert een nieuwe foto bij Samson je geen punten op.
+7. **Privacyverklaring nalezen** (`app/privacy.html`). Contact is nu `proost@bierkoers.nl`, zonder naam. De AVG vraagt wie verantwoordelijk is; zet je naam (en eventueel woonplaats) erbij als je dat goed vindt. Klopt er iets niet, zeg het dan, dan pas ik het aan.
+8. **Echte telefoon.** Loop op een iPhone en een Android de hele weg: zonder account een prijs melden, e-mail koppelen, inloggen op een tweede toestel, bevestigen, een foto van de kaart toevoegen (ook een HEIC-foto op Android) en weer verwijderen. Nu heeft nog niemand het anonieme pad echt gelopen: alle 4 accounts hebben een e-mailadres.
+9. **Park Café** (Prins Bernhardstraat 31) heeft volgens de gemeente een vergunning voor droge horeca: geen alcohol. Het hoort waarschijnlijk niet op de kaart. Sluit het in de SQL Editor met `update public.kroegen set open = false where id = 150;` als je het daarmee eens bent.
+
+## GitHub
+
+1. ~~**Standaardbranch.**~~ Gedaan: op 21 november 2026 gecontroleerd dat `main` de standaardbranch is.
 2. **Oude branches opruimen.** De lijst met per branch of hij al in `main` zit, staat in de pull request "Menukaartpijplijn 5". Na stap 1 kunnen de branches die al in `main` zitten weg (Settings, General, vink **Automatically delete head branches** aan voor de toekomst).
 
 ## Domein bierkoers.nl
@@ -12,7 +31,7 @@ Stappen die alleen in een dashboard kunnen. Precieze uitleg: `supabase/README.md
 Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (nameservers `jocelyn.ns.cloudflare.com` en `kip.ns.cloudflare.com`): DNS-records wijzig je dus in Cloudflare, niet bij Vimexx.
 
 1. ~~**Domein in Cloudflare, nameservers en koppelen aan de app (stap 1 tot en met 4).**~~ Gedaan: op 9 november 2026 gecontroleerd dat `https://bierkoers.nl` de app toont via Cloudflare.
-5. **DNSSEC weer aan**, nu via Cloudflare (DNS, Settings), en zet de DS-record die Cloudflare geeft bij Vimexx.
+5. **DNSSEC weer aan**, nu via Cloudflare (DNS, Settings), en zet de DS-record die Cloudflare geeft bij Vimexx. Op 21 november 2026 nog niet gedaan: .nl kent geen DS-record voor bierkoers.nl. Niet nodig voor de demo.
 6. ~~**Supabase-adressen bijwerken.**~~ Gedaan: op 10 november 2026 gecontroleerd dat de Site URL `https://bierkoers.nl` is en dat de Redirect URLs `https://bpdb-nl.pages.dev/**`, `https://bierkoers.nl/**`, `https://www.bierkoers.nl/**` en `http://localhost:8765/**` zijn. Nog open: bij inloggen met Apple en Google ook het nieuwe domein toevoegen.
 
 ## Terraskaartje (bierkoers.nl/k)
@@ -22,7 +41,7 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 ## Punten meteen
 
-1. **Migratie `20261113180000_punten_meteen`** uitvoeren (SQL Editor, of laat Claude het doen via MCP en keur de vraag van Supabase goed) en de versie gelijkzetten aan `20261113180000`. Daarna de Security Advisor. De wachtende meldingen van Guinness123 en de bevestigingen van Pilsbaas024 krijgen dan meteen hun punten.
+1. ~~**Migratie `20261113180000_punten_meteen`.**~~ Gedaan: op 21 november 2026 gecontroleerd dat de versie `20261113180000` in `schema_migrations` staat.
 
 ## Nieuwe stad aanvragen
 

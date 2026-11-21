@@ -129,6 +129,43 @@ Elke prijs is nagekeken door de subagent menukaart-controleur (Haiku). Die keurd
 
 Herhalen met een eigen scope: `docs/menukaart-manager.md`.
 
+## Tweede ronde DAEN vanuit een cloudsessie (21 november 2026)
+
+Alle open Nijmeegse kroegen zonder prijs en zonder openstaande melding (ongeveer 150). Geen lokale modellen of DeepSeek; Claude las elke kaart zelf, als tekst en als afbeelding, en de menukaart-controleur keek elk geval na (`nakijken/2026-11-21-daen/`, niet in Git).
+
+Werkwijze, voor een volgende keer:
+
+1. **Websites uit OpenStreetMap.** De `osm_id` van de kroegen in de database, per 50 opgevraagd bij `https://api.openstreetmap.org/api/0.6/nodes.json?nodes=...` (tags `website`, `contact:website`, `website:menu`). Overpass gaf vanuit de cloud steeds een time-out; de gewone OSM-API werkt wel. 52 van de 79 OSM-kroegen zonder prijs hadden een website.
+2. **Crawlen.** Per site de startpagina en hoogstens 12 links met menu, kaart, drank, bier, tap of pdf in de tekst of het adres; pdf's met `pdftotext -layout`; bij WordPress ook `/wp-json/wp/v2/media?search=drank` (en menu, kaart, bier) voor uploaddatums en `/wp-json/wp/v2/pages` voor `modified`. Sites die hun menu met JavaScript tonen (34) nog een keer met Playwright.
+3. **Zoeken** naar regels met een pilsmerk of pils, vaas, fluit, tap of 25 cl met een bedrag erbij, en elke treffer daarna zelf lezen op de kaart (pdf-pagina als afbeelding met `pdftoppm`).
+4. **Kroegen zonder website in OSM** (ongeveer 100, vooral uit Google): vier Haiku-agents zochten de eigen website en drankkaart. Dat leverde weinig op: de meeste kleine kroegen hebben geen site, of alleen Facebook en Instagram.
+
+Geïmporteerd (allemaal goedgekeurd door de controleur en door de vaste controles; mediaan van de stad € 3,90):
+
+| Kroeg | Vaasje | Datum | Bron van de datum |
+|---|---|---|---|
+| In de Blaauwe Hand | Hertog Jan 25 cl € 4,10 | 2026-11-02 | pdf (ModDate) |
+| De Plak | Gulpener vaasje 0,25 L € 3,80 | 2026-11-11 | `lastmod` van de pagina in `sitemap.xml` (Drupal) |
+| Cafe van Ouds | Heineken vaasje € 3,90 | 2025-03-21 | pdf (ModDate) |
+| Café Maxim | Brand 25 cl € 3,60 | 2026-02-16 | pdf (ModDate en bestandsnaam) |
+| YUCA | Hertog Jan tap 0,25 L € 3,95 | 2026-09-27 | `Last-Modified`, gelijk bij herhaald opvragen |
+| Blonde Pater | Grolsch Pilsner 25 cl € 3,80 | 2026-11-09 | pdf (ModDate) |
+| Café De Deut | Brand vaasje € 3,90 | 2025-04-08 | pdf (ModDate) |
+| Café De Opera | Brand 0,25 l € 3,90 | 2025-08-18 | pdf (ModDate) |
+| HOLT | Swinckels 0,25 l € 3,90 | 2026-03-20 | pdf (ModDate); gevonden door een Haiku-agent |
+| Funkenstein | Gulpener 0,25 L € 3,80 | 2026-11-02 | `modified` van de pagina in `/wp-json/wp/v2/pages`; gevonden door een Haiku-agent |
+
+Uitslag: 10 kroegen erbij. Nijmegen ging van 11 naar 21 kroegen in kaart (van 164 open kroegen), waarvan 15 menukaartprijzen.
+
+Afgevallen, met reden:
+
+- **De Ruyter**: "Grolsch vaas 3,5" zonder maat; de controleur keurt "vaas" af, omdat de regel alleen het woord "vaasje" accepteert. Let op: bij Café Faber en Brouwerij Florijn (9 november) is "vaas" wel als vaasje geteld. Kjell beslist of "vaas" voortaan meetelt; tot dan geen prijs.
+- **Geen maat bij het kleine glas**: Café Eten en Drinken Lent (Peroni 3,80), Freddy's (Heineken S/M/L 3,8/4/7,2), Tierney's (Heineken glass/pint 3,9/7,6), Bar Socio (Peroni 3,8), Café Piet Huisman (Heineken 3,8, met 18 en 50 cl apart), Atelier (Stella Artois 3,9).
+- **Grand Café Moenen**: Hertog Jan 0,25 L € 4,00 op de kaart van najaar 2025, maar er is een nieuwere kaart (zomer 2026, geüpload 1 september 2026) waarvan de bladzijde met tapbieren niet online staat. De nieuwste kaart wint, en die kennen we niet.
+- **Geen tapprijs op de kaart**: Brouwtoren ("kijk op het scherm"), Café Jos (tapbieren met maat maar zonder prijs), PAAK (alleen fles), Frowijn (alleen een huisbier zonder maat).
+
+Bevindingen over de kroegenlijst zelf (niet aangepast, zie `ACTIES.md`): Dreadlock en Kronkel aan de Vlaamsegas zijn coffeeshops; Park Café heeft een vergunning voor droge horeca; op Hertogstraat 127 (Café Royal) zit volgens In Your Pocket nu 't Hoofdkantoor; Strik Bakkers Cafe is een ijssalon.
+
 ## Proef: Café Van Buren (Molenstraat 89)
 
 6 november 2026.
