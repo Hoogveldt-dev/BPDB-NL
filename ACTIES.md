@@ -31,6 +31,13 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 3. Aanvragen staan in de app onder Ik, Beheer, Stadsaanvragen. Goedkeuren laadt de kroegen en wijken; daarna staat de stad onder Ik, Stad.
 4. ~~**Migratie `20261120190000_tijdlijn_gemeente`** (stadskeuze).~~ Gedaan op 20 november 2026 via MCP, versie gelijkgezet. Security Advisor: geen nieuwe waarschuwingen.
 
+## Foto van de kaart
+
+Een foto van de kaart bij een kroeg toevoegen, los van een prijs. Staat gebouwd in de pull request, maar werkt pas als de migratie op Supabase staat.
+
+1. **Migratie `20261121180000_kaartfotos`** uitvoeren (laat Claude het doen via MCP, of de SQL Editor) en de versie gelijkzetten aan `20261121180000`. Daarna de Security Advisor.
+2. **Controleren op de echte site.** Open een kroeg, tik op "Foto van de kaart toevoegen", kies een foto en kijk of hij onder "Foto's van de kaart" staat. Een ongepaste foto verwijder je in de SQL Editor: `delete from public.kroeg_fotos where id = ...;` (het bestand zelf staat dan nog in Storage, bucket `prijslijsten`).
+
 ## Prijs vervangen (zonder "klopt niet")
 
 Een andere prijs vervangt een openstaande melding, zonder straf voor de melder. De migratie staat op Supabase; de app-wijziging zit in de pull request en werkt pas zodra die gemerged is.

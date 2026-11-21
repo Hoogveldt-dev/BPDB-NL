@@ -306,6 +306,10 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 .nr { width: 24px; height: 24px; border-radius: 50%; background: var(--blue); color: #fff; font: 600 13px/24px var(--f-ui); text-align: center; flex: none; }
 .veld { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
 .linkbtn { border: 0; background: none; color: var(--blue); padding: 0; font-weight: 500; }
+.kaartfotos { display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 8px; }
+.kaartfoto { flex: none; width: 104px; border: 0; background: none; padding: 0; text-align: left; color: inherit; }
+.kaartfoto img { display: block; width: 104px; height: 104px; object-fit: cover; border-radius: 10px; background: var(--surface-2); }
+.kaartfoto span { display: block; margin-top: 4px; }
 
 /* De beurs: Pilsindex zoals een koers in Aandelen, prijsbewegingen en wijken als sectoren */
 .indexkaart { border-radius: var(--r); padding: 16px 16px 12px; margin: 6px 0 10px; background: var(--surface); }
