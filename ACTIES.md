@@ -33,9 +33,9 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 ## Foto van de kaart
 
-Een foto van de kaart bij een kroeg toevoegen, los van een prijs. Staat gebouwd in de pull request, maar werkt pas als de migratie op Supabase staat.
+Een foto van de kaart bij een kroeg toevoegen, los van een prijs. De migratie staat op Supabase; de app-wijziging zit in de pull request en werkt pas zodra die gemerged is.
 
-1. **Migratie `20261121180000_kaartfotos`** uitvoeren (laat Claude het doen via MCP, of de SQL Editor) en de versie gelijkzetten aan `20261121180000`. Daarna de Security Advisor.
+1. ~~**Migratie `20261121180000_kaartfotos`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121180000`. Gecontroleerd: RLS staat aan op `kroeg_fotos`, `anon` en `authenticated` mogen alleen lezen, `meld_foto` mag alleen `authenticated` (niet `anon`). Security Advisor: alleen de bekende waarschuwingen.
 2. **Controleren op de echte site.** Open een kroeg, tik op "Foto van de kaart toevoegen", kies een foto en kijk of hij onder "Foto's van de kaart" staat. Een ongepaste foto verwijder je in de SQL Editor: `delete from public.kroeg_fotos where id = ...;` (het bestand zelf staat dan nog in Storage, bucket `prijslijsten`).
 
 ## Prijs vervangen (zonder "klopt niet")
