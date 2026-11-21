@@ -2152,7 +2152,7 @@ function taalBlok() {
       <button type="button" data-taal="en" aria-pressed="${TAAL === "en"}">English</button></div>`;
 }
 
-// Bug melden: een korte omschrijving; de app stuurt het scherm en de browser mee (functie meld_bug)
+// Bug melden: een korte omschrijving; de app stuurt de schermgrootte en de browser mee (functie meld_bug)
 function bugBlok() {
   if (!kanBijdragen()) return "";
   return `<details class="klopt-niet bug">
@@ -2160,7 +2160,7 @@ function bugBlok() {
     <form class="form" id="bugForm">
       <label for="bugTekst">Wat ging er mis?</label>
       <textarea id="bugTekst" name="tekst" rows="4" minlength="5" maxlength="2000" placeholder="Wat deed je, en wat gebeurde er?" required></textarea>
-      <div class="small muted">We sturen mee welk scherm je open had en welke browser je gebruikt. Geen locatie.</div>
+      <div class="small muted">We sturen je browser en schermgrootte mee.</div>
       <div class="btns"><button class="btn primary" type="submit">Versturen</button></div>
     </form>
   </details>`;
@@ -2172,8 +2172,7 @@ async function verstuurBug(form) {
   const knop = form.querySelector("[type=submit]");
   knop.disabled = true;
   if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
-  const scherm = [state.tab, state.modus, state.selected != null ? `kroeg ${state.selected}` : "", `${innerWidth}x${innerHeight}`].filter(Boolean).join(", ");
-  const { error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: scherm, p_apparaat: navigator.userAgent });
+  const { error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: `${innerWidth}x${innerHeight}`, p_apparaat: navigator.userAgent });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
   form.reset();

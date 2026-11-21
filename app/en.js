@@ -450,7 +450,7 @@ export const EN = {
   "Bug melden": "Report a bug",
   "Wat ging er mis?": "What went wrong?",
   "Wat deed je, en wat gebeurde er?": "What did you do, and what happened?",
-  "We sturen mee welk scherm je open had en welke browser je gebruikt. Geen locatie.": "We include which screen you had open and which browser you use. No location.",
+  "We sturen je browser en schermgrootte mee.": "We include your browser and screen size.",
   "Beschrijf de bug in een paar woorden": "Describe the bug in a few words",
   "Bedankt! We kijken ernaar": "Thanks! We'll look into it",
   "Houd de beschrijving korter dan # tekens": "Keep the description under # characters",

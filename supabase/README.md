@@ -44,7 +44,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `kroeg_meldingen` | Openingstijden of "definitief gesloten" gemeld door een speler, met status `wacht`, `bevestigd` of `weerlegd`. Per kroeg en soort hoogstens een open melding. |
 | `kroegmelding_oordelen` | "Klopt" of "klopt niet" bij zo'n melding, een per speler per melding. |
 | `incheckingen` | Check-ins per speler en kroeg, hoogstens een per dag. Privé: alleen de speler zelf kan ze lezen en wissen. |
-| `bugmeldingen` | Bugs gemeld door spelers: omschrijving, scherm en browser. Alleen beheerders lezen ze; schrijven alleen via `meld_bug`. |
+| `bugmeldingen` | Bugs gemeld door spelers: omschrijving, schermgrootte en browser. Alleen beheerders lezen ze; schrijven alleen via `meld_bug`. |
 | `stadsaanvragen` | Steden die spelers willen vrijspelen, met status open, goedgekeurd of afgewezen. Alleen beheerders lezen ze; schrijven alleen via `vraag_stad_aan` en `zet_stadsaanvraag`. |
 | `kaartscans` | Een rij per bezoek via een gedrukte QR-code, zoals `bierkoers.nl/k` op het terraskaartje: alleen `bron` en tijdstip `op`, geen persoonsgegevens. Zie Kaartscans hieronder. |
 
