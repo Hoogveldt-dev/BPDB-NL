@@ -282,6 +282,7 @@ export const EN = {
   "Foto's van de kaart": "Photos of the menu",
   "Foto toegevoegd, bedankt": "Photo added, thanks",
   "Kies een foto": "Choose a photo",
+  "Deze HEIC-foto kan niet worden omgezet. Kies een JPEG-foto of zet je camera op JPEG.": "This HEIC photo cannot be converted. Choose a JPEG photo or set your camera to JPEG.",
   "Deze foto verwijderen? Kreeg je er punten voor, dan gaan die eraf.": "Delete this photo? If you got points for it, they are taken off.",
   "Foto verwijderd": "Photo deleted",
   "Foto van de kaart bij een kroeg (de eerste per kroeg)": "Photo of the menu at a pub (the first per pub)",
