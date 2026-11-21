@@ -31,6 +31,20 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 3. Aanvragen staan in de app onder Ik, Beheer, Stadsaanvragen. Goedkeuren laadt de kroegen en wijken; daarna staat de stad onder Ik, Stad.
 4. ~~**Migratie `20261120190000_tijdlijn_gemeente`** (stadskeuze).~~ Gedaan op 20 november 2026 via MCP, versie gelijkgezet. Security Advisor: geen nieuwe waarschuwingen.
 
+## Foto van de kaart
+
+Een foto van de kaart bij een kroeg toevoegen, los van een prijs: +5 punten voor de eerste foto per kroeg, en je eigen foto verwijderen.
+
+1. ~~**Migratie `20261121180000_kaartfotos`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121180000`. Gecontroleerd: RLS staat aan op `kroeg_fotos`, `anon` en `authenticated` mogen alleen lezen, `meld_foto` mag alleen `authenticated` (niet `anon`). Security Advisor: alleen de bekende waarschuwingen.
+2. ~~**Migratie `20261121200000_kaartfotos_punten_verwijderen`** (punten en verwijderen).~~ Gedaan op 21 november 2026: door Kjell uitgevoerd in de SQL Editor, de versie daarna door Claude in `schema_migrations` gezet (`20261121200000`). Gecontroleerd: kolommen `punten` en `verwijderd_op` op `kroeg_fotos`, `punten.kaartfoto_id`, `verwijder_foto` alleen voor `authenticated`, leesregel `verwijderd_op is null`. Security Advisor: alleen de bekende waarschuwingen.
+3. **Een ongepaste foto van een ander verwijderen** (spelers verwijderen alleen hun eigen foto) in de SQL Editor; de punten gaan er dan ook af. Daarna het bestand in Storage (bucket `prijslijsten`) verwijderen via het pad uit de eerste query:
+   ```sql
+   select id, pad, door_id from public.kroeg_fotos where verwijderd_op is null order by op desc;
+   update public.kroeg_fotos set verwijderd_op = now() where id = 123;
+   delete from public.punten where kaartfoto_id = 123;
+   ```
+4. **Controleren op de echte site.** Open een kroeg, tik op "Foto van de kaart toevoegen", kies een foto: je krijgt +5 en de foto staat onder "Foto's van de kaart". Verwijder hem met "Verwijderen": de punten gaan eraf.
+
 ## Prijs vervangen (zonder "klopt niet")
 
 Een andere prijs vervangt een openstaande melding, zonder straf voor de melder. De migratie staat op Supabase; de app-wijziging zit in de pull request en werkt pas zodra die gemerged is.

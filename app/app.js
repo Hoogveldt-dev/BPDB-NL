@@ -1165,7 +1165,7 @@ function draw() {
   else if (state.tab === "rang") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "ik") html = ikView();
   body.innerHTML = html;
-  if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); }
+  if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); laadKaartFotos(state.selected); }
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
   else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); laadBeheerSteden(); }
@@ -1282,7 +1282,9 @@ function detailView() {
       : "Check in met de prijs van je pils.";
     actie = `${k.open_melding_id && !vanMenukaart(k) ? `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>` : ""}
       <div class="btns"><button class="btn primary" data-form="hier">${vandaag ? "Prijs doorgeven" : "Inchecken"}</button></div>
-      <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>`;
+      <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>
+      <div class="small" style="margin-top:8px"><button type="button" class="linkbtn" data-kaartfoto>Foto van de kaart toevoegen</button>
+        <input type="file" id="kaartFotoInvoer" accept="image/*" hidden></div>`;
   }
   return `<button class="back" data-back>‹ Terug</button>
     <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
@@ -1309,6 +1311,7 @@ function detailView() {
       ${actie}
     </div>
     ${incheckHtml(k)}
+    <div id="kaartfotos"></div>
     <div id="tijden"></div>
     ${aanbodBlok(k)}
     <h3>Koersverloop <span class="muted">per vaasje</span></h3>
@@ -2332,6 +2335,7 @@ function regelsView() {
       <div><span>Klopt nog</span><b>+5</b></div>
       <div><span>Prijs van 90 dagen of ouder controleren</span><b>+15</b></div>
       <div><span>Foto van de prijslijst</span><b>+5</b></div>
+      <div><span>Foto van de kaart bij een kroeg (de eerste per kroeg)</span><b>+5</b></div>
       <div><span>Binnen ${INCHECK_M} m van de kroeg</span><b>×1,5</b></div>
       <div><span>Je melding wordt weerlegd</span><b>−20</b></div>
     </div>
@@ -2625,16 +2629,69 @@ function leesPrijs(form) {
   return { merk, cl, prijs, foto: guinness ? null : fd.get("foto") };
 }
 
+// Een foto van de kaart naar de opslag, in de eigen map van de speler; geeft het pad terug
+async function uploadFoto(k, bestand) {
+  const file = await verkleinFoto(bestand);
+  if (file.size > 5 * 1024 * 1024) throw new Error("De foto is groter dan 5 MB. Kies een kleinere.");
+  const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const pad = `${state.sessie.user.id}/${k.id}-${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from("prijslijsten").upload(pad, file, { contentType: file.type, upsert: false });
+  if (error) throw error;
+  return pad;
+}
+
+// Los van een prijs een foto van de kaart bij de kroeg zetten (meld_foto, geen punten)
+async function verstuurKaartFoto(invoer) {
+  const k = state.kroegen.find((x) => x.id === state.selected);
+  const bestand = invoer.files?.[0];
+  invoer.value = "";
+  if (!k || !bestand) return;
+  if (!bestand.type.startsWith("image/")) return toast("Kies een foto");
+  const knop = body.querySelector("[data-kaartfoto]");
+  if (knop) { knop.disabled = true; knop.textContent = "Foto uploaden…"; }
+  let pad = null;
+  try {
+    if (!(await zorgVoorSpeler())) return;
+    pad = await uploadFoto(k, bestand);
+    const { data, error } = await sb.rpc("meld_foto", { p_kroeg_id: k.id, p_pad: pad });
+    if (error) throw error;
+    pad = null;
+    toast("Foto toegevoegd, bedankt", data?.punten || null);
+    if (data?.punten) laadProfiel(); // het saldo onder Ik klopt dan meteen
+  } catch (e) {
+    if (pad) sb.storage.from("prijslijsten").remove([pad]); // niet vastgelegd: de upload weer opruimen
+    toast(await leesFout(e));
+  } finally {
+    if (state.selected === k.id && !state.form && !state.aanbodForm && !state.tijdenForm) draw();
+  }
+}
+
+// De foto's van de kaart bij een kroeg, nieuwste eerst
+async function laadKaartFotos(id) {
+  const { data, error } = await sb.from("kroeg_foto_overzicht").select("id,pad,op,door,door_id").eq("kroeg_id", id).order("op", { ascending: false }).limit(12);
+  const el = $("#kaartfotos");
+  // Bestaat het overzicht nog niet (migratie nog niet uitgevoerd), dan blijft de app gewoon werken
+  if (state.selected !== id || !el || error) return;
+  if (!data?.length) { el.innerHTML = ""; return; }
+  const uid = state.sessie?.user?.id;
+  el.innerHTML = `<h3>Foto's van de kaart</h3><div class="kaartfotos">${data.map((f) => `<div class="kaartfoto"><button type="button" data-foto="${esc(fotoUrl(f.pad))}">
+    <img src="${esc(fotoUrl(f.pad))}" alt="Foto van de kaart" loading="lazy"><span class="small muted">${esc(f.door ?? "Onbekend")}, ${wanneer(f.op)}</span></button>
+    ${uid && f.door_id === uid ? `<button type="button" class="linkbtn small" data-foto-weg="${f.id}">Verwijderen</button>` : ""}</div>`).join("")}</div>`;
+}
+
+// Je eigen foto van de kaart verwijderen (verwijder_foto); de punten ervoor gaan eraf, het bestand gaat uit de opslag
+async function verwijderKaartFoto(id) {
+  if (!(await vraag("Deze foto verwijderen? Kreeg je er punten voor, dan gaan die eraf.", "Verwijderen"))) return;
+  const { data: pad, error } = await sb.rpc("verwijder_foto", { p_id: id });
+  if (error) return toast(await leesFout(error));
+  if (pad) sb.storage.from("prijslijsten").remove([pad]); // niet wachten: het bestand opruimen mag mislukken
+  toast("Foto verwijderd");
+  await Promise.all([laadKaartFotos(state.selected), laadProfiel()]);
+}
+
 async function meldPrijs(k, w, pos) {
   let foto_pad = null;
-  if (w.foto && w.foto.size) {
-    const file = await verkleinFoto(w.foto);
-    if (file.size > 5 * 1024 * 1024) throw new Error("De foto is groter dan 5 MB. Kies een kleinere.");
-    const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-    foto_pad = `${state.sessie.user.id}/${k.id}-${Date.now()}.${ext}`;
-    const { error } = await sb.storage.from("prijslijsten").upload(foto_pad, file, { contentType: file.type, upsert: false });
-    if (error) throw error;
-  }
+  if (w.foto && w.foto.size) foto_pad = await uploadFoto(k, w.foto);
   const { data, error } = await sb.rpc("meld_prijs", {
     p_kroeg_id: k.id, p_merk: w.merk, p_volume_cl: w.cl, p_prijs_cent: w.prijs,
     p_lat: pos?.[1] ?? null, p_lon: pos?.[0] ?? null, p_foto_pad: foto_pad,
@@ -2851,6 +2908,8 @@ body.addEventListener("click", (e) => {
   if (t.dataset.import !== undefined) return importeer(t);
   if (t.dataset.stadOk !== undefined) return keurStad(t, t.dataset.stadOk);
   if (t.dataset.stadNee !== undefined) return wijsStadAf(t, t.dataset.stadNee);
+  if (t.dataset.kaartfoto !== undefined) return $("#kaartFotoInvoer")?.click();
+  if (t.dataset.fotoWeg) return verwijderKaartFoto(Number(t.dataset.fotoWeg));
   if (t.dataset.foto) return openFoto(t.dataset.foto);
   if (t.dataset.tekstenBewerken !== undefined) { teksten.zetBewerken(true); return toast("Tik op een tekst om hem aan te passen"); }
   if (t.dataset.tekstWis !== undefined) return teksten.wis(t.dataset.tekstWis).then(() => draw());
@@ -2875,6 +2934,7 @@ body.addEventListener("toggle", (e) => {
 
 body.addEventListener("change", (e) => {
   if (e.target.id === "stadKeuze") return kiesStad(e.target.value);
+  if (e.target.id === "kaartFotoInvoer") return verstuurKaartFoto(e.target);
   if (e.target.name === "foto" && e.target.closest("#prijsForm")) {
     const img = $("#fotoVoorbeeld"), file = e.target.files?.[0];
     if (img.src) URL.revokeObjectURL(img.src);
