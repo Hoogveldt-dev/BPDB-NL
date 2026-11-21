@@ -848,6 +848,25 @@ check('goedkeuren zet alle aanvragen voor die stad om', gezet.rows?.[0]?.n === 2
 check('een onbekende status wordt geweigerd', /Onbekende status/.test((await als(E, `select public.zet_stadsaanvraag('Arnhem', 'open')`)).fout ?? ''));
 await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
 
+// Mail naar de beheerder: claim_melding_mail geeft de gegevens voor de mail, hoogstens een keer, alleen aan de melder
+const bugId = bug1.rows[0].id;
+const stadMail = (await als(B, `select public.vraag_stad_aan('Zwolle') as id`)).rows[0].id;
+await als(A, `select public.vraag_stad_aan('Zwolle')`);
+check('claim_melding_mail kan een speler niet zelf aanroepen', !!(await als(B, `select public.claim_melding_mail('bug', ${bugId}, '${B}')`)).fout);
+check('claim_melding_mail kan anoniem niet worden aangeroepen', !!(await als(null, `select public.claim_melding_mail('bug', ${bugId}, '${B}')`)).fout);
+check('claim_melding_mail geeft niets voor een bug van een ander', (await alsService(`select public.claim_melding_mail('bug', ${bugId}, '${A}') as r`)).rows?.[0]?.r === null);
+const claimBug = await alsService(`select public.claim_melding_mail('bug', ${bugId}, '${B}') as r`);
+check('claim_melding_mail geeft de bug met naam, scherm en browser', claimBug.rows?.[0]?.r?.tekst === 'De kaart blijft wit na inchecken' && claimBug.rows[0].r.scherm === 'kaart, kroeg 3' && claimBug.rows[0].r.apparaat === 'Testbrowser' && !!claimBug.rows[0].r.naam, JSON.stringify(claimBug));
+check('een bug wordt maar een keer gemaild', (await alsService(`select public.claim_melding_mail('bug', ${bugId}, '${B}') as r`)).rows?.[0]?.r === null);
+await db.exec(`update public.bugmeldingen set gemaild_op = null where id = ${bugId}`);
+check('na vrijgeven kan de mail opnieuw', (await alsService(`select public.claim_melding_mail('bug', ${bugId}, '${B}') as r`)).rows?.[0]?.r?.soort === 'bug');
+const claimStad = await alsService(`select public.claim_melding_mail('stad', ${stadMail}, '${B}') as r`);
+check('claim_melding_mail geeft de stad met het aantal spelers', claimStad.rows?.[0]?.r?.stad === 'Zwolle' && claimStad.rows[0].r.spelers === 2, JSON.stringify(claimStad));
+check('een stadsaanvraag wordt maar een keer gemaild', (await alsService(`select public.claim_melding_mail('stad', ${stadMail}, '${B}') as r`)).rows?.[0]?.r === null);
+await db.exec(`update public.bugmeldingen set op = now() - interval '1 hour', gemaild_op = null where id = ${bugId}`);
+check('een oude melding wordt niet meer gemaild', (await alsService(`select public.claim_melding_mail('bug', ${bugId}, '${B}') as r`)).rows?.[0]?.r === null);
+check('een onbekende soort wordt geweigerd', /Onbekende soort/.test((await alsService(`select public.claim_melding_mail('iets', 1, '${B}')`)).fout ?? ''));
+
 // Stadskeuze: de tijdlijn kent de gemeente van de kroeg, zodat de app de koers per stad laadt
 const tlStad = await een(`select count(*)::int as n, bool_and(t.gemeente = k.gemeente) as goed
   from public.kroeg_tijdlijn t join public.kroegen k on k.id = t.kroeg_id`);

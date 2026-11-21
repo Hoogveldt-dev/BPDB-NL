@@ -2166,15 +2166,22 @@ function bugBlok() {
   </details>`;
 }
 
+// Laat de beheerder per mail weten dat er een bug of stadsaanvraag is (Edge Function melding-mail). Stil:
+// mislukt het, dan staat de melding toch onder Beheer.
+function mailMelding(soort, id) {
+  if (id) sb.functions.invoke("melding-mail", { body: { soort, id } }).catch(() => {});
+}
+
 async function verstuurBug(form) {
   const tekst = String(new FormData(form).get("tekst") ?? "").trim();
   if (tekst.length < 5) return toast("Beschrijf de bug in een paar woorden");
   const knop = form.querySelector("[type=submit]");
   knop.disabled = true;
   if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
-  const { error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: `${innerWidth}x${innerHeight}`, p_apparaat: navigator.userAgent });
+  const { data, error } = await sb.rpc("meld_bug", { p_tekst: tekst, p_scherm: `${innerWidth}x${innerHeight}`, p_apparaat: navigator.userAgent });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
+  mailMelding("bug", data);
   form.reset();
   form.closest("details").open = false;
   toast("Bedankt! We kijken ernaar");
@@ -2212,9 +2219,10 @@ async function verstuurStad(form) {
   const knop = form.querySelector("[type=submit]");
   knop.disabled = true;
   if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
-  const { error } = await sb.rpc("vraag_stad_aan", { p_stad: stad });
+  const { data, error } = await sb.rpc("vraag_stad_aan", { p_stad: stad });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
+  mailMelding("stad", data);
   form.reset();
   form.closest("details").open = false;
   toast("Bedankt! We kijken of we deze stad kunnen openen");

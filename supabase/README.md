@@ -23,6 +23,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | Bugs melden | `migrations/20261113120000_bugmeldingen.sql` | Tabel `bugmeldingen` en functie `meld_bug(tekst, scherm, apparaat)`: elke speler meldt een bug vanuit Ik, hoogstens 10 per dag. Alleen beheerders lezen ze (in de app onder Beheer, Bugs) |
 | Nieuwe stad aanvragen | `migrations/20261120170000_stadsaanvragen.sql` | Tabel `stadsaanvragen`, `vraag_stad_aan(stad)` (elke speler, hoogstens 5 per dag, een stad een keer per speler) en `zet_stadsaanvraag(stad, status)` (alleen beheerders). Alleen beheerders lezen de aanvragen. Goedkeuren in de app (Ik, Beheer, Stadsaanvragen) roept `osm-import` aan zonder gemeentecode; de functie zoekt hem dan op bij PDOK |
 | Stadskeuze | `migrations/20261120190000_tijdlijn_gemeente.sql` | Kolom `gemeente` achteraan op `kroeg_tijdlijn`, zodat de app de koers per gekozen stad laadt |
+| Mail bij een melding | `migrations/20261121100000_meldingen_mailen.sql`, `functions/melding-mail/` | Na een nieuwe bug of stadsaanvraag mailt de app de beheerder via de Infomaniak-mailbox. De Edge Function `melding-mail` controleert de sessie van de speler en roept `claim_melding_mail(soort, id, melder)` aan (alleen service_role): die zet `gemaild_op`, zodat elke melding hoogstens een keer wordt gemaild, alleen door de melder en binnen 10 minuten. Mislukt het versturen, dan geeft de functie de melding weer vrij. Instelling: secret `SMTP_WACHTWOORD` (apparaatwachtwoord van Infomaniak), optioneel `SMTP_GEBRUIKER`, `SMTP_HOST` en `MELDING_NAAR`. Poort 465 (Supabase laat 25 en 587 niet door) |
 | Account verwijderen | `functions/account-verwijderen/index.ts` | Edge Function: de ingelogde speler verwijdert het eigen account. Meldingen en prijzen blijven staan zonder naam |
 | Instellingen | `config.toml` | Instellingen voor de Supabase CLI |
 | Inlogmail | `templates/inlogcode.html` | Tekst van de mail met de inlogcode (`{{ .Token }}`) |
@@ -102,6 +103,7 @@ Of plak de migratie in de SQL Editor van het dashboard.
 supabase functions deploy osm-import
 supabase functions deploy account-verwijderen
 supabase functions deploy samenvoegen
+supabase functions deploy melding-mail
 ```
 
 **3. Inloggen instellen.** Nieuwe spelers beginnen anoniem, zonder e-mailadres. Wie zijn punten wil bewaren of prijzen van anderen wil bevestigen, koppelt later een e-mailadres. Bestaande spelers loggen in met een code van 6 cijfers die ze per mail krijgen en in de app typen. Een link gebruiken we niet meer: die werkt maar een keer, gaat stuk als een virusscanner van het mailprogramma hem eerst opent, en opent op een iPhone in Safari in plaats van in de app op het beginscherm. In het dashboard, onder Authentication:
