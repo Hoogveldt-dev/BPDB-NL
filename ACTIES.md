@@ -110,7 +110,7 @@ De knoppen staan op slot tot de aanbieder in Supabase aanstaat; daarna gaan ze v
 ## Menukaartprijzen uit Google-foto's
 
 1. **Run vanaf thuis, met de lokale modellen.** Claude draait dit in de sessie op je pc (`node menufotos.mjs --kroegen google-kroegen-nijmegen.json --sinds 2024-11-01`, standaard lokaal sinds 10 november 2026). Jij zorgt alleen dat de pc aan staat en de server van LM Studio draait (poort 1235). Importeren gaat met `--naar-supabase` en `SUPABASE_URL` en `SUPABASE_SERVICE_ROLE_KEY`, die jij zelf in je terminal zet, nooit in Git of in de chat. Vanuit een cloudsessie toont Google al na een paar kroegen een CAPTCHA.
-2. **DeepSeek alleen als reserve (niet nodig).** Alleen voor als je echt iets gedaan wilt krijgen en de pc niet draait (`--extern`). Er staat $0,05 op; niet opwaarderen zolang het lokaal lukt. Wil je de reserve houden, maak dan een nieuwe sleutel aan: de oude stond in een chat.
+2. **DeepSeek.** Een cloudsessie gebruikt DeepSeek (`--extern`) als de pc niet draait; de sleutel staat als netwerkgeheim in de omgeving. Saldo op 21 november 2026: $2,02 (een run over tientallen kroegen kost een paar cent).
 
 ## Testset voor de menukaartpijplijn
 
