@@ -33,9 +33,9 @@ Geregistreerd bij Vimexx op 6 november 2026. De DNS staat bij Cloudflare (namese
 
 ## Prijs vervangen (zonder "klopt niet")
 
-Een andere prijs vervangt een openstaande melding, zonder straf voor de melder. Staat gebouwd in de pull request, maar werkt pas als de migratie op Supabase staat.
+Een andere prijs vervangt een openstaande melding, zonder straf voor de melder. De migratie staat op Supabase; de app-wijziging zit in de pull request en werkt pas zodra die gemerged is.
 
-1. **Migratie `20261121140000_prijs_vervangen`** uitvoeren (laat Claude het doen via MCP, of de SQL Editor) en de versie gelijkzetten aan `20261121140000`. Het zijn twee dingen: een nieuwe waarde `vervangen` voor `gebeurtenis_status` (kan niet meer terug) en een aangepaste `meld_prijs`. Daarna de Security Advisor.
+1. ~~**Migratie `20261121140000_prijs_vervangen`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121140000`. Gecontroleerd: `gebeurtenis_status` heeft nu `vervangen`, kolom `vervangen_door` en de nieuwe `meld_prijs` staan erin, rechten onveranderd (`authenticated` ja, `anon` nee). Security Advisor: alleen de bekende waarschuwingen.
 2. **Controleren op de echte site.** Open een kroeg met een melding die op bevestiging wacht, kies "Is de prijs gewijzigd? Geef de nieuwe prijs door" en geef een andere prijs door. De oude melding moet in de geschiedenis als "vervangen" staan en de melder houdt zijn punten.
 
 ## Mail bij een nieuwe bug of stadsaanvraag
