@@ -574,8 +574,6 @@ export const EN = {
   "Met dank aan": "With thanks to",
   "Houdt de prijs van een pint Guinness in Ierland bij, met prijzen van bezoekers. Het voorbeeld voor Bierkoers.": "Tracks the price of a pint of Guinness in Ireland, with prices from visitors. The example for Bierkoers.",
   "Een kaart van echte kroegen, door en voor liefhebbers. Van hen komt het idee om meteen mee te doen, zonder account.": "A map of real dive bars, by and for fans. The idea of joining in right away, without an account, comes from them.",
-  "De kroegen en de kaart. © OpenStreetMap-bijdragers.": "The pubs and the map. © OpenStreetMap contributors.",
-  "De wijken.": "The districts.",
 
   // Beheer
   "Beheer": "Admin",

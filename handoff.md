@@ -7,13 +7,13 @@ Stand van 22 november 2026, voor de volgende sessie. Lees eerst `CLAUDE.md` (wer
 - De app draait op bierkoers.nl. `main` is de basis; werk vanaf de nieuwste `main` en lever op met een pull request. Mergen doet de beheerder.
 - Nijmegen: 161 open kroegen, 22 in kaart (2 bevestigd, 4 spelermeldingen, 16 menukaartprijzen). Pilsindex € 3,90.
 - Wat uit bronnen te halen valt, is binnen: eigen websites (DAEN) en foto's in Google Maps (JAN) zijn allebei doorzocht. De rest van de kaart komt van spelers ter plaatse.
-- 22 november: pagina Over Bierkoers (link onderaan Ik, `overView()` in `app/app.js`) met credits voor Guindex, Divebar Database, OpenStreetMap en CBS. De repository is openbaar en opgeschoond: werknotities neutraal, oude prompts weg (zie `CLAUDE.md`, Werkwijze).
+- 22 november: pagina Over Bierkoers (link onderaan Ik, `overView()` in `app/app.js`) met credits voor Guindex en Divebar Database. De repository is openbaar en opgeschoond: werknotities neutraal, oude prompts weg (zie `CLAUDE.md`, Werkwijze).
 
 ## 2. Repository en tests
 
 - `npm run check` en `npm run test:db` (`database.test.mjs` en `melding-mail.test.mjs`). De tools: `cd tools/google-kroegen && node --test test/*.test.mjs` (met `jpeg-js` en `tesseract.js` geïnstalleerd, zie punt 4).
 - Geen CI behalve de build van Cloudflare Pages; die geeft per pull request een preview.
-- Service worker `CACHE`: `bierkoers-v59`.
+- Service worker `CACHE`: `bierkoers-v60`.
 - Laatste migratie: `20261122120000_berichten`.
 
 ## 3. Open punten in het ontwerp
