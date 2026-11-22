@@ -13,7 +13,7 @@ Prototypes (open lokaal in een browser, geen build nodig):
 |---|---|---|
 | Kroegen vooraf op de kaart; zonder prijs grijs. De mist staat alleen op je eigen kaart (Mijn kaart) en trekt weg waar je incheckt | Ja | Vast (12 november 2026: mist van de gezamenlijke kaart naar Mijn kaart) |
 | Controle | Peer-to-peer bevestiging met betrouwbaarheidsscore; geen echte blockchain, geen tokens | Vast |
-| Hoe de betrouwbaarheid verandert | Naar verwachting, het idee van Elo zonder tegenstander: beginners stijgen snel, een fout van iemand boven 90% kost bijna 20 punten. Boven 90% pas met ervaring (zie 2.6) | **Voorlopig: Kjell is er nog niet tevreden over** |
+| Hoe de betrouwbaarheid verandert | Naar verwachting, het idee van Elo zonder tegenstander: beginners stijgen snel, een fout van iemand boven 90% kost bijna 20 punten. Boven 90% pas met ervaring (zie 2.6) | **Voorlopig, nog niet definitief** |
 | Kroegen bevestigen zelf hun prijs | Niet in de basis; misschien later, altijd naast P2P | Later |
 | Spelvorm | Samenwerken: iedereen speelt samen de hele stad vrij en houdt hem vers | Vast |
 | Ranglijst | Blijft: laat zien wie het meest bijdraagt | Vast |
@@ -137,7 +137,7 @@ Punten worden meteen uitgekeerd, bij melden en bij bevestigen. Wordt een melding
 ### 2.6 Peer-to-peer bevestiging
 
 - Elke speler heeft een **betrouwbaarheid** (0 tot 100%), los van punten. Die stijgt als je bijdragen later door anderen bevestigd worden en daalt als ze worden weerlegd.
-- **Hoe hard** (voorlopig; Kjell is er nog niet tevreden over, zie hieronder): hoe verrassender de uitkomst, hoe groter de sprong. Dat is het idee achter Elo, maar zonder tegenstander en op dezelfde schaal van 0 tot 100%.
+- **Hoe hard** (voorlopig, zie hieronder): hoe verrassender de uitkomst, hoe groter de sprong. Dat is het idee achter Elo, maar zonder tegenstander en op dezelfde schaal van 0 tot 100%.
 
   | Uitkomst | Verandering | Bij 30% | Bij 50% | Bij 90% | Bij 95% |
   |---|---|---:|---:|---:|---:|
@@ -148,7 +148,7 @@ Punten worden meteen uitgekeerd, bij melden en bij bevestigen. Wordt een melding
 
   Wie een fractie *p* van de tijd gelijk heeft, komt uit rond *p* / (*p* + 2(1 - *p*)): 95% goed geeft ongeveer 90%, 99% goed ongeveer 98%. Van 50 naar 90% kost ongeveer 16 goede meldingen.
 - **Ervaringsdrempel:** boven 90% kom je pas met minstens 20 bevestigde eigen meldingen, bevestigd door minstens 5 verschillende andere spelers. Tot die tijd blijft de score op 90 staan. Zo kunnen twee vrienden elkaar niet snel aan een dubbele stem helpen. Bestaande scores zijn niet omgerekend; de regel geldt vanaf de volgende melding of het volgende oordeel.
-- **Waarom voorlopig:** Kjell is er nog niet blij mee. Punten om op terug te komen: of de stappen goed voelen, of spelers met een hoge score bang worden om te melden, of de drempel van 20 en 5 klopt, en of het percentage beter iets anders kan tonen.
+- **Waarom voorlopig:** de regel is nog niet definitief. Punten om op terug te komen: of de stappen goed voelen, of spelers met een hoge score bang worden om te melden, of de drempel van 20 en 5 klopt, en of het percentage beter iets anders kan tonen.
 - Een prijs is **bevestigd** als een andere speler hem bevestigt wanneer de melder een betrouwbaarheid boven 90% heeft, en anders als twee andere spelers hem bevestigen. Het oordeel van een speler boven 90% telt dubbel. Niemand wordt bevestigd zonder dat een andere speler ernaar gekeken heeft.
 - Een melding die nog op bevestiging wacht, wordt als meest recente prijs getoond (met een ? erachter), samen met de laatst bevestigde prijs. Het spel zelf (vrijspelen, punten, ranglijst, versheid) telt alleen bevestigde prijzen.
 - **Uitschieters** (ver van de mediaan voor dat merk en volume) hebben altijd twee bevestigingen nodig.
@@ -253,4 +253,4 @@ Wijk         id, cbs_code, naam, geometrie
 4. Kroegentocht: een route langs gekozen kroegen, met afstand en kcal. Idee, nog uit te werken: [kroegentocht.md](kroegentocht.md).
 5. Wat is een "beste" kroeg voor de kroegentocht: beoordelingen door spelers, versheid van de prijs, of het aantal stamgasten?
 6. Mag een speler zijn aantal bezochte kroegen ooit openbaar maken (bijvoorbeeld op de ranglijst), en zo ja alleen met eigen toestemming?
-7. De betrouwbaarheid naar verwachting (2.6) is voorlopig; Kjell is er nog niet tevreden over. Wat moet anders?
+7. De betrouwbaarheid naar verwachting (2.6) is voorlopig. Wat moet anders?

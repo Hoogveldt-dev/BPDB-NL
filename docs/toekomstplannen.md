@@ -19,18 +19,18 @@ Extra bier bij een kroeg (Guinness, witbier, een ander merk pils) levert nu geen
 
 ## Betrouwbaarheid opnieuw bekijken
 
-De betrouwbaarheid verandert sinds migratie `20261106220000_betrouwbaarheid_verwachting` naar verwachting (het idee van Elo): zie [concept.md](concept.md), 2.6. Dat staat erin als voorlopige oplossing; **Kjell is er nog niet tevreden over**. Bij een nieuwe versie: nieuwe migratie met `private.betrouwbaarheid_na` en eventueel `private.ervaren_melder`, de tabel in `supabase/README.md`, paragraaf 2.6 en de test.
+De betrouwbaarheid verandert sinds migratie `20261106220000_betrouwbaarheid_verwachting` naar verwachting (het idee van Elo): zie [concept.md](concept.md), 2.6. Dat staat erin als voorlopige oplossing, **nog niet definitief**. Bij een nieuwe versie: nieuwe migratie met `private.betrouwbaarheid_na` en eventueel `private.ervaren_melder`, de tabel in `supabase/README.md`, paragraaf 2.6 en de test.
 
 ## Eenvoudiger voor een eerste bezoeker
 
-Opmerkingen uit een rondgang door de app (20 november 2026). Kjell wil ze bewaren, nog niet bouwen.
+Opmerkingen uit een rondgang door de app (20 november 2026). Bewaard, nog niet bouwen.
 
 - **Twee soorten navigatie tegelijk.** Op de kaart staan Stad, Koers en Mijn kaart plus de Guinness-knop, in het blad staan Kaart, Beurs, Ranglijst en Ik. Een nieuwe gebruiker ziet zo zeven knoppen voordat hij iets heeft gedaan. Idee: Koers en Guinness achter een knop "Weergave".
 - **Veel eigen begrippen.** Koers, Pilsindex, in kaart, vrijspelen, ontdekt en tickercodes zijn leuk zodra je het spel kent, maar veel voor een eerste bezoek. Een eerste bezoeker heeft eigenlijk maar een vraag: wat kost hier een biertje? Idee: de beurstaal pas tonen als iemand een keer heeft bijgedragen.
 
 ## Stadsfonds: je punten belegd in je stad
 
-Concept (20 november 2026), nog niet bouwen. Het idee van Kjell: de punten die je verdient, worden vanzelf "belegd" in het fonds van je stad, en ze groeien mee met dat fonds. Wie in meerdere steden speelt, heeft een portefeuille met meerdere fondsen.
+Concept (20 november 2026), nog niet bouwen. Het idee: de punten die je verdient, worden vanzelf "belegd" in het fonds van je stad, en ze groeien mee met dat fonds. Wie in meerdere steden speelt, heeft een portefeuille met meerdere fondsen.
 
 ### Waarom het fonds niet aan de bierprijs hangt
 
@@ -93,7 +93,7 @@ Rekenvoorbeeld voor Nijmegen. Vandaag hebben 2 van de 164 kroegen een bevestigde
   Bestaande punten krijgen deelbewijzen tegen koers 100, de startkoers: de spelers van het eerste uur waren pioniers.
 - Spelregels in `supabase/README.md`, de test in `supabase/tests/database.test.mjs`, de weergave in `app/app.js` (Ik en Beurs) met de Engelse teksten in `app/en.js`, en een regel in `CLAUDE.md`. Dit verandert de spelregels, dus migratie, README en test samen.
 
-### Open vragen voor Kjell
+### Open vragen
 
 1. De weging: blijft het 50/50 tussen dekking en versheid binnen G, of moet versheid zwaarder tellen?
 2. Tellen menukaartprijzen toch mee in de dekking (bijvoorbeeld voor de helft)?

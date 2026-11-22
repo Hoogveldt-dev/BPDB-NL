@@ -1,6 +1,6 @@
 # Testset voor de menukaartpijplijn
 
-Een vaste set foto's met labels die Kjell met de hand heeft gecontroleerd. Daarmee meten we per stap van de pijplijn (schiften, controleren, lezen, kiezen) hoe vaak een model goed zit, en kunnen we modellen en rollen vergelijken.
+Een vaste set foto's met labels die met de hand zijn gecontroleerd. Daarmee meten we per stap van de pijplijn (schiften, controleren, lezen, kiezen) hoe vaak een model goed zit, en kunnen we modellen en rollen vergelijken.
 
 | Bestand | Wat |
 |---|---|
@@ -13,7 +13,7 @@ Een vaste set foto's met labels die Kjell met de hand heeft gecontroleerd. Daarm
 
 ## Afspraken
 
-- Kjell controleert elk label met de hand en zet dan `gecontroleerd` op `true`. Claude vult nooit zelf een prijs in als label.
+- Een mens controleert elk label met de hand en zet dan `gecontroleerd` op `true`. Claude vult nooit zelf een prijs in als label.
 - De foto's blijven op de eigen computer (rechten van de makers, voorwaarden van Google). In Git staan alleen ID's, prijs, datum en omschrijving.
 - Doel: ongeveer twintig foto's, ook foto's zonder kaart (eten, interieur, QR-bordje), scheve en donkere foto's, krijtborden en gedrukte kaarten.
 

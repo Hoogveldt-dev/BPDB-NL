@@ -49,7 +49,7 @@ const veilig = (id) => String(id).replace(/[^\w-]+/g, "_");
 const bron = new FotoBron({ log: console.log, zichtbaar: o.zichtbaar, pauzeMs });
 try {
   if (o.kandidaten) {
-    // Miniaturen met ID en uploaddatum in een overzicht, zodat Kjell foto's kan kiezen en labelen.
+    // Miniaturen met ID en uploaddatum in een overzicht, zodat iemand foto's kan kiezen en labelen.
     const dataId = await bron.openPlaats(o.kandidaten);
     const fotos = (await bron.fotolijst(dataId, { maxFotos: Number(o.max) })).filter((f) => f.soort === "foto" && f.url);
     const doel = join(o.fotos, "kandidaten", veilig(o.kandidaten));

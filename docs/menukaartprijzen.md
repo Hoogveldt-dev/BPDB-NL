@@ -4,6 +4,18 @@ Menukaartprijzen vullen de prijsgeschiedenis voordat een speler een kroeg bezoek
 
 Het spel gebruikt alleen de goedkoopste pils van de tap in een vaasje (25 cl). Andere maten en bieren laten we voor nu liggen.
 
+## Werkwijze in het kort
+
+Stand van 21 november 2026.
+
+1. **Eigen websites (DAEN).** `osm_id` uit de database, tags per 50 via `https://api.openstreetmap.org/api/0.6/nodes.json?nodes=...` (Overpass geeft vanuit de cloud een time-out). Daarna crawlen op links met menu, kaart, drank, bier, tap of pdf; pdf's met `pdftotext -layout`; WordPress-datums via `/wp-json/wp/v2/media` en `/wp-json/wp/v2/pages`; sites met JavaScript nog een keer met Playwright. Kroegen zonder website in OSM: agents laten zoeken, met weinig opbrengst.
+2. **Foto's in Google Maps (JAN).** `node menufotos.mjs --kroegen <bestand> --extern --sinds 2024-11-01 --max-fotos 150` vanuit `tools/google-kroegen`. Een kroeg tegelijk, 3 seconden pauze; bij een CAPTCHA stopt de run.
+3. **Lezen en nakijken.** Elke prijs zelf op de kaart lezen (pdf-pagina als afbeelding met `pdftoppm`), een geval maken in `tools/google-kroegen/nakijken/<datum>/<id>-<naam>/` met `geval.json`, `uitsnede.jpg` en `foto.jpg`, en de subagent menukaart-controleur per geval laten oordelen. Elke prijs wordt nagekeken, niet alleen een steekproef. Afgekeurd omdat de bron onduidelijk was: verbeter alleen de bron (nooit de prijs) en laat opnieuw beoordelen.
+4. **Regels.** Alleen de goedkoopste pils van de tap in 25 cl, of het woord "vaasje" of "vaas"; geen actieprijs; een datum van de kaart zelf (pdf ModDate, wijzigingsdatum van de pagina, sitemap `lastmod`, of een vaste `Last-Modified`), nooit de dag van kijken; is er een nieuwere kaart die je niet kunt lezen, dan geen prijs. Daarna de vaste controles (€ 2,00 tot € 7,50, hoogstens 30% van de mediaan) en importeren met `select public.importeer_menuprijzen('<json>'::jsonb)` via `execute_sql`. Liever geen prijs dan een verkeerde.
+5. **Verslag.** Zet onderaan dit document wat er is gedaan en gevonden.
+
+Wat nog kan: eigen websites periodiek opnieuw doorzoeken (kaarten veranderen; op 21 november vielen er zes af omdat de maat van het kleine glas ontbrak), en de fotomethode opnieuw draaien als er nieuwe foto's zijn.
+
 ## DAEN-methode: de drankkaart van de eigen website
 
 Genoemd naar Café Daen (6 november 2026: Hertog Jan 25 cl €4,00, drankkaart van 2 september 2026).
@@ -33,7 +45,7 @@ Genoemd naar Stadscafé Jan (vaasje €3,90 op 20 december 2025, van een menufot
 7. **Stoppen.** Levert een groep een vaasjesprijs op, dan kijken we niet verder naar oudere foto's.
 8. **Nieuwste kaart wint.** Per kroeg de prijs met de nieuwste datum, als rij voor `importeer_menuprijzen`.
 
-Model: standaard lokaal (sinds 10 november 2026). Qwen3.5 en Gemma 4 draaien in LM Studio op de pc van Kjell, zonder kosten of limiet, met een tweede mening per prijs en elke foto apart geschift in plaats van op een contactblad: zie `docs/lokale-vision.md`. Alleen als reserve, als het echt moet: `--extern` gebruikt de betaalde DeepSeek (`deepseek-flash`, via `DEEPSEEK_API_KEY`) of een ander model in het OpenAI-formaat via `MENU_MODEL_URL` en `MENU_MODEL`. Let op: automatisch foto's bij Google ophalen werkt alleen vanaf een thuisverbinding, dus zonder de pc lukt deze methode ook met DeepSeek niet. (Het zijn de foto's van het bedrijfsprofiel, dezelfde als in Google Zoeken; de tool haalt de lijst via een Maps-pagina op omdat dat daar kan.) Een foto die Kjell zelf vindt, kan Claude of DeepSeek wel altijd lezen.
+Model: standaard lokaal (sinds 10 november 2026). Qwen3.5 en Gemma 4 draaien in LM Studio op de eigen pc, zonder kosten of limiet, met een tweede mening per prijs en elke foto apart geschift in plaats van op een contactblad: zie `docs/lokale-vision.md`. Alleen als reserve, als het echt moet: `--extern` gebruikt de betaalde DeepSeek (`deepseek-flash`, via `DEEPSEEK_API_KEY`) of een ander model in het OpenAI-formaat via `MENU_MODEL_URL` en `MENU_MODEL`. Let op: automatisch foto's bij Google ophalen werkt alleen vanaf een thuisverbinding, dus zonder de pc lukt deze methode ook met DeepSeek niet. (Het zijn de foto's van het bedrijfsprofiel, dezelfde als in Google Zoeken; de tool haalt de lijst via een Maps-pagina op omdat dat daar kan.) Een foto die je zelf vindt, kan Claude of DeepSeek wel altijd lezen.
 
 ### Nakijken: Claude kijkt alleen waar het nodig is
 
@@ -48,7 +60,7 @@ Daarna, in Claude Code op de eigen computer:
 
 1. Vraag: "Kijk `tools/google-kroegen/nakijken/<datum>` na met de menukaart-controleur en zet elk antwoord als `oordeel.json` in de map van het geval." De subagent `.claude/agents/menukaart-controleur.md` draait op Haiku, mag alleen lezen, bekijkt eerst de uitsnede en alleen bij twijfel de hele foto, en antwoordt met `{"is_menukaart", "prijs_klopt", "juiste_prijs", "toelichting"}`.
 2. `node verwerk-oordelen.mjs nakijken/<datum>` maakt `nakijken/<datum>/nagekeken.json`: goedgekeurde twijfels erbij, afgekeurde steekproefprijzen eraf, en een rapport met hoe vaak de modellen samen fout zaten. Een andere prijs van de controleur (`juiste_prijs`) importeren we niet: liever geen prijs dan een verkeerde.
-3. Kjell bekijkt het rapport en importeert zelf met `node verwerk-oordelen.mjs nakijken/<datum> --naar-supabase`.
+3. De beheerder bekijkt het rapport en importeert zelf met `node verwerk-oordelen.mjs nakijken/<datum> --naar-supabase`.
 
 ### Wat het kost
 
@@ -90,7 +102,7 @@ Wat de code al laat zien. Het verzoek dat we nu sturen (`fotolijstVerzoek` in `b
 
 Een categorie zit waarschijnlijk in een van de twee onbekende delen, maar dat is een vermoeden en geen meting.
 
-### Zo zoekt Kjell het uit (thuis, met de hand)
+### Zo zoek je het uit (thuis, met de hand)
 
 Volg de spelregels: hooguit twee of drie kroegen, ruime pauzes, bij een CAPTCHA stoppen.
 
@@ -146,7 +158,7 @@ Afgevallen: Café Maxim (alleen Brand in 22 cl), Café Jos (geen prijzen op de s
 
 Elke prijs is nagekeken door de subagent menukaart-controleur (Haiku). Die keurde De Kluizenaar eerst af: in de platte tekst stond de maat niet bij de prijs. In de HTML staan prijs (3,6 / 3,8 / 6,7) en maat (18 / 25 / 50 cl) in hetzelfde kaartje; met die bron keurde hij de prijs goed. Daarna de vaste controles (bereik, mediaan € 3,90, datum) en de import via `importeer_menuprijzen`: 5 toegevoegd, 0 overgeslagen. De eerste poging liep vast op de grens van 80 tekens voor `bron_omschrijving`; `naarMenuImport` houdt zich daar nu aan.
 
-Herhalen met een eigen scope: `docs/menukaart-manager.md`.
+Herhalen: zie Werkwijze in het kort, bovenaan.
 
 ## Tweede ronde DAEN vanuit een cloudsessie (21 november 2026)
 
