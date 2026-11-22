@@ -2388,7 +2388,7 @@ function regelsView() {
     <p class="small muted">Is de prijs gewijzigd? Geef dan de nieuwe prijs door. Die vervangt een melding die nog op bevestiging wacht, zonder straf voor de melder. Dat kan met een e-mailadres, hoogstens vijf keer per dag.</p>`;
 }
 
-// Over Bierkoers: korte credits voor de voorbeelden en de bronnen van de kaart. Bereikbaar via de link onderaan Ik.
+// Over Bierkoers: korte credits voor de voorbeelden. Bereikbaar via de link onderaan Ik.
 function overView() {
   const bron = (url, naam, tekst) => `<li><a class="row" href="${url}" target="_blank" rel="noopener"><span class="row-main">
     <span class="row-title">${naam}</span><span class="row-sub">${tekst}</span></span></a></li>`;
@@ -2399,8 +2399,6 @@ function overView() {
     <ul class="list over">
       ${bron("https://guindex.ie", "Guindex", "Houdt de prijs van een pint Guinness in Ierland bij, met prijzen van bezoekers. Het voorbeeld voor Bierkoers.")}
       ${bron("https://divebardb.com", "Divebar Database", "Een kaart van echte kroegen, door en voor liefhebbers. Van hen komt het idee om meteen mee te doen, zonder account.")}
-      ${bron("https://www.openstreetmap.org/copyright", "OpenStreetMap", "De kroegen en de kaart. © OpenStreetMap-bijdragers.")}
-      ${bron("https://www.cbs.nl", "CBS", "De wijken.")}
     </ul>
     <h3>Contact</h3>
     <p><a class="mail" href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a></p>`;
