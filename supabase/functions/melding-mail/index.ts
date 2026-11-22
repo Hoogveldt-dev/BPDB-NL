@@ -1,4 +1,4 @@
-// Mailt de beheerder over een nieuwe bug of stadsaanvraag, via de Infomaniak-mailbox van Bierkoers.
+// Mailt de beheerder over een nieuw bericht (soort "bug") of een stadsaanvraag, via de Infomaniak-mailbox van Bierkoers.
 // De app roept deze functie aan nadat de speler de melding deed (meld_bug of vraag_stad_aan). Wie de melding
 // deed, volgt uit de sessie (Authorization), nooit uit het verzoek; elke melding wordt hoogstens een keer
 // gemaild (public.claim_melding_mail).
@@ -58,7 +58,10 @@ Deno.serve(async (req) => {
   if (!melding) return antwoord({ ok: true, verstuurd: false }); // al gemaild, niet van deze speler, of te oud
 
   try {
-    const { onderwerp, tekst } = maakMail(melding);
+    // Heeft de speler een e-mailadres, dan wordt dat het antwoordadres: de beheerder antwoordt gewoon op de mail.
+    // Het adres komt uit de sessie, nooit uit het verzoek.
+    const email = auth.user.is_anonymous ? "" : (auth.user.email ?? "");
+    const { onderwerp, tekst } = maakMail(melding, !!email);
     const verbinding = nodemailer.createTransport({
       host,
       port: 465,
@@ -66,7 +69,7 @@ Deno.serve(async (req) => {
       auth: { user: gebruiker, pass: wachtwoord },
       connectionTimeout: 10000,
     });
-    await verbinding.sendMail({ from: `Bierkoers <${gebruiker}>`, to: naar, subject: onderwerp, text: tekst });
+    await verbinding.sendMail({ from: `Bierkoers <${gebruiker}>`, to: naar, subject: onderwerp, text: tekst, ...(email ? { replyTo: email } : {}) });
   } catch (e) {
     // Versturen mislukt: de melding weer vrijgeven, zodat een volgende poging kan lukken
     await admin.from(soort === "bug" ? "bugmeldingen" : "stadsaanvragen").update({ gemaild_op: null }).eq("id", id);

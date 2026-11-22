@@ -2189,7 +2189,7 @@ function ikView() {
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
       <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
       <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
-      <h3>Bugs</h3><div class="card"><div id="beheerBugs" class="small muted">Bugs laden…</div></div>
+      <h3>Berichten</h3><div class="card"><div id="beheerBugs" class="small muted">Berichten laden…</div></div>
       <h3>Teksten</h3><div class="card"><div class="small muted">Pas elke tekst in de app aan. Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen.</div>
       <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
       ${teksten.lijst().length ? `<ul class="list eigen-teksten" data-geen-teksten>${teksten.lijst().map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
@@ -2235,15 +2235,17 @@ function taalBlok() {
       <button type="button" data-taal="en" aria-pressed="${TAAL === "en"}">English</button></div>`;
 }
 
-// Bug melden: een korte omschrijving; de app stuurt de schermgrootte en de browser mee (functie meld_bug)
+// Een bericht aan de beheerder: een vraag, suggestie, probleem of opmerking. De app stuurt de schermgrootte en de
+// browser mee (functie meld_bug; tabel en functie heten nog naar de oude knop Bug melden). Met een e-mailadres
+// kan de beheerder per mail antwoorden: de Edge Function melding-mail zet dat adres als antwoordadres.
 function bugBlok() {
   if (!kanBijdragen()) return "";
   return `<details class="klopt-niet bug">
-    <summary>Bug melden</summary>
+    <summary>Vraag, idee of probleem</summary>
     <form class="form" id="bugForm">
-      <label for="bugTekst">Wat ging er mis?</label>
-      <textarea id="bugTekst" name="tekst" rows="4" minlength="5" maxlength="2000" placeholder="Wat deed je, en wat gebeurde er?" required></textarea>
-      <div class="small muted">We sturen je browser en schermgrootte mee.</div>
+      <label for="bugTekst">Je bericht</label>
+      <textarea id="bugTekst" name="tekst" rows="4" minlength="5" maxlength="2000" placeholder="Een vraag, een suggestie, iets wat niet werkt of een opmerking" required></textarea>
+      <div class="small muted">${state.sessie && !anoniem() ? "Je krijgt antwoord op je e-mailadres. We sturen je browser en schermgrootte mee." : "Wil je antwoord, maak dan eerst een account. We sturen je browser en schermgrootte mee."}</div>
       <div class="btns"><button class="btn primary" type="submit">Versturen</button></div>
     </form>
   </details>`;
@@ -2257,7 +2259,7 @@ function mailMelding(soort, id) {
 
 async function verstuurBug(form) {
   const tekst = String(new FormData(form).get("tekst") ?? "").trim();
-  if (tekst.length < 5) return toast("Beschrijf de bug in een paar woorden");
+  if (tekst.length < 5) return toast("Schrijf je bericht in een paar woorden");
   const knop = form.querySelector("[type=submit]");
   knop.disabled = true;
   if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
@@ -2267,16 +2269,16 @@ async function verstuurBug(form) {
   mailMelding("bug", data);
   form.reset();
   form.closest("details").open = false;
-  toast("Bedankt! We kijken ernaar");
+  toast("Bedankt voor je bericht!");
 }
 
-// Bugs voor de beheerder: de nieuwste dertig
+// Berichten voor de beheerder: de nieuwste dertig
 async function laadBeheerBugs() {
   const { data, error } = await sb.from("bugmeldingen").select("id,tekst,scherm,apparaat,op").order("op", { ascending: false }).limit(30);
   const el = $("#beheerBugs");
   if (!el) return;
-  if (error) { el.textContent = "Bugs laden lukte niet."; return; }
-  if (!data.length) { el.textContent = "Geen bugs gemeld."; return; }
+  if (error) { el.textContent = "Berichten laden lukte niet."; return; }
+  if (!data.length) { el.textContent = "Nog geen berichten."; return; }
   el.innerHTML = `<ul class="list" data-geen-teksten>${data.map((b) => `<li class="row"><span class="row-main">
     <span class="row-title" style="white-space:normal">${esc(b.tekst)}</span>
     <span class="row-sub" style="white-space:normal">${wanneer(b.op)}${b.scherm ? ` · ${esc(b.scherm)}` : ""}${b.apparaat ? ` · ${esc(b.apparaat)}` : ""}</span></span></li>`).join("")}</ul>`;
@@ -2384,20 +2386,27 @@ function regelsView() {
     <p class="small muted">Is de prijs gewijzigd? Geef dan de nieuwe prijs door. Die vervangt een melding die nog op bevestiging wacht, zonder straf voor de melder. Dat kan met een e-mailadres, hoogstens vijf keer per dag.</p>`;
 }
 
-// Meldingen over kroegen die niet kloppen, voor de beheerder: verkeerde plek, dubbel en gesloten
+// Meldingen over kroegen die niet kloppen, voor de beheerder: verkeerde plek, dubbel en gesloten. Bovenaan wat nog
+// wacht; afgehandelde meldingen (bevestigd of weerlegd) staan ingeklapt onder Geschiedenis. De naam komt uit de
+// database, want een gesloten kroeg staat niet meer in state.kroegen.
 async function laadBeheerMeldingen() {
-  const { data, error } = await sb.from("kroeg_meldingen").select("id,kroeg_id,soort,status,toelichting,op")
-    .in("soort", ["verkeerde_plek", "dubbel", "gesloten"]).neq("status", "weerlegd").order("op", { ascending: false }).limit(30);
+  const { data, error } = await sb.from("kroeg_meldingen").select("id,kroeg_id,soort,status,toelichting,op,kroegen(naam,open)")
+    .in("soort", ["verkeerde_plek", "dubbel", "gesloten"]).order("op", { ascending: false }).limit(50);
   const el = $("#beheerMeldingen");
   if (!el) return;
   if (error) { el.textContent = "Meldingen laden lukte niet."; return; }
-  if (!data.length) { el.textContent = "Geen meldingen over kroegen."; return; }
-  el.innerHTML = `<ul class="list">${data.map((m) => {
+  const rij = (m) => {
     const k = state.kroegen.find((x) => x.id === m.kroeg_id);
+    const naam = m.kroegen?.naam ?? k?.naam ?? `Kroeg ${m.kroeg_id}`;
     return `<li><button class="row" ${k ? `data-kroeg="${k.id}"` : "disabled"}><span class="row-main">
-      <span class="row-title">${esc(k?.naam ?? `Kroeg ${m.kroeg_id} (niet meer op de kaart)`)}</span>
-      <span class="row-sub">${esc(KROEGMELDING[m.soort].knop)} · ${m.status === "bevestigd" ? "bevestigd" : "wacht"} · ${wanneer(m.op)}${m.toelichting ? ` · "${esc(m.toelichting)}"` : ""}</span></span></button></li>`;
-  }).join("")}</ul>`;
+      <span class="row-title" data-geen-teksten>${esc(naam)}</span>
+      <span class="row-sub">${esc(KROEGMELDING[m.soort].knop)} · ${m.status}${m.kroegen && !m.kroegen.open ? " · van de kaart" : ""} · ${wanneer(m.op)}${m.toelichting ? ` · "${esc(m.toelichting)}"` : ""}</span></span></button></li>`;
+  };
+  const open = data.filter((m) => m.status === "wacht");
+  const klaar = data.filter((m) => m.status !== "wacht");
+  el.innerHTML = (open.length ? `<ul class="list">${open.map(rij).join("")}</ul>` : `<div>Geen open meldingen over kroegen.</div>`)
+    + (klaar.length ? `<details class="klopt-niet" data-onthoud="meldingen-geschiedenis"${uitgeklapt("meldingen-geschiedenis")}>
+      <summary>Geschiedenis (${klaar.length})</summary><ul class="list">${klaar.map(rij).join("")}</ul></details>` : "");
 }
 
 // Account verwijderen via de Edge Function account-verwijderen. Prijzen en meldingen blijven, zonder naam.
