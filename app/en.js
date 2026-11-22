@@ -308,6 +308,8 @@ export const EN = {
   "* voor een vaasje.": "* for 25 cl.",
   "* voor * cl is * per vaasje.": "* for * cl is * per 25 cl.",
   "De Pilsindex is *.": "The Lager index is *.",
+  "Wat een pint Guinness in * kost: de middelste van de laatst bekende prijzen, vergeleken met een jaar terug.": "What a pint of Guinness costs in *: the middle of the latest known prices, compared with a year ago.",
+  "Nog geen Guinness-prijs. Geef de eerste door.": "No Guinness price yet. Report the first one.",
   "Dit wijkt flink af van de stad: twee andere spelers moeten het bevestigen en je punten krijg je daarna.": "This differs a lot from the city: two other players need to confirm it, and you get your points afterwards.",
   "Dit wijkt flink af van de vorige prijs: twee andere spelers moeten het bevestigen en je punten krijg je daarna.": "This differs a lot from the previous price: two other players need to confirm it, and you get your points afterwards.",
   "Heb je een foto van de kaart? Die helpt hen.": "Do you have a photo of the menu? That helps them.",

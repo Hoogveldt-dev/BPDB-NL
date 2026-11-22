@@ -510,9 +510,9 @@ const codeVan = (id) => state.codes.get(id) ?? "";
 const codeHtml = (id, groot = false) => codeVan(id) ? `<span class="code${groot ? " groot" : ""}">${codeVan(id)}</span>` : "";
 
 // Index op een moment: mediaan van de laatst bekende prijs per kroeg op of voor dat moment
-function indexOp(t) {
+function indexOp(t, punten = state.koers.punten) {
   const vs = [];
-  for (const p of state.koers.punten.values()) {
+  for (const p of punten.values()) {
     let v = null;
     for (const x of p) { if (x.t <= t) v = x.v; else break; }
     if (v != null) vs.push(v);
@@ -532,20 +532,25 @@ function koersen() {
   }
   for (const p of punten.values()) p.sort((a, b) => a.t - b.t);
   state.koers.punten = punten;
-  const nu = Date.now(), stand = indexOp(nu);
+  state.koers.index = indexVan(punten);
+}
+
+// De index van een reeks prijzen per kroeg: stand nu, vergeleken met twaalf maanden terug, en het verloop
+function indexVan(punten) {
+  const nu = Date.now(), stand = indexOp(nu, punten);
   let index = null;
   if (stand) {
     // Bierprijzen gaan zelden omhoog, meestal een keer per jaar. Daarom vergelijkt de index met twaalf maanden terug.
-    const jaar = indexOp(nu - 365 * DAG);
+    const jaar = indexOp(nu - 365 * DAG, punten);
     // Verloop sinds de eerste bekende prijs (hooguit vijf jaar): een punt per maand, plus nu
     const eerste = Math.min(...[...punten.values()].map((p) => p[0].t));
     const van = Math.max(eerste, nu - 5 * 365 * DAG);
     const reeks = [];
-    for (let t = van; t < nu; t += 30 * DAG) { const i = indexOp(t); if (i) reeks.push({ t, v: i.v }); }
+    for (let t = van; t < nu; t += 30 * DAG) { const i = indexOp(t, punten); if (i) reeks.push({ t, v: i.v }); }
     reeks.push({ t: nu, v: stand.v });
     index = { nu: stand.v, n: stand.n, jaar: jaar?.v ?? null, delta: jaar ? stand.v - jaar.v : null, pct: jaar ? (stand.v - jaar.v) / jaar.v : null, reeks };
   }
-  state.koers.index = index;
+  return index;
 }
 
 // Koers van een kroeg. Een prijs blijft meestal lang gelijk, dus het belangrijkste is sinds wanneer.
@@ -554,8 +559,8 @@ function koersen() {
 // De prijs per vaasje die de kaart toont: de koers (ook van de menukaart), anders de bevestigde of een wachtende prijs
 const prijsPer25 = (k) => koersVan(k.id)?.nu ?? k.per25_cent ?? (inQuarantaine(k) ? null : k.open_per25_cent) ?? null;
 
-function koersVan(id) {
-  const p = state.koers.punten.get(id);
+function koersVan(id, punten = state.koers.punten) {
+  const p = punten.get(id);
   if (!p?.length) return null;
   const nu = p[p.length - 1].v;
   let i = p.length - 1;
@@ -576,13 +581,13 @@ const maandJaar = (t) => new Date(t).toLocaleDateString(LOCALE, { month: "short"
 const maandKort = (t) => new Date(t).toLocaleDateString(LOCALE, { month: "short" }).replace(".", "");
 
 // Kroegen met een prijsstap in de afgelopen twaalf maanden, nieuwste eerst
-function bewegers() {
-  return state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c?.recent).sort((a, b) => b.c.vastSinds - a.c.vastSinds);
+function bewegers(punten) {
+  return state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c?.recent).sort((a, b) => b.c.vastSinds - a.c.vastSinds);
 }
 
 // Kroegen waarvan de prijs het langst gelijk is gebleven
-function prijsvast() {
-  return state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c).sort((a, b) => a.c.vastSinds - b.c.vastSinds);
+function prijsvast(punten) {
+  return state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => a.c.vastSinds - b.c.vastSinds);
 }
 
 // Klein trapje in een rij: alleen als de kroeg echt een prijsgeschiedenis heeft. Drie jaar breed, voor elke rij gelijk.
@@ -1895,12 +1900,32 @@ async function verkleinFoto(file) {
   }
 }
 
+// Guinness-koers: de prijzen van een pint per kroeg uit kroeg_aanbod. Een nieuwe prijs vervangt de oude (status
+// vervangen), dus de oude rijen zijn de geschiedenis. Omgerekend naar een pint van 50 cl.
+async function guinnessKoers() {
+  const { data } = await sb.from("kroeg_aanbod").select("kroeg_id,volume_cl,prijs_cent,op,kroegen!inner(gemeente)")
+    .eq("soort", GUINNESS).in("status", ["actief", "vervangen"]).not("prijs_cent", "is", null).eq("kroegen.gemeente", stadNaam);
+  const open = new Set(state.kroegen.map((k) => k.id)), punten = new Map();
+  for (const a of data ?? []) {
+    if (!open.has(a.kroeg_id) || !a.volume_cl) continue;
+    const lijst = punten.get(a.kroeg_id) ?? [];
+    lijst.push({ t: new Date(a.op).getTime(), v: Math.round((a.prijs_cent * PINT) / a.volume_cl) });
+    punten.set(a.kroeg_id, lijst);
+  }
+  for (const p of punten.values()) p.sort((a, b) => a.t - b.t);
+  return punten;
+}
+
 async function beursView() {
-  const [{ data: wijken }, { data: recent }] = await Promise.all([
+  // In de Guinness-stand volgen de index en de prijsbewegingen de Guinness-prijzen; de rest blijft het spel (pils)
+  const guinness = guinnessAan();
+  const [{ data: wijken }, { data: recent }, gPunten] = await Promise.all([
     sb.from("wijk_voortgang").select("*").eq("gemeente", stadNaam).order("naam"),
     sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").eq("gemeente", stadNaam).order("op", { ascending: false }).limit(15),
+    guinness ? guinnessKoers() : null,
   ]);
   if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
+  const punten = gPunten ?? state.koers.punten;
   const s = state.stad ?? { vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
   // Dezelfde telling als op de kaart en in de lichtkrant: elke kroeg met een prijs
   const totaal = state.kroegen.length, metPrijs = inKaart();
@@ -1908,15 +1933,15 @@ async function beursView() {
   const MS = [25, 50, 75, 100], next = MS.find((m) => m > pct), nodig = next ? Math.ceil((next / 100) * totaal) - metPrijs : 0;
   const C = 2 * Math.PI * 42;
   const versPct = metPrijs ? Math.round((s.vers / metPrijs) * 100) : 0;
-  const idx = state.koers.index;
+  const idx = guinness ? indexVan(punten) : state.koers.index;
 
   // Bierprijzen dalen bijna nooit en stijgen hooguit een keer per jaar. Daarom geen stijgers en dalers,
   // maar wie dit jaar verhoogde en wie het langst prijsvast is. Goedkoper worden is zeldzaam en krijgt een eigen plek.
-  const jaar = bewegers();
+  const jaar = bewegers(punten);
   const verhoogd = jaar.filter((x) => x.c.delta > 0).slice(0, 3);
   const goedkoper = jaar.filter((x) => x.c.delta < 0);
-  const vast = prijsvast().slice(0, 3);
-  const metKoers = state.kroegen.map((k) => ({ k, c: koersVan(k.id) })).filter((x) => x.c).sort((a, b) => a.c.nu - b.c.nu);
+  const vast = prijsvast(punten).slice(0, 3);
+  const metKoers = state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => a.c.nu - b.c.nu);
   const mover = ({ k, c }, onder, rechts = "") => `<button class="mover" data-kroeg="${k.id}">
       <span class="n">${esc(k.naam)}</span><span class="p">${euro(c.nu)}</span>
       <span class="w">${codeVan(k.id)}${onder ? ` · ${onder}` : ""}</span>${rechts}</button>`;
@@ -1950,13 +1975,14 @@ async function beursView() {
 
   body.innerHTML = `
     <div class="indexkaart">
-      <div class="kop">Pilsindex ${esc(stadNaam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
+      <div class="kop">${guinness ? "Guinness" : "Pilsindex"} ${esc(stadNaam)}<span>${idx ? `${idx.n} ${idx.n === 1 ? "kroeg" : "kroegen"}` : ""}</span></div>
       ${idx ? `<div class="stand"><span class="big-price">${euro(idx.nu)}</span>${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct, pil: true })}<span class="uitleg">in 12 maanden</span>` : ""}</div>
-        <div class="uitleg">Wat een vaasje pils in ${esc(stadNaam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>
-        ${metPrijs > idx.n ? `<div class="uitleg">Van de ${metPrijs} kroegen met een prijs tellen er ${idx.n} mee. Een nieuwe melding telt mee zodra een andere speler hem bevestigt.</div>` : ""}
+        ${guinness ? `<div class="uitleg">Wat een pint Guinness in ${esc(stadNaam)} kost: de middelste van de laatst bekende prijzen, vergeleken met een jaar terug.</div>`
+          : `<div class="uitleg">Wat een vaasje pils in ${esc(stadNaam)} kost: de middelste van de laatst bekende prijzen. Bierprijzen gaan meestal een keer per jaar omhoog, daarom vergelijken we met een jaar terug.</div>`}
+        ${!guinness && metPrijs > idx.n ? `<div class="uitleg">Van de ${metPrijs} kroegen met een prijs tellen er ${idx.n} mee. Een nieuwe melding telt mee zodra een andere speler hem bevestigt.</div>` : ""}
         ${idx.reeks.length > 1 ? `<div class="grafiek">${grafiekSvg(idx.reeks, { id: "gi", lijnLabel: "", kleur: idx.delta > 0 ? "var(--op)" : idx.delta < 0 ? "var(--af)" : "var(--accent)" })}</div>` : ""}`
       : `<div class="stand"><span class="big-price">€ ?</span></div>
-        <div class="uitleg">Nog geen koers. Geef de eerste prijs door en zet de Pilsindex op het bord.</div>`}
+        <div class="uitleg">${guinness ? "Nog geen Guinness-prijs. Geef de eerste door." : "Nog geen koers. Geef de eerste prijs door en zet de Pilsindex op het bord."}</div>`}
     </div>
     <div class="small muted">↗ duurder · ↘ goedkoper · → vast. Rood en groen zoals jij het als klant voelt.</div>
     ${duo}
