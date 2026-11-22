@@ -2457,12 +2457,14 @@ function berichtenGewijzigd() {
 function berichtRij(b, beheer) {
   const nieuw = beheer ? nieuwVoorBeheer(b) : nieuwVoorSpeler(b);
   const n = b.bericht_antwoorden?.[0]?.count ?? 0;
+  // De spelersnaam apart, zodat de vertaling de rest van de regel per stuk vertaalt
+  const naam = beheer && b.profielen?.naam ? `<span data-geen-teksten>${esc(b.profielen.naam)}</span> · ` : "";
   const sub = beheer
-    ? [b.profielen?.naam ? `<span data-geen-teksten>${esc(b.profielen.naam)}</span>` : "", wanneer(b.laatste_op), n ? `${n} ${n === 1 ? "antwoord" : "antwoorden"}` : "", b.laatste_van_beheer ? "Beantwoord" : ""]
+    ? [wanneer(b.laatste_op), n ? `${n} ${n === 1 ? "antwoord" : "antwoorden"}` : "", b.laatste_van_beheer ? "Beantwoord" : ""]
     : [nieuw ? "Nieuw antwoord" : b.laatste_van_beheer ? "Beantwoord" : "Wacht op antwoord", wanneer(b.laatste_op)];
   return `<li><button class="row bericht-rij${nieuw ? " nieuw" : ""}" data-bericht="${b.id}"><span class="dot${nieuw ? " wacht" : ""}"></span><span class="row-main">
     <span class="row-title" data-geen-teksten>${esc(b.tekst)}</span>
-    <span class="row-sub">${sub.filter(Boolean).join(" · ")}</span></span></button></li>`;
+    <span class="row-sub">${naam}<span>${sub.filter(Boolean).join(" · ")}</span></span></span></button></li>`;
 }
 
 function mijnBerichtenHtml() {
