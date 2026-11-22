@@ -1159,6 +1159,7 @@ function draw() {
   let html = "";
   if (state.selected != null) html = state.form ? formView() : state.aanbodForm ? aanbodFormView() : state.tijdenForm ? tijdenFormView() : detailView();
   else if (state.pagina === "regels") html = regelsView();
+  else if (state.pagina === "over") html = overView();
   else if (state.tocht) html = tochtView();
   else if (state.tab === "kaart") html = lijstView();
   else if (state.tab === "beurs") html = '<div class="empty">Laden…</div>';
@@ -2127,7 +2128,7 @@ function ikView() {
       ${stadKeuzeBlok()}
       ${stadBlok()}
       ${taalBlok()}
-      ${privacyRegel()}`;
+      ${voetRegel()}`;
   }
   if (!state.sessie) {
     // Alleen als anoniem meespelen niet kan: anonieme accounts staan in Supabase uit, of aanmaken lukte niet
@@ -2151,7 +2152,7 @@ function ikView() {
       ${inloggen}
       <h3>Nieuw hier?</h3>${beginnen}
       <p class="small muted">We belonen bijdragen, nooit drinken.</p>
-      ${privacyRegel()}`;
+      ${voetRegel()}`;
     }
     const terug = state.terugNaar != null ? state.kroegen.find((k) => k.id === state.terugNaar) : null;
     return `<h2>Account maken</h2>${terug ? `<p class="small">Daarna ga je terug naar <b>${esc(terug.naam)}</b>.</p>` : ""}${beginnen}
@@ -2159,7 +2160,7 @@ function ikView() {
       <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
       <h3>Al een account?</h3>
       ${inloggen}
-      ${privacyRegel()}`;
+      ${voetRegel()}`;
   }
   const p = state.profiel;
   const koppelen = anoniem() ? accountBlok(p) : "";
@@ -2198,11 +2199,12 @@ function ikView() {
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
       Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p></details>
     <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>
-    ${privacyRegel()}`;
+    ${voetRegel()}`;
 }
 
-// De privacyverklaring is een losse pagina (app/privacy.html), zodat Google en anderen er ook naar kunnen linken
-const privacyRegel = () => `<p class="small muted privacy-regel"><a href="privacy.html" target="_blank" rel="noopener">Privacyverklaring</a></p>`;
+// Onderaan Ik: de privacyverklaring, een losse pagina (app/privacy.html) zodat Google en anderen er ook naar kunnen
+// linken, en de pagina Over Bierkoers met de credits (overView()).
+const voetRegel = () => `<p class="small muted voet-regel"><a href="privacy.html" target="_blank" rel="noopener">Privacyverklaring</a> · <button type="button" class="linkbtn" data-over>Over Bierkoers</button></p>`;
 
 // Stad kiezen: alleen als er meer dan een stad meedoet
 function stadKeuzeBlok() {
@@ -2384,6 +2386,24 @@ function regelsView() {
     <p class="small muted">Een prijs komt pas vast op de kaart als andere spelers hem bevestigen, meestal twee. Zo voorkomen we koersmanipulatie.</p>
     <p class="small muted">Zeggen twee spelers "klopt niet", dan is de melding weerlegd en gaan de punten eraf. Gebruik dat voor een prijs die overduidelijk fout is.</p>
     <p class="small muted">Is de prijs gewijzigd? Geef dan de nieuwe prijs door. Die vervangt een melding die nog op bevestiging wacht, zonder straf voor de melder. Dat kan met een e-mailadres, hoogstens vijf keer per dag.</p>`;
+}
+
+// Over Bierkoers: korte credits voor de voorbeelden en de bronnen van de kaart. Bereikbaar via de link onderaan Ik.
+function overView() {
+  const bron = (url, naam, tekst) => `<li><a class="row" href="${url}" target="_blank" rel="noopener"><span class="row-main">
+    <span class="row-title">${naam}</span><span class="row-sub">${tekst}</span></span></a></li>`;
+  return `<button class="back" data-sluit-pagina>‹ Terug</button>
+    <h2>Over Bierkoers</h2>
+    <p>Bierkoers is een kaart met bierprijzen per kroeg, bijgehouden door spelers. Begonnen in Nijmegen.</p>
+    <h3>Met dank aan</h3>
+    <ul class="list over">
+      ${bron("https://guindex.ie", "Guindex", "Houdt de prijs van een pint Guinness in Ierland bij, met prijzen van bezoekers. Het voorbeeld voor Bierkoers.")}
+      ${bron("https://divebardb.com", "Divebar Database", "Een kaart van echte kroegen, door en voor liefhebbers. Van hen komt het idee om meteen mee te doen, zonder account.")}
+      ${bron("https://www.openstreetmap.org/copyright", "OpenStreetMap", "De kroegen en de kaart. © OpenStreetMap-bijdragers.")}
+      ${bron("https://www.cbs.nl", "CBS", "De wijken.")}
+    </ul>
+    <h3>Contact</h3>
+    <p><a class="mail" href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a></p>`;
 }
 
 // Meldingen over kroegen die niet kloppen, voor de beheerder: verkeerde plek, dubbel en gesloten. Bovenaan wat nog
@@ -2963,6 +2983,7 @@ body.addEventListener("click", (e) => {
   if (t.dataset.tekstWis !== undefined) return teksten.wis(t.dataset.tekstWis).then(() => draw());
   if (t.dataset.uitleg !== undefined) return toonUitleg();
   if (t.dataset.regels !== undefined) { state.pagina = "regels"; draw(); body.scrollTop = 0; return; }
+  if (t.dataset.over !== undefined) { state.pagina = "over"; draw(); body.scrollTop = 0; return; }
   if (t.dataset.sluitPagina !== undefined) { state.pagina = null; return draw(); }
 });
 

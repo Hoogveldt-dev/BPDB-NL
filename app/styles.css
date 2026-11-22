@@ -306,8 +306,8 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 .nr { width: 24px; height: 24px; border-radius: 50%; background: var(--blue); color: #fff; font: 600 13px/24px var(--f-ui); text-align: center; flex: none; }
 .veld { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
 .linkbtn { border: 0; background: none; color: var(--blue); padding: 0; font-weight: 500; }
-.privacy-regel { margin-top: 20px; }
-.privacy-regel a { color: var(--blue); font-weight: 500; text-decoration: none; }
+.voet-regel { margin-top: 20px; }
+.voet-regel a, .voet-regel .linkbtn { color: var(--blue); font-weight: 500; text-decoration: none; font-size: inherit; }
 .kaartfotos { display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 8px; }
 .kaartfoto { flex: none; width: 104px; }
 .kaartfoto > button:first-child { display: block; width: 100%; border: 0; background: none; padding: 0; text-align: left; color: inherit; }
@@ -442,6 +442,11 @@ li.row:nth-child(-n+3) .rank { color: var(--accent-text); }
 .regels b { font-weight: 600; white-space: nowrap; }
 .eigen-teksten .row-title { white-space: normal; font-size: 15px; }
 .eigen-teksten .row-sub { white-space: normal; }
+/* Over Bierkoers: credits als lijst met haarlijnen, de uitleg loopt door op meer regels */
+.over .row { text-decoration: none; }
+.over > li + li > .row::before { left: 0; }
+.over .row-sub { white-space: normal; margin-top: 2px; }
+a.mail { color: var(--blue); font-weight: 500; text-decoration: none; }
 
 /* Toegankelijkheid */
 :focus-visible { outline: 2.5px solid var(--blue); outline-offset: 2px; }
