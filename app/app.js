@@ -410,7 +410,8 @@ function setGuinness(aan) {
   state.limiet = 40;
   // Kleuren van de kaart en de mist lezen de nieuwe tinten opnieuw in
   mist.thema();
-  kaartBijwerken(); hud(); draw();
+  $("#legenda").hidden = state.modus !== "koers" || aan;
+  kaartBijwerken(); hud(); lichtkrant(); draw();
   if (aan && !zichtbareKroegen().length) toast("Nog geen kroeg met Guinness gemeld. Weet je er een? Meld het bij de kroeg.");
 }
 const aanbodVan = (kroegId) => state.aanbod.filter((a) => a.kroeg_id === kroegId);
@@ -620,7 +621,31 @@ async function laadKoers() {
 }
 
 // Lichtkrant bovenin: de Pilsindex en wat er net gebeurde. Tik op een koers om de kroeg te openen.
+// Lichtkrant in de Guinness-stand: de Guinness-index en de kroegen met Guinness, met de laatste prijsstap
+async function guinnessLichtkrant() {
+  const punten = await guinnessKoers();
+  if (!guinnessAan()) return;
+  const idx = indexVan(punten);
+  const items = [`<span class="tk idx"><b>GUINNESS</b>${idx ? `${euro(idx.nu)} <span class="zacht">per pint</span>` : `<span class="zacht">nog geen prijs</span>`}</span>`];
+  for (const { k, c } of state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => b.c.vastSinds - a.c.vastSinds)) {
+    const wat = c.recent ? deltaHtml(c.delta) : `<span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span>`;
+    items.push(`<button class="tk" data-kroeg="${k.id}" aria-label="${esc(k.naam)} ${euro(c.nu)}"><b>${codeVan(k.id)}</b>${euro(c.nu)} ${wat}</button>`);
+  }
+  const totaal = state.kroegen.length, met = state.kroegen.filter((k) => punten.has(k.id)).length;
+  if (totaal) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${met}/${totaal} <span class="zacht">met Guinness-prijs</span></span>`);
+  zetLichtkrant(items);
+}
+
+function zetLichtkrant(items) {
+  const een = items.join("");
+  const baan = $("#tickerBaan");
+  // Twee keer achter elkaar, zodat de lichtkrant naadloos doorloopt; de tweede is alleen decor
+  baan.innerHTML = `<div style="display:flex">${een}</div><div style="display:flex" aria-hidden="true" inert>${een}</div>`;
+  baan.style.setProperty("--duur", Math.max(25, items.length * 5) + "s");
+}
+
 function lichtkrant() {
+  if (guinnessAan()) return guinnessLichtkrant();
   const idx = state.koers.index;
   const s = state.stad;
   const items = [
@@ -643,11 +668,7 @@ function lichtkrant() {
   if (totaal) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${metPrijs}/${totaal} <span class="zacht">in kaart</span></span>`);
   if (totaal - metPrijs > 0) items.push(`<span class="tk"><span class="zacht">${totaal - metPrijs} kroegen zonder prijs</span></span>`);
   if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
-  const een = items.join("");
-  const baan = $("#tickerBaan");
-  // Twee keer achter elkaar, zodat de lichtkrant naadloos doorloopt; de tweede is alleen decor
-  baan.innerHTML = `<div style="display:flex">${een}</div><div style="display:flex" aria-hidden="true" inert>${een}</div>`;
-  baan.style.setProperty("--duur", Math.max(25, items.length * 5) + "s");
+  zetLichtkrant(items);
 }
 
 // ---------------------------------------------------------------------------
@@ -1140,7 +1161,8 @@ function zetRing(pct, sub, label, koers, delta, deltaPct) {
 function setModus(m) {
   state.modus = m;
   document.querySelectorAll("#modus button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.modus === m)));
-  $("#legenda").hidden = m !== "koers";
+  // De legenda (onder of boven de Pilsindex) hoort niet bij de Guinness-stand: daar zijn alle stippen groen
+  $("#legenda").hidden = m !== "koers" || guinnessAan();
   // In de koersstand staat de lijst op Goedkoopst
   if (m === "koers" && state.filter !== "goedkoop") { state.filter = "goedkoop"; if (state.tab === "kaart" && state.selected == null && !state.tocht && !bezigMetTypen()) draw(); }
   kaartBijwerken();
@@ -1288,19 +1310,20 @@ function detailView() {
     const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
     const uitleg = vandaag ? "Je bent hier vandaag ingecheckt."
       : d != null && d > INCHECK_M ? `Je bent ${meters(d)} hiervandaan; inchecken kan binnen ${INCHECK_M} m.`
-      : "Check in met de prijs van je pils.";
-    actie = `${k.open_melding_id && !vanMenukaart(k) ? `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>` : ""}
+      : guinnessAan() ? "Check in met de prijs van je Guinness." : "Check in met de prijs van je pils.";
+    actie = `${k.open_melding_id && !vanMenukaart(k) && !guinnessAan() ? `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>` : ""}
       <div class="btns"><button class="btn primary" data-form="hier">${vandaag ? "Prijs doorgeven" : "Inchecken"}</button></div>
       <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>
       <div class="small" style="margin-top:8px"><button type="button" class="linkbtn" data-kaartfoto>Foto van de kaart toevoegen</button>
         <input type="file" id="kaartFotoInvoer" accept="image/*" hidden></div>`;
   }
   return `<button class="back" data-back>‹ Terug</button>
-    <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
+    <div class="koerskop">${codeHtml(k.id, true)}${guinnessAan() ? "" : `<span class="badge ${v}">${VERSHEID[v]}</span>`}</div>
     <h2>${esc(k.naam)}</h2>
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
-      ${k.open_prijs_cent && vanMenukaart(k) ? `
+      ${guinnessAan() ? guinnessPrijsHtml(k)
+      : k.open_prijs_cent && vanMenukaart(k) ? `
         <div class="big-price">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
         <div class="muted small">Van de menukaart</div>`
@@ -1331,8 +1354,9 @@ function detailView() {
     <h3>Koersverloop <span class="muted">${guinnessAan() ? "Guinness per pint" : "per vaasje"}</span></h3>
     <div id="spark"></div>
     <h3>Geschiedenis</h3>
-    <div id="stamgast"></div>
-    <div id="tijdlijn"><div class="muted small">Laden…</div></div>
+    ${guinnessAan() ? `<ul class="timeline" id="guinnessGeschiedenis"><li class="check"><div class="t-meta">Laden…</div></li></ul>` : ""}
+    <div id="stamgast"${guinnessAan() ? " hidden" : ""}></div>
+    <div id="tijdlijn"${guinnessAan() ? " hidden" : ""}><div class="muted small">Laden…</div></div>
     <div id="sluiting"></div>`;
 }
 
@@ -1509,9 +1533,18 @@ function aanbodBlok(k) {
       <div class="aanbod-knoppen">${knoppen}</div>
     </div>
     ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${kanBijdragen() ? "" : "disabled"}>Prijs van een pint melden</button></div>`}
-    <ul class="timeline" id="guinnessGeschiedenis"></ul>`
+    ${guinnessAan() ? "" : `<ul class="timeline" id="guinnessGeschiedenis"></ul>`}`
     : `<div class="small muted">Nog niet bekend of ze hier Guinness tappen.</div>
     ${kanBijdragen() ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
+}
+
+// In de Guinness-stand staat bovenaan de kroegkaart de prijs van een pint Guinness, niet de pils
+function guinnessPrijsHtml(k) {
+  const g = soortIn(k.id, GUINNESS), pint = perPint(g);
+  if (!pint) return `<div class="big-price muted">€ ?</div><div class="muted" style="margin-top:6px">Nog geen prijs voor een pint Guinness.</div>`;
+  return `<div class="big-price">${euro(pint)}</div>
+    <div class="muted">Guinness van de tap · pint${g.volume_cl !== PINT ? ` (omgerekend van ${g.volume_cl} cl)` : ""}</div>
+    <div class="muted small">Gemeld door ${esc(g.door ?? "onbekend")} ${wanneer(g.gecontroleerd_op ?? g.op)}</div>`;
 }
 
 // Geschiedenis van Guinness bij een kroeg: een nieuwe prijs vervangt de oude (status vervangen), dus elke rij in
@@ -1530,12 +1563,15 @@ async function laadGuinness(id) {
       const wat = !a.prijs_cent ? "Gemeld: ze tappen Guinness"
         : vorig != null && vorig !== a.prijs_cent ? `Gewijzigd: ${euro(vorig)} → ${euro(a.prijs_cent)}` : `Gemeld: ${euro(a.prijs_cent)}`;
       if (a.prijs_cent && a.status !== "weg") vorig = a.prijs_cent;
-      const status = a.status === "vervangen" ? " (vervangen)" : a.status === "weg" ? " (afgekeurd)" : "";
+      // Een vervangen prijs spreekt voor zich: de regel erboven toont de wijziging
+      const status = a.status === "weg" ? " (afgekeurd)" : "";
       return `<li class="${a.status === "actief" ? "" : a.status === "weg" ? "weerlegd" : "vervangen"}"><div class="t-what">${wat}${status ? `<span>${status}</span>` : ""}</div>
         <div class="t-meta">${wanneer(a.op)} door ${esc(a.door?.naam ?? "onbekend")}${a.volume_cl ? ` · ${a.volume_cl} cl` : ""}</div></li>`;
     });
     // Alleen tonen als er iets te volgen is: meer dan de ene melding die er al boven staat
-    el.innerHTML = rijen.length > 1 ? items.reverse().join("") : "";
+    // In de Guinness-stand is dit de Geschiedenis; anders staat ze onder het Guinness-blok, alleen als er iets te volgen is
+    el.innerHTML = guinnessAan() ? (items.reverse().join("") || `<li class="check"><div class="t-meta">Nog geen Guinness gemeld.</div></li>`)
+      : rijen.length > 1 ? items.reverse().join("") : "";
   }
   if (guinnessAan() && $("#spark")) {
     if (!metPrijs.length) { $("#spark").innerHTML = `<div class="muted small">Nog geen Guinness-prijs.</div>`; return; }
@@ -1673,7 +1709,7 @@ function tijdlijnItem(g) {
   const wat = g.soort === "eerst" ? `Eerst gemeld: ${euro(g.prijs_cent)}`
     : g.soort === "wijziging" ? `Gewijzigd: ${euro(g.vorige_prijs_cent)} → ${euro(g.prijs_cent)}`
     : `Gecontroleerd: klopt nog`;
-  const status = g.status === "wacht" ? " (wacht op bevestiging)" : g.status === "weerlegd" ? " (weerlegd)" : g.status === "vervangen" ? " (vervangen)" : "";
+  const status = g.status === "wacht" ? " (wacht op bevestiging)" : g.status === "weerlegd" ? " (weerlegd)" : "";
   const meta = [`${wanneer(g.op)} door ${esc(g.door ?? "onbekend")}`];
   if (g.soort !== "check") meta.push(`${esc(g.merk)} ${g.volume_cl} cl`);
   if (g.bevestigd_door.length) meta.push(`bevestigd door ${g.bevestigd_door.map(esc).join(", ")}`);
@@ -2007,14 +2043,14 @@ async function beursView() {
     const verschil = g.soort === "wijziging" && g.vorige_prijs_cent != null ? g.prijs_cent - g.vorige_prijs_cent : null;
     return `<li><button class="row" data-kroeg="${g.kroeg_id}">
       <span class="row-main"><span class="row-title">${codeHtml(g.kroeg_id)}${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "ontdekte" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}</span>
-      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : g.status === "vervangen" ? " · vervangen" : ""}</span></span>
+      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span>
       ${g.soort !== "check" && per25 ? `<span class="price">${euro(g.prijs_cent)}${verschil ? `<small class="delta ${richting(verschil)}">${KOERS_TAAL[richting(verschil)]} ${bedrag(verschil)}</small>` : `<small>${g.volume_cl} cl</small>`}</span>` : ""}</button></li>`;
   };
 
   // Een Guinness-melding: een nieuwe prijs vervangt de oude (status vervangen), "weg" is afgekeurd
   const guinnessMelding = (a) => `<li><button class="row" data-kroeg="${a.kroeg_id}">
       <span class="row-main"><span class="row-title">${codeHtml(a.kroeg_id)}${esc(a.door?.naam ?? "Iemand")} meldde Guinness bij ${esc(a.kroegen?.naam ?? "")}</span>
-      <span class="row-sub">${wanneer(a.op)}${a.status === "vervangen" ? " · vervangen" : a.status === "weg" ? " · afgekeurd" : ""}</span></span>
+      <span class="row-sub">${wanneer(a.op)}${a.status === "weg" ? " · afgekeurd" : ""}</span></span>
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : ""}</button></li>`;
 
   body.innerHTML = `
