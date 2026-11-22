@@ -11,11 +11,19 @@ check('bericht: vast onderwerp', bug.onderwerp === 'Bierkoers: nieuw bericht', b
 check('bericht: naam, tekst, schermgrootte en browser staan erin', ['dorstige-zebra stuurde een bericht', 'De kaart blijft wit <b>na</b> inchecken', 'Schermgrootte: 390x844', 'Browser: Testbrowser'].every((s) => bug.tekst.includes(s)), bug.tekst);
 check('bug: tijd in Nederlandse tijd', bug.tekst.includes('10:50'), bug.tekst);
 check('bericht: wijst naar Beheer, Berichten', bug.tekst.includes('Ik, Beheer, Berichten'), bug.tekst);
-check('bericht met e-mailadres: antwoorden gaat via de mail', bug.tekst.includes('Beantwoord deze mail'), bug.tekst);
+check('bericht: antwoorden kan in de app', bug.tekst.includes('Antwoord in de app'), bug.tekst);
+check('bericht met e-mailadres: antwoorden kan ook via de mail', bug.tekst.includes('Beantwoord je deze mail'), bug.tekst);
 
 const kaal = maakMail({ soort: 'bug', tekst: 'Alleen een tekst', scherm: null, apparaat: null, op: '2026-11-21T09:50:00Z', naam: null });
 check('bug zonder gegevens: noemt "Een speler" en geen lege regels achter elkaar', kaal.tekst.startsWith('Een speler stuurde') && !kaal.tekst.includes('\n\n\n') && !kaal.tekst.includes('Browser:'), kaal.tekst);
-check('bericht zonder e-mailadres: zegt dat antwoorden niet kan', kaal.tekst.includes('antwoorden kan niet') && !kaal.tekst.includes('Beantwoord deze mail'), kaal.tekst);
+check('bericht zonder e-mailadres: het antwoord staat alleen in de app', kaal.tekst.includes('alleen in de app') && !kaal.tekst.includes('Beantwoord je deze mail'), kaal.tekst);
+
+const aanSpeler = maakMail({ soort: 'antwoord', tekst: 'Goed idee, we kijken ernaar.', op: '2026-11-22T09:50:00Z', van_beheer: true, naam: 'Eva', bericht: 'Kunnen jullie\nIJwit toevoegen?' });
+check('antwoord aan de speler: eigen onderwerp', aanSpeler.onderwerp === 'Bierkoers: antwoord op je bericht', aanSpeler.onderwerp);
+check('antwoord aan de speler: antwoord, geciteerd bericht en de weg in de app', aanSpeler.tekst.includes('Goed idee, we kijken ernaar.') && aanSpeler.tekst.includes('> Kunnen jullie\n> IJwit toevoegen?') && aanSpeler.tekst.includes('Ik, Jouw berichten'), aanSpeler.tekst);
+check('antwoord aan de speler: noemt de naam van de beheerder niet', !aanSpeler.tekst.includes('Eva'), aanSpeler.tekst);
+const aanBeheer = maakMail({ soort: 'antwoord', tekst: 'Dank! En Hertog Jan?', op: '2026-11-22T09:50:00Z', van_beheer: false, naam: 'dorstige-zebra', bericht: 'Kunnen jullie IJwit toevoegen?' });
+check('reactie van de speler: naar de beheerder met naam en de weg in de app', aanBeheer.onderwerp === 'Bierkoers: nieuw antwoord in een gesprek' && aanBeheer.tekst.startsWith('dorstige-zebra antwoordde') && aanBeheer.tekst.includes('Ik, Beheer, Berichten'), aanBeheer.tekst);
 
 const een = maakMail({ soort: 'stad', stad: 'Arnhem', op: '2026-11-21T09:50:00Z', naam: 'Rik', spelers: 1 });
 check('stad: onderwerp met de stad', een.onderwerp === 'Bierkoers: stad aangevraagd, Arnhem', een.onderwerp);
@@ -23,7 +31,7 @@ check('stad: een speler', een.tekst.includes('Nu 1 speler vraagt erom.'), een.te
 const meer = maakMail({ soort: 'stad', stad: 'Arnhem', op: '2026-11-21T09:50:00Z', naam: 'Rik', spelers: 3 });
 check('stad: meer spelers', meer.tekst.includes('Nu 3 spelers vragen erom.'), meer.tekst);
 check('stad: wijst naar Beheer, Stadsaanvragen', meer.tekst.includes('Ik, Beheer, Stadsaanvragen'), meer.tekst);
-check('geen gedachtestreepjes', !(bug.tekst + kaal.tekst + een.tekst + meer.tekst).includes('—'));
+check('geen gedachtestreepjes', !(bug.tekst + kaal.tekst + een.tekst + meer.tekst + aanSpeler.tekst + aanBeheer.tekst).includes('—'));
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);
