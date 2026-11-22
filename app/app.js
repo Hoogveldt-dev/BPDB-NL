@@ -1300,7 +1300,8 @@ function detailView() {
     <h2>${esc(k.naam)}</h2>
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
-      ${k.open_prijs_cent && vanMenukaart(k) ? `
+      ${guinnessAan() ? guinnessPrijsHtml(k)
+      : k.open_prijs_cent && vanMenukaart(k) ? `
         <div class="big-price">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
         <div class="muted small">Van de menukaart</div>`
@@ -1513,6 +1514,15 @@ function aanbodBlok(k) {
     ${guinnessAan() ? "" : `<ul class="timeline" id="guinnessGeschiedenis"></ul>`}`
     : `<div class="small muted">Nog niet bekend of ze hier Guinness tappen.</div>
     ${kanBijdragen() ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
+}
+
+// In de Guinness-stand staat bovenaan de kroegkaart de prijs van een pint Guinness, niet de pils
+function guinnessPrijsHtml(k) {
+  const g = soortIn(k.id, GUINNESS), pint = perPint(g);
+  if (!pint) return `<div class="big-price muted">€ ?</div><div class="muted" style="margin-top:6px">Nog geen prijs voor een pint Guinness.</div>`;
+  return `<div class="big-price">${euro(pint)}</div>
+    <div class="muted">Guinness van de tap · pint${g.volume_cl !== PINT ? ` (omgerekend van ${g.volume_cl} cl)` : ""}</div>
+    <div class="muted small">Gemeld door ${esc(g.door ?? "onbekend")} ${wanneer(g.gecontroleerd_op ?? g.op)}</div>`;
 }
 
 // Geschiedenis van Guinness bij een kroeg: een nieuwe prijs vervangt de oude (status vervangen), dus elke rij in
