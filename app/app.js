@@ -1331,8 +1331,9 @@ function detailView() {
     <h3>Koersverloop <span class="muted">${guinnessAan() ? "Guinness per pint" : "per vaasje"}</span></h3>
     <div id="spark"></div>
     <h3>Geschiedenis</h3>
-    <div id="stamgast"></div>
-    <div id="tijdlijn"><div class="muted small">Laden…</div></div>
+    ${guinnessAan() ? `<ul class="timeline" id="guinnessGeschiedenis"><li class="check"><div class="t-meta">Laden…</div></li></ul>` : ""}
+    <div id="stamgast"${guinnessAan() ? " hidden" : ""}></div>
+    <div id="tijdlijn"${guinnessAan() ? " hidden" : ""}><div class="muted small">Laden…</div></div>
     <div id="sluiting"></div>`;
 }
 
@@ -1509,7 +1510,7 @@ function aanbodBlok(k) {
       <div class="aanbod-knoppen">${knoppen}</div>
     </div>
     ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${kanBijdragen() ? "" : "disabled"}>Prijs van een pint melden</button></div>`}
-    <ul class="timeline" id="guinnessGeschiedenis"></ul>`
+    ${guinnessAan() ? "" : `<ul class="timeline" id="guinnessGeschiedenis"></ul>`}`
     : `<div class="small muted">Nog niet bekend of ze hier Guinness tappen.</div>
     ${kanBijdragen() ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
 }
@@ -1536,7 +1537,9 @@ async function laadGuinness(id) {
         <div class="t-meta">${wanneer(a.op)} door ${esc(a.door?.naam ?? "onbekend")}${a.volume_cl ? ` · ${a.volume_cl} cl` : ""}</div></li>`;
     });
     // Alleen tonen als er iets te volgen is: meer dan de ene melding die er al boven staat
-    el.innerHTML = rijen.length > 1 ? items.reverse().join("") : "";
+    // In de Guinness-stand is dit de Geschiedenis; anders staat ze onder het Guinness-blok, alleen als er iets te volgen is
+    el.innerHTML = guinnessAan() ? (items.reverse().join("") || `<li class="check"><div class="t-meta">Nog geen Guinness gemeld.</div></li>`)
+      : rijen.length > 1 ? items.reverse().join("") : "";
   }
   if (guinnessAan() && $("#spark")) {
     if (!metPrijs.length) { $("#spark").innerHTML = `<div class="muted small">Nog geen Guinness-prijs.</div>`; return; }
