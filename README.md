@@ -1,6 +1,6 @@
 # BPDB-NL
 
-Beer Price Database voor Nederland: een door gebruikers gevulde kaart met bierprijzen per kroeg. Iedereen speelt samen de hele stad vrij en houdt de prijzen vers. Pilotstad: Nijmegen. Guindex (guindex.ie) is het conceptvoorbeeld; het idee om meteen mee te doen zonder account komt van Divebar Database (divebardb.com).
+Beer Price Database voor Nederland: een door gebruikers gevulde kaart met bierprijzen per kroeg. Iedereen speelt samen de hele stad vrij en houdt de prijzen vers. Pilotstad: Nijmegen. Guindex (guindex.ie) is het conceptvoorbeeld.
 
 ## Inhoud
 
