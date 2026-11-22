@@ -325,6 +325,7 @@ const state = {
   inbox: null, // alle berichten, alleen voor een beheerder (Beheer, Berichten); undefined als laden mislukte
   inboxFilter: "open", // Beheer, Berichten: "open" of "afgehandeld"
   bericht: null, // id van het geopende gesprek (state.pagina "bericht")
+  paginaTerug: null, // waar Terug naartoe gaat vanuit een gesprek: Beheer of Ik
   selected: null,
   form: null,
   filter: "alles",
@@ -396,8 +397,6 @@ function toonPrijsTekst(k) {
 function glasTekst(merk, volume, per25) {
   return `${esc(merk)} · ${volume === VAASJE ? "vaasje (25 cl)" : `${volume} cl, omgerekend ${euro(per25)} per vaasje`}`;
 }
-
-const soortNaam = (code) => state.biersoorten.find((b) => b.code === code)?.naam ?? code;
 
 // Voorlopig is pils het enige spel. Ander bier staat uit, met een uitzondering: Guinness, als extraatje.
 // In de Guinness-stand (state.soort = "guinness") kleurt de app groen, staan alleen kroegen met Guinness op
@@ -1195,6 +1194,7 @@ function draw() {
   else if (state.pagina === "regels") html = regelsView();
   else if (state.pagina === "over") html = overView();
   else if (state.pagina === "bericht") html = berichtView();
+  else if (state.pagina === "beheer") html = state.profiel?.is_beheerder ? beheerView() : ikView();
   else if (state.tocht) html = tochtView();
   else if (state.tab === "kaart") html = lijstView();
   else if (state.tab === "beurs") html = '<div class="empty">Laden…</div>';
@@ -1205,7 +1205,7 @@ function draw() {
   if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); laadKaartFotos(state.selected); laadGuinness(state.selected); }
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
-  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerSteden(); }
+  else if (state.selected == null && state.pagina === "beheer" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerSteden(); }
   if (state.selected == null && !state.pagina && state.tab === "ik" && state.sessie) laadBadges();
   // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
   $("#tabIk").textContent = state.profiel && !anoniem() && state.profiel.naam_vast ? state.profiel.naam : "Ik";
@@ -2300,6 +2300,8 @@ function ikView() {
       </div>
       <div class="small muted" style="margin-top:10px">${p?.ontdekt ?? 0} ${(p?.ontdekt ?? 0) === 1 ? "kroeg" : "kroegen"} ontdekt. Punten krijg je voor melden en controleren, nooit voor drinken.</div>
     </div>
+    ${p?.is_beheerder ? `<ul class="list"><li><button class="row" data-pagina="beheer"><span class="row-main"><span class="row-title">Beheer</span>
+      <span class="row-sub">Berichten, meldingen, steden en teksten</span></span><span class="nieuw-label" id="beheerTeller">${inboxTeller()}</span><span class="muted">›</span></button></li></ul>` : ""}
     ${p && !p.naam_vast && !anoniem() ? `<form class="form" id="naamForm"><label>Kies je spelersnaam</label><input name="naam" minlength="2" maxlength="24" placeholder="Zichtbaar op de ranglijst" required>
       <div class="small muted">Je speelt nu als ${esc(p.naam)}. Je kiest je naam een keer; daarna staat hij vast.</div>
       <div class="btns"><button class="btn primary" type="submit">Naam opslaan</button></div></form>` : ""}
@@ -2312,15 +2314,6 @@ function ikView() {
     ${stadKeuzeBlok()}
     ${stadBlok()}
     ${taalBlok()}
-    ${p?.is_beheerder ? `<h3>Beheer</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${esc(stadNaam)}.</div>
-      <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
-      <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
-      <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
-      <h3>Berichten<span class="muted" id="inboxTeller">${inboxTeller()}</span></h3><div class="card"><div id="beheerBugs">${inboxHtml()}</div></div>
-      <h3>Teksten</h3><div class="card"><div class="small muted">Pas elke tekst in de app aan. Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen.</div>
-      <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
-      ${teksten.lijst().length ? `<ul class="list eigen-teksten" data-geen-teksten>${teksten.lijst().map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
-        <button type="button" class="mini" data-tekst-wis="${esc(sleutel)}">Standaard</button></li>`).join("")}</ul>` : `<div class="small muted" style="margin-top:8px">Nog geen eigen teksten.</div>`}</div>` : ""}
     <details class="uitklap" data-onthoud="gegevens"${uitgeklapt("gegevens")}><summary><span class="uitklap-kop">Jouw gegevens</span></summary>
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
       Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p></details>
@@ -2434,8 +2427,7 @@ function vulBerichten() {
   if (mijn) mijn.innerHTML = mijnBerichtenHtml();
   const inbox = $("#beheerBugs");
   if (inbox) inbox.innerHTML = inboxHtml();
-  const teller = $("#inboxTeller");
-  if (teller) teller.textContent = inboxTeller();
+  for (const id of ["#inboxTeller", "#beheerTeller"]) { const el = $(id); if (el) el.textContent = inboxTeller(); }
 }
 
 function tabStip() {
@@ -2575,8 +2567,7 @@ async function zetBerichtStatus(knop, status) {
   await laadBerichten();
   if (status === "afgehandeld") {
     toast("Afgehandeld");
-    state.pagina = null; state.bericht = null;
-    return draw();
+    return sluitPagina();
   }
   toast("Weer open");
   vulBerichten();
@@ -2700,6 +2691,26 @@ function overView() {
     </ul>
     <h3>Contact</h3>
     <p><a class="mail" href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a></p>`;
+}
+
+// Beheer: een eigen pagina, bereikbaar via de regel Beheer onder Ik. Bovenaan wat aandacht vraagt (berichten,
+// meldingen over kroegen, stadsaanvragen), daaronder het gereedschap (kroegen importeren, teksten aanpassen).
+// De aangepaste teksten staan ingeklapt: aanpassen en terugzetten gaat in de bewerkstand zelf; de lijst is
+// voor een overzicht en voor teksten die niet meer in de app staan.
+function beheerView() {
+  const eigen = teksten.lijst();
+  return `<button class="back" data-sluit-pagina>‹ Terug</button>
+    <h2>Beheer</h2>
+    <h3>Berichten<span class="muted" id="inboxTeller">${inboxTeller()}</span></h3><div class="card"><div id="beheerBugs">${inboxHtml()}</div></div>
+    <h3>Meldingen over kroegen</h3><div class="card"><div id="beheerMeldingen" class="small muted">Meldingen laden…</div></div>
+    <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
+    <h3>Kroegen importeren</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${esc(stadNaam)}.</div>
+      <div class="btns"><button class="btn" data-import>Kroegen en wijken importeren</button></div></div>
+    <h3>Teksten</h3><div class="card"><div class="small muted">Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen. In de bewerkstand zet je een tekst ook terug.</div>
+      <div class="btns"><button class="btn" data-teksten-bewerken>Teksten aanpassen</button></div>
+      ${eigen.length ? `<details class="klopt-niet" data-onthoud="eigen-teksten"${uitgeklapt("eigen-teksten")}><summary>Aangepaste teksten (${eigen.length})</summary>
+        <ul class="list eigen-teksten" data-geen-teksten>${eigen.map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
+        <button type="button" class="mini" data-tekst-wis="${esc(sleutel)}">Standaard</button></li>`).join("")}</ul></details>` : ""}</div>`;
 }
 
 // Meldingen over kroegen die niet kloppen, voor de beheerder: verkeerde plek, dubbel en gesloten. Bovenaan wat nog
@@ -2966,9 +2977,16 @@ function sluitKroeg() {
   kaartBijwerken(); draw();
 }
 
+// Terug van een losse pagina (regels, over, beheer, een gesprek). Uit een gesprek ga je terug naar waar je het opende.
+function sluitPagina() {
+  state.pagina = state.pagina === "bericht" ? state.paginaTerug : null;
+  state.paginaTerug = null; state.bericht = null;
+  draw();
+}
+
 function setTab(t) {
   if (t !== "ik") state.terugNaar = null;
-  state.pagina = null;
+  state.pagina = null; state.paginaTerug = null;
   state.tab = t; state.selected = null; state.form = null; state.aanbodForm = null; state.tijdenForm = null; state.info = null; state.tocht = null;
   document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === t)));
   kaartBijwerken(); draw(); body.scrollTop = 0;
@@ -3281,8 +3299,9 @@ body.addEventListener("click", (e) => {
   if (t.dataset.uitleg !== undefined) return toonUitleg();
   if (t.dataset.regels !== undefined) { state.pagina = "regels"; draw(); body.scrollTop = 0; return; }
   if (t.dataset.over !== undefined) { state.pagina = "over"; draw(); body.scrollTop = 0; return; }
-  if (t.dataset.sluitPagina !== undefined) { state.pagina = null; state.bericht = null; return draw(); }
-  if (t.dataset.bericht) { state.pagina = "bericht"; state.bericht = Number(t.dataset.bericht); draw(); body.scrollTop = 0; return; }
+  if (t.dataset.sluitPagina !== undefined) return sluitPagina();
+  if (t.dataset.pagina) { state.pagina = t.dataset.pagina; draw(); body.scrollTop = 0; if (t.dataset.pagina === "beheer") laadBerichten().then(vulBerichten); return; }
+  if (t.dataset.bericht) { state.paginaTerug = state.pagina; state.pagina = "bericht"; state.bericht = Number(t.dataset.bericht); draw(); body.scrollTop = 0; return; }
   if (t.dataset.inbox) { state.inboxFilter = t.dataset.inbox; return vulBerichten(); }
   if (t.dataset.berichtStatus) return zetBerichtStatus(t, t.dataset.berichtStatus);
 });
