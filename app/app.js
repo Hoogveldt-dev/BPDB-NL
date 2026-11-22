@@ -1954,13 +1954,14 @@ async function beursView() {
         ${goedkoper.map((x) => mover(x, maandKort(x.c.vastSinds), deltaHtml(x.c.delta))).join("")}</div>` : ""}`
     : "";
 
-  // Wijken als sectoren: de mediaan per wijk naast de Pilsindex
+  // Wijken als sectoren: de mediaan per wijk naast de Pilsindex (ook in de Guinness-stand: de wijken gaan over pils)
+  const pils = state.koers.index;
   const sector = (w) => {
     const m = mediaan(state.kroegen.filter((k) => k.wijk === w.naam).map((k) => koersVan(k.id)?.nu).filter(Boolean));
     const wi = inKaart(state.kroegen.filter((k) => k.wijk === w.naam));
     return `<button type="button" class="sector" data-wijk="${esc(w.naam)}" aria-label="${esc(w.naam)} op de kaart tonen">
       <div class="t"><b>${esc(w.naam)}</b><span>${m ? `<span class="price">${euro(m)}</span>` : `<span class="small muted">geen koers</span>`}</span></div>
-      <div class="t small muted"><span>${wi} van ${w.kroegen} in kaart</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
+      <div class="t small muted"><span>${wi} van ${w.kroegen} in kaart</span><span>${m && pils ? deltaHtml(m - pils.nu) + " t.o.v. index" : ""}</span></div>
       <div class="bar"><span style="width:${w.kroegen ? (wi / w.kroegen) * 100 : 0}%"></span></div></button>`;
   };
 
