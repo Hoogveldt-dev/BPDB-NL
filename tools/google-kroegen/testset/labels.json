@@ -1,5 +1,5 @@
 {
-  "uitleg": "Testset voor de menukaartpijplijn. Kjell controleert elk label met de hand en zet dan gecontroleerd op true. Velden: kaart = staat er een kaart of krijtbord op; bierprijzen = staan er bierprijzen die je kunt lezen; vaasje = verwachte prijs in euro van de goedkoopste pils van de tap in 25 cl, of null; datum = verwachte datum (EXIF-opname, anders upload, of de datum op de kaart). bron google: foto uit Google Maps (place_id en foto_id nodig, haal-fotos.mjs haalt hem op); bron bestand: zet de afbeelding zelf in fotos/<sleutel>/s0.jpg. De foto's zelf staan nooit in Git.",
+  "uitleg": "Testset voor de menukaartpijplijn. Een mens controleert elk label met de hand en zet dan gecontroleerd op true. Velden: kaart = staat er een kaart of krijtbord op; bierprijzen = staan er bierprijzen die je kunt lezen; vaasje = verwachte prijs in euro van de goedkoopste pils van de tap in 25 cl, of null; datum = verwachte datum (EXIF-opname, anders upload, of de datum op de kaart). bron google: foto uit Google Maps (place_id en foto_id nodig, haal-fotos.mjs haalt hem op); bron bestand: zet de afbeelding zelf in fotos/<sleutel>/s0.jpg. De foto's zelf staan nooit in Git.",
   "fotos": [
     {
       "sleutel": "jan-kaart",

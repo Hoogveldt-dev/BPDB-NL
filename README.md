@@ -1,6 +1,6 @@
 # BPDB-NL
 
-Beer Price Database voor Nederland: een door gebruikers gevulde kaart met bierprijzen per kroeg. Iedereen speelt samen de hele stad vrij en houdt de prijzen vers. Pilotstad: Nijmegen. Guindex (guindex.ie) is het conceptvoorbeeld.
+Beer Price Database voor Nederland: een door gebruikers gevulde kaart met bierprijzen per kroeg. Iedereen speelt samen de hele stad vrij en houdt de prijzen vers. Pilotstad: Nijmegen. Guindex (guindex.ie) is het conceptvoorbeeld; het idee om meteen mee te doen zonder account komt van Divebar Database (divebardb.com).
 
 ## Inhoud
 
@@ -34,7 +34,7 @@ De app heeft geen build nodig. Lokaal:
 python3 -m http.server 8765 --directory app
 ```
 
-Open daarna http://localhost:8765. Eerst moet de backend klaarstaan: zie [`supabase/README.md`](supabase/README.md). De app draait online op https://bpdb-nl.pages.dev.
+Open daarna http://localhost:8765. Eerst moet de backend klaarstaan: zie [`supabase/README.md`](supabase/README.md). De app draait online op https://bierkoers.nl.
 
 ## Controleren
 

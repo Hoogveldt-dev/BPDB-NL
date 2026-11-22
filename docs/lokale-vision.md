@@ -1,6 +1,6 @@
 # Foto's van cafés doorzoeken met lokale vision-modellen
 
-Kjell draait vision-modellen op zijn eigen computer in **LM Studio**. Ze kosten niets per foto en hebben geen limiet. Daarmee kunnen we alle foto's van alle kroegen doorzoeken in plaats van een handvol per kroeg.
+De vision-modellen draaien op een eigen computer in **LM Studio**. Ze kosten niets per foto en hebben geen limiet. Daarmee kunnen we alle foto's van alle kroegen doorzoeken in plaats van een handvol per kroeg.
 
 Waar dit voor is: de JAN-methode (`docs/menukaartprijzen.md`), dus menukaartfoto's in Google Maps vinden, lezen en dateren. De uitkomst blijft een **menukaartprijs**: een hint bij de kroeg, met de mist erover. Menukaartprijzen tellen mee in de koers en de Pilsindex, maar zijn geen melding: ze staan niet in "Laatste meldingen" en niet in de activiteit van de lichtkrant.
 
@@ -26,7 +26,7 @@ Llama 3.2 Vision staat niet meer in de standaardinstelling: het is niet gedownlo
 | 3. Lezen: alle bieren met maat en prijs, met nadenken, temperatuur 0 | lezer (`LOKAAL_LEZER`) | `qwen/qwen3.5-9b` | 1600 px |
 | 4. Kiezen: goedkoopste pils van de tap in 25 cl | geen model (`kiesVaasje`) | | |
 | 5. Tweede mening: staat deze prijs echt op de kaart? | kijker (`LOKAAL_KIJKER`) | `google/gemma-4-e4b` | 1600 px |
-| 6. Twijfels nakijken | Claude, of Kjell | | |
+| 6. Twijfels nakijken | Claude, of de beheerder | | |
 
 Zegt de tweede mening geen duidelijk "ja", of ziet het model een andere prijs, dan gaat de prijs naar `twijfels` in de uitvoer en niet naar de import. Liever geen prijs dan een verkeerde.
 
@@ -67,7 +67,7 @@ node menufotos.mjs --kroegen google-kroegen-nijmegen.json --volledig --max-fotos
 - De lokale modellen zijn de standaard (sinds 10 november 2026); `--lokaal` hoeft niet meer. `--extern` gebruikt de betaalde DeepSeek, als reserve als LM Studio niet draait. Foto's ophalen bij Google kan alleen vanaf de thuisverbinding.
 - `--volledig`: niet stoppen bij de eerste prijs, maar alle foto's bekijken. Zo vinden we de nieuwste kaart.
 - De uitvoer heeft per kroeg `prijs` (beide modellen eens) en `twijfels` (nakijken).
-- Importeren gaat met `--naar-supabase` en de `service_role`-sleutel in `SUPABASE_SERVICE_ROLE_KEY`. Die sleutel staat alleen op de computer van Kjell, nooit in Git of in een chat.
+- Importeren gaat met `--naar-supabase` en de `service_role`-sleutel in `SUPABASE_SERVICE_ROLE_KEY`. Die sleutel staat alleen op de eigen computer, nooit in Git of in een chat.
 
 Een onbeperkt model betekent niet dat Google onbeperkt is. De spelregels uit `docs/menukaartprijzen.md` blijven gelden: een kroeg tegelijk, ongeveer 3 seconden tussen verzoeken, een run per paar maanden, en bij een CAPTCHA stoppen.
 
@@ -104,17 +104,17 @@ Voor de lezer tellen de regels `controleren`, `lezen` en `kiezen`, voor de kijke
 | kijker Gemma 4 E4B | | | | | |
 | kijker Qwen2.5-VL 7B | | | | | |
 
-Daarna een proef op kroegen waarvan we de prijs al weten (de menukaartprijzen in de database, zie hieronder): noteren hoeveel prijzen lokaal gelijk uitkomen, hoeveel verschillen en hoeveel twijfels er zijn. De vergelijking met DeepSeek laten we vallen (besluit van Kjell, 10 november 2026): het doel is zonder betaalde modellen te werken.
+Daarna een proef op kroegen waarvan we de prijs al weten (de menukaartprijzen in de database, zie hieronder): noteren hoeveel prijzen lokaal gelijk uitkomen, hoeveel verschillen en hoeveel twijfels er zijn. De vergelijking met DeepSeek laten we vallen (besluit van 10 november 2026): het doel is zonder betaalde modellen te werken.
 
 ## Hoe Claude meewerkt
 
-De lokale modellen draaien op de computer van Kjell; een cloudsessie van Claude kan `localhost` daar niet bereiken. Er zijn drie manieren:
+De lokale modellen draaien op de eigen computer; een cloudsessie van Claude kan `localhost` daar niet bereiken. Er zijn drie manieren:
 
 1. **Claude Code op de eigen computer (aanbevolen).** Open de repo in de Claude-app op de computer, of start `claude` in een terminal. Die sessie kan LM Studio op `localhost` aanroepen, de tool en de testset draaien, de twijfels nakijken en de import klaarzetten. Zo blijft alles op de eigen computer.
 2. **Remote Control vanuit een cloudsessie.** In de Claude-app op de computer: Instellingen, Claude Code, Remote Control, en daar de map van de repo delen. Een cloudsessie kan dan opdrachten op de computer uitvoeren. Op 9 november 2026 stond er nog geen map klaar.
 3. **Niet doen: de server van LM Studio of Ollama openzetten naar internet** (met een tunnel of door de poort open te zetten). Er zit geen wachtwoord op; iedereen die het adres vindt, gebruikt dan de videokaart en kan de modellen wisselen.
 
-Werkverdeling: de lokale modellen doen het grote werk (duizenden foto's). Claude kijkt alleen de twijfels na (meestal een paar per stad), vergelijkt ze met de foto en zet de rijen voor `importeer_menuprijzen` klaar. Kjell importeert.
+Werkverdeling: de lokale modellen doen het grote werk (duizenden foto's). Claude kijkt alleen de twijfels na (meestal een paar per stad), vergelijkt ze met de foto en zet de rijen voor `importeer_menuprijzen` klaar. De beheerder importeert.
 
 ## Eerst meten
 
