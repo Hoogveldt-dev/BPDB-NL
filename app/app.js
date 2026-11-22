@@ -1530,7 +1530,8 @@ async function laadGuinness(id) {
       const wat = !a.prijs_cent ? "Gemeld: ze tappen Guinness"
         : vorig != null && vorig !== a.prijs_cent ? `Gewijzigd: ${euro(vorig)} → ${euro(a.prijs_cent)}` : `Gemeld: ${euro(a.prijs_cent)}`;
       if (a.prijs_cent && a.status !== "weg") vorig = a.prijs_cent;
-      const status = a.status === "vervangen" ? " (vervangen)" : a.status === "weg" ? " (afgekeurd)" : "";
+      // Een vervangen prijs spreekt voor zich: de regel erboven toont de wijziging
+      const status = a.status === "weg" ? " (afgekeurd)" : "";
       return `<li class="${a.status === "actief" ? "" : a.status === "weg" ? "weerlegd" : "vervangen"}"><div class="t-what">${wat}${status ? `<span>${status}</span>` : ""}</div>
         <div class="t-meta">${wanneer(a.op)} door ${esc(a.door?.naam ?? "onbekend")}${a.volume_cl ? ` · ${a.volume_cl} cl` : ""}</div></li>`;
     });
