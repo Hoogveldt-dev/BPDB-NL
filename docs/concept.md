@@ -151,7 +151,7 @@ Punten worden meteen uitgekeerd, bij melden en bij bevestigen. Wordt een melding
 - **Waarom voorlopig:** de regel is nog niet definitief. Punten om op terug te komen: of de stappen goed voelen, of spelers met een hoge score bang worden om te melden, of de drempel van 20 en 5 klopt, en of het percentage beter iets anders kan tonen.
 - Een prijs is **bevestigd** als een andere speler hem bevestigt wanneer de melder een betrouwbaarheid boven 90% heeft, en anders als twee andere spelers hem bevestigen. Het oordeel van een speler boven 90% telt dubbel. Niemand wordt bevestigd zonder dat een andere speler ernaar gekeken heeft.
 - Een melding die nog op bevestiging wacht, wordt als meest recente prijs getoond (met een ? erachter), samen met de laatst bevestigde prijs. Het spel zelf (vrijspelen, punten, ranglijst, versheid) telt alleen bevestigde prijzen.
-- **Uitschieters** (ver van de mediaan voor dat merk en volume) hebben altijd twee bevestigingen nodig.
+- **Uitschieters** (ver van de mediaan van de stad, of ver van de vorige prijs van de kroeg) hebben altijd twee bevestigingen nodig, staan tot dan niet op de kaart en leveren pas na bevestiging punten op (zie `supabase/README.md`).
 - Beheerders zien alleen geschillen en meldingen.
 
 ### 2.7 Wat we niet doen

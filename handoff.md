@@ -13,8 +13,8 @@ Stand van 22 november 2026, voor de volgende sessie. Lees eerst `CLAUDE.md` (wer
 
 - `npm run check` en `npm run test:db` (`database.test.mjs` en `melding-mail.test.mjs`). De tools: `cd tools/google-kroegen && node --test test/*.test.mjs` (met `jpeg-js` en `tesseract.js` geïnstalleerd, zie punt 4).
 - Geen CI behalve de build van Cloudflare Pages; die geeft per pull request een preview.
-- Service worker `CACHE`: `bierkoers-v60`.
-- Laatste migratie: `20261122120000_berichten`.
+- Service worker `CACHE`: `bierkoers-v62`.
+- Laatste migratie: `20261122150000_uitschieters`.
 
 ## 3. Open punten in het ontwerp
 
