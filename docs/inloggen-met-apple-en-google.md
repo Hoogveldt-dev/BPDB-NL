@@ -12,12 +12,11 @@ https://yzaootlrhxzyxtvacrot.supabase.co/auth/v1/callback
 
 | | Zonder account | Anonieme speler |
 | --- | --- | --- |
-| Google | Hele pagina naar Google en terug; nieuw of bestaand account | Koppelt Google aan het huidige account; punten blijven |
+| Google | Hele pagina naar Google en terug; bestaand account, of een nieuw als er nog geen is | Hetzelfde; daarna gaan de bijdragen van de anonieme speler naar dat account |
 | Apple | Idem, via de webpagina van Apple | Idem |
 
-- Code: `aanbiederKnoppen()`, `inloggenMet()` en `laadAanbieders()` in `app/app.js`. Inloggen gaat met `signInWithOAuth`, koppelen met `linkIdentity`. Terug in de app staat `?code=` in de adresbalk; supabase-js wisselt die zelf in (PKCE).
+- Code: `aanbiederKnoppen()`, `inloggenMet()` en `laadAanbieders()` in `app/app.js`. Beide knoppen heten "Doorgaan met" en gebruiken altijd `signInWithOAuth`, ook voor een anonieme speler: vooraf bewaart `onthoudAnoniem()` diens token en na terugkomst zet `samenvoegen()` (Edge Function `samenvoegen`) zijn bijdragen over. Geen `linkIdentity`: dat weigert als het Google-account al bij een speler hoort. Staat een aanbieder in Supabase uit, dan staat zijn knop op slot. Terug in de app staat `?code=` in de adresbalk; supabase-js wisselt die zelf in (PKCE).
 - Een nieuwe speler via Apple of Google heet eerst "speler" en kiest onder Ik zelf een naam. We nemen bewust niet de naam van Google of Apple over: de ranglijst is openbaar.
-- Hoort het Google- of Apple-account al bij een andere speler, dan zegt de app dat; de twee accounts worden niet samengevoegd.
 
 ## Stap 1. Supabase
 
@@ -26,7 +25,7 @@ Authentication, URL Configuration:
 - Site URL: `https://bpdb-nl.pages.dev`
 - Redirect URLs: `https://bpdb-nl.pages.dev/**` en `http://localhost:8765/**`
 
-Authentication, Sign In / Providers: zet **Allow manual linking** aan (nodig om een anonieme speler aan Google of Apple te koppelen).
+Authentication, Sign In / Providers: **Allow manual linking** is voor Apple en Google niet meer nodig (wel voor het koppelen van een e-mailadres aan een anonieme speler).
 
 ## Stap 2. Google (kan zonder betaald account)
 
