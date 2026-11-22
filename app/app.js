@@ -1174,7 +1174,7 @@ function draw() {
   else if (state.tab === "rang") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "ik") html = ikView();
   body.innerHTML = html;
-  if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); laadKaartFotos(state.selected); }
+  if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); laadKaartFotos(state.selected); laadGuinness(state.selected); }
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
   else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); laadBeheerSteden(); }
@@ -1328,7 +1328,7 @@ function detailView() {
     <div id="kaartfotos"></div>
     <div id="tijden"></div>
     ${aanbodBlok(k)}
-    <h3>Koersverloop <span class="muted">per vaasje</span></h3>
+    <h3>Koersverloop <span class="muted">${guinnessAan() ? "Guinness per pint" : "per vaasje"}</span></h3>
     <div id="spark"></div>
     <h3>Geschiedenis</h3>
     <div id="stamgast"></div>
@@ -1508,9 +1508,41 @@ function aanbodBlok(k) {
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}</span>` : `<span class="small muted">prijs?</span>`}
       <div class="aanbod-knoppen">${knoppen}</div>
     </div>
-    ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${kanBijdragen() ? "" : "disabled"}>Prijs van een pint melden</button></div>`}`
+    ${a.prijs_cent ? "" : `<div class="btns"><button class="btn" data-aanbodform ${kanBijdragen() ? "" : "disabled"}>Prijs van een pint melden</button></div>`}
+    <ul class="timeline" id="guinnessGeschiedenis"></ul>`
     : `<div class="small muted">Nog niet bekend of ze hier Guinness tappen.</div>
     ${kanBijdragen() ? `<div class="btns"><button class="btn" data-aanbodform>Ze hebben hier Guinness</button></div>` : ""}`}`;
+}
+
+// Geschiedenis van Guinness bij een kroeg: een nieuwe prijs vervangt de oude (status vervangen), dus elke rij in
+// kroeg_aanbod is een stap. Onder het Guinness-blok, en in de Guinness-stand ook als koersverloop (per pint).
+async function laadGuinness(id) {
+  if (!aanbodVan(id).some((x) => x.soort === GUINNESS) && !guinnessAan()) return;
+  const { data } = await sb.from("kroeg_aanbod").select("id,volume_cl,prijs_cent,op,status,door:profielen(naam)")
+    .eq("kroeg_id", id).eq("soort", GUINNESS).order("op");
+  if (state.selected !== id || state.form || state.aanbodForm || state.tijdenForm) return;
+  const rijen = data ?? [];
+  const metPrijs = rijen.filter((a) => a.prijs_cent && a.volume_cl && a.status !== "weg");
+  const el = $("#guinnessGeschiedenis");
+  if (el) {
+    let vorig = null;
+    const items = rijen.map((a) => {
+      const wat = !a.prijs_cent ? "Gemeld: ze tappen Guinness"
+        : vorig != null && vorig !== a.prijs_cent ? `Gewijzigd: ${euro(vorig)} → ${euro(a.prijs_cent)}` : `Gemeld: ${euro(a.prijs_cent)}`;
+      if (a.prijs_cent && a.status !== "weg") vorig = a.prijs_cent;
+      const status = a.status === "vervangen" ? " (vervangen)" : a.status === "weg" ? " (afgekeurd)" : "";
+      return `<li class="${a.status === "actief" ? "" : a.status === "weg" ? "weerlegd" : "vervangen"}"><div class="t-what">${wat}${status ? `<span>${status}</span>` : ""}</div>
+        <div class="t-meta">${wanneer(a.op)} door ${esc(a.door?.naam ?? "onbekend")}${a.volume_cl ? ` · ${a.volume_cl} cl` : ""}</div></li>`;
+    });
+    // Alleen tonen als er iets te volgen is: meer dan de ene melding die er al boven staat
+    el.innerHTML = rijen.length > 1 ? items.reverse().join("") : "";
+  }
+  if (guinnessAan() && $("#spark")) {
+    if (!metPrijs.length) { $("#spark").innerHTML = `<div class="muted small">Nog geen Guinness-prijs.</div>`; return; }
+    const pts = metPrijs.map((a) => ({ t: new Date(a.op).getTime(), v: Math.round((a.prijs_cent * PINT) / a.volume_cl) }));
+    pts.push({ t: Date.now(), v: pts[pts.length - 1].v });
+    $("#spark").innerHTML = grafiekSvg(pts, { id: "gg" });
+  }
 }
 
 function aanbodFormView() {
@@ -1608,7 +1640,8 @@ async function laadTijdlijn(id) {
            <div class="small" style="margin-top:8px"><button type="button" class="linkbtn" data-form="${dichtbij ? "hier" : "afstand"}" data-soort="pils" data-anders>Is de prijs gewijzigd? Geef de nieuwe prijs door</button></div>`}`;
   }
   $("#tijdlijn").innerHTML = data.length ? `<ul class="timeline">${data.map(tijdlijnItem).join("")}</ul>` : `<div class="muted small">Nog niets gebeurd.</div>`;
-  $("#spark").innerHTML = spark(data);
+  // In de Guinness-stand tekent laadGuinness() het koersverloop
+  if (!guinnessAan()) $("#spark").innerHTML = spark(data);
 }
 
 // Stamgast: wie hier het vaakst de prijs heeft bijgewerkt of bevestigd (zie view kroeg_stamgast).
