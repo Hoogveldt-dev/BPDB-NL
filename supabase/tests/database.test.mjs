@@ -815,7 +815,7 @@ check('na een weigering blijft de anonieme speler zijn melding houden', (await e
 const bug1 = await als(B, `select public.meld_bug('De kaart blijft wit na inchecken', 'kaart, kroeg 3', 'Testbrowser') as id`);
 check('een speler meldt een bug', bug1.rows?.[0]?.id > 0, JSON.stringify(bug1));
 check('een bug zonder inloggen kan niet', !!(await als(null, `select public.meld_bug('Zonder account melden')`)).fout);
-check('een te korte bug wordt geweigerd', /paar woorden/.test((await als(B, `select public.meld_bug('kap')`)).fout ?? ''));
+check('een te kort bericht wordt geweigerd met een tekst over een bericht', /Schrijf je bericht in een paar woorden/.test((await als(B, `select public.meld_bug('kap')`)).fout ?? ''));
 check('direct in bugmeldingen schrijven kan niet', !!(await als(B, `insert into public.bugmeldingen (door_id, tekst) values ('${B}', 'Rechtstreeks erin')`)).fout);
 const bugLees = await als(B, `select count(*)::int as n from public.bugmeldingen`);
 check('een gewone speler leest geen bugmeldingen, ook niet zijn eigen', bugLees.rows?.[0]?.n === 0, JSON.stringify(bugLees));
@@ -824,7 +824,7 @@ const bugBeheer = await als(E, `select tekst, scherm, apparaat, door_id from pub
 check('een beheerder leest de bugmeldingen met scherm en browser', bugBeheer.rows?.length === 1 && bugBeheer.rows[0].scherm === 'kaart, kroeg 3' && bugBeheer.rows[0].door_id === B, JSON.stringify(bugBeheer));
 await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
 for (let i = 0; i < 9; i++) await als(B, `select public.meld_bug('Nog een bug nummer ${i}')`);
-check('na 10 bugs op een dag is het genoeg', /al 10 bugs/.test((await als(B, `select public.meld_bug('De elfde bug vandaag')`)).fout ?? ''));
+check('na 10 berichten op een dag is het genoeg (20261122120000_berichten)', /al 10 berichten gestuurd/.test((await als(B, `select public.meld_bug('De elfde bug vandaag')`)).fout ?? ''));
 
 // ---------------------------------------------------------------------------
 // Nieuwe stad aanvragen: elke speler via vraag_stad_aan, alleen beheerders lezen en behandelen

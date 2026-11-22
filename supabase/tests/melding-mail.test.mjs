@@ -6,14 +6,16 @@ const check = (naam, voorwaarde, extra = '') => {
   if (voorwaarde) { ok++; console.log('  ok  ', naam); } else { fout++; console.log('  FOUT', naam, extra); }
 };
 
-const bug = maakMail({ soort: 'bug', tekst: 'De kaart blijft wit <b>na</b> inchecken', scherm: '390x844', apparaat: 'Testbrowser', op: '2026-11-21T09:50:00Z', naam: 'dorstige-zebra' });
-check('bug: vast onderwerp', bug.onderwerp === 'Bierkoers: nieuwe bug gemeld', bug.onderwerp);
-check('bug: naam, tekst, schermgrootte en browser staan erin', ['dorstige-zebra meldde een bug', 'De kaart blijft wit <b>na</b> inchecken', 'Schermgrootte: 390x844', 'Browser: Testbrowser'].every((s) => bug.tekst.includes(s)), bug.tekst);
+const bug = maakMail({ soort: 'bug', tekst: 'De kaart blijft wit <b>na</b> inchecken', scherm: '390x844', apparaat: 'Testbrowser', op: '2026-11-21T09:50:00Z', naam: 'dorstige-zebra' }, true);
+check('bericht: vast onderwerp', bug.onderwerp === 'Bierkoers: nieuw bericht', bug.onderwerp);
+check('bericht: naam, tekst, schermgrootte en browser staan erin', ['dorstige-zebra stuurde een bericht', 'De kaart blijft wit <b>na</b> inchecken', 'Schermgrootte: 390x844', 'Browser: Testbrowser'].every((s) => bug.tekst.includes(s)), bug.tekst);
 check('bug: tijd in Nederlandse tijd', bug.tekst.includes('10:50'), bug.tekst);
-check('bug: wijst naar Beheer, Bugs', bug.tekst.includes('Ik, Beheer, Bugs'), bug.tekst);
+check('bericht: wijst naar Beheer, Berichten', bug.tekst.includes('Ik, Beheer, Berichten'), bug.tekst);
+check('bericht met e-mailadres: antwoorden gaat via de mail', bug.tekst.includes('Beantwoord deze mail'), bug.tekst);
 
 const kaal = maakMail({ soort: 'bug', tekst: 'Alleen een tekst', scherm: null, apparaat: null, op: '2026-11-21T09:50:00Z', naam: null });
-check('bug zonder gegevens: noemt "Een speler" en geen lege regels achter elkaar', kaal.tekst.startsWith('Een speler meldde') && !kaal.tekst.includes('\n\n\n') && !kaal.tekst.includes('Browser:'), kaal.tekst);
+check('bug zonder gegevens: noemt "Een speler" en geen lege regels achter elkaar', kaal.tekst.startsWith('Een speler stuurde') && !kaal.tekst.includes('\n\n\n') && !kaal.tekst.includes('Browser:'), kaal.tekst);
+check('bericht zonder e-mailadres: zegt dat antwoorden niet kan', kaal.tekst.includes('antwoorden kan niet') && !kaal.tekst.includes('Beantwoord deze mail'), kaal.tekst);
 
 const een = maakMail({ soort: 'stad', stad: 'Arnhem', op: '2026-11-21T09:50:00Z', naam: 'Rik', spelers: 1 });
 check('stad: onderwerp met de stad', een.onderwerp === 'Bierkoers: stad aangevraagd, Arnhem', een.onderwerp);

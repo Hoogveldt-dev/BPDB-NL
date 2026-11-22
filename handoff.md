@@ -7,7 +7,7 @@ Voor de volgende sessie. Lees eerst `CLAUDE.md` (werkafspraken; op 21 november f
 - Al het werk staat op `main` (`cfb5096`, PR #49) en is live op bierkoers.nl. Er staat geen pull request open.
 - Nijmegen: **22 van de 161 open kroegen in kaart** (2 bevestigd, 4 spelermeldingen, 16 menukaartprijzen). Pilsindex € 3,90.
 - Wat uit bronnen te halen valt, is binnen: eigen websites (DAEN) en foto's in Google Maps (JAN) zijn allebei doorzocht. De rest van de kaart komt van spelers ter plaatse.
-- Wat nog openstaat voor de demo, kan alleen Kjell (Cloudflare, Google Cloud, echte telefoons); zie punt 4.
+- Wat nog openstaat voor de demo, kan alleen Kjell (Google Cloud, Vimexx, echte telefoons). Cloudflare doet Claude sinds 22 november zelf met een API-token in de omgeving; zie punt 4.
 
 ## 2. Repository en tests
 
@@ -52,13 +52,13 @@ Pull requests #47, #48 en #49, alle gemerged.
 | Accounts | 4, alle met e-mailadres; 0 anoniem; 9 check-ins; 2 Guinness-prijzen; 0 bugs; 0 stadsaanvragen |
 | Laatste migratie | `20261121220000_samenvoegen_fotos` |
 | Auth | anonieme accounts aan, Google aan, Apple uit |
-| DMARC | ontbreekt (`_dmarc.bierkoers.nl` bestaat niet) |
-| www.bierkoers.nl | 200, een tweede kopie in plaats van een doorverwijzing |
-| DNSSEC | uit (geen DS-record bij .nl) |
+| DMARC | sinds 22 november 2026 `p=none`, rapporten naar `proost@bierkoers.nl` |
+| www.bierkoers.nl | sinds 22 november 2026 301 naar bierkoers.nl (Redirect Rule) |
+| DNSSEC | 22 november 2026 aan in Cloudflare (`pending`); DS-record moet nog bij Vimexx (`ACTIES.md`) |
 | Edge Function `eenmalig-migratie` | leeg, geeft 401/410; mag in het dashboard weg |
 | DeepSeek-saldo | $ 1,99 |
 
-Nog open voor de demo, alleen door Kjell (op volgorde in `ACTIES.md`): DMARC toevoegen in Cloudflare, Google-inlog op "In production" met `https://bierkoers.nl/privacy` als privacy-URL, www laten doorsturen, de privacyverklaring nalezen (naam erbij of niet), en op een echte iPhone en Android e-mail koppelen, inloggen op een tweede toestel, bevestigen en een foto (ook HEIC op Android) toevoegen en verwijderen.
+Nog open voor de demo, alleen door Kjell (op volgorde in `ACTIES.md`; DMARC en www zijn op 22 november gedaan): Google-inlog op "In production" met `https://bierkoers.nl/privacy` als privacy-URL, de privacyverklaring nalezen (naam erbij of niet), en op een echte iPhone en Android e-mail koppelen, inloggen op een tweede toestel, bevestigen en een foto (ook HEIC op Android) toevoegen en verwijderen.
 
 Niet gecontroleerd: of de Google-app op "In production" staat, het Supabase-abonnement, back-ups en automatisch pauzeren, Safari op een echte iPhone.
 
