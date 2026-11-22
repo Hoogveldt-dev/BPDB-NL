@@ -308,7 +308,9 @@ export const EN = {
   "* voor een vaasje.": "* for 25 cl.",
   "* voor * cl is * per vaasje.": "* for * cl is * per 25 cl.",
   "De Pilsindex is *.": "The Lager index is *.",
-  "Dit wijkt sterk af van de stad: twee andere spelers moeten het bevestigen.": "This differs a lot from the city: two other players need to confirm it.",
+  "Dit wijkt flink af van de stad: twee andere spelers moeten het bevestigen en je punten krijg je daarna.": "This differs a lot from the city: two other players need to confirm it, and you get your points afterwards.",
+  "Dit wijkt flink af van de vorige prijs: twee andere spelers moeten het bevestigen en je punten krijg je daarna.": "This differs a lot from the previous price: two other players need to confirm it, and you get your points afterwards.",
+  "Heb je een foto van de kaart? Die helpt hen.": "Do you have a photo of the menu? That helps them.",
   "Foto van de prijslijst (optioneel, +#)": "Photo of the price list (optional, +#)",
   "Voorbeeld van je foto": "Preview of your photo",
   "Je krijgt de punten meteen. Wordt je melding weerlegd, dan gaan ze er weer af.": "You get the points right away. If your report is refuted, they are taken off again.",
@@ -565,6 +567,9 @@ export const EN = {
   "Een prijs komt pas vast op de kaart als andere spelers hem bevestigen, meestal twee. Zo voorkomen we koersmanipulatie.": "A price only becomes firm on the map once other players confirm it, usually two. That is how we prevent price manipulation.",
   "Zeggen twee spelers \"klopt niet\", dan is de melding weerlegd en gaan de punten eraf.": "If two players say \"not right\", the report is refuted and the points are taken back.",
   "Hoe punten werken": "How points work",
+  "Wijkt een prijs flink af van de stad of van de vorige prijs van de kroeg, dan moeten twee spelers hem bevestigen. Tot die tijd staat hij niet op de kaart en krijg je de punten pas daarna.": "If a price differs a lot from the city or from the pub's previous price, two players must confirm it. Until then it isn't on the map and you get the points only afterwards.",
+  "Afwijkende prijs wacht op controle": "Unusual price awaiting a check",
+  "Gemeld *. Deze prijs wijkt flink af; hij telt pas als twee spelers hem bevestigen.": "Reported *. This price differs a lot; it only counts once two players confirm it.",
 
   // Over Bierkoers
   "Over Bierkoers": "About Bierkoers",

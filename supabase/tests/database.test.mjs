@@ -1014,5 +1014,46 @@ check('kaartscans wissen kan niet', !!(await als(A, `delete from public.kaartsca
 const scans = await een(`select count(*)::int as n, bool_and(bron = 'kaartje') as goed from public.kaartscans`);
 check('de beheerder telt twee scans in de SQL Editor', scans.n === 2 && scans.goed === true, JSON.stringify(scans));
 
+// ---------------------------------------------------------------------------
+// Uitschieters (20261122150000_uitschieters): mediaan met menukaartprijzen vanaf 3 prijzen, vergelijking met de
+// vorige prijs van de kroeg, punten pas na bevestiging, en open_uitschieter op de kaart
+// ---------------------------------------------------------------------------
+
+await db.query(`select private.importeer_kroegen($1, 'Uitschieterstad')`, [JSON.stringify(
+  [1, 2, 3, 4, 5].map((i) => ({ osm_id: `uit/${i}`, naam: `Café U${i}`, soort: 'pub', lat: 52.3 + i / 100, lon: 5.3 })))]);
+const UK = Object.fromEntries((await db.query(`select osm_id, id from public.kroegen where gemeente = 'Uitschieterstad'`)).rows.map((r) => [r.osm_id, r.id]));
+const um = await menuImport([350, 360, 370].map((prijs_cent, i) => ({ kroeg_id: UK[`uit/${i + 1}`], merk: 'Heineken', volume_cl: 25, prijs_cent, datum: '2026-10-01', bron_omschrijving: 'website' })));
+check('uitschieters: drie menukaartprijzen in de stad', um.toegevoegd === 3, JSON.stringify(um));
+check('de mediaan telt menukaartprijzen mee', Number((await een(`select private.mediaan_per25('Uitschieterstad') as m`)).m) === 360);
+check('onder de 3 prijzen is er geen mediaan', (await een(`select private.mediaan_per25('Bestaatnietstad') as m`)).m === null);
+const punten = async (wie) => (await een(`select coalesce(sum(punten), 0)::int as n from public.punten where gebruiker_id = '${wie}'`)).n;
+
+const uA0 = await punten(A);
+const u1 = (await als(A, `select * from public.meld_prijs(${UK['uit/4']}, 'Heineken', 25, 900)`)).rows?.[0];
+check('met alleen menukaartprijzen in de stad is een prijs ver van de mediaan een uitschieter', u1?.uitschieter === true, JSON.stringify(u1));
+check('een uitschieter levert bij het melden nog geen punten op', (await punten(A)) === uA0);
+const u1Kaart = (await als(null, `select open_uitschieter, open_prijs_cent from public.kroeg_kaart where id = ${UK['uit/4']}`)).rows?.[0];
+check('kroeg_kaart meldt een wachtende uitschieter', u1Kaart?.open_uitschieter === true && u1Kaart?.open_prijs_cent === 900, JSON.stringify(u1Kaart));
+check('een uitschieter: een bevestiging is niet genoeg', (await klopt(u1.id, B)) === 'wacht');
+check('een uitschieter: twee bevestigingen', (await klopt(u1.id, C)) === 'bevestigd');
+check('na bevestiging krijgt de melder alsnog zijn punten', (await punten(A)) === uA0 + 50, `${uA0} -> ${await punten(A)}`);
+
+const uA1 = await punten(A);
+const u2 = (await als(A, `select * from public.meld_prijs(${UK['uit/5']}, 'Heineken', 25, 380)`)).rows?.[0];
+check('een gewone prijs is geen uitschieter en levert meteen punten op', u2?.uitschieter === false && (await punten(A)) === uA1 + 50, JSON.stringify(u2));
+check('kroeg_kaart: een gewone wachtende prijs is geen uitschieter',
+  (await als(null, `select open_uitschieter from public.kroeg_kaart where id = ${UK['uit/5']}`)).rows?.[0]?.open_uitschieter === false);
+await klopt(u2.id, B, C);
+const u3 = (await als(D, `select * from public.meld_prijs(${UK['uit/5']}, 'Heineken', 25, 490)`)).rows?.[0];
+check('meer dan 25% duurder dan de vorige prijs is een uitschieter, ook dicht bij de mediaan', u3?.uitschieter === true, JSON.stringify(u3));
+const u4 = (await als(D, `select * from public.meld_prijs(${UK['uit/2']}, 'Heineken', 25, 320)`)).rows?.[0];
+check('meer dan 10% goedkoper dan de menukaartprijs is een uitschieter', u4?.uitschieter === true, JSON.stringify(u4));
+const u5 = (await als(D, `select * from public.meld_prijs(${UK['uit/3']}, 'Heineken', 25, 400)`)).rows?.[0];
+check('8% duurder dan de menukaartprijs is geen uitschieter', u5?.uitschieter === false, JSON.stringify(u5));
+const uD = await punten(D);
+await als(A, `select public.beoordeel(${u4.id}, 'klopt_niet')`);
+await als(B, `select public.beoordeel(${u4.id}, 'klopt_niet')`);
+check('een weerlegde uitschieter kost -20, zonder punten die nog terug moeten', (await punten(D)) === uD - 20, `${uD} -> ${await punten(D)}`);
+
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);

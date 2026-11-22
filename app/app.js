@@ -371,12 +371,15 @@ function spelPrijs(k) {
 // ranglijst, versheid, goedkoopste) draait alleen om de bevestigde prijs.
 // Een prijs van een menukaart: eerste stuk geschiedenis, zonder melder; de kroeg blijft op slot
 const vanMenukaart = (k) => k.open_bron === "menukaart";
+// Een wachtende prijs die flink afwijkt (uitschieter) staat in quarantaine: niet op de kaart of in de lijst, alleen
+// bij de kroeg, zodat spelers hem kunnen controleren. Twee bevestigingen en hij telt gewoon.
+const inQuarantaine = (k) => !!k.open_uitschieter;
 const datumTekst = (d) => new Date(d).toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" });
 // Alleen de bron zelf ("Drankkaart dekluizenaar.nl"); de datum staat er al naast
 const bronKort = (s) => (s ?? "").split(/[,(]/)[0].trim() || "menukaart";
 
 function toonPrijs(k) {
-  if (k.open_prijs_cent) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
+  if (k.open_prijs_cent && !inQuarantaine(k)) return { per25: k.open_per25_cent, volume: k.open_volume_cl, onbevestigd: true };
   if (k.per25_cent) return { per25: k.per25_cent, volume: k.huidig_volume_cl, onbevestigd: false };
   return null;
 }
@@ -549,7 +552,7 @@ function koersen() {
 // vastSinds: sinds wanneer de prijs dit bedrag is. delta: de laatste stap ten opzichte van het vorige bedrag.
 // recent: die stap was in de afgelopen twaalf maanden; een oudere stap tonen we niet als koersverschil.
 // De prijs per vaasje die de kaart toont: de koers (ook van de menukaart), anders de bevestigde of een wachtende prijs
-const prijsPer25 = (k) => koersVan(k.id)?.nu ?? k.per25_cent ?? k.open_per25_cent ?? null;
+const prijsPer25 = (k) => koersVan(k.id)?.nu ?? k.per25_cent ?? (inQuarantaine(k) ? null : k.open_per25_cent) ?? null;
 
 function koersVan(id) {
   const p = state.koers.punten.get(id);
@@ -1296,6 +1299,11 @@ function detailView() {
         <div class="big-price">${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
         <div class="muted small">Van de menukaart</div>`
+      : k.open_prijs_cent && inQuarantaine(k) ? `${k.huidig_prijs_cent ? `<div class="big-price">${euro(k.huidig_prijs_cent)}</div>
+        <div class="muted">${glasTekst(k.huidig_merk, k.huidig_volume_cl, k.per25_cent)}</div>` : `<div class="big-price muted">€ ?</div>`}
+        <div class="vorige"><span class="badge wacht">Afwijkende prijs wacht op controle</span>
+          <div style="margin-top:6px"><b>${euro(k.open_prijs_cent)}</b> <span class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</span></div>
+          <div class="muted small">Gemeld ${wanneer(k.open_op)}. Deze prijs wijkt flink af; hij telt pas als twee spelers hem bevestigen.</div></div>`
       : k.open_prijs_cent ? `${v === "wacht" ? "" : `<span class="badge wacht">Nieuwe prijs wacht op bevestiging</span>`}
         <div class="big-price"${v === "wacht" ? "" : ` style="margin-top:10px"`}>${euro(k.open_prijs_cent)}<span class="onbevestigd">?</span></div>
         <div class="muted">${glasTekst(k.open_merk, k.open_volume_cl, k.open_per25_cent)}</div>
@@ -1822,14 +1830,19 @@ function prijsVoorbeeld() {
     el.textContent = cl ? "Vul de prijs in. Je ziet meteen wat dat per vaasje is." : "Vul de inhoud van het glas in, tussen 15 en 100 cl.";
     return;
   }
-  const per25 = Math.round((prijs * 25) / cl), idx = state.koers.index?.nu;
-  // Zelfde grens als de database: meer dan 40% van de mediaan, vanaf 5 prijzen in de stad
-  const med = state.stad?.mediaan_per25_cent, genoeg = state.koers.punten.size >= 5;
-  const uitschieter = med && genoeg && Math.abs(per25 - med) > med * 0.4;
-  el.className = uitschieter ? "small waarschuwing" : "small muted";
-  el.textContent = (cl === VAASJE ? `${euro(prijs)} voor een vaasje.` : `${euro(prijs)} voor ${cl} cl is ${euro(per25)} per vaasje.`)
-    + (idx ? ` De Pilsindex is ${euro(idx)}.` : "")
-    + (uitschieter ? " Dit wijkt sterk af van de stad: twee andere spelers moeten het bevestigen." : "");
+  const per25 = Math.round((prijs * 25) / cl), idx = state.koers.index;
+  // Zelfde regels als de database (private.is_uitschieter): meer dan 40% van de mediaan van de stad (bevestigde en
+  // menukaartprijzen, vanaf 3), of meer dan 25% duurder of 10% goedkoper dan de vorige prijs van de kroeg
+  const k = state.kroegen.find((x) => x.id === state.selected);
+  const vorig = k?.per25_cent ?? (k && vanMenukaart(k) ? k.open_per25_cent : null);
+  const vanStad = idx?.nu && idx.n >= 3 && Math.abs(per25 - idx.nu) > idx.nu * 0.4;
+  const vanVorig = vorig && (per25 > vorig * 1.25 || per25 < vorig * 0.9);
+  el.className = vanStad || vanVorig ? "small waarschuwing" : "small muted";
+  // Elke zin in een eigen span, zodat de vertaling (app/en.js) hem per zin vindt
+  const zinnen = [cl === VAASJE ? `${euro(prijs)} voor een vaasje.` : `${euro(prijs)} voor ${cl} cl is ${euro(per25)} per vaasje.`];
+  if (idx?.nu) zinnen.push(`De Pilsindex is ${euro(idx.nu)}.`);
+  if (vanStad || vanVorig) zinnen.push(`Dit wijkt flink af van ${vanVorig ? "de vorige prijs" : "de stad"}: twee andere spelers moeten het bevestigen en je punten krijg je daarna.`, "Heb je een foto van de kaart? Die helpt hen.");
+  el.innerHTML = zinnen.map((z) => `<span>${esc(z)}</span>`).join(" ");
 }
 
 // Een foto van de telefoon is vaak 4 tot 12 MB. Verklein hem naar hoogstens 1600 px als JPEG: sneller en zuiniger.
@@ -2382,6 +2395,7 @@ function regelsView() {
       <div><span>Je melding wordt weerlegd</span><b>−20</b></div>
     </div>
     <p class="small muted">Punten krijg je meteen, ook voor bevestigen.</p>
+    <p class="small muted">Wijkt een prijs flink af van de stad of van de vorige prijs van de kroeg, dan moeten twee spelers hem bevestigen. Tot die tijd staat hij niet op de kaart en krijg je de punten pas daarna.</p>
     <p class="small muted">Een prijs komt pas vast op de kaart als andere spelers hem bevestigen, meestal twee. Zo voorkomen we koersmanipulatie.</p>
     <p class="small muted">Zeggen twee spelers "klopt niet", dan is de melding weerlegd en gaan de punten eraf. Gebruik dat voor een prijs die overduidelijk fout is.</p>
     <p class="small muted">Is de prijs gewijzigd? Geef dan de nieuwe prijs door. Die vervangt een melding die nog op bevestiging wacht, zonder straf voor de melder. Dat kan met een e-mailadres, hoogstens vijf keer per dag.</p>`;
