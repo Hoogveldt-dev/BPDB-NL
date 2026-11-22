@@ -1687,7 +1687,7 @@ function tijdlijnItem(g) {
   const wat = g.soort === "eerst" ? `Eerst gemeld: ${euro(g.prijs_cent)}`
     : g.soort === "wijziging" ? `Gewijzigd: ${euro(g.vorige_prijs_cent)} → ${euro(g.prijs_cent)}`
     : `Gecontroleerd: klopt nog`;
-  const status = g.status === "wacht" ? " (wacht op bevestiging)" : g.status === "weerlegd" ? " (weerlegd)" : g.status === "vervangen" ? " (vervangen)" : "";
+  const status = g.status === "wacht" ? " (wacht op bevestiging)" : g.status === "weerlegd" ? " (weerlegd)" : "";
   const meta = [`${wanneer(g.op)} door ${esc(g.door ?? "onbekend")}`];
   if (g.soort !== "check") meta.push(`${esc(g.merk)} ${g.volume_cl} cl`);
   if (g.bevestigd_door.length) meta.push(`bevestigd door ${g.bevestigd_door.map(esc).join(", ")}`);
@@ -2021,14 +2021,14 @@ async function beursView() {
     const verschil = g.soort === "wijziging" && g.vorige_prijs_cent != null ? g.prijs_cent - g.vorige_prijs_cent : null;
     return `<li><button class="row" data-kroeg="${g.kroeg_id}">
       <span class="row-main"><span class="row-title">${codeHtml(g.kroeg_id)}${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "ontdekte" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}</span>
-      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : g.status === "vervangen" ? " · vervangen" : ""}</span></span>
+      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span>
       ${g.soort !== "check" && per25 ? `<span class="price">${euro(g.prijs_cent)}${verschil ? `<small class="delta ${richting(verschil)}">${KOERS_TAAL[richting(verschil)]} ${bedrag(verschil)}</small>` : `<small>${g.volume_cl} cl</small>`}</span>` : ""}</button></li>`;
   };
 
   // Een Guinness-melding: een nieuwe prijs vervangt de oude (status vervangen), "weg" is afgekeurd
   const guinnessMelding = (a) => `<li><button class="row" data-kroeg="${a.kroeg_id}">
       <span class="row-main"><span class="row-title">${codeHtml(a.kroeg_id)}${esc(a.door?.naam ?? "Iemand")} meldde Guinness bij ${esc(a.kroegen?.naam ?? "")}</span>
-      <span class="row-sub">${wanneer(a.op)}${a.status === "vervangen" ? " · vervangen" : a.status === "weg" ? " · afgekeurd" : ""}</span></span>
+      <span class="row-sub">${wanneer(a.op)}${a.status === "weg" ? " · afgekeurd" : ""}</span></span>
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : ""}</button></li>`;
 
   body.innerHTML = `
