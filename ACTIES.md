@@ -70,6 +70,14 @@ Een andere prijs vervangt een openstaande melding, zonder straf voor de melder. 
 1. ~~**Migratie `20261121140000_prijs_vervangen`.**~~ Gedaan op 21 november 2026: uitgevoerd via MCP, versie gelijkgezet aan `20261121140000`. Gecontroleerd: `gebeurtenis_status` heeft nu `vervangen`, kolom `vervangen_door` en de nieuwe `meld_prijs` staan erin, rechten onveranderd (`authenticated` ja, `anon` nee). Security Advisor: alleen de bekende waarschuwingen.
 2. **Controleren op de echte site.** Open een kroeg met een melding die op bevestiging wacht, kies "Is de prijs gewijzigd? Geef de nieuwe prijs door" en geef een andere prijs door. De oude melding moet in de geschiedenis als "vervangen" staan en de melder houdt zijn punten.
 
+## Berichten (vragen, suggesties, problemen, opmerkingen)
+
+De knop Bug melden heet nu "Vraag, idee of probleem". Een bericht komt per mail binnen in `proost@bierkoers.nl`; heeft de speler een e-mailadres, dan gaat je antwoord op die mail rechtstreeks naar de speler.
+
+1. ~~**Migratie `20261122120000_berichten`.**~~ Gedaan op 22 november 2026 door Claude via MCP, versie gelijkgezet. Gecontroleerd: nieuwe foutmeldingen in `meld_bug`, rechten onveranderd (`authenticated` ja, `anon` nee). Security Advisor: alleen de bekende waarschuwingen.
+2. ~~**Edge Function `melding-mail` versie 3.**~~ Gedaan op 22 november 2026 (antwoordadres en nieuwe mailtekst).
+3. **Testen op de echte site.** Stuur onder Ik, "Vraag, idee of probleem", een bericht met je eigen account. De mail "Bierkoers: nieuw bericht" moet in `proost@bierkoers.nl` staan, en Beantwoorden moet naar je eigen adres gaan.
+
 ## Mail bij een nieuwe bug of stadsaanvraag
 
 De app mailt je zodra een speler een bug meldt of een stad aanvraagt, naar `proost@bierkoers.nl` (Infomaniak). Gedaan op 21 november 2026 en getest.
