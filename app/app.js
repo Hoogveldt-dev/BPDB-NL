@@ -410,7 +410,8 @@ function setGuinness(aan) {
   state.limiet = 40;
   // Kleuren van de kaart en de mist lezen de nieuwe tinten opnieuw in
   mist.thema();
-  kaartBijwerken(); hud(); draw();
+  $("#legenda").hidden = state.modus !== "koers" || aan;
+  kaartBijwerken(); hud(); lichtkrant(); draw();
   if (aan && !zichtbareKroegen().length) toast("Nog geen kroeg met Guinness gemeld. Weet je er een? Meld het bij de kroeg.");
 }
 const aanbodVan = (kroegId) => state.aanbod.filter((a) => a.kroeg_id === kroegId);
@@ -620,7 +621,31 @@ async function laadKoers() {
 }
 
 // Lichtkrant bovenin: de Pilsindex en wat er net gebeurde. Tik op een koers om de kroeg te openen.
+// Lichtkrant in de Guinness-stand: de Guinness-index en de kroegen met Guinness, met de laatste prijsstap
+async function guinnessLichtkrant() {
+  const punten = await guinnessKoers();
+  if (!guinnessAan()) return;
+  const idx = indexVan(punten);
+  const items = [`<span class="tk idx"><b>GUINNESS</b>${idx ? `${euro(idx.nu)} <span class="zacht">per pint</span>` : `<span class="zacht">nog geen prijs</span>`}</span>`];
+  for (const { k, c } of state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => b.c.vastSinds - a.c.vastSinds)) {
+    const wat = c.recent ? deltaHtml(c.delta) : `<span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span>`;
+    items.push(`<button class="tk" data-kroeg="${k.id}" aria-label="${esc(k.naam)} ${euro(c.nu)}"><b>${codeVan(k.id)}</b>${euro(c.nu)} ${wat}</button>`);
+  }
+  const totaal = state.kroegen.length, met = state.kroegen.filter((k) => punten.has(k.id)).length;
+  if (totaal) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${met}/${totaal} <span class="zacht">met Guinness-prijs</span></span>`);
+  zetLichtkrant(items);
+}
+
+function zetLichtkrant(items) {
+  const een = items.join("");
+  const baan = $("#tickerBaan");
+  // Twee keer achter elkaar, zodat de lichtkrant naadloos doorloopt; de tweede is alleen decor
+  baan.innerHTML = `<div style="display:flex">${een}</div><div style="display:flex" aria-hidden="true" inert>${een}</div>`;
+  baan.style.setProperty("--duur", Math.max(25, items.length * 5) + "s");
+}
+
 function lichtkrant() {
+  if (guinnessAan()) return guinnessLichtkrant();
   const idx = state.koers.index;
   const s = state.stad;
   const items = [
@@ -643,11 +668,7 @@ function lichtkrant() {
   if (totaal) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${metPrijs}/${totaal} <span class="zacht">in kaart</span></span>`);
   if (totaal - metPrijs > 0) items.push(`<span class="tk"><span class="zacht">${totaal - metPrijs} kroegen zonder prijs</span></span>`);
   if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
-  const een = items.join("");
-  const baan = $("#tickerBaan");
-  // Twee keer achter elkaar, zodat de lichtkrant naadloos doorloopt; de tweede is alleen decor
-  baan.innerHTML = `<div style="display:flex">${een}</div><div style="display:flex" aria-hidden="true" inert>${een}</div>`;
-  baan.style.setProperty("--duur", Math.max(25, items.length * 5) + "s");
+  zetLichtkrant(items);
 }
 
 // ---------------------------------------------------------------------------
@@ -1140,7 +1161,8 @@ function zetRing(pct, sub, label, koers, delta, deltaPct) {
 function setModus(m) {
   state.modus = m;
   document.querySelectorAll("#modus button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.modus === m)));
-  $("#legenda").hidden = m !== "koers";
+  // De legenda (onder of boven de Pilsindex) hoort niet bij de Guinness-stand: daar zijn alle stippen groen
+  $("#legenda").hidden = m !== "koers" || guinnessAan();
   // In de koersstand staat de lijst op Goedkoopst
   if (m === "koers" && state.filter !== "goedkoop") { state.filter = "goedkoop"; if (state.tab === "kaart" && state.selected == null && !state.tocht && !bezigMetTypen()) draw(); }
   kaartBijwerken();
@@ -1288,15 +1310,15 @@ function detailView() {
     const d = state.pos ? afstand(state.pos, [k.lon, k.lat]) : null;
     const uitleg = vandaag ? "Je bent hier vandaag ingecheckt."
       : d != null && d > INCHECK_M ? `Je bent ${meters(d)} hiervandaan; inchecken kan binnen ${INCHECK_M} m.`
-      : "Check in met de prijs van je pils.";
-    actie = `${k.open_melding_id && !vanMenukaart(k) ? `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>` : ""}
+      : guinnessAan() ? "Check in met de prijs van je Guinness." : "Check in met de prijs van je pils.";
+    actie = `${k.open_melding_id && !vanMenukaart(k) && !guinnessAan() ? `<div class="card" id="openMelding"><div class="muted small">Melding laden…</div></div>` : ""}
       <div class="btns"><button class="btn primary" data-form="hier">${vandaag ? "Prijs doorgeven" : "Inchecken"}</button></div>
       <div class="small muted" style="margin-top:8px">${uitleg}${vandaag ? "" : ` <button type="button" class="linkbtn" data-form="afstand">Niet in de kroeg?</button>`}</div>
       <div class="small" style="margin-top:8px"><button type="button" class="linkbtn" data-kaartfoto>Foto van de kaart toevoegen</button>
         <input type="file" id="kaartFotoInvoer" accept="image/*" hidden></div>`;
   }
   return `<button class="back" data-back>‹ Terug</button>
-    <div class="koerskop">${codeHtml(k.id, true)}<span class="badge ${v}">${VERSHEID[v]}</span></div>
+    <div class="koerskop">${codeHtml(k.id, true)}${guinnessAan() ? "" : `<span class="badge ${v}">${VERSHEID[v]}</span>`}</div>
     <h2>${esc(k.naam)}</h2>
     <div class="muted small">${esc([k.adres, k.wijk].filter(Boolean).join(" · "))}</div>
     <div class="card">
