@@ -1917,18 +1917,22 @@ async function guinnessKoers() {
 }
 
 async function beursView() {
-  // In de Guinness-stand volgen de index en de prijsbewegingen de Guinness-prijzen; de rest blijft het spel (pils)
+  // In de Guinness-stand gaat de hele Beurs over Guinness: index, prijsbewegingen, in kaart, buurten en meldingen
   const guinness = guinnessAan();
   const [{ data: wijken }, { data: recent }, gPunten] = await Promise.all([
     sb.from("wijk_voortgang").select("*").eq("gemeente", stadNaam).order("naam"),
-    sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").eq("gemeente", stadNaam).order("op", { ascending: false }).limit(15),
+    guinness
+      ? sb.from("kroeg_aanbod").select("id,kroeg_id,volume_cl,prijs_cent,op,status,door:profielen(naam),kroegen!inner(naam,gemeente)")
+        .eq("soort", GUINNESS).eq("kroegen.gemeente", stadNaam).order("op", { ascending: false }).limit(15)
+      : sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").eq("gemeente", stadNaam).order("op", { ascending: false }).limit(15),
     guinness ? guinnessKoers() : null,
   ]);
   if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
   const punten = gPunten ?? state.koers.punten;
   const s = state.stad ?? { vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
-  // Dezelfde telling als op de kaart en in de lichtkrant: elke kroeg met een prijs
-  const totaal = state.kroegen.length, metPrijs = inKaart();
+  // Dezelfde telling als op de kaart en in de lichtkrant: elke kroeg met een prijs (in de Guinness-stand: met een Guinness-prijs)
+  const metPrijsIn = (lijst) => guinness ? lijst.filter((k) => punten.has(k.id)).length : inKaart(lijst);
+  const totaal = state.kroegen.length, metPrijs = metPrijsIn(state.kroegen);
   const pct = totaal ? Math.round((metPrijs / totaal) * 100) : 0;
   const MS = [25, 50, 75, 100], next = MS.find((m) => m > pct), nodig = next ? Math.ceil((next / 100) * totaal) - metPrijs : 0;
   const C = 2 * Math.PI * 42;
@@ -1954,10 +1958,11 @@ async function beursView() {
         ${goedkoper.map((x) => mover(x, maandKort(x.c.vastSinds), deltaHtml(x.c.delta))).join("")}</div>` : ""}`
     : "";
 
-  // Wijken als sectoren: de mediaan per wijk naast de Pilsindex
+  // Wijken als sectoren: de mediaan per wijk naast de index (in de Guinness-stand de Guinness-prijzen)
   const sector = (w) => {
-    const m = mediaan(state.kroegen.filter((k) => k.wijk === w.naam).map((k) => koersVan(k.id)?.nu).filter(Boolean));
-    const wi = inKaart(state.kroegen.filter((k) => k.wijk === w.naam));
+    const inWijk = state.kroegen.filter((k) => k.wijk === w.naam);
+    const m = mediaan(inWijk.map((k) => koersVan(k.id, punten)?.nu).filter(Boolean));
+    const wi = metPrijsIn(inWijk);
     return `<button type="button" class="sector" data-wijk="${esc(w.naam)}" aria-label="${esc(w.naam)} op de kaart tonen">
       <div class="t"><b>${esc(w.naam)}</b><span>${m ? `<span class="price">${euro(m)}</span>` : `<span class="small muted">geen koers</span>`}</span></div>
       <div class="t small muted"><span>${wi} van ${w.kroegen} in kaart</span><span>${m && idx ? deltaHtml(m - idx.nu) + " t.o.v. index" : ""}</span></div>
@@ -1972,6 +1977,12 @@ async function beursView() {
       <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : g.status === "vervangen" ? " · vervangen" : ""}</span></span>
       ${g.soort !== "check" && per25 ? `<span class="price">${euro(g.prijs_cent)}${verschil ? `<small class="delta ${richting(verschil)}">${KOERS_TAAL[richting(verschil)]} ${bedrag(verschil)}</small>` : `<small>${g.volume_cl} cl</small>`}</span>` : ""}</button></li>`;
   };
+
+  // Een Guinness-melding: een nieuwe prijs vervangt de oude (status vervangen), "weg" is afgekeurd
+  const guinnessMelding = (a) => `<li><button class="row" data-kroeg="${a.kroeg_id}">
+      <span class="row-main"><span class="row-title">${codeHtml(a.kroeg_id)}${esc(a.door?.naam ?? "Iemand")} meldde Guinness bij ${esc(a.kroegen?.naam ?? "")}</span>
+      <span class="row-sub">${wanneer(a.op)}${a.status === "vervangen" ? " · vervangen" : a.status === "weg" ? " · afgekeurd" : ""}</span></span>
+      ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : ""}</button></li>`;
 
   body.innerHTML = `
     <div class="indexkaart">
@@ -1989,22 +2000,22 @@ async function beursView() {
     <h3>Samen in kaart <span class="muted">${metPrijs}/${totaal}</span></h3>
     <div class="card ring-big">
       <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="ring-bg"/><circle cx="50" cy="50" r="42" class="ring-fg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct / 100)}"/></svg>
-      <div><div class="pct">${pct}%</div><div>van ${esc(stadNaam)} heeft een prijs</div>
+      <div><div class="pct">${pct}%</div><div>van ${esc(stadNaam)} heeft een ${guinness ? "Guinness-prijs" : "prijs"}</div>
       <div class="small muted">${metPrijs} van ${totaal} kroegen${next ? ` · nog ${nodig} tot ${next}%` : " · alles in kaart!"}</div></div>
     </div>
     <div class="milestones">${MS.map((m) => `<span class="${pct >= m ? "done" : ""}">${m}%</span>`).join("")}</div>
-    <h3>Deze week, met z'n allen</h3>
+    ${guinness ? "" : `<h3>Deze week, met z'n allen</h3>
     <div class="card">
       <div><b class="num">${s.bijdragen_week}</b> van ${WEEKDOEL} bijdragen <span class="muted small">· ${s.spelers_week} spelers</span></div>
       <div class="bar"><span style="width:${Math.min(100, (s.bijdragen_week / WEEKDOEL) * 100)}%"></span></div>
       ${s.oud ? `<div style="margin-top:12px"><b class="num">${s.oud}</b> oude koersen (90+ dagen) om te controleren <span class="muted small">· +15 per controle</span></div>` : ""}
       <div style="margin-top:12px"><b class="num">${versPct}%</b> van de prijzen is vers</div>
       <div class="bar fresh"><span style="width:${versPct}%"></span></div>
-    </div>
+    </div>`}
     <h3>Sectoren <span class="muted">tik voor de kaart</span></h3>
     ${(wijken ?? []).length ? `<div class="card" style="padding:4px 14px">${(wijken ?? []).map(sector).join("")}</div>` : `<div class="muted small">Nog geen wijken geladen.</div>`}
     <h3>Laatste meldingen</h3>
-    ${(recent ?? []).length ? `<ul class="list">${recent.map(melding).join("")}</ul>` : `<div class="muted small">Nog geen activiteit.</div>`}`;
+    ${(recent ?? []).length ? `<ul class="list">${recent.map(guinness ? guinnessMelding : melding).join("")}</ul>` : `<div class="muted small">Nog geen activiteit.</div>`}`;
 }
 
 async function rangView() {
