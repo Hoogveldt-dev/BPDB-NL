@@ -321,6 +321,10 @@ const state = {
   badgeTellers: {}, // tellers voor de badges onder Ik (laadBadges)
   uitgeklapt: new Set(), // namen van open uitklapblokken (data-onthoud), zie uitgeklapt()
   steden: [], // alle steden die meedoen (stad_voortgang), voor de stadskeuze onder Ik
+  berichten: [], // je eigen berichten aan de beheerder (Ik, Jouw berichten), zie laadBerichten()
+  inbox: null, // alle berichten, alleen voor een beheerder (Beheer, Berichten); undefined als laden mislukte
+  inboxFilter: "open", // Beheer, Berichten: "open" of "afgehandeld"
+  bericht: null, // id van het geopende gesprek (state.pagina "bericht")
   selected: null,
   form: null,
   filter: "alles",
@@ -1174,7 +1178,7 @@ let vernieuwTimer;
 function vernieuw() {
   clearTimeout(vernieuwTimer);
   vernieuwTimer = setTimeout(async () => {
-    await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbod(), laadMijn(), laadKoers()]);
+    await Promise.all([laadKroegen(), laadStad(), laadProfiel().then(laadBerichten), laadAanbod(), laadMijn(), laadKoers()]);
     if (!bezigMetTypen()) draw();
   }, 400);
 }
@@ -1190,19 +1194,22 @@ function draw() {
   if (state.selected != null) html = state.form ? formView() : state.aanbodForm ? aanbodFormView() : state.tijdenForm ? tijdenFormView() : detailView();
   else if (state.pagina === "regels") html = regelsView();
   else if (state.pagina === "over") html = overView();
+  else if (state.pagina === "bericht") html = berichtView();
   else if (state.tocht) html = tochtView();
   else if (state.tab === "kaart") html = lijstView();
   else if (state.tab === "beurs") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "rang") html = '<div class="empty">Laden…</div>';
   else if (state.tab === "ik") html = ikView();
   body.innerHTML = html;
+  if (state.selected == null && state.pagina === "bericht") laadGesprek(state.bericht);
   if (state.selected != null && !state.form && !state.aanbodForm && !state.tijdenForm) { laadTijdlijn(state.selected); laadKroegInfo(state.selected); laadKaartFotos(state.selected); laadGuinness(state.selected); }
   else if (state.selected == null && !state.pagina && state.tab === "beurs") beursView();
   else if (state.selected == null && !state.pagina && state.tab === "rang") rangView();
-  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerBugs(); laadBeheerSteden(); }
+  else if (state.selected == null && !state.pagina && state.tab === "ik" && state.profiel?.is_beheerder) { laadBeheerMeldingen(); laadBeheerSteden(); }
   if (state.selected == null && !state.pagina && state.tab === "ik" && state.sessie) laadBadges();
   // Een willekeurige naam van een anonieme speler (dorstige-zebra) past niet op het tabblad; die blijft Ik
   $("#tabIk").textContent = state.profiel && !anoniem() && state.profiel.naam_vast ? state.profiel.naam : "Ik";
+  tabStip();
 }
 
 // Een prijs die nog op bevestiging wacht (van een speler of van de menukaart) is blauw. Grijs is alleen
@@ -2301,6 +2308,7 @@ function ikView() {
     ${koppelen}
     <div class="btns"><button class="btn" data-uitleg>Hoe werkt het?</button><button class="btn" data-regels>Spelregels</button></div>
     ${bugBlok()}
+    <div id="mijnBerichten">${mijnBerichtenHtml()}</div>
     ${stadKeuzeBlok()}
     ${stadBlok()}
     ${taalBlok()}
@@ -2308,7 +2316,7 @@ function ikView() {
       <div class="btns"><button class="btn primary" data-import>Kroegen en wijken importeren</button></div>
       <div id="beheerMeldingen" class="small muted" style="margin-top:12px">Meldingen laden…</div></div>
       <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
-      <h3>Berichten</h3><div class="card"><div id="beheerBugs" class="small muted">Berichten laden…</div></div>
+      <h3>Berichten<span class="muted" id="inboxTeller">${inboxTeller()}</span></h3><div class="card"><div id="beheerBugs">${inboxHtml()}</div></div>
       <h3>Teksten</h3><div class="card"><div class="small muted">Pas elke tekst in de app aan. Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen.</div>
       <div class="btns"><button class="btn primary" data-teksten-bewerken>Teksten aanpassen</button></div>
       ${teksten.lijst().length ? `<ul class="list eigen-teksten" data-geen-teksten>${teksten.lijst().map(([sleutel, tekst]) => `<li class="row"><span class="row-main"><span class="row-sub">${esc(sleutel)}</span><span class="row-title">${esc(tekst)}</span></span>
@@ -2356,8 +2364,9 @@ function taalBlok() {
 }
 
 // Een bericht aan de beheerder: een vraag, suggestie, probleem of opmerking. De app stuurt de schermgrootte en de
-// browser mee (functie meld_bug; tabel en functie heten nog naar de oude knop Bug melden). Met een e-mailadres
-// kan de beheerder per mail antwoorden: de Edge Function melding-mail zet dat adres als antwoordadres.
+// browser mee (functie meld_bug; tabel en functie heten nog naar de oude knop Bug melden). Elk bericht wordt een
+// gesprek: de beheerder antwoordt in de app en de speler leest en reageert onder Jouw berichten (zie Berichten als
+// gesprekken hieronder). Met een e-mailadres krijgt de speler het antwoord ook per mail.
 function bugBlok() {
   if (!kanBijdragen()) return "";
   return `<details class="klopt-niet bug">
@@ -2365,16 +2374,17 @@ function bugBlok() {
     <form class="form" id="bugForm">
       <label for="bugTekst">Je bericht</label>
       <textarea id="bugTekst" name="tekst" rows="4" minlength="5" maxlength="2000" placeholder="Een vraag, een suggestie, iets wat niet werkt of een opmerking" required></textarea>
-      <div class="small muted">${state.sessie && !anoniem() ? "Je krijgt antwoord op je e-mailadres. We sturen je browser en schermgrootte mee." : "Wil je antwoord, maak dan eerst een account. We sturen je browser en schermgrootte mee."}</div>
+      <div class="small muted">${state.sessie && !anoniem() ? "Je krijgt antwoord hier onder Jouw berichten en per mail. We sturen je browser en schermgrootte mee." : "Je krijgt antwoord hier onder Jouw berichten. We sturen je browser en schermgrootte mee."}</div>
       <div class="btns"><button class="btn primary" type="submit">Versturen</button></div>
     </form>
   </details>`;
 }
 
-// Laat de beheerder per mail weten dat er een bug of stadsaanvraag is (Edge Function melding-mail). Stil:
-// mislukt het, dan staat de melding toch onder Beheer.
-function mailMelding(soort, id) {
-  if (id) sb.functions.invoke("melding-mail", { body: { soort, id } }).catch(() => {});
+// Stuurt de mail bij een nieuw bericht, een stadsaanvraag of een antwoord (Edge Function melding-mail). Stil:
+// mislukt het, dan staat alles toch in de app. Geeft { verstuurd } terug als de mail weg is.
+async function mailMelding(soort, id) {
+  if (!id) return {};
+  try { return (await sb.functions.invoke("melding-mail", { body: { soort, id } })).data ?? {}; } catch { return {}; }
 }
 
 async function verstuurBug(form) {
@@ -2389,19 +2399,186 @@ async function verstuurBug(form) {
   mailMelding("bug", data);
   form.reset();
   form.closest("details").open = false;
+  state.uitgeklapt.add("berichten");
   toast("Bedankt voor je bericht!");
+  await laadBerichten();
+  vulBerichten();
 }
 
-// Berichten voor de beheerder: de nieuwste dertig
-async function laadBeheerBugs() {
-  const { data, error } = await sb.from("bugmeldingen").select("id,tekst,scherm,apparaat,op").order("op", { ascending: false }).limit(30);
-  const el = $("#beheerBugs");
-  if (!el) return;
-  if (error) { el.textContent = "Berichten laden lukte niet."; return; }
-  if (!data.length) { el.textContent = "Nog geen berichten."; return; }
-  el.innerHTML = `<ul class="list" data-geen-teksten>${data.map((b) => `<li class="row"><span class="row-main">
-    <span class="row-title" style="white-space:normal">${esc(b.tekst)}</span>
-    <span class="row-sub" style="white-space:normal">${wanneer(b.op)}${b.scherm ? ` · ${esc(b.scherm)}` : ""}${b.apparaat ? ` · ${esc(b.apparaat)}` : ""}</span></span></li>`).join("")}</ul>`;
+// Berichten als gesprekken (migratie 20261122200000_inbox). Een speler ziet zijn eigen berichten onder Ik, Jouw
+// berichten, en reageert daar; een beheerder ziet alle berichten onder Beheer, Berichten (open of afgehandeld) en
+// antwoordt in het gesprek (beantwoord_bericht). Nieuw is een gesprek waarvan het laatste bericht van de ander
+// komt en dat je sinds dat bericht niet opende (lees_bericht). Een stip op het tabblad Ik wijst erop.
+const BERICHT_VELDEN = "id,door_id,tekst,scherm,apparaat,op,status,laatste_op,laatste_van_beheer,beheer_gelezen_op,speler_gelezen_op";
+const later = (a, b) => !b || Date.parse(a) > Date.parse(b);
+const nieuwVoorSpeler = (b) => b.laatste_van_beheer && later(b.laatste_op, b.speler_gelezen_op);
+const nieuwVoorBeheer = (b) => !b.laatste_van_beheer && later(b.laatste_op, b.beheer_gelezen_op);
+
+async function laadBerichten() {
+  const uid = state.sessie?.user?.id;
+  if (!uid) { state.berichten = []; state.inbox = null; return; }
+  const [eigen, alles] = await Promise.all([
+    sb.from("bugmeldingen").select(BERICHT_VELDEN).eq("door_id", uid).order("laatste_op", { ascending: false }).limit(50),
+    state.profiel?.is_beheerder
+      ? sb.from("bugmeldingen").select(`${BERICHT_VELDEN},profielen(naam),bericht_antwoorden(count)`).order("laatste_op", { ascending: false }).limit(200)
+      : null,
+  ]);
+  if (!eigen.error) state.berichten = eigen.data;
+  state.inbox = !alles ? null : alles.error ? undefined : alles.data;
+}
+
+// Tekent de berichten opnieuw zonder het hele scherm, zodat een half getypt bericht blijft staan
+function vulBerichten() {
+  tabStip();
+  const mijn = $("#mijnBerichten");
+  if (mijn) mijn.innerHTML = mijnBerichtenHtml();
+  const inbox = $("#beheerBugs");
+  if (inbox) inbox.innerHTML = inboxHtml();
+  const teller = $("#inboxTeller");
+  if (teller) teller.textContent = inboxTeller();
+}
+
+function tabStip() {
+  const n = state.berichten.filter(nieuwVoorSpeler).length + (state.inbox ?? []).filter(nieuwVoorBeheer).length;
+  $("#tabIk").classList.toggle("stip", n > 0);
+}
+
+let berichtenTimer;
+function berichtenGewijzigd() {
+  clearTimeout(berichtenTimer);
+  berichtenTimer = setTimeout(async () => {
+    await laadBerichten();
+    vulBerichten();
+    if (state.pagina === "bericht" && state.bericht != null) laadGesprek(state.bericht);
+  }, 300);
+}
+
+// Een gesprek in een lijst. Een beheerder ziet wie het stuurde; de speler ziet of er antwoord is.
+function berichtRij(b, beheer) {
+  const nieuw = beheer ? nieuwVoorBeheer(b) : nieuwVoorSpeler(b);
+  const n = b.bericht_antwoorden?.[0]?.count ?? 0;
+  const sub = beheer
+    ? [b.profielen?.naam ? `<span data-geen-teksten>${esc(b.profielen.naam)}</span>` : "", wanneer(b.laatste_op), n ? `${n} ${n === 1 ? "antwoord" : "antwoorden"}` : "", b.laatste_van_beheer ? "Beantwoord" : ""]
+    : [nieuw ? "Nieuw antwoord" : b.laatste_van_beheer ? "Beantwoord" : "Wacht op antwoord", wanneer(b.laatste_op)];
+  return `<li><button class="row bericht-rij${nieuw ? " nieuw" : ""}" data-bericht="${b.id}"><span class="dot${nieuw ? " wacht" : ""}"></span><span class="row-main">
+    <span class="row-title" data-geen-teksten>${esc(b.tekst)}</span>
+    <span class="row-sub">${sub.filter(Boolean).join(" · ")}</span></span></button></li>`;
+}
+
+function mijnBerichtenHtml() {
+  const lijst = state.berichten;
+  if (!lijst.length) return "";
+  const nieuw = lijst.filter(nieuwVoorSpeler).length;
+  return `<details class="uitklap" data-onthoud="berichten"${nieuw ? " open" : uitgeklapt("berichten")}><summary><span class="uitklap-kop">Jouw berichten</span>${nieuw ? `<span class="nieuw-label">${nieuw} nieuw</span>` : ""}</summary>
+    <ul class="list inbox">${lijst.map((b) => berichtRij(b, false)).join("")}</ul></details>`;
+}
+
+const inboxTeller = () => {
+  const n = (state.inbox ?? []).filter(nieuwVoorBeheer).length;
+  return n ? `${n} nieuw` : "";
+};
+
+function inboxHtml() {
+  const lijst = state.inbox;
+  if (lijst === undefined) return `<div class="small muted">Berichten laden lukte niet.</div>`;
+  if (!lijst) return `<div class="small muted">Berichten laden…</div>`;
+  const open = lijst.filter((b) => b.status === "open");
+  const klaar = lijst.filter((b) => b.status !== "open");
+  const afgehandeld = state.inboxFilter === "afgehandeld";
+  const toon = afgehandeld ? klaar : open;
+  return `<div class="seg" role="group" aria-label="Berichten">
+      <button type="button" data-inbox="open" aria-pressed="${!afgehandeld}">Open (${open.length})</button>
+      <button type="button" data-inbox="afgehandeld" aria-pressed="${afgehandeld}">Afgehandeld (${klaar.length})</button></div>
+    ${toon.length ? `<ul class="list inbox">${toon.map((b) => berichtRij(b, true)).join("")}</ul>`
+      : `<div class="small muted" style="margin-top:12px">${afgehandeld ? "Nog niets afgehandeld." : "Geen open berichten."}</div>`}`;
+}
+
+// Het gesprek: het bericht met alle antwoorden, en daaronder het antwoordformulier. Het gesprek zelf laadt
+// laadGesprek() in #gesprek; het formulier staat er los van, zodat nieuwe antwoorden het typen niet storen.
+function berichtView() {
+  const beheer = !!state.profiel?.is_beheerder;
+  return `<button class="back" data-sluit-pagina>‹ Terug</button>
+    <h2>Bericht</h2>
+    <div id="gesprek"><div class="empty">Laden…</div></div>
+    <form class="form" id="antwoordForm">
+      <label for="antwoordTekst">${beheer ? "Je antwoord" : "Reageer"}</label>
+      <textarea id="antwoordTekst" name="tekst" rows="4" maxlength="2000" required></textarea>
+      <div class="small muted" id="antwoordUitleg"></div>
+      <div class="btns"><button class="btn primary" type="submit">Versturen</button></div>
+    </form>
+    <div id="gesprekActies"></div>`;
+}
+
+const tijdstip = (iso) => new Date(iso).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+async function laadGesprek(id) {
+  const [{ data: b, error }, { data: antwoorden }] = await Promise.all([
+    sb.from("bugmeldingen").select(`${BERICHT_VELDEN},profielen(naam)`).eq("id", id).maybeSingle(),
+    sb.from("bericht_antwoorden").select("id,van_beheer,tekst,op").eq("bericht_id", id).order("op"),
+  ]);
+  const el = $("#gesprek");
+  if (!el || state.pagina !== "bericht" || state.bericht !== id) return;
+  if (error || !b) {
+    el.innerHTML = `<div class="empty">Dit bericht is er niet meer.</div>`;
+    $("#antwoordForm")?.remove();
+    return;
+  }
+  const eigen = b.door_id === state.sessie?.user?.id;
+  const beheer = !!state.profiel?.is_beheerder && !eigen;
+  // Namen: de speler ziet "Jij" en "Bierkoers"; de beheerder ziet de spelersnaam en "Bierkoers"
+  const speler = eigen ? "Jij" : b.profielen?.naam ? `<span data-geen-teksten>${esc(b.profielen.naam)}</span>` : "Verwijderde speler";
+  const stuk = (wie, tekst, op, vanMij) => `<li class="${vanMij ? "van-mij" : ""}"><div class="wie">${wie}</div>
+    <div class="tekst" data-geen-teksten>${esc(tekst)}</div><div class="wanneer" data-geen-teksten>${tijdstip(op)}</div></li>`;
+  el.innerHTML = `${beheer ? `<p class="small muted gesprek-info">${[b.scherm ? `<span data-geen-teksten>${esc(b.scherm)}</span>` : "", b.apparaat ? `<span data-geen-teksten>${esc(b.apparaat)}</span>` : ""].filter(Boolean).join(" · ")}</p>` : ""}
+    <ul class="gesprek">${stuk(speler, b.tekst, b.op, eigen)}${(antwoorden ?? []).map((a) => stuk(a.van_beheer ? "Bierkoers" : speler, a.tekst, a.op, a.van_beheer ? beheer : eigen)).join("")}</ul>`;
+  const uitleg = $("#antwoordUitleg");
+  if (uitleg) uitleg.textContent = beheer ? "De speler ziet je antwoord onder Ik, Jouw berichten, en krijgt het per mail als die een e-mailadres heeft." : "Bierkoers ziet je reactie in de app en krijgt een mail.";
+  const acties = $("#gesprekActies");
+  if (acties) acties.innerHTML = beheer
+    ? `<div class="btns">${b.status === "open" ? `<button class="btn" data-bericht-status="afgehandeld">Afhandelen</button>` : `<button class="btn" data-bericht-status="open">Weer openen</button>`}</div>`
+    : "";
+  // Geopend is gelezen
+  if ((beheer && nieuwVoorBeheer(b)) || (eigen && nieuwVoorSpeler(b))) {
+    const { error: leesMislukt } = await sb.rpc("lees_bericht", { p_bericht: id });
+    if (!leesMislukt) { await laadBerichten(); vulBerichten(); }
+  }
+}
+
+async function verstuurAntwoord(form) {
+  const tekst = String(new FormData(form).get("tekst") ?? "").trim();
+  if (!tekst) return toast("Schrijf eerst je antwoord");
+  const knop = form.querySelector("[type=submit]");
+  knop.disabled = true;
+  const id = state.bericht;
+  const { data, error } = await sb.rpc("beantwoord_bericht", { p_bericht: id, p_tekst: tekst });
+  if (error) { knop.disabled = false; return toast(await leesFout(error)); }
+  form.reset();
+  document.activeElement?.blur();
+  const eigen = state.berichten.some((b) => b.id === id);
+  const mail = mailMelding("antwoord", data);
+  await laadGesprek(id);
+  laadBerichten().then(vulBerichten);
+  // Een antwoord van de beheerder: zeggen of de speler ook een mail kreeg
+  if (state.profiel?.is_beheerder && !eigen) {
+    const { verstuurd } = await mail;
+    toast(verstuurd ? "Verstuurd, ook per mail" : "Verstuurd. De speler ziet het in de app");
+  } else toast("Verstuurd");
+  knop.disabled = false;
+}
+
+async function zetBerichtStatus(knop, status) {
+  knop.disabled = true;
+  const { error } = await sb.rpc("zet_bericht_status", { p_bericht: state.bericht, p_status: status });
+  if (error) { knop.disabled = false; return toast(await leesFout(error)); }
+  await laadBerichten();
+  if (status === "afgehandeld") {
+    toast("Afgehandeld");
+    state.pagina = null; state.bericht = null;
+    return draw();
+  }
+  toast("Weer open");
+  vulBerichten();
+  laadGesprek(state.bericht);
 }
 
 // Nieuwe stad aanvragen: elke speler kan een stad voorstellen; een beheerder keurt goed (functie vraag_stad_aan)
@@ -2793,6 +2970,7 @@ function setTab(t) {
   state.tab = t; state.selected = null; state.form = null; state.aanbodForm = null; state.tijdenForm = null; state.info = null; state.tocht = null;
   document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === t)));
   kaartBijwerken(); draw(); body.scrollTop = 0;
+  if (t === "ik") laadBerichten().then(vulBerichten);
   // Ik bevat formulieren; in de halve stand valt de onderkant buiten beeld
   if (!wide() && t === "ik") setDetent("full");
   else if (!wide() && sheet.dataset.detent === "peek") setDetent("half");
@@ -3101,7 +3279,10 @@ body.addEventListener("click", (e) => {
   if (t.dataset.uitleg !== undefined) return toonUitleg();
   if (t.dataset.regels !== undefined) { state.pagina = "regels"; draw(); body.scrollTop = 0; return; }
   if (t.dataset.over !== undefined) { state.pagina = "over"; draw(); body.scrollTop = 0; return; }
-  if (t.dataset.sluitPagina !== undefined) { state.pagina = null; return draw(); }
+  if (t.dataset.sluitPagina !== undefined) { state.pagina = null; state.bericht = null; return draw(); }
+  if (t.dataset.bericht) { state.pagina = "bericht"; state.bericht = Number(t.dataset.bericht); draw(); body.scrollTop = 0; return; }
+  if (t.dataset.inbox) { state.inboxFilter = t.dataset.inbox; return vulBerichten(); }
+  if (t.dataset.berichtStatus) return zetBerichtStatus(t, t.dataset.berichtStatus);
 });
 
 // Wie iets gaat invullen, krijgt het hele blad te zien
@@ -3155,6 +3336,7 @@ body.addEventListener("submit", async (e) => {
   if (f.id === "tijdenForm") return verstuurTijden(f);
   if (f.id === "kroegmeldingForm") return verstuurKroegmelding(f);
   if (f.id === "bugForm") return verstuurBug(f);
+  if (f.id === "antwoordForm") return verstuurAntwoord(f);
   if (f.id === "stadForm") return verstuurStad(f);
   if (f.id === "loginForm" || f.id === "aanmeldForm") {
     const fd = new FormData(f);
@@ -3308,6 +3490,9 @@ sb.channel("stad")
   .on("postgres_changes", { event: "*", schema: "public", table: "kroegen" }, () => vernieuw())
   .on("postgres_changes", { event: "*", schema: "public", table: "kroeg_aanbod" }, () => vernieuw())
   .on("postgres_changes", { event: "*", schema: "public", table: "kroeg_meldingen" }, () => vernieuw())
+  // Berichten: realtime volgt de leesregels, dus een speler hoort alleen over zijn eigen gesprekken
+  .on("postgres_changes", { event: "*", schema: "public", table: "bugmeldingen" }, () => berichtenGewijzigd())
+  .on("postgres_changes", { event: "INSERT", schema: "public", table: "bericht_antwoorden" }, () => berichtenGewijzigd())
   .subscribe();
 
 // ---------------------------------------------------------------------------
@@ -3327,7 +3512,7 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   if (gebeurtenis === "TOKEN_REFRESHED") return;
   // Niet binnen deze callback op Supabase wachten: supabase-js houdt dan nog een slot vast en de app kan vastlopen.
   setTimeout(async () => {
-    await Promise.all([laadProfiel(), laadMijn()]);
+    await Promise.all([laadProfiel().then(laadBerichten), laadMijn()]);
     if (stilAangemeld) { stilAangemeld = false; return; }
     if (sessie && !sessie.user.is_anonymous) samenvoegen(sessie.user.id);
     // Kwam de speler via "Doe mee" bij een kroeg? Dan terug naar die kroeg.
@@ -3358,7 +3543,7 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   const { data } = await sb.auth.getSession();
   // Geen sessie in de browser: misschien wel in de bewaarcookie
   state.sessie = data.session ?? (await bewaar.herstel());
-  await Promise.all([laadKroegen(), laadStad(), laadProfiel(), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
+  await Promise.all([laadKroegen(), laadStad(), laadProfiel().then(laadBerichten), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
   sessieBekend = true; // nu weten we of er al een sessie is en of anonieme accounts in Supabase aanstaan
   koersen(); lichtkrant(); hud(); kaartBijwerken();
   draw();

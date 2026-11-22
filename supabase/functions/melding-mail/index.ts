@@ -1,11 +1,14 @@
-// Mailt de beheerder over een nieuw bericht (soort "bug") of een stadsaanvraag, via de Infomaniak-mailbox van Bierkoers.
-// De app roept deze functie aan nadat de speler de melding deed (meld_bug of vraag_stad_aan). Wie de melding
-// deed, volgt uit de sessie (Authorization), nooit uit het verzoek; elke melding wordt hoogstens een keer
-// gemaild (public.claim_melding_mail).
+// Mailt via de Infomaniak-mailbox van Bierkoers over een nieuw bericht (soort "bug"), een stadsaanvraag (soort
+// "stad") of een antwoord in een gesprek over een bericht (soort "antwoord"). De app roept deze functie aan nadat
+// de speler of beheerder het deed (meld_bug, vraag_stad_aan of beantwoord_bericht). Wie het deed, volgt uit de
+// sessie (Authorization), nooit uit het verzoek; elke melding wordt hoogstens een keer gemaild
+// (public.claim_melding_mail).
+// Een bericht, stadsaanvraag of antwoord van een speler gaat naar de beheerder. Een antwoord van de beheerder gaat
+// naar het e-mailadres van de speler die het bericht stuurde; zonder e-mailadres alleen in de app.
 //
 // POST /functions/v1/melding-mail
-// Authorization: Bearer <sessie van de speler>
-// { "soort": "bug" | "stad", "id": <id van de melding> }
+// Authorization: Bearer <sessie>
+// { "soort": "bug" | "stad" | "antwoord", "id": <id van de melding of het antwoord> }
 //
 // Instellingen (Edge Functions, Secrets): SMTP_WACHTWOORD is verplicht (apparaatwachtwoord van Infomaniak).
 // Optioneel: SMTP_GEBRUIKER (standaard proost@bierkoers.nl), SMTP_HOST (standaard mail.infomaniak.com) en
@@ -20,6 +23,8 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const TABEL: Record<string, string> = { bug: "bugmeldingen", stad: "stadsaanvragen", antwoord: "bericht_antwoorden" };
 
 function antwoord(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -46,7 +51,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const soort = body?.soort;
   const id = Number(body?.id);
-  if (!jwt || (soort !== "bug" && soort !== "stad") || !Number.isSafeInteger(id) || id < 1) {
+  if (!jwt || typeof soort !== "string" || !Object.hasOwn(TABEL, soort) || !Number.isSafeInteger(id) || id < 1) {
     return antwoord({ fout: "Gegevens ontbreken" }, 400);
   }
 
@@ -57,10 +62,20 @@ Deno.serve(async (req) => {
   if (error) return antwoord({ fout: "De melding kon niet worden opgehaald" }, 500);
   if (!melding) return antwoord({ ok: true, verstuurd: false }); // al gemaild, niet van deze speler, of te oud
 
+  // Een antwoord van de beheerder gaat naar de speler, als die een e-mailadres heeft
+  let ontvanger = naar;
+  if (melding.soort === "antwoord" && melding.van_beheer) {
+    const { data: speler } = melding.speler ? await admin.auth.admin.getUserById(melding.speler) : { data: null };
+    const adres = speler?.user && !speler.user.is_anonymous ? (speler.user.email ?? "") : "";
+    if (!adres) return antwoord({ ok: true, verstuurd: false, reden: "geen e-mailadres" });
+    ontvanger = adres;
+  }
+
   try {
     // Heeft de speler een e-mailadres, dan wordt dat het antwoordadres: de beheerder antwoordt gewoon op de mail.
-    // Het adres komt uit de sessie, nooit uit het verzoek.
-    const email = auth.user.is_anonymous ? "" : (auth.user.email ?? "");
+    // Het adres komt uit de sessie, nooit uit het verzoek. Een mail van de beheerder aan een speler heeft de
+    // mailbox van Bierkoers als afzender en antwoordadres.
+    const email = auth.user.is_anonymous || ontvanger !== naar ? "" : (auth.user.email ?? "");
     const { onderwerp, tekst } = maakMail(melding, !!email);
     const verbinding = nodemailer.createTransport({
       host,
@@ -69,10 +84,10 @@ Deno.serve(async (req) => {
       auth: { user: gebruiker, pass: wachtwoord },
       connectionTimeout: 10000,
     });
-    await verbinding.sendMail({ from: `Bierkoers <${gebruiker}>`, to: naar, subject: onderwerp, text: tekst, ...(email ? { replyTo: email } : {}) });
+    await verbinding.sendMail({ from: `Bierkoers <${gebruiker}>`, to: ontvanger, subject: onderwerp, text: tekst, ...(email ? { replyTo: email } : {}) });
   } catch (e) {
     // Versturen mislukt: de melding weer vrijgeven, zodat een volgende poging kan lukken
-    await admin.from(soort === "bug" ? "bugmeldingen" : "stadsaanvragen").update({ gemaild_op: null }).eq("id", id);
+    await admin.from(TABEL[soort]).update({ gemaild_op: null }).eq("id", id);
     console.error("melding-mail: versturen mislukt", e instanceof Error ? e.message : e);
     return antwoord({ fout: "De mail kon niet worden verstuurd" }, 502);
   }

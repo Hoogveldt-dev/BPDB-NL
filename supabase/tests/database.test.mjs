@@ -818,7 +818,9 @@ check('een bug zonder inloggen kan niet', !!(await als(null, `select public.meld
 check('een te kort bericht wordt geweigerd met een tekst over een bericht', /Schrijf je bericht in een paar woorden/.test((await als(B, `select public.meld_bug('kap')`)).fout ?? ''));
 check('direct in bugmeldingen schrijven kan niet', !!(await als(B, `insert into public.bugmeldingen (door_id, tekst) values ('${B}', 'Rechtstreeks erin')`)).fout);
 const bugLees = await als(B, `select count(*)::int as n from public.bugmeldingen`);
-check('een gewone speler leest geen bugmeldingen, ook niet zijn eigen', bugLees.rows?.[0]?.n === 0, JSON.stringify(bugLees));
+check('een speler leest zijn eigen bericht (20261122200000_inbox)', bugLees.rows?.[0]?.n === 1, JSON.stringify(bugLees));
+const bugAnder = await als(A, `select count(*)::int as n from public.bugmeldingen`);
+check('een gewone speler leest de berichten van een ander niet', bugAnder.rows?.[0]?.n === 0, JSON.stringify(bugAnder));
 await db.exec(`update public.profielen set is_beheerder = true where id = '${E}'`);
 const bugBeheer = await als(E, `select tekst, scherm, apparaat, door_id from public.bugmeldingen`);
 check('een beheerder leest de bugmeldingen met scherm en browser', bugBeheer.rows?.length === 1 && bugBeheer.rows[0].scherm === 'kaart, kroeg 3' && bugBeheer.rows[0].door_id === B, JSON.stringify(bugBeheer));
@@ -1054,6 +1056,66 @@ const uD = await punten(D);
 await als(A, `select public.beoordeel(${u4.id}, 'klopt_niet')`);
 await als(B, `select public.beoordeel(${u4.id}, 'klopt_niet')`);
 check('een weerlegde uitschieter kost -20, zonder punten die nog terug moeten', (await punten(D)) === uD - 20, `${uD} -> ${await punten(D)}`);
+
+// ---------------------------------------------------------------------------
+// Inbox: een bericht wordt een gesprek tussen speler en beheerder (20261122200000_inbox)
+// ---------------------------------------------------------------------------
+
+const gb = (await als(C, `select public.meld_bug('Kunnen jullie IJwit toevoegen?') as id`)).rows[0].id;
+const gesprek = () => een(`select status, laatste_op, laatste_van_beheer, beheer_gelezen_op, speler_gelezen_op from public.bugmeldingen where id = ${gb}`);
+const gs0 = await gesprek();
+check('een nieuw bericht is open en het laatste woord is van de speler', gs0.status === 'open' && gs0.laatste_van_beheer === false && !!gs0.laatste_op, JSON.stringify(gs0));
+check('een andere speler antwoordt niet op andermans bericht', /eigen berichten/.test((await als(A, `select public.beantwoord_bericht(${gb}, 'Ik ook!')`)).fout ?? ''));
+check('antwoorden zonder inloggen kan niet', !!(await als(null, `select public.beantwoord_bericht(${gb}, 'Hallo')`)).fout);
+check('een leeg antwoord wordt geweigerd', /Schrijf eerst je antwoord/.test((await als(C, `select public.beantwoord_bericht(${gb}, '   ')`)).fout ?? ''));
+check('een antwoord op een onbekend bericht wordt geweigerd', /bestaat niet/.test((await als(C, `select public.beantwoord_bericht(999999, 'Hallo')`)).fout ?? ''));
+check('direct in bericht_antwoorden schrijven kan niet', !!(await als(C, `insert into public.bericht_antwoorden (bericht_id, door_id, van_beheer, tekst) values (${gb}, '${C}', true, 'Nep')`)).fout);
+check('de status zelf wijzigen kan niet', !!(await als(C, `update public.bugmeldingen set status = 'afgehandeld' where id = ${gb}`)).fout
+  || (await gesprek()).status === 'open');
+
+await db.exec(`update public.profielen set is_beheerder = true where id = '${E}'`);
+const ga1 = (await als(E, `select public.beantwoord_bericht(${gb}, 'Goed idee, we kijken ernaar.') as id`)).rows?.[0]?.id;
+check('een beheerder antwoordt op een bericht', ga1 > 0);
+const gs1 = await gesprek();
+check('na het antwoord is het laatste woord van de beheerder, nieuw voor de speler en gelezen door de beheerder',
+  gs1.laatste_van_beheer === true && gs1.speler_gelezen_op === null && gs1.beheer_gelezen_op >= gs1.laatste_op, JSON.stringify(gs1));
+const antwC = await als(C, `select tekst, van_beheer, door_id from public.bericht_antwoorden where bericht_id = ${gb}`);
+check('de speler leest het antwoord in het gesprek', antwC.rows?.length === 1 && antwC.rows[0].van_beheer === true && antwC.rows[0].tekst === 'Goed idee, we kijken ernaar.', JSON.stringify(antwC));
+check('een andere speler leest het antwoord niet', (await als(A, `select count(*)::int as n from public.bericht_antwoorden`)).rows?.[0]?.n === 0);
+check('een ander zet het gesprek niet op gelezen', /bestaat niet/.test((await als(A, `select public.lees_bericht(${gb})`)).fout ?? ''));
+await als(C, `select public.lees_bericht(${gb})`);
+const gs2 = await gesprek();
+check('na lees_bericht heeft de speler het antwoord gelezen', gs2.speler_gelezen_op >= gs2.laatste_op, JSON.stringify(gs2));
+
+check('een speler handelt een bericht niet af', /beheerder/.test((await als(C, `select public.zet_bericht_status(${gb}, 'afgehandeld')`)).fout ?? ''));
+check('een onbekende status wordt geweigerd', /Onbekende status/.test((await als(E, `select public.zet_bericht_status(${gb}, 'weg')`)).fout ?? ''));
+await als(E, `select public.zet_bericht_status(${gb}, 'afgehandeld')`);
+check('de beheerder handelt het gesprek af', (await gesprek()).status === 'afgehandeld');
+const ga2 = (await als(C, `select public.beantwoord_bericht(${gb}, 'Dank! En Hertog Jan?') as id`)).rows?.[0]?.id;
+const gs3 = await gesprek();
+check('een reactie van de speler zet het gesprek weer open en is nieuw voor de beheerder',
+  ga2 > 0 && gs3.status === 'open' && gs3.laatste_van_beheer === false && gs3.beheer_gelezen_op < gs3.laatste_op, JSON.stringify(gs3));
+check('de beheerder leest alle antwoorden in het gesprek', (await als(E, `select count(*)::int as n from public.bericht_antwoorden where bericht_id = ${gb}`)).rows?.[0]?.n === 2);
+
+// De mail bij een antwoord: alleen wie het schreef, een keer, met de speler en het eerste bericht
+const cA1 = (await alsService(`select public.claim_melding_mail('antwoord', ${ga1}, '${E}') as r`)).rows?.[0]?.r;
+check('claim_melding_mail geeft bij een antwoord van de beheerder de speler en het eerste bericht',
+  cA1?.soort === 'antwoord' && cA1.van_beheer === true && cA1.speler === C && cA1.bericht === 'Kunnen jullie IJwit toevoegen?', JSON.stringify(cA1));
+check('een antwoord wordt maar een keer gemaild', (await alsService(`select public.claim_melding_mail('antwoord', ${ga1}, '${E}') as r`)).rows?.[0]?.r === null);
+check('claim_melding_mail geeft niets voor een antwoord van een ander', (await alsService(`select public.claim_melding_mail('antwoord', ${ga2}, '${E}') as r`)).rows?.[0]?.r === null);
+const cA2 = (await alsService(`select public.claim_melding_mail('antwoord', ${ga2}, '${C}') as r`)).rows?.[0]?.r;
+check('een reactie van de speler gaat naar de beheerder met de naam van de speler', cA2?.van_beheer === false && !!cA2.naam, JSON.stringify(cA2));
+check('een speler roept claim_melding_mail voor een antwoord niet zelf aan', !!(await als(C, `select public.claim_melding_mail('antwoord', ${ga2}, '${C}')`)).fout);
+await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
+check('een gewezen beheerder antwoordt niet meer op andermans bericht', /eigen berichten/.test((await als(E, `select public.beantwoord_bericht(${gb}, 'Nog iets')`)).fout ?? ''));
+
+// Hoogstens 20 antwoorden per speler per dag
+for (let i = 0; i < 19; i++) await als(C, `select public.beantwoord_bericht(${gb}, 'Reactie ${i}')`);
+check('na 20 antwoorden op een dag is het genoeg', /al 20 antwoorden/.test((await als(C, `select public.beantwoord_bericht(${gb}, 'De eenentwintigste')`)).fout ?? ''));
+check('een verwijderd bericht neemt zijn antwoorden mee', (await (async () => {
+  await db.exec(`delete from public.bugmeldingen where id = ${gb}`);
+  return (await een(`select count(*)::int as n from public.bericht_antwoorden where bericht_id = ${gb}`)).n;
+})()) === 0);
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);
