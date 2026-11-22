@@ -230,6 +230,8 @@ h3 .muted { font: 400 15px var(--f-ui); letter-spacing: -.01em; }
 .btn.aanbieder { display: flex; align-items: center; gap: 10px; background: var(--surface-2); color: var(--fg); text-align: left; }
 .btn.aanbieder svg.logo { width: 18px; height: 18px; flex: none; }
 .btn.aanbieder .naam { flex: 1; }
+.btn.aanbieder svg.slot { width: 16px; height: 16px; flex: none; color: var(--muted); }
+.btn.aanbieder:disabled { opacity: .55; }
 .of { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 16px 0 4px; }
 .of::before, .of::after { content: ""; flex: 1; border-top: var(--hair); }
 

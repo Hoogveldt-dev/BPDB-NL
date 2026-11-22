@@ -1987,27 +1987,26 @@ const LOGO = {
   google: `<svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.27c0-.82-.07-1.6-.2-2.36H12v4.47h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.56-5.17 3.56-8.73z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.9l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.28v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.29 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.28a12 12 0 0 0 0 10.8l4.01-3.1z"/><path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.8l3.44-3.44A11.5 11.5 0 0 0 12 0 12 12 0 0 0 1.28 6.6l4.01 3.1C6.23 6.86 8.88 4.75 12 4.75z"/></svg>`,
 };
 
-// Knoppen voor Apple en Google. Zolang een aanbieder in Supabase uit staat, staat de knop op slot
-// (zie docs/inloggen-met-apple-en-google.md). "koppelen": een anonieme speler maakt er een account van, met
-// behoud van punten en check-ins. "inloggen": met een bestaand account.
-function aanbiederKnoppen(soort = "inloggen") {
-  // Alleen aanbieders die in Supabase aanstaan; een knop die nog niet werkt, verwart alleen
-  const werkwoord = soort === "koppelen" ? "Account maken met" : "Doorgaan met";
-  const knoppen = [["apple", "Apple"], ["google", "Google"]].filter(([id]) => state.aanbieders[id])
-    .map(([id, naam]) => `<button class="btn aanbieder" data-aanbieder="${id}" data-soort="${soort}">${LOGO[id]}<span class="naam">${werkwoord} ${naam}</span></button>`);
-  return knoppen.length ? `<div class="sociaal">${knoppen.join("")}</div>` : "";
+// Knoppen voor Google en Apple: "Doorgaan met", voor inloggen en account maken tegelijk. Staat een aanbieder in
+// Supabase uit, dan staat de knop op slot (zie docs/inloggen-met-apple-en-google.md).
+const SLOT = `<svg class="slot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+function aanbiederKnoppen() {
+  const knoppen = [["google", "Google"], ["apple", "Apple"]].map(([id, naam]) => state.aanbieders[id]
+    ? `<button class="btn aanbieder" data-aanbieder="${id}">${LOGO[id]}<span class="naam">Doorgaan met ${naam}</span></button>`
+    : `<button class="btn aanbieder" disabled aria-label="Doorgaan met ${naam} (nog niet beschikbaar)">${LOGO[id]}<span class="naam">Doorgaan met ${naam}</span>${SLOT}</button>`);
+  return `<div class="sociaal">${knoppen.join("")}</div>`;
 }
 
+// Altijd gewoon inloggen bij Apple of Google: hoort er al een account bij, dan is dat het; zo niet, dan maakt
+// Supabase er een. Een anonieme speler (ook een die met de bewaarcookie terugkwam) gaat daarbij niet verloren:
+// onthoudAnoniem() bewaart zijn token en samenvoegen() zet zijn bijdragen daarna over naar het account.
+// (Koppelen met linkIdentity weigert juist als het Google-account al bij een speler hoort.)
 async function inloggenMet(aanbieder, knop) {
-  const koppelen = knop.dataset.soort === "koppelen" && (anoniem() || !state.sessie);
-  if (!koppelen) onthoudAnoniem();
-  if (koppelen && !(await zorgVoorSpeler())) return;
+  onthoudAnoniem();
   knop.disabled = true;
   const terug = location.origin + location.pathname;
   // De pagina gaat naar Apple of Google en komt terug met ?code=; supabase-js wisselt die zelf in
-  const { error } = koppelen
-    ? await sb.auth.linkIdentity({ provider: aanbieder, options: { redirectTo: terug } })
-    : await sb.auth.signInWithOAuth({ provider: aanbieder, options: { redirectTo: terug } });
+  const { error } = await sb.auth.signInWithOAuth({ provider: aanbieder, options: { redirectTo: terug } });
   if (error) { knop.disabled = false; toast(vertaalAuthFout(error)); }
 }
 
@@ -2099,7 +2098,7 @@ function accountBlok(p) {
         <div class="btns"><button class="btn primary" type="submit">Ga verder</button></div>
       </form>
       <div class="small muted" style="margin-top:8px">Je krijgt een code per mail, geen wachtwoord. Hoort er nog geen account bij je e-mailadres, dan maken we er een.</div>
-      ${metOf(aanbiederKnoppen(p ? "koppelen" : "inloggen"), "of")}
+      ${metOf(aanbiederKnoppen(), "of")}
     </div>`;
 }
 

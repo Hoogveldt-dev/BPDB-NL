@@ -42,7 +42,6 @@ export const EN = {
   "wacht": "waiting",
   "goedkoper": "cheaper",
   "duurder": "pricier",
-  "Account maken met *": "Create account with *",
   "Doorgaan met *": "Continue with *",
   "van * bijdragen": "of * contributions",
   "Vanaf het centrum van *, kroegen binnen *.": "From the centre of *, pubs within *.",
@@ -494,7 +493,6 @@ export const EN = {
 
   // Account en inloggen
   "Account maken": "Create account",
-  "Account maken met": "Create account with",
   "Doorgaan met": "Continue with",
   "* *, nog niet beschikbaar": "* *, not available yet",
   "*Maak een account om je eigen spelersnaam te kiezen, op een ander toestel verder te spelen en prijzen van anderen te bevestigen.*": "*Create an account to choose your own player name, continue on another device and confirm prices by others.*",
