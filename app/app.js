@@ -46,7 +46,26 @@ const TAAL = (() => {
 const LOCALE = TAAL === "en" ? "en-GB" : "nl-NL";
 const EN = TAAL === "en" ? await import("./en.js").then((m) => m.EN).catch(() => null) : null;
 document.documentElement.lang = TAAL;
-const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Stand: licht, donker of het systeem volgen (Ik, Weergave). Een eigen keuze zet data-theme op de pagina, het systeem
+// haalt het weg zodat styles.css de voorkeur van het toestel volgt. index.html zet hem al voor het tekenen.
+const systeemDonker = matchMedia("(prefers-color-scheme: dark)");
+let stand = (() => {
+  try { const s = localStorage.getItem("bierkoers-stand"); if (s === "licht" || s === "donker") return s; } catch { /* privévenster */ }
+  return "systeem";
+})();
+const isDonker = () => (stand === "systeem" ? systeemDonker.matches : stand === "donker");
+function pasStandToe() {
+  const root = document.documentElement;
+  if (stand === "systeem") root.removeAttribute("data-theme"); else root.dataset.theme = stand === "donker" ? "dark" : "light";
+  // De kleur van de statusbalk: bij een eigen keuze voor beide voorkeuren gelijk, anders de twee uit index.html
+  for (const m of document.querySelectorAll('meta[name="theme-color"]')) {
+    m.dataset.standaard ??= m.content;
+    m.content = stand === "systeem" ? m.dataset.standaard : isDonker() ? "#0E0E0E" : "#FFF6E0";
+  }
+}
+pasStandToe();
+const esc =(v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const euro = (cent) => cent == null ? "" : "€ " + (cent / 100).toFixed(2).replace(".", ",");
 const dagen = (iso) => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
 const wanneer = (iso) => {
@@ -678,10 +697,9 @@ function lichtkrant() {
 // Kaart
 // ---------------------------------------------------------------------------
 
-const donker = matchMedia("(prefers-color-scheme: dark)");
 const map = new maplibregl.Map({
   container: "map",
-  style: donker.matches ? KAARTSTIJL.donker : KAARTSTIJL.licht,
+  style: isDonker() ? KAARTSTIJL.donker : KAARTSTIJL.licht,
   center: STAD.centrum,
   zoom: STAD.zoom,
   attributionControl: { compact: true },
@@ -796,7 +814,7 @@ const LICHTE_KAART = [
   [/^label_/, { "text-color": "#0e0e0e", "text-halo-color": "#fff6e0" }],
 ];
 function kaartKleuren() {
-  const tabel = donker.matches ? DONKERE_KAART : LICHTE_KAART;
+  const tabel = isDonker() ? DONKERE_KAART : LICHTE_KAART;
   for (const laag of map.getStyle()?.layers ?? []) {
     for (const [patroon, verf] of tabel) {
       if (!patroon.test(laag.id)) continue;
@@ -975,7 +993,6 @@ const mist = (() => {
   }
 
   map.on("render", teken);
-  donker.addEventListener("change", () => { kleuren = null; map.triggerRepaint(); });
   return {
     thema() { kleuren = null; map.triggerRepaint(); },
     bij: () => map.triggerRepaint(),
@@ -1005,10 +1022,19 @@ map.on("load", () => {
   kaartKlaar = true;
   kaartLagen();
 });
-donker.addEventListener("change", () => {
-  map.setStyle(donker.matches ? KAARTSTIJL.donker : KAARTSTIJL.licht);
-  map.once("styledata", () => kaartLagen());
-});
+// De kaart, de mist en de kroegpunten nemen een nieuwe stand over: bij een andere keuze onder Ik, Weergave,
+// of als het systeem wisselt terwijl de stand het systeem volgt.
+let kaartIsDonker = isDonker();
+function kaartStand() {
+  pasStandToe();
+  if (isDonker() !== kaartIsDonker) {
+    kaartIsDonker = isDonker();
+    map.setStyle(kaartIsDonker ? KAARTSTIJL.donker : KAARTSTIJL.licht);
+    map.once("styledata", () => kaartLagen());
+  }
+  mist.thema();
+}
+systeemDonker.addEventListener("change", () => { if (stand === "systeem") kaartStand(); });
 
 function kaartBijwerken() {
   if (!kaartKlaar) return;
@@ -2252,6 +2278,7 @@ function ikView() {
       ${bugBlok()}
       ${stadKeuzeBlok()}
       ${stadBlok()}
+      ${standBlok()}
       ${taalBlok()}
       ${voetRegel()}`;
   }
@@ -2313,6 +2340,7 @@ function ikView() {
     <div id="mijnBerichten">${mijnBerichtenHtml()}</div>
     ${stadKeuzeBlok()}
     ${stadBlok()}
+    ${standBlok()}
     ${taalBlok()}
     <details class="uitklap" data-onthoud="gegevens"${uitgeklapt("gegevens")}><summary><span class="uitklap-kop">Jouw gegevens</span></summary>
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
@@ -2345,6 +2373,23 @@ function kiesStad(naam) {
   state.koersRuw = [];
   state.stad = state.steden?.find((s) => s.gemeente === naam) ?? null;
   vernieuw();
+  draw();
+}
+
+// Weergave kiezen: licht, donker of het systeem volgen. Staat boven de taalkeuze.
+function standBlok() {
+  const knop = (s, naam) => `<button type="button" data-stand="${s}" aria-pressed="${stand === s}">${naam}</button>`;
+  return `<h3>Weergave</h3>
+    <div class="seg" role="group" aria-label="Weergave">${knop("licht", "Licht")}${knop("donker", "Donker")}${knop("systeem", "Systeem")}</div>`;
+}
+
+function kiesStand(nieuw) {
+  if (nieuw === stand) return;
+  stand = nieuw;
+  try {
+    if (stand === "systeem") localStorage.removeItem("bierkoers-stand"); else localStorage.setItem("bierkoers-stand", stand);
+  } catch { /* privévenster: alleen voor nu */ }
+  kaartStand();
   draw();
 }
 
@@ -3267,6 +3312,7 @@ body.addEventListener("click", (e) => {
     return prijsVoorbeeld();
   }
   if (t.dataset.wisMijn !== undefined) return wisMijn();
+  if (t.dataset.stand) return kiesStand(t.dataset.stand);
   if (t.dataset.taal) {
     if (t.dataset.taal === TAAL) return;
     try { localStorage.setItem("bierkoers-taal", t.dataset.taal); } catch { /* privévenster: alleen voor nu */ }

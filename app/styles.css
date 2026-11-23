@@ -74,6 +74,7 @@
 @media (prefers-color-scheme: dark) {
   :root[data-bier="guinness"]:not([data-theme="light"]) { --accent: #2fc27f; --accent-ink: #00140b; --accent-text: #5fdca2; --accent-zacht: rgb(47 194 127 / .2); }
 }
+:root[data-bier="guinness"][data-theme="dark"] { --accent: #2fc27f; --accent-ink: #00140b; --accent-text: #5fdca2; --accent-zacht: rgb(47 194 127 / .2); }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
