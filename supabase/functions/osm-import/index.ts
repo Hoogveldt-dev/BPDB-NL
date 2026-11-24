@@ -12,11 +12,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { multipolygoon, type OsmElement } from "./grenzen.ts";
 
-// Overpass weigert of overbelast soms; probeer dan de volgende server.
+// Overpass weigert of overbelast soms; probeer dan de volgende server. overpass-api.de weigerde in november 2026
+// verzoeken vanuit Supabase (406), dus de server van mail.ru staat voorop. Elke poging duurt hoogstens een minuut.
 const OVERPASS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.private.coffee/api/interpreter",
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
 ];
 const USER_AGENT = "BPDB-NL kroegimport (https://bpdb-nl.pages.dev)";
 const PDOK_WIJKEN = "https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0";
@@ -27,13 +29,6 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
-function antwoord(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors, "Content-Type": "application/json" },
-  });
-}
 
 function antwoord(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -54,7 +49,7 @@ async function overpass(query: string): Promise<{ elements: OsmElement[] }> {
           "User-Agent": USER_AGENT,
         },
         body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(70_000),
+        signal: AbortSignal.timeout(60_000),
       });
       const tekst = await res.text();
       if (!res.ok) {

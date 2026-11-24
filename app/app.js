@@ -2646,12 +2646,13 @@ function gemeenten() {
 const zoekVorm = (t) => String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const gemeenteLabel = (g) => `${g.naam}, ${g.provincie}`;
 
-// Beste treffers eerst: de naam begint ermee, dan een woord in de naam, dan de andere naam, dan ergens erin
+// Beste treffers eerst: precies de naam, dan begint de naam ermee, dan een woord in de naam, dan de andere naam, dan ergens erin
 function zoekGemeenten(lijst, tekst) {
   const q = zoekVorm(tekst.split(",")[0]);
   if (q.length < 2) return [];
   const score = (g) => {
     const n = zoekVorm(g.naam), o = zoekVorm(g.ook_bekend_als);
+    if (n === q || o === q) return -1;
     if (n.startsWith(q)) return 0;
     if (n.split(/[\s'-]+/).some((w) => w.startsWith(q))) return 1;
     if (o && o.startsWith(q)) return 2;
@@ -2668,7 +2669,7 @@ async function toonGemeenten(invoer) {
   const el = form.querySelector("#gemeenteKeuze");
   el.innerHTML = zoekGemeenten(lijst, invoer.value).map((g) => `<li><button type="button" class="row" data-gemeente="${esc(g.code)}">
     <span class="row-main"><span class="row-title">${esc(g.naam)}</span>
-    <span class="row-sub">${esc(g.provincie)}${g.ook_bekend_als ? ` · ${esc(g.ook_bekend_als)}` : ""}</span></span></button></li>`).join("");
+    <span class="row-sub">${esc(g.provincie)}${g.ook_bekend_als && g.ook_bekend_als !== g.provincie ? ` · ${esc(g.ook_bekend_als)}` : ""}</span></span></button></li>`).join("");
 }
 
 async function kiesGemeente(code) {
