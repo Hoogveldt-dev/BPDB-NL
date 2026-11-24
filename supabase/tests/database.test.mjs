@@ -832,15 +832,21 @@ check('na 10 berichten op een dag is het genoeg (20261122120000_berichten)', /al
 // Nieuwe stad aanvragen: elke speler via vraag_stad_aan, alleen beheerders lezen en behandelen
 // ---------------------------------------------------------------------------
 
-const stad1 = await als(B, `select public.vraag_stad_aan('Arnhem') as id`);
-check('een speler vraagt een stad aan', stad1.rows?.[0]?.id > 0, JSON.stringify(stad1));
-check('een stad zonder inloggen aanvragen kan niet', !!(await als(null, `select public.vraag_stad_aan('Tiel')`)).fout);
-check('dezelfde stad twee keer aanvragen wordt geweigerd', /al aangevraagd/.test((await als(B, `select public.vraag_stad_aan(' arnhem ')`)).fout ?? ''));
-check('een stad die al meedoet wordt geweigerd', /doet al mee/.test((await als(B, `select public.vraag_stad_aan('Nijmegen')`)).fout ?? ''));
-check('een ongeldige stadsnaam wordt geweigerd', /naam van een stad/.test((await als(B, `select public.vraag_stad_aan('x<script>')`)).fout ?? ''));
-check('direct in stadsaanvragen schrijven kan niet', !!(await als(B, `insert into public.stadsaanvragen (door_id, stad) values ('${B}', 'Zwolle')`)).fout);
+const stad1 = await als(B, `select public.vraag_stad_aan('GM0202') as id`);
+check('een speler vraagt een gemeente uit de lijst aan (20261124120000_gemeentelijst)', stad1.rows?.[0]?.id > 0, JSON.stringify(stad1));
+check('een stad zonder inloggen aanvragen kan niet', !!(await als(null, `select public.vraag_stad_aan('GM0281')`)).fout);
+check('dezelfde stad twee keer aanvragen wordt geweigerd', /al aangevraagd/.test((await als(B, `select public.vraag_stad_aan(' gm0202 ')`)).fout ?? ''));
+check('een stad die al meedoet wordt geweigerd', /doet al mee/.test((await als(B, `select public.vraag_stad_aan('GM0268')`)).fout ?? ''));
+check('een gemeente die niet in de lijst staat wordt geweigerd', /uit de lijst/.test((await als(B, `select public.vraag_stad_aan('GM9999')`)).fout ?? ''));
+check('vrije tekst in plaats van een code wordt geweigerd', /uit de lijst/.test((await als(B, `select public.vraag_stad_aan('Arnhem')`)).fout ?? ''));
+const gent = await als(B, `select public.vraag_stad_aan('BE44021') as id`);
+check('een Belgische gemeente aanvragen kan', gent.rows?.[0]?.id > 0, JSON.stringify(gent));
+check('iedereen leest de gemeentelijst, met provincie', (await als(null, `select naam, provincie from public.gemeenten where code = 'BE44021'`)).rows?.[0]?.provincie === 'Oost-Vlaanderen');
+check('de gemeentelijst heeft Nederland en België', (await een(`select count(*) filter (where land = 'NL')::int as nl, count(*) filter (where land = 'BE')::int as be from public.gemeenten`)).be === 565);
+check('in de gemeentelijst schrijven kan niet', !!(await als(B, `insert into public.gemeenten (code, naam, provincie, land) values ('GM9998', 'Nepstad', 'Gelderland', 'NL')`)).fout);
+check('direct in stadsaanvragen schrijven kan niet', !!(await als(B, `insert into public.stadsaanvragen (door_id, stad, gemeente_code) values ('${B}', 'Zwolle', 'GM0193')`)).fout);
 check('een gewone speler leest geen stadsaanvragen', (await als(B, `select count(*)::int as n from public.stadsaanvragen`)).rows?.[0]?.n === 0);
-await als(A, `select public.vraag_stad_aan('Arnhem')`);
+await als(A, `select public.vraag_stad_aan('GM0202')`);
 check('een gewone speler behandelt geen aanvraag', /beheerders/.test((await als(B, `select public.zet_stadsaanvraag('Arnhem', 'goedgekeurd')`)).fout ?? ''));
 await db.exec(`update public.profielen set is_beheerder = true where id = '${E}'`);
 const aanv = await als(E, `select count(*)::int as n from public.stadsaanvragen where stad_sleutel = 'arnhem' and status = 'open'`);
@@ -899,8 +905,8 @@ check('de zesde vervanging op een dag wordt geweigerd', /al 5 meldingen/.test(ze
 
 // Mail naar de beheerder: claim_melding_mail geeft de gegevens voor de mail, hoogstens een keer, alleen aan de melder
 const bugId = bug1.rows[0].id;
-const stadMail = (await als(B, `select public.vraag_stad_aan('Zwolle') as id`)).rows[0].id;
-await als(A, `select public.vraag_stad_aan('Zwolle')`);
+const stadMail = (await als(B, `select public.vraag_stad_aan('GM0193') as id`)).rows[0].id;
+await als(A, `select public.vraag_stad_aan('GM0193')`);
 check('claim_melding_mail kan een speler niet zelf aanroepen', !!(await als(B, `select public.claim_melding_mail('bug', ${bugId}, '${B}')`)).fout);
 check('claim_melding_mail kan anoniem niet worden aangeroepen', !!(await als(null, `select public.claim_melding_mail('bug', ${bugId}, '${B}')`)).fout);
 check('claim_melding_mail geeft niets voor een bug van een ander', (await alsService(`select public.claim_melding_mail('bug', ${bugId}, '${A}') as r`)).rows?.[0]?.r === null);
@@ -968,9 +974,9 @@ await uploadFoto(S3, 1, KS1); await uploadFoto(S3, 2, KS2);
 const fs1 = (await als(S3, `select * from public.meld_foto(${KS1}, '${fotoPad(S3, 1, KS1)}')`)).rows?.[0];
 const fs2 = (await als(S3, `select * from public.meld_foto(${KS2}, '${fotoPad(S3, 2, KS2)}')`)).rows?.[0];
 const bugS3 = (await als(S3, `select public.meld_bug('Bug van een anonieme speler') as id`)).rows?.[0]?.id;
-await als(R, `select public.vraag_stad_aan('Deventer')`);
-await als(S3, `select public.vraag_stad_aan('Deventer')`);
-const stadS3 = (await als(S3, `select public.vraag_stad_aan('Zutphen') as id`)).rows?.[0]?.id;
+await als(R, `select public.vraag_stad_aan('GM0150')`);
+await als(S3, `select public.vraag_stad_aan('GM0150')`);
+const stadS3 = (await als(S3, `select public.vraag_stad_aan('GM0301') as id`)).rows?.[0]?.id;
 check('samenvoegen: de anonieme speler heeft twee foto\'s met punten, een bug en twee stadsaanvragen',
   fs1?.punten === 5 && fs2?.punten === 5 && bugS3 > 0 && stadS3 > 0, JSON.stringify({ fs1, fs2, bugS3, stadS3 }));
 const voorS3 = (await een(`select coalesce(sum(punten), 0)::int as n from public.punten where gebruiker_id = '${R}'`)).n;

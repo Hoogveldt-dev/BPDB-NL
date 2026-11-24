@@ -5,6 +5,7 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm";
 import { SUPABASE_URL, SUPABASE_KEY, STAD, KAARTSTIJL } from "./config.js";
+import { haalOsm } from "./overpass.js";
 
 const maplibregl = window.maplibregl;
 
@@ -702,7 +703,8 @@ const map = new maplibregl.Map({
   style: isDonker() ? KAARTSTIJL.donker : KAARTSTIJL.licht,
   center: STAD.centrum,
   zoom: STAD.zoom,
-  attributionControl: { compact: true },
+  // Bronnen van de wijken (de kaart zelf vermeldt OpenStreetMap)
+  attributionControl: { compact: true, customAttribution: "Wijken: CBS, Stad Gent, OpenStreetMap" },
 });
 let kaartKlaar = false;
 
@@ -2619,77 +2621,144 @@ async function zetBerichtStatus(knop, status) {
   laadGesprek(state.bericht);
 }
 
-// Nieuwe stad aanvragen: elke speler kan een stad voorstellen; een beheerder keurt goed (functie vraag_stad_aan)
+// Nieuwe stad aanvragen: elke speler kiest een gemeente uit de lijst (tabel gemeenten, Nederland en België);
+// een beheerder keurt goed en de import vindt de gemeente aan de hand van de code (functie vraag_stad_aan)
 function stadBlok() {
   if (!kanBijdragen()) return "";
   return `<details class="klopt-niet bug">
     <summary>Nieuwe stad aanvragen</summary>
     <form class="form" id="stadForm">
       <label for="stadNaam">Welke stad wil je vrijspelen?</label>
-      <input id="stadNaam" name="stad" minlength="2" maxlength="60" placeholder="Bijvoorbeeld Arnhem" required>
-      <div class="small muted">Als genoeg spelers een stad willen, laden we de kroegen in.</div>
+      <input id="stadNaam" name="stad" maxlength="80" placeholder="Bijvoorbeeld Gent" autocomplete="off" data-gemeente-zoek required>
+      <input type="hidden" name="code">
+      <ul class="list gemeente-keuze" id="gemeenteKeuze" data-geen-teksten></ul>
+      <div class="small muted">Kies je gemeente uit de lijst. Als genoeg spelers een stad willen, laden we de kroegen in.</div>
       <div class="btns"><button class="btn primary" type="submit">Aanvragen</button></div>
     </form>
   </details>`;
 }
 
+// De gemeentelijst wordt pas geladen als iemand een stad zoekt (ruim 900 gemeenten)
+let gemeentenLaden = null;
+function gemeenten() {
+  gemeentenLaden ??= sb.from("gemeenten").select("code,naam,provincie,ook_bekend_als").order("naam")
+    .then(({ data, error }) => { if (error) { gemeentenLaden = null; return []; } return data; });
+  return gemeentenLaden;
+}
+const zoekVorm = (t) => String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+const gemeenteLabel = (g) => `${g.naam}, ${g.provincie}`;
+
+// Beste treffers eerst: precies de naam, dan begint de naam ermee, dan een woord in de naam, dan de andere naam, dan ergens erin
+function zoekGemeenten(lijst, tekst) {
+  const q = zoekVorm(tekst.split(",")[0]);
+  if (q.length < 2) return [];
+  const score = (g) => {
+    const n = zoekVorm(g.naam), o = zoekVorm(g.ook_bekend_als);
+    if (n === q || o === q) return -1;
+    if (n.startsWith(q)) return 0;
+    if (n.split(/[\s'-]+/).some((w) => w.startsWith(q))) return 1;
+    if (o && o.startsWith(q)) return 2;
+    return n.includes(q) || (o && o.includes(q)) ? 3 : 9;
+  };
+  return lijst.map((g) => [score(g), g]).filter(([sc]) => sc < 9).sort((a, b) => a[0] - b[0]).slice(0, 6).map(([, g]) => g);
+}
+
+async function toonGemeenten(invoer) {
+  const form = invoer.form;
+  form.code.value = "";
+  const lijst = await gemeenten();
+  if (form.stad.value !== invoer.value) return; // er is intussen verder getypt
+  const el = form.querySelector("#gemeenteKeuze");
+  el.innerHTML = zoekGemeenten(lijst, invoer.value).map((g) => `<li><button type="button" class="row" data-gemeente="${esc(g.code)}">
+    <span class="row-main"><span class="row-title">${esc(g.naam)}</span>
+    <span class="row-sub">${esc(g.provincie)}${g.ook_bekend_als && g.ook_bekend_als !== g.provincie ? ` · ${esc(g.ook_bekend_als)}` : ""}</span></span></button></li>`).join("");
+}
+
+async function kiesGemeente(code) {
+  const g = (await gemeenten()).find((x) => x.code === code);
+  const form = $("#stadForm");
+  if (!g || !form) return;
+  form.stad.value = gemeenteLabel(g);
+  form.code.value = g.code;
+  form.querySelector("#gemeenteKeuze").innerHTML = "";
+}
+
 async function verstuurStad(form) {
-  const stad = String(new FormData(form).get("stad") ?? "").trim();
-  if (stad.length < 2) return toast("Vul de naam van een stad in");
+  let code = form.code.value;
+  // Precies de naam van een gemeente getypt en niets gekozen: dan is het die gemeente (namen zijn uniek)
+  if (!code) {
+    const q = zoekVorm(form.stad.value.split(",")[0]);
+    code = (await gemeenten()).find((g) => zoekVorm(g.naam) === q)?.code ?? "";
+  }
+  if (!code) return toast("Kies een gemeente uit de lijst");
   const knop = form.querySelector("[type=submit]");
   knop.disabled = true;
   if (!(await zorgVoorSpeler())) { knop.disabled = false; return; }
-  const { data, error } = await sb.rpc("vraag_stad_aan", { p_stad: stad });
+  const { data, error } = await sb.rpc("vraag_stad_aan", { p_code: code });
   knop.disabled = false;
   if (error) return toast(await leesFout(error));
   mailMelding("stad", data);
   form.reset();
+  form.querySelector("#gemeenteKeuze").innerHTML = "";
   form.closest("details").open = false;
   toast("Bedankt! We kijken of we deze stad kunnen openen");
 }
 
 // Open stadsaanvragen voor de beheerder, per stad geteld
 async function laadBeheerSteden() {
-  const { data, error } = await sb.from("stadsaanvragen").select("stad,stad_sleutel").eq("status", "open").order("op");
+  const { data, error } = await sb.from("stadsaanvragen").select("stad,gemeente_code,gemeenten(provincie)").eq("status", "open").order("op");
   const el = $("#beheerSteden");
   if (!el) return;
   if (error) { el.textContent = "Aanvragen laden lukte niet."; return; }
   const perStad = new Map();
   for (const r of data) {
-    const s = perStad.get(r.stad_sleutel) ?? { naam: r.stad, n: 0 };
+    const s = perStad.get(r.gemeente_code) ?? { code: r.gemeente_code, naam: r.stad, provincie: r.gemeenten?.provincie, n: 0 };
     s.n++;
-    perStad.set(r.stad_sleutel, s);
+    perStad.set(r.gemeente_code, s);
   }
   if (!perStad.size) { el.textContent = "Geen open aanvragen."; return; }
   el.innerHTML = `<ul class="list" data-geen-teksten>${[...perStad.values()].sort((a, b) => b.n - a.n).map((s) => `<li class="row"><span class="row-main">
-    <span class="row-title">${esc(s.naam)}</span>
+    <span class="row-title">${esc(s.naam)}${s.provincie ? `, ${esc(s.provincie)}` : ""}</span>
     <span class="row-sub">${s.n} ${s.n === 1 ? "speler" : "spelers"}</span></span>
-    <button type="button" class="mini" data-stad-ok="${esc(s.naam)}">Goedkeuren</button>
+    <button type="button" class="mini" data-stad-ok="${esc(s.code)}" data-stad-naam="${esc(s.naam)}">Goedkeuren</button>
     <button type="button" class="mini" data-stad-nee="${esc(s.naam)}">Afwijzen</button></li>`).join("")}</ul>`;
 }
 
-// Goedkeuren: eerst de kroegen en wijken laden, daarna de aanvraag afhandelen
-async function keurStad(knop, stad) {
-  knop.disabled = true; knop.textContent = "Bezig…";
-  const data = await importeerStad(stad);
+// Goedkeuren: eerst de kroegen en wijken laden (op gemeentecode), daarna de aanvraag afhandelen
+async function keurStad(knop, code, stad) {
+  knop.disabled = true;
+  const data = await importeerStad({ gemeentecode: code }, knop);
   if (data) {
     const { error } = await sb.rpc("zet_stadsaanvraag", { p_stad: stad, p_status: "goedgekeurd" });
     if (error) toast(await leesFout(error));
-    else toast(`${data.gemeente}: ${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
+    else toast(importTekst(data));
     laadStad();
   }
   laadBeheerSteden();
 }
 
-// Kroegen en wijken van een gemeente laden (Edge Function osm-import). De functie zoekt de gemeentecode zelf op.
-async function importeerStad(gemeente) {
-  const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeente } });
+// Kroegen en wijken van een gemeente laden, met { gemeentecode } of { gemeente } (de naam). De browser haalt de
+// gegevens bij OpenStreetMap (overpass.js: vanuit Supabase lukt dat niet betrouwbaar), de Edge Function osm-import
+// verwerkt en bewaart ze. De knop laat zien waar het is.
+async function importeerStad(welke, knop) {
+  const zoek = zoekVorm(welke.gemeente);
+  const g = (await gemeenten()).find((x) => welke.gemeentecode ? x.code === welke.gemeentecode : zoekVorm(x.naam) === zoek);
+  if (!g) { toast("Deze gemeente staat niet in de gemeentelijst"); return null; }
+  knop.textContent = "Kroegen ophalen…";
+  let elementen;
+  try { elementen = await haalOsm(g); } catch (e) { toast("Import mislukt: " + e.message); return null; }
+  knop.textContent = "Opslaan…";
+  const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeentecode: g.code, elementen } });
   if (!error) return data;
   // De functie geeft de echte reden in het antwoord ({ fout }); supabase-js zegt alleen "non-2xx status code".
   const reden = await error.context?.json?.().then((b) => b?.fout).catch(() => null);
   toast("Import mislukt: " + (reden ?? "de importfunctie gaf geen antwoord"));
   return null;
 }
+
+const importTekst = (d) => d.cafes
+  ? `${d.gemeente}: ${d.kroegen} kroegen (waarvan ${d.cafes} cafés) en ${d.wijken} wijken geïmporteerd`
+  : `${d.gemeente}: ${d.kroegen} kroegen en ${d.wijken} wijken geïmporteerd`;
 
 async function wijsStadAf(knop, stad) {
   knop.disabled = true;
@@ -2749,7 +2818,7 @@ function beheerView() {
     <h3>Berichten<span class="muted" id="inboxTeller">${inboxTeller()}</span></h3><div class="card"><div id="beheerBugs">${inboxHtml()}</div></div>
     <h3>Meldingen over kroegen</h3><div class="card"><div id="beheerMeldingen" class="small muted">Meldingen laden…</div></div>
     <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
-    <h3>Kroegen importeren</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS voor ${esc(stadNaam)}.</div>
+    <h3>Kroegen importeren</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS (in België de eigen wijkindeling van de stad of de deelgemeenten) voor ${esc(stadNaam)}.</div>
       <div class="btns"><button class="btn" data-import>Kroegen en wijken importeren</button></div></div>
     <h3>Teksten</h3><div class="card"><div class="small muted">Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen. In de bewerkstand zet je een tekst ook terug.</div>
       <div class="btns"><button class="btn" data-teksten-bewerken>Teksten aanpassen</button></div>
@@ -3335,7 +3404,8 @@ body.addEventListener("click", (e) => {
   if (t.dataset.aanbieder) return inloggenMet(t.dataset.aanbieder, t);
   if (t.dataset.anderadres !== undefined) { state.inlog = null; state.nieuwAdres = null; return draw(); }
   if (t.dataset.import !== undefined) return importeer(t);
-  if (t.dataset.stadOk !== undefined) return keurStad(t, t.dataset.stadOk);
+  if (t.dataset.stadOk !== undefined) return keurStad(t, t.dataset.stadOk, t.dataset.stadNaam);
+  if (t.dataset.gemeente) return kiesGemeente(t.dataset.gemeente);
   if (t.dataset.stadNee !== undefined) return wijsStadAf(t, t.dataset.stadNee);
   if (t.dataset.kaartfoto !== undefined) return $("#kaartFotoInvoer")?.click();
   if (t.dataset.fotoWeg) return verwijderKaartFoto(Number(t.dataset.fotoWeg));
@@ -3388,6 +3458,7 @@ body.addEventListener("input", (e) => {
     const inp = body.querySelector("[data-zoek]");
     inp.focus(); inp.setSelectionRange(pos, pos);
   }
+  if (e.target.matches("[data-gemeente-zoek]")) return toonGemeenten(e.target);
   if ((e.target.name === "prijs" || e.target.name === "clAnders") && e.target.closest("#prijsForm")) prijsVoorbeeld();
   if (e.target.name === "merk" && e.target.closest("#prijsForm")) {
     const anders = body.querySelector("[name=merkAnders]");
@@ -3513,11 +3584,11 @@ async function stuurCode(email, soort, knop, naam) {
 }
 
 async function importeer(knop) {
-  knop.disabled = true; knop.textContent = "Bezig met importeren…";
-  const data = await importeerStad(stadNaam);
+  knop.disabled = true;
+  const data = await importeerStad({ gemeente: stadNaam }, knop);
   knop.disabled = false; knop.textContent = "Kroegen en wijken importeren";
   if (!data) return;
-  toast(`${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
+  toast(importTekst(data));
   vernieuw();
 }
 
