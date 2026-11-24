@@ -5,6 +5,7 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm";
 import { SUPABASE_URL, SUPABASE_KEY, STAD, KAARTSTIJL } from "./config.js";
+import { haalOsm } from "./overpass.js";
 
 const maplibregl = window.maplibregl;
 
@@ -2724,26 +2725,39 @@ async function laadBeheerSteden() {
 
 // Goedkeuren: eerst de kroegen en wijken laden (op gemeentecode), daarna de aanvraag afhandelen
 async function keurStad(knop, code, stad) {
-  knop.disabled = true; knop.textContent = "Bezig…";
-  const data = await importeerStad({ gemeentecode: code });
+  knop.disabled = true;
+  const data = await importeerStad({ gemeentecode: code }, knop);
   if (data) {
     const { error } = await sb.rpc("zet_stadsaanvraag", { p_stad: stad, p_status: "goedgekeurd" });
     if (error) toast(await leesFout(error));
-    else toast(`${data.gemeente}: ${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
+    else toast(importTekst(data));
     laadStad();
   }
   laadBeheerSteden();
 }
 
-// Kroegen en wijken van een gemeente laden (Edge Function osm-import), met { gemeentecode } of { gemeente } (de naam)
-async function importeerStad(welke) {
-  const { data, error } = await sb.functions.invoke("osm-import", { body: welke });
+// Kroegen en wijken van een gemeente laden, met { gemeentecode } of { gemeente } (de naam). De browser haalt de
+// gegevens bij OpenStreetMap (overpass.js: vanuit Supabase lukt dat niet betrouwbaar), de Edge Function osm-import
+// verwerkt en bewaart ze. De knop laat zien waar het is.
+async function importeerStad(welke, knop) {
+  const zoek = zoekVorm(welke.gemeente);
+  const g = (await gemeenten()).find((x) => welke.gemeentecode ? x.code === welke.gemeentecode : zoekVorm(x.naam) === zoek);
+  if (!g) { toast("Deze gemeente staat niet in de gemeentelijst"); return null; }
+  knop.textContent = "Kroegen ophalen…";
+  let elementen;
+  try { elementen = await haalOsm(g); } catch (e) { toast("Import mislukt: " + e.message); return null; }
+  knop.textContent = "Opslaan…";
+  const { data, error } = await sb.functions.invoke("osm-import", { body: { gemeentecode: g.code, elementen } });
   if (!error) return data;
   // De functie geeft de echte reden in het antwoord ({ fout }); supabase-js zegt alleen "non-2xx status code".
   const reden = await error.context?.json?.().then((b) => b?.fout).catch(() => null);
   toast("Import mislukt: " + (reden ?? "de importfunctie gaf geen antwoord"));
   return null;
 }
+
+const importTekst = (d) => d.cafes
+  ? `${d.gemeente}: ${d.kroegen} kroegen (waarvan ${d.cafes} cafés) en ${d.wijken} wijken geïmporteerd`
+  : `${d.gemeente}: ${d.kroegen} kroegen en ${d.wijken} wijken geïmporteerd`;
 
 async function wijsStadAf(knop, stad) {
   knop.disabled = true;
@@ -3569,11 +3583,11 @@ async function stuurCode(email, soort, knop, naam) {
 }
 
 async function importeer(knop) {
-  knop.disabled = true; knop.textContent = "Bezig met importeren…";
-  const data = await importeerStad({ gemeente: stadNaam });
+  knop.disabled = true;
+  const data = await importeerStad({ gemeente: stadNaam }, knop);
   knop.disabled = false; knop.textContent = "Kroegen en wijken importeren";
   if (!data) return;
-  toast(`${data.kroegen} kroegen en ${data.wijken} wijken geïmporteerd`);
+  toast(importTekst(data));
   vernieuw();
 }
 

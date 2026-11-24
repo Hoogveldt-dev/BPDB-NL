@@ -1,28 +1,19 @@
-// Importeert kroegen uit OpenStreetMap (Overpass) en wijken voor een gemeente uit public.gemeenten.
-// Nederland: wijken van het CBS (PDOK). België: de deelgemeenten uit OpenStreetMap (de subareas van de gemeente).
-// Alleen voor beheerders (profielen.is_beheerder = true).
+// Bewaart kroegen en wijken van een gemeente uit public.gemeenten. Alleen voor beheerders
+// (profielen.is_beheerder = true).
+//
+// De app haalt de gegevens zelf bij OpenStreetMap (app/overpass.js) en stuurt het antwoord van Overpass mee: vanuit
+// Supabase is Overpass niet betrouwbaar bereikbaar. Deze functie verwerkt het (verwerk.ts) en bewaart het.
+// Wijken: in Nederland van het CBS (PDOK), in België de deelgemeenten uit het antwoord van Overpass.
 //
 // Aanroep (met de sessie van een ingelogde beheerder):
 //   POST /functions/v1/osm-import
-//   { "gemeentecode": "BE44021", "soorten": ["pub", "bar", "biergarten"] }
-// In plaats van de code mag ook de naam ({ "gemeente": "Nijmegen" }); de functie zoekt hem op in public.gemeenten.
-// De gemeente wordt in OpenStreetMap gezocht op code (ref:gemeentecode of ref:INS), niet op naam, zodat ook
-// "Bergen (NH)" en "Den Haag" (officieel 's-Gravenhage) de goede gemeente vinden.
+//   { "gemeentecode": "BE44021", "elementen": [ ...elements uit het antwoord van Overpass... ] }
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
-import { multipolygoon, type OsmElement } from "./grenzen.ts";
+import { verwerk } from "./verwerk.ts";
 
-// Overpass weigert of overbelast soms; probeer dan de volgende server. overpass-api.de weigerde in november 2026
-// verzoeken vanuit Supabase (406), dus de server van mail.ru staat voorop. Elke poging duurt hoogstens een minuut.
-const OVERPASS = [
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.private.coffee/api/interpreter",
-];
-const USER_AGENT = "BPDB-NL kroegimport (https://bpdb-nl.pages.dev)";
+const USER_AGENT = "Bierkoers kroegimport (https://bierkoers.nl)";
 const PDOK_WIJKEN = "https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0";
-const TOEGESTANE_SOORTEN = ["pub", "bar", "biergarten", "cafe", "nightclub"];
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -35,35 +26,6 @@ function antwoord(body: unknown, status = 200) {
     status,
     headers: { ...cors, "Content-Type": "application/json" },
   });
-}
-
-async function overpass(query: string): Promise<{ elements: OsmElement[] }> {
-  const fouten: string[] = [];
-  for (const server of OVERPASS) {
-    try {
-      const res = await fetch(server, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "application/json",
-          "User-Agent": USER_AGENT,
-        },
-        body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(60_000),
-      });
-      const tekst = await res.text();
-      if (!res.ok) {
-        fouten.push(`${new URL(server).host} gaf ${res.status}`);
-        console.error("Overpass", server, res.status, tekst.slice(0, 300));
-        continue;
-      }
-      return JSON.parse(tekst);
-    } catch (e) {
-      fouten.push(`${new URL(server).host}: ${(e as Error).message}`);
-      console.error("Overpass", server, e);
-    }
-  }
-  throw new Error(`OpenStreetMap niet bereikbaar (${fouten.join("; ")})`);
 }
 
 Deno.serve(async (req) => {
@@ -96,48 +58,21 @@ async function importeer(req: Request): Promise<Response> {
 
   // 2. Invoer controleren: de gemeente moet in public.gemeenten staan
   const invoer = await req.json().catch(() => ({}));
-  const soorten: string[] = (Array.isArray(invoer.soorten) ? invoer.soorten : ["pub", "bar", "biergarten"])
-    .filter((s: unknown) => TOEGESTANE_SOORTEN.includes(String(s)));
-  if (soorten.length === 0) return antwoord({ fout: "Geen geldige soorten" }, 400);
+  const elementen = invoer.elementen;
+  if (!Array.isArray(elementen) || elementen.length > 100_000) return antwoord({ fout: "Geen gegevens van OpenStreetMap" }, 400);
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
-  const zoek = admin.from("gemeenten").select("code,naam,land");
-  const { data: g } = invoer.gemeentecode
-    ? await zoek.eq("code", String(invoer.gemeentecode).trim().toUpperCase()).maybeSingle()
-    : await zoek.ilike("naam", String(invoer.gemeente ?? "Nijmegen").trim().replace(/[%_\\]/g, "")).maybeSingle();
+  const { data: g } = await admin.from("gemeenten").select("code,naam,land")
+    .eq("code", String(invoer.gemeentecode ?? "").trim().toUpperCase()).maybeSingle();
   if (!g) return antwoord({ fout: "Deze gemeente staat niet in de gemeentelijst" }, 404);
   const gemeente: string = g.naam;
-  const belgie = g.land === "BE";
-  const ref = belgie ? `["ref:INS"="${g.code.slice(2)}"]` : `["ref:gemeentecode"="${g.code.slice(2)}"]`;
 
-  // 3. Kroegen en, in België, de deelgemeenten (OpenStreetMap via Overpass)
-  const regex = `^(${soorten.join("|")})$`;
-  const query = `[out:json][timeout:90];
-rel["boundary"="administrative"]["admin_level"="8"]${ref}->.r;
-.r out ids;
-.r map_to_area->.g;
-nwr["amenity"~"${regex}"](area.g);
-out center tags;
-${belgie ? `rel(r.r:"subarea")["boundary"="administrative"];\nout geom;` : ""}`;
-  const osm = await overpass(query);
-  const relatie = osm.elements.find((e) => e.type === "relation" && !e.tags);
-  if (!relatie) return antwoord({ fout: `${gemeente} niet gevonden in OpenStreetMap` }, 404);
+  // 3. Verwerken: kroegen (in België met de cafés die op een kroeg lijken) en de Belgische deelgemeenten
+  const v = verwerk(elementen, gemeente, g.land === "BE");
+  if (!v.gevonden) return antwoord({ fout: `${gemeente} niet gevonden in OpenStreetMap` }, 400);
 
-  // 4. Wijken
-  let wijkGeo: { type: string; features: unknown[] };
-  if (belgie) {
-    wijkGeo = {
-      type: "FeatureCollection",
-      features: osm.elements
-        .filter((e) => e.type === "relation" && e.tags?.boundary === "administrative" && e.tags?.name)
-        .map((e) => ({
-          type: "Feature",
-          properties: { wijkcode: `OSM-R${e.id}`, wijknaam: e.tags!.name, gemeentenaam: gemeente },
-          geometry: multipolygoon(e),
-        }))
-        .filter((f) => f.geometry),
-    };
-  } else {
-    // CBS via PDOK
+  // 4. Wijken: in Nederland van het CBS (PDOK)
+  let wijkGeo = v.wijken;
+  if (!wijkGeo) {
     const filter =
       `<Filter><PropertyIsEqualTo><PropertyName>gemeentecode</PropertyName><Literal>${g.code}</Literal></PropertyIsEqualTo></Filter>`;
     const wfs = new URL(PDOK_WIJKEN);
@@ -155,39 +90,21 @@ ${belgie ? `rel(r.r:"subarea")["boundary"="administrative"];\nout geom;` : ""}`;
       console.error("PDOK", wijkRes.status, (await wijkRes.text()).slice(0, 300));
       return antwoord({ fout: `CBS-wijken (PDOK) gaf ${wijkRes.status}` }, 502);
     }
-    wijkGeo = await wijkRes.json();
-    // Water-wijken (bijv. de Waal) overslaan.
-    wijkGeo.features = (wijkGeo.features ?? []).filter((f: any) => f.properties?.water !== "JA");
-    // De naam van de gemeente zoals in de app (Den Haag in plaats van 's-Gravenhage)
-    for (const f of wijkGeo.features as any[]) f.properties.gemeentenaam = gemeente;
+    const cbs = await wijkRes.json();
+    // Water-wijken (bijv. de Waal) overslaan; de naam van de gemeente zoals in de app (Den Haag, niet 's-Gravenhage)
+    cbs.features = (cbs.features ?? []).filter((f: any) => f.properties?.water !== "JA");
+    for (const f of cbs.features) f.properties.gemeentenaam = gemeente;
+    wijkGeo = cbs;
   }
   const { data: wijken, error: wijkFout } = await admin.rpc("importeer_wijken", { p_geojson: wijkGeo });
   if (wijkFout) return antwoord({ fout: wijkFout.message }, 500);
 
   // 5. Kroegen opslaan
-  const kroegen = osm.elements
-    .filter((e) => e.tags?.amenity)
-    .map((e) => {
-      const t = e.tags ?? {};
-      const lat = e.lat ?? e.center?.lat;
-      const lon = e.lon ?? e.center?.lon;
-      const straat = [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" ");
-      return {
-        osm_id: `${e.type}/${e.id}`,
-        naam: t.name,
-        soort: t.amenity,
-        adres: straat || null,
-        lat,
-        lon,
-      };
-    })
-    .filter((k) => k.naam && k.lat != null && k.lon != null);
-
   const { data: aantal, error: kroegFout } = await admin.rpc("importeer_kroegen", {
-    p_kroegen: kroegen,
+    p_kroegen: v.kroegen,
     p_gemeente: gemeente,
   });
   if (kroegFout) return antwoord({ fout: kroegFout.message }, 500);
 
-  return antwoord({ gemeente, gemeentecode: g.code, wijken, kroegen: aantal });
+  return antwoord({ gemeente, gemeentecode: g.code, wijken, kroegen: aantal, cafes: v.cafes });
 }
