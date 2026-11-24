@@ -67,3 +67,24 @@ export function verwerk(elementen: OsmElement[], gemeente: string, belgie: boole
     : null;
   return { gevonden, kroegen, cafes: kroegen.filter((k) => k.soort === "cafe").length, wijken };
 }
+
+// Gemeenten met een eigen, officiële wijkindeling: het lokale equivalent van de CBS-wijken. Zonder vermelding hier
+// zijn de wijken in België de deelgemeenten uit OpenStreetMap. Een nieuwe stad: een regel met de GeoJSON-bron
+// (WGS84) en de velden voor het nummer en de naam van de wijk; de bron staat ook in de bronvermelding van de kaart.
+export const LOKALE_WIJKEN: Record<string, { url: string; nr: string; naam: string }> = {
+  // Stad Gent: 25 stadswijken (data.stad.gent, Modellicentie Gratis Hergebruik)
+  BE44021: { url: "https://data.stad.gent/api/explore/v2.1/catalog/datasets/stadswijken-gent/exports/geojson", nr: "wijknr", naam: "wijk" },
+};
+
+// Zet de GeoJSON van een lokale bron om naar de vorm van importeer_wijken (wijkcode, wijknaam, gemeentenaam)
+export function lokaleWijken(geo: { features?: any[] }, code: string, gemeente: string) {
+  const bron = LOKALE_WIJKEN[code];
+  const features = (geo.features ?? [])
+    .filter((f) => f.geometry && f.properties?.[bron.naam] && f.properties?.[bron.nr] != null)
+    .map((f) => ({
+      type: "Feature",
+      properties: { wijkcode: `${code}-${f.properties[bron.nr]}`, wijknaam: String(f.properties[bron.naam]), gemeentenaam: gemeente },
+      geometry: f.geometry,
+    }));
+  return { type: "FeatureCollection", features };
+}

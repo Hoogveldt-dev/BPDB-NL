@@ -1,7 +1,7 @@
 // Test van de kroegimport: ophalen bij OpenStreetMap in de browser (app/overpass.js), de cafés die als kroeg tellen
 // en het omzetten van grenzen naar wijken (supabase/functions/osm-import/verwerk.ts en grenzen.ts).
 import { multipolygoon } from "../functions/osm-import/grenzen.ts";
-import { cafeIsKroeg, laatOpen, verwerk } from "../functions/osm-import/verwerk.ts";
+import { LOKALE_WIJKEN, cafeIsKroeg, laatOpen, lokaleWijken, verwerk } from "../functions/osm-import/verwerk.ts";
 import { OVERPASS, haalOsm, osmQuery } from "../../app/overpass.js";
 
 let goed = 0, fout = 0;
@@ -69,6 +69,17 @@ check("verwerk: adres en het midden van een gebouw", v.kroegen[0].adres === "Gro
 check("verwerk: de deelgemeente wordt een wijk van Gent", v.wijken?.features.length === 1 && v.wijken.features[0].properties.wijkcode === "OSM-R3134191" && v.wijken.features[0].properties.gemeentenaam === "Gent");
 check("verwerk in Nederland: geen wijken uit OpenStreetMap (die komen van het CBS)", verwerk(elementen, "Nijmegen", false).wijken === null);
 check("verwerk zonder de gemeente-relatie: niet gevonden", verwerk(elementen.slice(1), "Gent", true).gevonden === false);
+
+// Eigen wijkindeling van een stad (Gent: stadswijken van data.stad.gent)
+const vlak = { type: "Polygon", coordinates: [[[3.72, 51.04], [3.73, 51.04], [3.73, 51.05], [3.72, 51.04]]] };
+const gentWijken = lokaleWijken({ features: [
+  { type: "Feature", properties: { wijk: "Binnenstad", wijknr: 1 }, geometry: vlak },
+  { type: "Feature", properties: { wijk: "Ledeberg", wijknr: 9 }, geometry: vlak },
+  { type: "Feature", properties: { wijk: null, wijknr: 99 }, geometry: vlak },
+] }, "BE44021", "Gent");
+check("Gent heeft een eigen wijkindeling", !!LOKALE_WIJKEN.BE44021?.url.startsWith("https://data.stad.gent/"));
+check("stadswijken krijgen een vaste code, naam en de gemeente; zonder naam overgeslagen",
+  gentWijken.features.map((f) => `${f.properties.wijkcode} ${f.properties.wijknaam} ${f.properties.gemeentenaam}`).join() === "BE44021-1 Binnenstad Gent,BE44021-9 Ledeberg Gent", JSON.stringify(gentWijken));
 
 // De query: op code, in België met cafés en deelgemeenten
 const qBe = osmQuery({ code: "BE44021", naam: "Gent" }), qNl = osmQuery({ code: "GM0268", naam: "Nijmegen" });

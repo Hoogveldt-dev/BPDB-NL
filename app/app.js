@@ -703,7 +703,8 @@ const map = new maplibregl.Map({
   style: isDonker() ? KAARTSTIJL.donker : KAARTSTIJL.licht,
   center: STAD.centrum,
   zoom: STAD.zoom,
-  attributionControl: { compact: true },
+  // Bronnen van de wijken (de kaart zelf vermeldt OpenStreetMap)
+  attributionControl: { compact: true, customAttribution: "Wijken: CBS, Stad Gent, OpenStreetMap" },
 });
 let kaartKlaar = false;
 
@@ -2817,7 +2818,7 @@ function beheerView() {
     <h3>Berichten<span class="muted" id="inboxTeller">${inboxTeller()}</span></h3><div class="card"><div id="beheerBugs">${inboxHtml()}</div></div>
     <h3>Meldingen over kroegen</h3><div class="card"><div id="beheerMeldingen" class="small muted">Meldingen laden…</div></div>
     <h3>Stadsaanvragen</h3><div class="card"><div id="beheerSteden" class="small muted">Aanvragen laden…</div></div>
-    <h3>Kroegen importeren</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS (in België de deelgemeenten) voor ${esc(stadNaam)}.</div>
+    <h3>Kroegen importeren</h3><div class="card"><div class="small muted">Haalt kroegen uit OpenStreetMap en wijken van het CBS (in België de eigen wijkindeling van de stad of de deelgemeenten) voor ${esc(stadNaam)}.</div>
       <div class="btns"><button class="btn" data-import>Kroegen en wijken importeren</button></div></div>
     <h3>Teksten</h3><div class="card"><div class="small muted">Zet de bewerkstand aan en tik op een tekst; de wijziging geldt meteen voor iedereen. In de bewerkstand zet je een tekst ook terug.</div>
       <div class="btns"><button class="btn" data-teksten-bewerken>Teksten aanpassen</button></div>

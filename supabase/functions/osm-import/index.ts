@@ -3,14 +3,15 @@
 //
 // De app haalt de gegevens zelf bij OpenStreetMap (app/overpass.js) en stuurt het antwoord van Overpass mee: vanuit
 // Supabase is Overpass niet betrouwbaar bereikbaar. Deze functie verwerkt het (verwerk.ts) en bewaart het.
-// Wijken: in Nederland van het CBS (PDOK), in België de deelgemeenten uit het antwoord van Overpass.
+// Wijken: een eigen wijkindeling van de gemeente als die er is (LOKALE_WIJKEN, zoals de stadswijken van Gent),
+// anders in Nederland van het CBS (PDOK) en in België de deelgemeenten uit het antwoord van Overpass.
 //
 // Aanroep (met de sessie van een ingelogde beheerder):
 //   POST /functions/v1/osm-import
 //   { "gemeentecode": "BE44021", "elementen": [ ...elements uit het antwoord van Overpass... ] }
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
-import { verwerk } from "./verwerk.ts";
+import { LOKALE_WIJKEN, lokaleWijken, verwerk } from "./verwerk.ts";
 
 const USER_AGENT = "Bierkoers kroegimport (https://bierkoers.nl)";
 const PDOK_WIJKEN = "https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0";
@@ -70,9 +71,14 @@ async function importeer(req: Request): Promise<Response> {
   const v = verwerk(elementen, gemeente, g.land === "BE");
   if (!v.gevonden) return antwoord({ fout: `${gemeente} niet gevonden in OpenStreetMap` }, 400);
 
-  // 4. Wijken: in Nederland van het CBS (PDOK)
+  // 4. Wijken: de eigen indeling van de gemeente, anders in België de deelgemeenten en in Nederland het CBS (PDOK)
   let wijkGeo = v.wijken;
-  if (!wijkGeo) {
+  if (LOKALE_WIJKEN[g.code]) {
+    const res = await fetch(LOKALE_WIJKEN[g.code].url, { headers: { "User-Agent": USER_AGENT } });
+    if (!res.ok) return antwoord({ fout: `De wijken van ${gemeente} gaven ${res.status}` }, 502);
+    wijkGeo = lokaleWijken(await res.json(), g.code, gemeente);
+    if (!wijkGeo.features.length) return antwoord({ fout: `Geen wijken gevonden voor ${gemeente}` }, 502);
+  } else if (!wijkGeo) {
     const filter =
       `<Filter><PropertyIsEqualTo><PropertyName>gemeentecode</PropertyName><Literal>${g.code}</Literal></PropertyIsEqualTo></Filter>`;
     const wfs = new URL(PDOK_WIJKEN);
