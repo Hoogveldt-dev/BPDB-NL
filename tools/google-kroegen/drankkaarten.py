@@ -7,10 +7,11 @@ Stappen (elk schrijft naar nakijken/<datum>-<stad>/, niet in Git):
   lees      DeepSeek leest per kroeg alles en geeft alle bieren van het vat (soort, maat, prijs, regel, datum)
   kies      kandidaten volgens de regels (pils van het vat, 25 cl; in Belgie zonder maat binnen 15% van de index)
   gevallen  per kandidaat een map met geval.json en, bij een pdf, uitsnede.jpg en foto.jpg voor het nakijken
+  datum     (na het nakijken) per goedgekeurd geval de datum van de kaart zelf, de vaste controles en import.json
 
 Gebruik: python3 drankkaarten.py <stad> [stap ...] [--extra extra-websites.json]
-Zonder stap draaien alle stappen. Nakijken daarna met deepseek-controleur.mjs; importeren met
-importeer_menuprijzen (zie docs/menukaartprijzen.md). Vanuit een cloudsessie voegt de proxy de DeepSeek-sleutel
+Zonder stap draaien de stappen tot en met gevallen. Nakijken daarna met deepseek-controleur.mjs, dan de stap
+datum; import.json gaat naar importeer_menuprijzen (zie docs/menukaartprijzen.md). Vanuit een cloudsessie voegt de proxy de DeepSeek-sleutel
 toe; zet anders DEEPSEEK_API_KEY.
 """
 import concurrent.futures as cf, datetime, glob, html, json, os, re, statistics, subprocess, sys, time
@@ -222,6 +223,114 @@ def stap_gevallen(map_):
     print(f"{len(k['kandidaten'])} gevallen in {map_}/gevallen; zonder uitsnede: maak een schermafbeelding of laat de controleur de tekst gebruiken")
 
 
+MERKEN = ["Hertog Jan", "Heineken", "Amstel", "Grolsch", "Brand", "Bavaria", "Jupiler", "Stella Artois", "Primus", "Cristal",
+          "Maes", "Bavik", "Swinckels", "Alfa", "Gulpener", "Warsteiner", "Jever", "Birra Moretti", "Estrella Galicia", "Estaminet",
+          "Zenne Pils", "Lindeboom", "Budels", "Kordaat", "Palm", "Carlsberg", "Pilsner Urquell", "Weihenstephaner", "Uiltje", "Brouwerij 't IJ"]
+DMY = re.compile(r"(?<!\d)(\d{1,2})[-_.](\d{1,2})[-_.](20\d\d)(?!\d)")
+YMD = re.compile(r"(?<!\d)(20\d\d)[-_.]?(\d\d)[-_.]?(\d\d)(?!\d)")
+
+
+def merk_van(naam):
+    for m in MERKEN:
+        if m.lower().split()[0] in naam.lower() and (len(m.split()) == 1 or m.lower() in naam.lower() or m in ("Stella Artois", "Birra Moretti", "Estrella Galicia")):
+            return m
+    return re.sub(r"\s*(\(?\d+[,.]?\d*\s*c?l\)?|vaasje|vaas|pils(ener)?|pilsner|\d+[,.]\d%)\s*", " ", naam, flags=re.I).strip() or naam
+
+
+def datum_ok(j, m, d):
+    try:
+        x = datetime.date(int(j), int(m), int(d))
+        return x.isoformat() if datetime.date(2015, 1, 1) <= x <= datetime.date.today() else None
+    except ValueError:
+        return None
+
+
+def kop(url):
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=UA, method="HEAD"), timeout=25) as r:
+            return r.headers.get("Last-Modified")
+    except Exception:
+        return None
+
+
+def datum_van(map_, c):
+    """Datum van de kaart zelf, in de volgorde van de DAEN-methode. Geeft (datum, bron) of (None, wat er geprobeerd is)."""
+    u = c["bron"]; p = urllib.parse.urlparse(u); basis = f"{p.scheme}://{p.netloc}"
+    naam = urllib.parse.unquote(p.path.rsplit("/", 1)[-1])
+    for r in (DMY, YMD):  # 1. datum in de bestandsnaam
+        for m in r.finditer(naam):
+            d = datum_ok(m[3], m[2], m[1]) if r is DMY else datum_ok(m[1], m[2], m[3])
+            if d: return d, f"datum in de bestandsnaam {naam}"
+    try: data, soort, lm, _ = haal(u, pogingen=1)
+    except Exception: return None, "bron niet bereikbaar"
+    if data[:5] == b"%PDF-":  # 2. pdf-datum
+        open(f"{map_}/_datum.pdf", "wb").write(data)
+        info = subprocess.run(["pdfinfo", f"{map_}/_datum.pdf"], capture_output=True, text=True).stdout
+        for veld in ("ModDate", "CreationDate"):
+            m = re.search(veld + r":\s+(.+)", info)
+            if m:
+                try: return datetime.datetime.strptime(" ".join(m[1].split()[:5]), "%a %b %d %H:%M:%S %Y").date().isoformat(), f"pdf {veld}"
+                except ValueError: pass
+    t = data.decode("utf-8", "replace")
+    pid = re.search(r"page-id-(\d+)", t); slug = p.path.strip("/").split("/")[-1]
+    for wp in ([f"{basis}/wp-json/wp/v2/pages/{pid[1]}?_fields=modified"] if pid else []) + ([f"{basis}/wp-json/wp/v2/pages?slug={slug}&_fields=modified"] if slug and "." not in slug else []):
+        try: j = haal(wp, json_=True, pogingen=1)  # 3. WordPress
+        except Exception: continue
+        j = j[0] if isinstance(j, list) and j else j
+        if isinstance(j, dict) and j.get("modified"): return j["modified"][:10], "WordPress modified"
+    m = re.search(r'(?:"dateModified"\s*:\s*"|article:modified_time"\s+content=")(\d{4}-\d\d-\d\d)', t)
+    if m: return m[1], "dateModified van de pagina"
+    for sm in ("/sitemap.xml", "/sitemap_index.xml"):  # 4. sitemap; overal dezelfde datum is een publicatie van de hele site
+        try: x = haal(basis + sm, pogingen=1)[0].decode("utf-8", "replace")
+        except Exception: continue
+        xs = [x] + [haal(s, pogingen=1)[0].decode("utf-8", "replace") for s in re.findall(r"<loc>([^<]+\.xml)</loc>", x)[:8]]
+        paren = [pr for y in xs for pr in re.findall(r"<loc>([^<]+)</loc>\s*<lastmod>([^<]+)</lastmod>", y)]
+        overal = len({lm_[:10] for _, lm_ in paren}) == 1
+        kaal = lambda x: re.sub(r"/(en|nl|fr|de)(?=/|$)", "", x.rstrip("/").split("//")[-1].replace("www.", ""))
+        for loc, lm_ in paren:
+            if kaal(loc) == kaal(u):
+                if not (overal and lm_[:10] == datetime.date.today().isoformat()):  # overal vandaag: gemaakt bij het opvragen
+                    return lm_[:10], "lastmod in de sitemap" + (" (hele site)" if overal else "")
+        break
+    if lm:  # 5. Last-Modified, alleen als hij bij opnieuw opvragen gelijk blijft
+        time.sleep(3)
+        if kop(u) == lm:
+            d = datetime.datetime.strptime(lm[5:16], "%d %b %Y").date().isoformat()
+            return d, "vaste Last-Modified" + (" (vandaag: later nog eens opvragen)" if d == datetime.date.today().isoformat() else "")
+    return None, "geen datum gevonden"
+
+
+def stap_datum(stad, map_):
+    gevallen = []
+    for g in sorted(glob.glob(f"{map_}/gevallen/*/geval.json")):
+        o = g.replace("geval.json", "oordeel.json")
+        if not os.path.exists(o): continue
+        geval, oordeel = json.load(open(g)), json.load(open(o))
+        if not (oordeel.get("is_menukaart") and oordeel.get("prijs_klopt")):
+            print(f"  af   {geval['kroeg'][:30]:30} {oordeel.get('toelichting', '')[:80]}"); continue
+        geval["datum"], geval["datum_bron"] = datum_van(map_, geval)
+        gevallen.append(geval)
+    oud = rest(f"kroeg_tijdlijn?select=kroeg_id,prijs_cent,volume_cl,status,bron&gemeente=eq.{urllib.parse.quote(stad)}&soort=neq.check&order=op")
+    prijzen = {r["kroeg_id"]: r["prijs_cent"] / 100 * 25 / r["volume_cl"] for r in oud if r["volume_cl"] and (r["status"] == "bevestigd" or r["bron"] == "menukaart")}
+    prijzen.update({g["kroeg_id"]: g["gelezen"]["prijs"] for g in gevallen if g["datum"]})
+    mediaan = statistics.median(prijzen.values()) if len(prijzen) >= 5 else None
+    invoer = []
+    for g in gevallen:
+        prijs = g["gelezen"]["prijs"]
+        if not g["datum"]: fout = g["datum_bron"]
+        elif not 2.0 <= prijs <= 7.5: fout = "buiten € 2,00 tot € 7,50"
+        elif mediaan and abs(prijs - mediaan) / mediaan > 0.30: fout = f"meer dan 30% van de mediaan (€ {mediaan:.2f})"
+        else: fout = None
+        print(f"  {'GOED' if not fout else 'af  '} {g['kroeg'][:30]:30} € {prijs:.2f}  {g['datum'] or '':10}  {fout or g['datum_bron']}")
+        if fout: continue
+        host = urllib.parse.urlparse(g["bron"]).netloc.replace("www.", "")
+        omschr = f"Drankkaart {host} ({g['datum_bron'].split(' (')[0]} {g['datum']})" + (", maat aangenomen" if g.get("maat_aangenomen") else "")
+        invoer.append({"kroeg_id": g["kroeg_id"], "merk": merk_van(g["gelezen"]["merk"]), "volume_cl": 25, "prijs_cent": round(prijs * 100),
+                       "datum": g["datum"], "bron_omschrijving": omschr[:80]})
+    json.dump(invoer, open(f"{map_}/import.json", "w"), ensure_ascii=False)
+    print(f"mediaan {mediaan}; {len(invoer)} in {map_}/import.json: select public.importeer_menuprijzen('<inhoud>'::jsonb)")
+
+
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     extra = sys.argv[sys.argv.index("--extra") + 1] if "--extra" in sys.argv else None
@@ -236,5 +345,5 @@ if __name__ == "__main__":
     for s in stappen:
         print(f"== {s}")
         {"kroegen": lambda: stap_kroegen(stad, map_, extra), "crawl": lambda: stap_crawl(map_), "lees": lambda: stap_lees(map_),
-         "kies": lambda: stap_kies(stad, map_, belgie), "gevallen": lambda: stap_gevallen(map_)}[s]()
+         "kies": lambda: stap_kies(stad, map_, belgie), "gevallen": lambda: stap_gevallen(map_), "datum": lambda: stap_datum(stad, map_)}[s]()
     print(f"map: {map_}")
