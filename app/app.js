@@ -2919,7 +2919,9 @@ function overView() {
       ${bron("https://divebardb.com", "Divebar Database", "Een kaart van echte kroegen, door en voor liefhebbers. Van hen komt het idee om meteen mee te doen, zonder account.")}
     </ul>
     <h3>Contact</h3>
-    <p><a class="mail" href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a></p>`;
+    <p><a class="mail" href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a></p>
+    <h3>Het project</h3>
+    <p>Bierkoers is een project van Kjell Hoogveldt.</p>`;
 }
 
 // Beheer: een eigen pagina, bereikbaar via de regel Beheer onder Ik. Bovenaan wat aandacht vraagt (berichten,
