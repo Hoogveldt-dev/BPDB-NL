@@ -33,7 +33,7 @@ const SOORTEN = new Set(["pub", "bar", "biergarten", "cafe", "nightclub"]);
 
 // Gemeenten met een openbaar register van horecavergunningen. Daar telt een café, restaurant of nachtclub uit
 // OpenStreetMap als kroeg als er binnen 40 m een vergunning als café of nachtzaak is met een gelijkende naam
-// (in Amsterdam staan veel bruine cafés in OSM als restaurant of café). De query in app/overpass.js haalt voor
+// (in Amsterdam staan veel bruine cafés in OSM als restaurant of café); een naam als van een koffiezaak telt niet. De query in app/overpass.js haalt voor
 // deze gemeenten ook cafés, restaurants en nachtclubs op (REGISTER_GEMEENTEN).
 export const HORECAREGISTER: Record<string, string> = {
   // Gemeente Amsterdam: exploitatievergunningen horeca (api.data.amsterdam.nl, CC0)
@@ -76,7 +76,7 @@ export function verwerk(elementen: OsmElement[], gemeente: string, belgie: boole
   const gevonden = elementen.some((e) => e.type === "relation" && !e.tags);
   const plek = (e: OsmElement) => ({ lat: (e.lat ?? e.center?.lat)!, lon: (e.lon ?? e.center?.lon)! });
   const viaRegister = (e: OsmElement) => !!register && ["cafe", "restaurant", "nightclub"].includes(e.tags!.amenity) &&
-    inRegister(e.tags!.name, plek(e).lat, plek(e).lon, register);
+    !KOFFIE_NAAM.test(e.tags!.name) && inRegister(e.tags!.name, plek(e).lat, plek(e).lon, register);
   let uitRegister = 0;
   const kroegen = elementen
     .filter((e) => e.tags?.name && (SOORTEN.has(e.tags.amenity ?? "") || e.tags.amenity === "restaurant"))

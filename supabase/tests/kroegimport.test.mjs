@@ -88,6 +88,7 @@ const amsterdam = [
   { type: "node", id: 13, lat: 52.3600, lon: 4.9200, tags: { amenity: "restaurant", name: "Pizzeria Roma" } },
   { type: "node", id: 14, lat: 52.3700, lon: 4.9001, tags: { amenity: "cafe", name: "Coffee Company" } },
   { type: "node", id: 15, lat: 52.3500, lon: 4.8000, tags: { amenity: "pub", name: "De Druif" } },
+  { type: "node", id: 16, lat: 52.3700, lon: 4.9000, tags: { amenity: "cafe", name: "Paardje Espressobar" } },
 ];
 const va = verwerk(amsterdam, "Amsterdam", false, register);
 check("verwerk met register: pub, en restaurant en nachtclub met een vergunning als café", va.kroegen.map((k) => k.naam).join() === "Het Paardje,Dokzicht,De Druif" && va.uitRegister === 2 && va.cafes === 0, JSON.stringify(va));
