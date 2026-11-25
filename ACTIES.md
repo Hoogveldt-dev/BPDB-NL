@@ -19,7 +19,7 @@ Wat alleen in een dashboard, bij een registrar of op een echte telefoon kan. Hie
    - DNSKEY: flags `257`, protocol `3`, algoritme `13`, publieke sleutel `mdsswUyr3DPW132mOi8V9xESWE8jTo0dxCjjnopKl+GqJxpVXckHAeF+KkxLbxILfDLUT0rAK9iUzy1L53eKGQ==`
 
    Zolang de DS-record er niet staat, werkt alles gewoon. Daarna wordt de status in Cloudflare vanzelf `active`.
-2. **Edge Function `eenmalig-migratie` verwijderen** (Supabase, Edge Functions, eenmalig-migratie, Delete). Hij doet niets meer (410); de connector kan geen Edge Function verwijderen.
+2. **Edge Functions `eenmalig-migratie` en `eenmalig-import` verwijderen** (Supabase, Edge Functions, Delete). Ze doen niets meer (410); de connector kan geen Edge Function verwijderen.
 3. **Apparaatwachtwoord "Meldingen" vernieuwen** (aanbevolen): nieuw apparaat bij de mailbox `proost@bierkoers.nl` in Infomaniak, het oude intrekken en het secret `SMTP_WACHTWOORD` opnieuw zetten (Supabase, Edge Functions, Secrets).
 4. **Apple en Google:** bij inloggen met Apple en Google ook het domein `bierkoers.nl` toevoegen.
 5. **GitHub:** de oude werkbranches die al in `main` zitten verwijderen, en onder Settings, General **Automatically delete head branches** aanvinken.

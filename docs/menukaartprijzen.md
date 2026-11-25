@@ -284,3 +284,23 @@ Uitslag: Gent van 7 naar 11 kroegen in kaart, Pilsindex € 3,20.
 Afgevallen: Artevelde Brouwerij (huispils 25 cl € 3,30, maar niet duidelijk van de tap, en de site vraagt eerst of je ouder dan 18 bent; die vraag beantwoordt een sessie niet), Bar Dada (Vedett 25 cl € 3,70 van de tap, geen datum), Fluoclub (pils zonder maat en niet duidelijk van de tap).
 
 Sinds deze ronde doet DeepSeek het lezen en nakijken; Haiku-agents worden niet meer ingezet, omdat Claude-gebruik schaars is. Zoeken naar websites kan DeepSeek niet (geen zoekfunctie); bij Gent leverde dat met agents ook niets meer op.
+
+## Helmond, Amsterdam en Antwerpen: import en DeepSeek (25 november 2026)
+
+**Kroegen importeren vanuit een cloudsessie.** Overpass gaf vanuit de sessie vaak een time-out of 504; met een eigen `User-Agent` en om de beurt `maps.mail.ru` en `overpass.private.coffee` lukte het binnen een paar pogingen (dezelfde query als `osmQuery()` in `app/overpass.js`). `overpass-api.de` was vanuit de sessie niet bereikbaar en weigerde verzoeken vanuit Supabase (406). Het antwoord ging naar `osm-import` via een eenmalige Edge Function met een willekeurige sleutel (zoals bij Migratie uitvoeren vanuit een sessie in `supabase/README.md`), die daarna een lege versie werd.
+
+| Stad | Kroegen | Wijken | Met website | Gelezen | Tapbieren | Kandidaten | Geïmporteerd |
+|---|---|---|---|---|---|---|---|
+| Helmond | 18 | 12 | 6 | 5 | 1 kroeg, 9 | 1 | 1 |
+| Antwerpen | 466 (44 cafés) | 10 | 142 | 100 | 18 kroegen, 149 | 17 | 11 |
+| Amsterdam | 602 | 110 | 306 | 258 | 48 kroegen, 544 | 26 | 22 |
+
+Alle kandidaten zijn door DeepSeek nagekeken; de datum komt van de kaart zelf (pdf-datum, datum in de bestandsnaam, WordPress `modified`, `lastmod` in de sitemap of een vaste `Last-Modified`). In Antwerpen kwamen in een tweede ronde zes pilsen zonder maat bij, toen de stad met de eerste vijf prijzen een Pilsindex had (€ 3,10; regel van 15%).
+
+Afgevallen:
+- Antwerpen, geen datum: Café Kamiel, Gilbert, Quinten Matsijs, Kid's Rhythm 'n' Blues Kaffee, New Arena, Poisson Pilote.
+- Amsterdam, geen datum: Side Quest bar, Checkpoint Charlie, Czaar. Afgekeurd: Cantina L'esquina (lager zonder maat).
+
+Oude kaarten staan erin met hun eigen datum (Café Baron 2023, Café Ons 2024, Sluyswacht, Café Pieper en Smit & Voogt 2025); ze vallen onder Te controleren. Van de 48 crawlfouten in Amsterdam en 42 in Antwerpen is niets opnieuw geprobeerd met Playwright. Alle tapbieren: `tools/google-kroegen/data/<stad>-tapbieren-2026-11-25.json`.
+
+DeepSeek: ongeveer 2,1 miljoen tokens in en 0,6 miljoen uit, vooral het lezen van Amsterdam (1,7 miljoen in).
