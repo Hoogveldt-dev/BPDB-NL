@@ -16,6 +16,19 @@ Stand van 21 november 2026.
 
 Wat nog kan: eigen websites periodiek opnieuw doorzoeken (kaarten veranderen; op 21 november vielen er zes af omdat de maat van het kleine glas ontbrak), en de fotomethode opnieuw draaien als er nieuwe foto's zijn.
 
+## Een hele stad doorzoeken met DeepSeek
+
+Voor elke Nederlandse en Belgische gemeente die in de app staat, vanuit een cloudsessie of thuis. DeepSeek leest en kijkt na; Claude stuurt alleen, controleert de datum en importeert. Zoeken op internet doet niemand meer standaard: in Gent leverde dat voor kroegen zonder website in OpenStreetMap niets op.
+
+1. `python3 drankkaarten.py <stad>` in `tools/google-kroegen` (de naam zoals in de app, bijvoorbeeld `Gent` of `Den Haag`). Het script haalt de open kroegen zonder prijs en zonder openstaande melding uit de database, hun websites uit OpenStreetMap, crawlt die (pagina's met menu, kaart, drank, bier, tap of vat, en pdf's), laat DeepSeek per kroeg alle bieren van het vat uitlezen, kiest de kandidaten en maakt per kandidaat een geval in `nakijken/<datum>-<stad>/gevallen/`. Stappen apart: `kroegen`, `crawl`, `lees`, `kies`, `gevallen`. Ken je zelf websites die niet in OSM staan: `--extra websites.json` (`{"<kroeg_id>": "https://..."}`).
+2. Kandidaten (`kandidaten.json`): de goedkoopste pils van het vat in 25 cl (of vaasje/vaas), tussen € 2,00 en € 7,50; in België ook zonder maat als de prijs binnen 15% van de Pilsindex van de stad ligt. Alle tapbieren, ook blond en speciaalbier, staan in `tapbieren.json`, voor later.
+3. Nakijken: `NODE_USE_ENV_PROXY=1 node deepseek-controleur.mjs nakijken/<datum>-<stad>`. Een geval zonder uitsnede (een HTML-pagina) heeft de tekst rond de regel in `geval.json`; bij twijfel een schermafbeelding maken (Playwright) en opnieuw laten nakijken.
+4. Datum per goedgekeurd geval, van de kaart zelf (zie de DAEN-methode hieronder): pdf-datum, datum op de kaart, `modified` uit `/wp-json/wp/v2/pages?slug=<pagina>`, `dateModified`, `lastmod` in `sitemap.xml`, of een `Last-Modified` die bij herhaald opvragen gelijk blijft. Geen datum, geen prijs.
+5. Controle op de mediaan (hoogstens 30% ervan af, zodra de stad er 5 heeft), dan importeren met `select public.importeer_menuprijzen('<json>'::jsonb)` (velden `kroeg_id`, `merk`, `volume_cl`, `prijs_cent`, `datum`, `bron_omschrijving` tot 80 tekens; bij een aangenomen maat staat dat in de omschrijving).
+6. Verslag onderaan dit document en `tapbieren.json` naar `tools/google-kroegen/data/<stad>-tapbieren-<datum>.json`.
+
+Proef op 25 november 2026 in Nijmegen: 139 kroegen zonder prijs, 44 met een website, 38 gelezen (ongeveer 190.000 tokens in), 1 kandidaat (Café de Opstand, Pilsner 25 cl € 3,90, pagina gewijzigd 24 november 2026), goedgekeurd en geïmporteerd. De rest van Nijmegen met een website was in eerdere rondes al gedaan.
+
 ## DAEN-methode: de drankkaart van de eigen website
 
 Genoemd naar Café Daen (6 november 2026: Hertog Jan 25 cl €4,00, drankkaart van 2 september 2026).
