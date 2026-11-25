@@ -93,7 +93,7 @@ Met `veroveringen: true` komen kroegbaas-titels, wijkbezit, de wijkenlaag op de 
 
 ### 2.1 De mist (vast)
 
-Elke kroeg uit OpenStreetMap staat op de kaart. Op de gezamenlijke kaart is een kroeg zonder prijs grijs; wie als eerste een prijs invult, brengt de kroeg in kaart (+50) en blijft als ontdekker bij de kroeg staan. Zo zie je in één oogopslag waar nog data ontbreekt.
+Elke kroeg uit OpenStreetMap staat op de kaart. Op de gezamenlijke kaart is een kroeg zonder prijs grijs; wie als eerste een prijs invult, brengt de kroeg in kaart (+50) en blijft als ontdekker bij de kroeg staan. Zo zie je in één oogopslag waar nog data ontbreekt. Ontbreekt een kroeg, dan stelt een speler hem voor met een speld op de kaart; na goedkeuring door een beheerder staat hij erbij, zonder prijs, klaar om in kaart te brengen.
 
 De mist (een stippenraster) staat alleen op Mijn kaart: elke speler begint met een kaart onder de mist en speelt kroegen vrij door er in te checken. Op de gezamenlijke kaart zou de mist na de eerste fanatieke spelers voor altijd weg zijn; op je eigen kaart blijft hij voor iedereen werken. Na een nieuwe check-in gaat de app naar Mijn kaart, waar de mist rond de kroeg wegtrekt.
 

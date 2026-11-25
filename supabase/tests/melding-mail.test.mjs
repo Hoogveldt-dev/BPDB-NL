@@ -31,7 +31,12 @@ check('stad: een speler', een.tekst.includes('Nu 1 speler vraagt erom.'), een.te
 const meer = maakMail({ soort: 'stad', stad: 'Arnhem', op: '2026-11-21T09:50:00Z', naam: 'Rik', spelers: 3 });
 check('stad: meer spelers', meer.tekst.includes('Nu 3 spelers vragen erom.'), meer.tekst);
 check('stad: wijst naar Beheer, Stadsaanvragen', meer.tekst.includes('Ik, Beheer, Stadsaanvragen'), meer.tekst);
-check('geen gedachtestreepjes', !(bug.tekst + kaal.tekst + een.tekst + meer.tekst + aanSpeler.tekst + aanBeheer.tekst).includes('—'));
+const kroeg = maakMail({ soort: 'kroeg', kroeg: 'Café Nieuw', gemeente: 'Nijmegen', toelichting: 'Ingang in de steeg', lat: 51.846, lon: 5.86, op: '2026-11-25T09:50:00Z', naam: 'dorstige-zebra' });
+check('kroeg: onderwerp met de kroeg en de stad', kroeg.onderwerp === 'Bierkoers: kroeg voorgesteld, Café Nieuw in Nijmegen', kroeg.onderwerp);
+check('kroeg: naam, toelichting, kaartlink en de weg in de app', ['dorstige-zebra stelde op', 'Toelichting: Ingang in de steeg', 'openstreetmap.org/?mlat=51.846&mlon=5.86', 'Ik, Beheer, Ontbrekende kroegen'].every((s) => kroeg.tekst.includes(s)), kroeg.tekst);
+const kroegKaal = maakMail({ soort: 'kroeg', kroeg: 'Café Nieuw', gemeente: 'Nijmegen', toelichting: null, lat: 51.846, lon: 5.86, op: '2026-11-25T09:50:00Z', naam: null });
+check('kroeg zonder toelichting: geen lege toelichting en geen lege regels achter elkaar', !kroegKaal.tekst.includes('Toelichting') && !kroegKaal.tekst.includes('\n\n\n') && kroegKaal.tekst.startsWith('Een speler stelde'), kroegKaal.tekst);
+check('geen gedachtestreepjes', !(bug.tekst + kaal.tekst + een.tekst + meer.tekst + aanSpeler.tekst + aanBeheer.tekst + kroeg.tekst).includes('—'));
 
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);

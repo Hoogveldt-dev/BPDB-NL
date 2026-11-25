@@ -3,11 +3,13 @@
 // - soort "bug": een nieuw bericht (vraag, suggestie, probleem of opmerking; de naam komt van de oude knop), aan de beheerder
 // - soort "stad": een stadsaanvraag, aan de beheerder
 // - soort "antwoord": een antwoord in een gesprek; van de beheerder aan de speler, of van de speler aan de beheerder
+// - soort "kroeg": een kroeg die volgens een speler ontbreekt, aan de beheerder
 
 export type Melding =
   | { soort: "bug"; tekst: string; scherm: string | null; apparaat: string | null; op: string; naam: string | null }
   | { soort: "stad"; stad: string; op: string; naam: string | null; spelers: number }
-  | { soort: "antwoord"; tekst: string; op: string; van_beheer: boolean; naam: string | null; bericht: string | null };
+  | { soort: "antwoord"; tekst: string; op: string; van_beheer: boolean; naam: string | null; bericht: string | null }
+  | { soort: "kroeg"; kroeg: string; gemeente: string; toelichting: string | null; lat: number; lon: number; op: string; naam: string | null };
 
 const wanneer = (op: string) =>
   new Date(op).toLocaleString("nl-NL", { timeZone: "Europe/Amsterdam", dateStyle: "long", timeStyle: "short" });
@@ -64,6 +66,19 @@ export function maakMail(m: Melding, kanAntwoorden = false): { onderwerp: string
         citaat(m.bericht),
         "",
         "Antwoord in de app: https://bierkoers.nl, Ik, Beheer, Berichten.",
+      ]),
+    };
+  }
+  if (m.soort === "kroeg") {
+    return {
+      onderwerp: `Bierkoers: kroeg voorgesteld, ${m.kroeg} in ${m.gemeente}`,
+      tekst: regels([
+        `${wie} stelde op ${wanneer(m.op)} een kroeg voor die ontbreekt: ${m.kroeg} in ${m.gemeente}.`,
+        m.toelichting ? `Toelichting: ${m.toelichting}` : "",
+        "",
+        `Op de kaart: https://www.openstreetmap.org/?mlat=${m.lat}&mlon=${m.lon}#map=19/${m.lat}/${m.lon}`,
+        "",
+        "Goedkeuren of afwijzen: https://bierkoers.nl, Ik, Beheer, Ontbrekende kroegen.",
       ]),
     };
   }

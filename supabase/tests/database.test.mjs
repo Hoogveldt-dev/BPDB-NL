@@ -1134,5 +1134,64 @@ check('een verwijderd bericht neemt zijn antwoorden mee', (await (async () => {
   return (await een(`select count(*)::int as n from public.bericht_antwoorden where bericht_id = ${gb}`)).n;
 })()) === 0);
 
+// ---------------------------------------------------------------------------
+// Een kroeg die ontbreekt: spelers stellen hem voor, de beheerder keurt goed (20261125150000_kroeg_voorstellen)
+// ---------------------------------------------------------------------------
+
+const stel = (wie, naam, lat, lon, toelichting = null) =>
+  als(wie, `select public.stel_kroeg_voor($1, $2, $3, $4) as id`, [naam, lat, lon, toelichting]);
+check('een kroeg voorstellen zonder inloggen kan niet', !!(await stel(null, 'Café Nieuw', 51.8460, 5.8600)).fout);
+const kv1 = (await stel(B, '  Café   Nieuw ', 51.8460, 5.8600, 'Ingang in de steeg')).rows?.[0]?.id;
+check('een speler stelt een kroeg voor', kv1 > 0);
+const kvRij = await een(`select naam, gemeente, status, toelichting from public.kroeg_voorstellen where id = ${kv1}`);
+check('het voorstel krijgt de gemeente van de wijk en een nette naam', kvRij?.naam === 'Café Nieuw' && kvRij.gemeente === 'Nijmegen' && kvRij.status === 'open' && kvRij.toelichting === 'Ingang in de steeg', JSON.stringify(kvRij));
+check('een voorstel zonder naam wordt geweigerd', /naam van de kroeg/.test((await stel(B, ' ', 51.8460, 5.8600)).fout ?? ''));
+check('een voorstel zonder plek wordt geweigerd', /speld/.test((await stel(B, 'Café Ergens', null, 5.86)).fout ?? ''));
+check('een plek buiten de steden die meedoen wordt geweigerd', /niet in een stad die meedoet/.test((await stel(B, 'Café Ver Weg', 53.2, 6.56)).fout ?? ''));
+check('een kroeg die al op de kaart staat wordt geweigerd', /De Blaauwe Hand staat al op de kaart/.test((await stel(A, 'Blaauwe Hand', 51.8476, 5.8641)).fout ?? ''));
+check('een kroeg die al is voorgesteld wordt geweigerd', /al voorgesteld/.test((await stel(A, 'Cafe Nieuw', 51.8461, 5.8601)).fout ?? ''));
+check('een gewone speler leest geen kroegvoorstellen', (await als(B, `select count(*)::int as n from public.kroeg_voorstellen`)).rows?.[0]?.n === 0);
+check('direct in kroeg_voorstellen schrijven kan niet', !!(await als(B, `insert into public.kroeg_voorstellen (door_id, naam, lat, lon, gemeente) values ('${B}', 'Nep', 51.84, 5.86, 'Nijmegen')`)).fout);
+check('een gewone speler keurt geen voorstel goed', /beheerders/.test((await als(B, `select public.zet_kroegvoorstel(${kv1}, 'goedgekeurd')`)).fout ?? ''));
+
+const cKv = (await alsService(`select public.claim_melding_mail('kroeg', ${kv1}, '${B}') as r`)).rows?.[0]?.r;
+check('claim_melding_mail geeft het voorstel met naam, gemeente, plek en toelichting',
+  cKv?.soort === 'kroeg' && cKv.kroeg === 'Café Nieuw' && cKv.gemeente === 'Nijmegen' && cKv.lat === 51.846 && cKv.toelichting === 'Ingang in de steeg' && !!cKv.naam, JSON.stringify(cKv));
+check('een voorstel wordt maar een keer gemaild', (await alsService(`select public.claim_melding_mail('kroeg', ${kv1}, '${B}') as r`)).rows?.[0]?.r === null);
+
+await db.exec(`update public.profielen set is_beheerder = true where id = '${E}'`);
+check('een beheerder leest de voorstellen', (await als(E, `select count(*)::int as n from public.kroeg_voorstellen`)).rows?.[0]?.n === 1);
+const nieuweKroeg = (await als(E, `select public.zet_kroegvoorstel(${kv1}, 'goedgekeurd') as id`)).rows?.[0]?.id;
+const nk = await een(`select naam, gemeente, osm_id, open, wijk_id from public.kroegen where id = $1`, [nieuweKroeg]);
+check('goedkeuren zet de kroeg op de kaart, zonder osm_id en in zijn wijk', nk?.naam === 'Café Nieuw' && nk.gemeente === 'Nijmegen' && nk.osm_id === null && nk.open && nk.wijk_id != null, JSON.stringify(nk));
+const nkKaart = await als(null, `select versheid from public.kroeg_kaart where id = ${nieuweKroeg}`);
+check('de nieuwe kroeg staat op de kaart zonder prijs', nkKaart.rows?.[0]?.versheid === 'locked', JSON.stringify(nkKaart));
+const kvNa = await een(`select status, kroeg_id from public.kroeg_voorstellen where id = ${kv1}`);
+check('het voorstel is goedgekeurd en wijst naar de kroeg', kvNa.status === 'goedgekeurd' && Number(kvNa.kroeg_id) === Number(nieuweKroeg), JSON.stringify(kvNa));
+check('een voorstel twee keer afhandelen kan niet', /al afgehandeld/.test((await als(E, `select public.zet_kroegvoorstel(${kv1}, 'afgewezen')`)).fout ?? ''));
+check('een onbekende status voor een voorstel wordt geweigerd', /Onbekende status/.test((await als(E, `select public.zet_kroegvoorstel(${kv1}, 'open')`)).fout ?? ''));
+check('dezelfde kroeg nog eens voorstellen kan niet meer: hij staat op de kaart', /staat al op de kaart/.test((await stel(A, 'Café Nieuw', 51.8460, 5.8600)).fout ?? ''));
+
+const kv2 = (await stel(A, 'Het Pleintje', 51.8440, 5.8700)).rows?.[0]?.id;
+const afgewezen = await als(E, `select public.zet_kroegvoorstel(${kv2}, 'afgewezen') as id`);
+check('afwijzen zet geen kroeg op de kaart', afgewezen.rows?.[0]?.id === null && (await een(`select count(*)::int as n from public.kroegen where naam = 'Het Pleintje'`)).n === 0, JSON.stringify(afgewezen));
+
+// Hoogstens 5 open voorstellen per speler
+const plekken = ['Alfa', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot'].map((n, i) => [`Proeflokaal ${n}`, 51.8360 + i * 0.0015, 5.8530]);
+for (const [n, lat, lon] of plekken.slice(0, 5)) await stel(C, n, lat, lon);
+check('na 5 open voorstellen is het genoeg', /al 5 kroegen voorgesteld/.test((await stel(C, ...plekken[5])).fout ?? ''));
+
+// De OSM-import koppelt de toegevoegde kroeg aan dezelfde kroeg in OSM, in plaats van een tweede kroeg te maken
+const voorImport = (await een(`select count(*)::int as n from public.kroegen where gemeente = 'Nijmegen'`)).n;
+await alsService(`select public.importeer_kroegen($1::jsonb, 'Nijmegen')`, [JSON.stringify([
+  ...JSON.parse(kroegenJson).filter((k) => k.osm_id !== 'node/8'),
+  { osm_id: 'node/500', naam: 'Cafe Nieuw', soort: 'bar', lat: 51.84603, lon: 5.86004 },
+  { osm_id: 'node/501', naam: 'Ander Café', soort: 'bar', lat: 51.8462, lon: 5.8602 },
+])]);
+const gekoppeld = await een(`select osm_id, naam, soort from public.kroegen where id = $1`, [nieuweKroeg]);
+check('de import koppelt een toegevoegde kroeg aan dezelfde kroeg in OSM', gekoppeld?.osm_id === 'node/500' && gekoppeld.naam === 'Cafe Nieuw' && gekoppeld.soort === 'bar', JSON.stringify(gekoppeld));
+check('een andere kroeg vlakbij wordt niet gekoppeld maar komt erbij', (await een(`select count(*)::int as n from public.kroegen where gemeente = 'Nijmegen'`)).n === voorImport + 1);
+await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
+
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);
