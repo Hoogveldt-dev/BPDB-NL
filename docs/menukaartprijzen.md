@@ -216,3 +216,36 @@ Ter controle las het model de drankkaart van Café Daen als afbeelding: Hertog J
 St Anneke (St. Annastraat 55), zelfde dag: 132 foto's in Google; voordat Google een CAPTCHA toonde kwamen er 10 binnen. Het krijtbord achter de bar (foto genomen 4 juni 2013) werd gevonden en gelezen: Paulaner, witbier, Max Rosé en Omer, maar geen pils, dus terecht geen vaasjesprijs.
 
 Conclusie: Van Buren laat bestellen via een QR-code en heeft weinig kaarten op tafel. Of er tussen de andere 340 foto's een kaart met prijzen zit, laat een run vanaf een thuisverbinding zien.
+
+## Gent: DAEN en Haiku-agents vanuit een cloudsessie (25 november 2026)
+
+Eerste ronde in een Belgische stad: alle 367 open kroegen in Gent zonder prijs. De JAN-methode (foto's in Google Maps) is niet gebruikt: de Gentse kroegen komen uit OpenStreetMap en hebben geen Google Place ID, en die eerst bij Google opzoeken vraagt veel verzoeken vanaf een datacenter.
+
+Werkwijze:
+
+1. **Websites uit OpenStreetMap** via de OSM-API (nodes en ways per 50): 109 van de 367 kroegen hebben een website.
+2. **Crawlen** zoals in Nijmegen: startpagina en links met menu, kaart, drank, bier of pdf, pdf's met `pdftotext -layout`, daarna sites met weinig tekst of een fout nog een keer met Playwright. Gezocht op Belgische pilsmerken (Jupiler, Stella Artois, Maes, Primus, Cristal, Bavik, Martens, Bockor) met een bedrag.
+3. **Haiku-agents** (13, elk ongeveer 20 kroegen) zochten de eigen website en drankkaart van de 258 kroegen zonder website in OSM. De zoekbudget van de sessie (gedeeld door alle agents) raakte halverwege op, dus ongeveer de helft is niet gezocht. Wat wel gezocht is, leverde weinig op: de meeste kroegen staan alleen op Facebook, Instagram of verzamelsites, en die tellen niet als bron.
+4. **Nakijken**: elke prijs zelf gelezen, met een uitsnede uit de pdf (`pdftoppm`, regel opgezocht met `pdftotext -bbox-layout`) of een schermafbeelding van de pagina, en de menukaart-controleur keurde elk geval. Op Belgische kaarten staat de maat er meestal bij (25 cl, het pintje); zonder maat geen prijs.
+
+Geïmporteerd (allemaal goedgekeurd door de controleur en door de vaste controles; mediaan € 3,20):
+
+| Kroeg | Pintje (25 cl, van het vat) | Datum | Bron van de datum |
+|---|---|---|---|
+| 5 voor 12 | Primus € 3,20 | 2024-10-14 | pdf (ModDate) |
+| Café Merino | Stella Artois € 3,00 | 2025-03-11 | datum in de titel van de kaart |
+| The Celtic Towers | Stella Artois € 3,00 | 2025-05-22 | `dateModified` van de pagina; gevonden door een Haiku-agent |
+| Bar Bassie | Stella Artois € 3,30 | 2026-06-25 | pdf (ModDate) |
+| the Wan & Only | Cristal € 3,20 | 2026-09-22 | pdf (ModDate) |
+| VIERNULVIER Café | Cristal € 3,20 | 2026-09-24 | pdf (ModDate) |
+| Trollenkelder | Stella Artois € 3,20 | 2026-11-23 | `Last-Modified` van de pagina, vast bij herhaald opvragen; website gevonden door een Haiku-agent |
+
+Uitslag: 7 van de 367 kroegen in kaart, de eerste Pilsindex van Gent (€ 3,20).
+
+Afgevallen, met reden:
+
+- **Geen maat bij de pils**: Eltòn (Stella Artois van het vat 3,3), ABA-JOUR (Bavik superpils van het vat 3,20), Fluoclub (pilsner 3,5).
+- **Geen pils van de tap in 25 cl**: De Dulle Griet (Mongozo Pilsener in fles), Café Cannelle (Jupiler in flesje), Amaro (Peroni 33 cl).
+- **Niet te lezen**: Bar Martine (pdf geeft 403), 19 sites gaven een fout of bestaan niet meer.
+
+Wat nog kan: de kroegen die de agents door het zoekbudget niet konden zoeken opnieuw laten zoeken (in een nieuwe beurt, met minder agents tegelijk), en de JAN-methode zodra de Gentse kroegen een Google Place ID hebben.
