@@ -338,7 +338,8 @@ const state = {
   tab: "kaart",
   kroegen: [], // alle open kroegen, van alle steden (de kaart)
   stadKroegen: [], // de kroegen van de stad in beeld (stadNaam): lijst, Pilsindex, lichtkrant, Beurs
-  grenzen: [], // grenzen van de steden (laadGrenzen), om de stad in beeld te kiezen
+  grenzen: [], // grenzen van de geladen steden (grensVan), om de stad in beeld te kiezen
+  kaders: [], // rechthoek om de kroegen van elke stad (stad_kaders), om alleen de steden in beeld te laden
   stad: null,
   badgeTellers: {}, // tellers voor de badges onder Ik (laadBadges)
   uitgeklapt: new Set(), // namen van open uitklapblokken (data-onthoud), zie uitgeklapt()
@@ -632,23 +633,6 @@ function trapjeHtml(id) {
   for (const x of p.slice(1)) d += ` H${X(x.t)} V${Y(x.v)}`;
   d += ` H${W}`;
   return `<svg class="trapje ${c.recent ? richting(c.delta) : ""}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/></svg>`;
-}
-
-async function laadKoers() {
-  // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee.
-  // Daarnaast de laatste activiteit van spelers voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen.
-  const [{ data, error }, { data: recent }] = await Promise.all([
-    // Alle steden: de kaart kleurt elke kroeg in beeld; de lichtkrant kiest de activiteit van de stad in beeld
-    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
-      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(20000),
-    sb.from("kroeg_tijdlijn").select("kroeg_id,gemeente,soort,status,op").eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: false }).limit(200),
-  ]);
-  if (error) { console.error(error); return; }
-  state.koersRuw = data ?? [];
-  state.koers.recent = recent ?? [];
-  koersen();
-  lichtkrant();
-  hud();
 }
 
 // Lichtkrant bovenin: de Pilsindex en wat er net gebeurde. Tik op een koers om de kroeg te openen.
@@ -1117,18 +1101,60 @@ function setDetent(d) {
 // Data
 // ---------------------------------------------------------------------------
 
-async function laadKroegen() {
-  // Alle steden tegelijk: bij schuiven over de kaart staan de kroegen van de buurstad er meteen
-  const { data, error } = await sb.from("kroeg_kaart").select("*").eq("open", true).order("naam");
-  if (error) { console.error(error); toast("Kroegen laden mislukt"); return; }
-  state.kroegen = data;
-  state.codes = maakCodes(data);
+// Laden per stad: alleen de steden in beeld en de gekozen stad, zodat de app met honderden steden even snel blijft.
+// Per stad komen de kroegen, de koersen, de laatste activiteit, Guinness en de grens in een keer binnen en worden ze
+// samengevoegd met wat er al is. Een stad die al geladen is, wordt alleen opnieuw geladen bij vernieuw().
+const geladen = new Set(), bezigMet = new Set();
+async function laadSteden(namen, opnieuw = false) {
+  namen = [...new Set(namen)].filter((n) => n && !bezigMet.has(n) && (opnieuw || !geladen.has(n)));
+  if (!namen.length) return;
+  namen.forEach((n) => bezigMet.add(n));
+  const [kroegen, koers, recent, aanbod, grenzen] = await Promise.all([
+    sb.from("kroeg_kaart").select("*").in("gemeente", namen).eq("open", true).order("naam"),
+    // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee
+    sb.from("kroeg_tijdlijn").select("kroeg_id,gemeente,soort,status,prijs_cent,volume_cl,op,bron").in("gemeente", namen)
+      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(20000),
+    // De laatste activiteit van spelers voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen
+    sb.from("kroeg_tijdlijn").select("kroeg_id,gemeente,soort,status,op").in("gemeente", namen).eq("status", "bevestigd").eq("bron", "speler")
+      .order("op", { ascending: false }).limit(40 * namen.length),
+    sb.from("aanbod_overzicht").select("*").in("gemeente", namen),
+    sb.from("stad_grenzen").select("gemeente,vlak").in("gemeente", namen),
+  ]);
+  namen.forEach((n) => bezigMet.delete(n));
+  if (kroegen.error) { console.error(kroegen.error); toast("Kroegen laden mislukt"); return; }
+  namen.forEach((n) => geladen.add(n));
+  const nieuw = new Set(namen), buiten = (x) => !nieuw.has(x.gemeente);
+  state.kroegen = [...state.kroegen.filter(buiten), ...kroegen.data].sort((a, b) => a.naam.localeCompare(b.naam, "nl"));
+  // Tickercodes per stad, zodat ze niet veranderen als er een stad bij komt
+  for (const n of namen) for (const [id, code] of maakCodes(kroegen.data.filter((k) => k.gemeente === n))) state.codes.set(id, code);
+  if (!koers.error) state.koersRuw = [...state.koersRuw.filter(buiten), ...(koers.data ?? [])];
+  if (!recent.error) state.koers.recent = [...(state.koers.recent ?? []).filter(buiten), ...(recent.data ?? [])].sort((a, b) => (a.op < b.op ? 1 : -1));
+  // Voorlopig alleen Guinness; ander extra bier blijft in de database maar staat niet in de app
+  if (!aanbod.error) state.aanbod = [...state.aanbod.filter(buiten), ...(aanbod.data ?? []).filter((a) => a.soort === GUINNESS)];
+  if (!grenzen.error) state.grenzen = [...state.grenzen.filter(buiten), ...(grenzen.data ?? []).filter((g) => g.vlak?.coordinates).map(grensVan)];
   zetStadKroegen();
-  if (kaartNaarStad && data.length) { kaartNaarStad = false; map.jumpTo({ center: stadCentrum(), zoom: STAD.zoom }); }
   koersen();
   kaartBijwerken();
   lichtkrant();
   hud(); // de bovenbalk rekent met de kroegen (stand, jouw index), dus ook bijwerken als die binnenkomen
+  stadVolgen(true);
+}
+
+// De gekozen stad (en bij het openen de sprong ernaartoe), daarna wat er verder in beeld is
+async function laadKroegen(opnieuw = false) {
+  await laadSteden([stadNaam], opnieuw);
+  if (kaartNaarStad && state.stadKroegen.length) { kaartNaarStad = false; map.jumpTo({ center: stadCentrum(), zoom: STAD.zoom }); }
+  laadInBeeld();
+}
+
+// De steden waarvan het kader het zichtbare deel van de kaart raakt (met een rand eromheen, zodat de buurstad er al
+// is voor je erheen schuift). Ver uitgezoomd laden we niets bij: dan zou de halve kaart binnenkomen.
+const INBEELD_ZOOM = 9;
+function laadInBeeld() {
+  if (!kaartKlaar || !state.kaders.length || map.getZoom() < INBEELD_ZOOM) return;
+  const b = map.getBounds(), dx = (b.getEast() - b.getWest()) / 2, dy = (b.getNorth() - b.getSouth()) / 2;
+  const [w, z, o, n] = [b.getWest() - dx, b.getSouth() - dy, b.getEast() + dx, b.getNorth() + dy];
+  laadSteden(state.kaders.filter((k) => k.west <= o && k.oost >= w && k.zuid <= n && k.noord >= z).map((k) => k.gemeente));
 }
 
 // Midden van de stad: de mediaan van de kroegen, zodat losse kroegen in de dorpen eromheen het niet verschuiven
@@ -1139,15 +1165,11 @@ function stadCentrum() {
 
 const zetStadKroegen = () => { state.stadKroegen = state.kroegen.filter((k) => k.gemeente === stadNaam); };
 
-// Grenzen van de steden (view stad_grenzen), om de stad te kiezen die het meest van het scherm vult
-async function laadGrenzen() {
-  const { data } = await sb.from("stad_grenzen").select("gemeente,vlak");
-  state.grenzen = (data ?? []).filter((g) => g.vlak?.coordinates).map((g) => {
-    const polygonen = g.vlak.type === "Polygon" ? [g.vlak.coordinates] : g.vlak.coordinates;
-    const xs = polygonen.flatMap((p) => p[0].map((c) => c[0])), ys = polygonen.flatMap((p) => p[0].map((c) => c[1]));
-    return { gemeente: g.gemeente, polygonen, kader: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] };
-  });
-  stadVolgen();
+// Grens van een stad (view stad_grenzen), om de stad te kiezen die het meest van het scherm vult
+function grensVan(g) {
+  const polygonen = g.vlak.type === "Polygon" ? [g.vlak.coordinates] : g.vlak.coordinates;
+  const xs = polygonen.flatMap((p) => p[0].map((c) => c[0])), ys = polygonen.flatMap((p) => p[0].map((c) => c[1]));
+  return { gemeente: g.gemeente, polygonen, kader: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] };
 }
 
 function inRing([x, y], ring) {
@@ -1194,6 +1216,7 @@ function stadVolgen(nu = false) {
   // Eerst naar de bewaarde stad springen (laadKroegen); de kaart begint op de pilotstad
   if (kaartNaarStad || (!nu && performance.now() - volgTijd < 250)) return;
   volgTijd = performance.now();
+  laadInBeeld();
   const naam = stadInBeeld();
   if (naam && naam !== stadNaam) wisselStad(naam);
 }
@@ -1216,8 +1239,12 @@ function wisselStad(naam) {
 }
 
 async function laadStad() {
-  const { data } = await sb.from("stad_voortgang").select("*").order("gemeente");
+  const [{ data }, { data: kaders }] = await Promise.all([
+    sb.from("stad_voortgang").select("*").order("gemeente"),
+    sb.from("stad_kaders").select("*"),
+  ]);
   state.steden = data ?? [];
+  state.kaders = kaders ?? state.kaders;
   state.stad = state.steden.find((s) => s.gemeente === stadNaam) ?? null;
   // De bewaarde stad doet niet (meer) mee: terug naar de pilotstad
   if (!state.stad && data?.length && stadNaam !== STAD.naam) return kiesStad(STAD.naam);
@@ -1294,7 +1321,7 @@ let vernieuwTimer;
 function vernieuw() {
   clearTimeout(vernieuwTimer);
   vernieuwTimer = setTimeout(async () => {
-    await Promise.all([laadKroegen(), laadStad(), laadGrenzen(), laadProfiel().then(laadBerichten), laadAanbod(), laadMijn(), laadKoers()]);
+    await Promise.all([laadSteden([...geladen, stadNaam], true), laadStad(), laadProfiel().then(laadBerichten), laadMijn()]);
     if (!bezigMetTypen()) draw();
   }, 400);
 }
@@ -1623,7 +1650,7 @@ async function beoordeelMelding(id, oordeel) {
   toast(data === "bevestigd" ? "Bevestigd, bedankt" : data === "weerlegd" ? "Weggehaald" : "Genoteerd; nog een keer klopt niet en het wordt teruggedraaid");
   // Een bevestigde sluiting of dubbele kroeg haalt de kroeg van de kaart
   if (data === "bevestigd" && (state.info?.open_meldingen ?? []).some((m) => m.id === id && (m.soort === "gesloten" || m.soort === "dubbel"))) {
-    await laadKroegen();
+    await laadSteden([...geladen], true);
     return sluitKroeg();
   }
   draw();
@@ -1756,17 +1783,18 @@ async function beoordeelAanbod(id, oordeel) {
   draw();
 }
 
+// Guinness van de geladen steden opnieuw ophalen (na een eigen melding of oordeel)
 async function laadAanbod() {
-  const [{ data: aanbod, error }, soorten] = await Promise.all([
-    sb.from("aanbod_overzicht").select("*"),
-    state.biersoorten.length ? { data: state.biersoorten } : sb.from("biersoorten").select("*").order("volgorde"),
-  ]);
-  // Bestaat de tabel nog niet (migratie nog niet uitgevoerd), dan blijft de app gewoon werken zonder extra's
+  const { data, error } = await sb.from("aanbod_overzicht").select("*").in("gemeente", [...geladen]);
   if (error) return;
   // Voorlopig alleen Guinness; ander extra bier blijft in de database maar staat niet in de app
-  state.aanbod = (aanbod ?? []).filter((a) => a.soort === GUINNESS);
-  state.biersoorten = soorten.data ?? [];
+  state.aanbod = (data ?? []).filter((a) => a.soort === GUINNESS);
   kaartBijwerken();
+}
+
+async function laadBiersoorten() {
+  const { data } = await sb.from("biersoorten").select("*").order("volgorde");
+  state.biersoorten = data ?? [];
 }
 
 async function laadTijdlijn(id) {
@@ -2460,7 +2488,7 @@ function kiesStad(naam) {
   state.tocht = null;
   wisselStad(naam);
   if (state.stadKroegen.length) map.flyTo({ center: stadCentrum(), zoom: STAD.zoom, duration: 900 });
-  else { kaartNaarStad = true; vernieuw(); }
+  else { kaartNaarStad = true; laadKroegen(); }
 }
 
 // Weergave kiezen: licht, donker of het systeem volgen. Staat boven de taalkeuze.
@@ -3369,7 +3397,7 @@ async function verstuurIncheck(keuze, form, knop) {
     draw();
     toonOpMijnKaart(k, !was);
   } else if (vrij) vierVrij(k);
-  await Promise.all([laadKroegen(), laadStad(), laadMijn(), guinness ? laadAanbod() : null]);
+  await Promise.all([laadSteden([...geladen, stadNaam], true), laadStad(), laadMijn()]);
   if (!bezigMetTypen()) draw();
 }
 
@@ -3766,7 +3794,7 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   const { data } = await sb.auth.getSession();
   // Geen sessie in de browser: misschien wel in de bewaarcookie
   state.sessie = data.session ?? (await bewaar.herstel());
-  await Promise.all([laadKroegen(), laadStad(), laadGrenzen(), laadProfiel().then(laadBerichten), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
+  await Promise.all([laadKroegen(), laadStad(), laadProfiel().then(laadBerichten), laadAanbieders(), laadBiersoorten(), laadMijn(), teksten.laad()]);
   sessieBekend = true; // nu weten we of er al een sessie is en of anonieme accounts in Supabase aanstaan
   koersen(); lichtkrant(); hud(); kaartBijwerken();
   draw();

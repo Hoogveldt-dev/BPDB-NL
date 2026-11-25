@@ -832,6 +832,11 @@ check('na 10 berichten op een dag is het genoeg (20261122120000_berichten)', /al
 const grens = await als(null, `select gemeente, vlak from public.stad_grenzen where gemeente = 'Nijmegen'`);
 check('de grens van een stad is een vlak dat de wijken omvat', ['Polygon', 'MultiPolygon'].includes(grens.rows?.[0]?.vlak?.type)
   && JSON.stringify(grens.rows[0].vlak.coordinates).includes('5.85'), JSON.stringify(grens));
+const kader = (await als(null, `select west, zuid, oost, noord from public.stad_kaders where gemeente = 'Nijmegen'`)).rows?.[0];
+const echt = await een(`select min(extensions.st_x(locatie::extensions.geometry)) as w, max(extensions.st_x(locatie::extensions.geometry)) as o,
+  min(extensions.st_y(locatie::extensions.geometry)) as z, max(extensions.st_y(locatie::extensions.geometry)) as n from public.kroegen where gemeente = 'Nijmegen' and open`);
+check('het kader van een stad is de rechthoek om zijn open kroegen, voor iedereen leesbaar (20261125120000_stad_kaders)',
+  kader && Math.abs(kader.west - echt.w) < 1e-9 && Math.abs(kader.oost - echt.o) < 1e-9 && Math.abs(kader.zuid - echt.z) < 1e-9 && Math.abs(kader.noord - echt.n) < 1e-9, JSON.stringify({ kader, echt }));
 check('een gemeente zonder wijken heeft geen grens', (await als(null, `select count(*)::int as n from public.stad_grenzen where gemeente = 'Vervangstad'`)).rows?.[0]?.n === 0);
 
 // ---------------------------------------------------------------------------
