@@ -6555,6 +6555,2985 @@
     "CreationDate: Wed Apr  1 13:44:05 2026 UTC",
     "ModDate: Wed Apr  1 13:44:04 2026 UTC"
    ]
+  },
+  {
+   "kroeg_id": 2461,
+   "kroeg": "Café Luxembourg",
+   "tapbieren": [
+    {
+     "naam": "JUPILER PILSNER",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "JUPILER PILSNER\n25 cl | 4.5 • 30 cl | 5.5 • 50 cl | 8.75",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "JUPILER PILSNER",
+     "soort": "pils",
+     "cl": 30,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "JUPILER PILSNER\n25 cl | 4.5 • 30 cl | 5.5 • 50 cl | 8.75",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "JUPILER PILSNER",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 8.75,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "JUPILER PILSNER\n25 cl | 4.5 • 30 cl | 5.5 • 50 cl | 8.75",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "TRIPEL KARMELIET",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "TRIPEL KARMELIET\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "TRIPEL KARMELIET",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 8.25,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "TRIPEL KARMELIET\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "HOEGAARDEN WIT BIER",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "HOEGAARDEN WIT BIER\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "HOEGAARDEN WIT BIER",
+     "soort": "wit",
+     "cl": 33,
+     "prijs": 8.25,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "HOEGAARDEN WIT BIER\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "LEFFE BLOND",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "LEFFE BLOND\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "LEFFE BLOND",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 8.25,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "LEFFE BLOND\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "LEFFE DUBBEL",
+     "soort": "dubbel",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "LEFFE DUBBEL\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "LEFFE DUBBEL",
+     "soort": "dubbel",
+     "cl": 33,
+     "prijs": 8.25,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "LEFFE DUBBEL\n25 cl | 6.5 • 33 cl | 8.25",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    },
+    {
+     "naam": "SEASONAL BEER",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "SEASONAL BEER\n25 cl | 6.5",
+     "bron": "https://www.cafeluxembourg.amsterdam/menu/CafeLuxembourg-DRINKS.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Wed, 04 Nov 2026 13:44:45 GMT",
+    "CreationDate: Wed Nov 4 13:44:45 2026 UTC",
+    "ModDate: Wed Nov 4 13:44:45 2026 UTC",
+    "Last-Modified: Sat, 21 Nov 2026 05:20:54 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 2502,
+   "kroeg": "café De Pianist",
+   "tapbieren": [
+    {
+     "naam": "Brand 5%",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "- Vaasje\t\t                  3.90",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Brand 5%",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "- Fluitje\t\t                 3.70",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Brand 5%",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "- Pint\t\t\t                   7.60",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "IJwit, witbier 6,5%",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": " - IJwit, witbier 6,5%     6.20",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Affligem Blond 6,7%",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Affligem Blond 6,7%        6.20",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe 6%",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Texels Skuumkoppe 6% 6.20",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Lellebel Blond 5,7%",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Lellebel Blond 5,7%        6.20",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Funky Falcon Pale Ale 5,2%",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Funky Falcon Pale Ale 5,2% 6.20",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Wisseltap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Wisseltap\t\t                6.20",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2026/05/Menus-Cafe-De-Pianist-mei-2026.pdf"
+    },
+    {
+     "naam": "Brand 5%",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "- Vaasje\t\t                  3.90",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2025/10/Menus-Cafe-De-Pianist-okt-2025.pdf"
+    },
+    {
+     "naam": "Brand 5%",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "- Fluitje\t\t                 3.70",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2025/10/Menus-Cafe-De-Pianist-okt-2025.pdf"
+    },
+    {
+     "naam": "Brand 5%",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "- Pint\t\t\t                   7.60",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2025/10/Menus-Cafe-De-Pianist-okt-2025.pdf"
+    },
+    {
+     "naam": "IJwit, witbier 6,5%",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": " - IJwit, witbier 6,5%6.10",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2025/10/Menus-Cafe-De-Pianist-okt-2025.pdf"
+    },
+    {
+     "naam": "Affligem Blond 6,7%",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Affligem Blond 6,7%  6.10",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2025/10/Menus-Cafe-De-Pianist-okt-2025.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe 6%",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Texels Skuumkoppe 6% 6.10",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2025/10/Menus-Cafe-De-Pianist-okt-2025.pdf"
+    },
+    {
+     "naam": "Wisseltap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Wisseltap\t\t          6.10",
+     "bron": "https://www.cafedepianist.nl/wp-content/uploads/2025/10/Menus-Cafe-De-Pianist-okt-2025.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2024 | Cafe De Pianist , All Rights Reserved",
+    "© 2024 | Cafe De Pianist , All Rights Reserved",
+    "bestandsnaam: Menus-Cafe-De-Pianist-mei-2026.pdf (mei 2026)",
+    "Last-Modified: Fri, 29 May 2026 07:16:32 GMT",
+    "CreationDate: Mon May 25 16:34:43 2026 UTC",
+    "ModDate: Mon May 25 16:34:44 2026 UTC",
+    "bestandsnaam: Menus-Cafe-De-Pianist-okt-2025.pdf (okt 2025)",
+    "Last-Modified: Fri, 10 Oct 2025 08:06:01 GMT",
+    "CreationDate: Fri Oct 10 07:48:30 2025 UTC",
+    "ModDate: Fri Oct 10 07:48:31 2025 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 2508,
+   "kroeg": "Kosmos",
+   "tapbieren": [
+    {
+     "naam": "Heineken 5%",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Heineken 5%                                                                     3,90",
+     "bron": "https://www.kosmosamsterdam.nl/wp-content/uploads/2026/10/drankenkaart-2026-10-v2.pdf"
+    },
+    {
+     "naam": "Wisseltap ?%",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Wisseltap ?%                                                                    6,25",
+     "bron": "https://www.kosmosamsterdam.nl/wp-content/uploads/2026/10/drankenkaart-2026-10-v2.pdf"
+    },
+    {
+     "naam": "Zeebries Blond 5%",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Zeebries Blond 5%                                                               6,25",
+     "bron": "https://www.kosmosamsterdam.nl/wp-content/uploads/2026/10/drankenkaart-2026-10-v2.pdf"
+    },
+    {
+     "naam": "Kosmos Weizen 5,5%",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.85,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Kosmos Weizen 5,5%                                           5,85",
+     "bron": "https://www.kosmosamsterdam.nl/wp-content/uploads/2026/10/drankenkaart-2026-10-v2.pdf"
+    },
+    {
+     "naam": "Skuumkoppe 5%",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Skuumkoppe 5%                                                                   6,25",
+     "bron": "https://www.kosmosamsterdam.nl/wp-content/uploads/2026/10/drankenkaart-2026-10-v2.pdf"
+    },
+    {
+     "naam": "Gaia IPA 5%",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Gaia IPA 5%                                                                     6,25",
+     "bron": "https://www.kosmosamsterdam.nl/wp-content/uploads/2026/10/drankenkaart-2026-10-v2.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: drankenkaart-2026-10-v2.pdf; Last-Modified: Wed, 28 Oct 2026 17:52:10 GMT; titel in pdf: 'Drankenkaart'",
+    "Op de kaart zelf staat geen datum, alleen 'Bier van de tap' als kop boven de tapbieren",
+    "Bestandsnaam: dinkerkaart-2026-10.pdf; Last-Modified: Wed, 07 Oct 2026 09:28:12 GMT (dinerkaart, geen bier)",
+    "Bestandsnaam: lunch-juli-2026.pdf; Last-Modified: Mon, 06 Jul 2026 07:21:09 GMT (lunchkaart, geen bier)",
+    "Website Kosmos Amsterdam: geen Last-Modified/datum zichtbaar; copyright '© 2026 Kosmos Amsterdam'"
+   ]
+  },
+  {
+   "kroeg_id": 2568,
+   "kroeg": "De Rooseboom",
+   "tapbieren": [
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 18,
+     "prijs": 3.1,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken fluit 0,18l. 3,10",
+     "bron": "https://www.cafederooseboom.com/_files/ugd/09f193_eba5ac36a74a42b7a96b4079e843ddbf.pdf"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken tulp 0,2l. 3,20",
+     "bron": "https://www.cafederooseboom.com/_files/ugd/09f193_eba5ac36a74a42b7a96b4079e843ddbf.pdf"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.65,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken vaas 0,25l. 3,65",
+     "bron": "https://www.cafederooseboom.com/_files/ugd/09f193_eba5ac36a74a42b7a96b4079e843ddbf.pdf"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.3,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken pint 0,5l. 7,30",
+     "bron": "https://www.cafederooseboom.com/_files/ugd/09f193_eba5ac36a74a42b7a96b4079e843ddbf.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": 30,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Texels Skuumkoppe 0,3l. 5,75",
+     "bron": "https://www.cafederooseboom.com/_files/ugd/09f193_eba5ac36a74a42b7a96b4079e843ddbf.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 26 Feb 2026 15:40:09 GMT",
+    "CreationDate: Thu Jan 8 13:09:07 2026 UTC",
+    "Creator: printess.com ... 2026-01-07 09:07:11+0100"
+   ]
+  },
+  {
+   "kroeg_id": 2611,
+   "kroeg": "Café Orloff",
+   "tapbieren": [
+    {
+     "naam": "Fluitje Gulpener",
+     "soort": "pils",
+     "cl": 22,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Fluitje Gulpener               3,50",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Vaasje Gulpener",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Vaasje Gulpener                3,80",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Gerardus Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Gerardus Blond                 6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Gulpener seizoensbier",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Gulpener seizoensbier\n                               6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Korenwolf Wit",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Korenwolf Wit\n                               6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Loffelijk Orloff Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Loffelijk Orloff Blond         6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Homeland Zeebonk NEIPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Homeland Zeebonk NEIPA         6,50",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Homeland Atlantis Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Homeland Atlantis Tripel       6,50",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf"
+    },
+    {
+     "naam": "Gulpener 22 cl",
+     "soort": "pils",
+     "cl": 22,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Gulpener 22 cl                 3,50",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    },
+    {
+     "naam": "Gulpener 25 cl",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Gulpener 25 cl                 3,80",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    },
+    {
+     "naam": "Gerardus Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Gerardus Blond                 6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    },
+    {
+     "naam": "Gulpener seasonal beer",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Gulpener seasonal beer\n                               6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    },
+    {
+     "naam": "Korenwolf White",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Korenwolf White\n                               6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    },
+    {
+     "naam": "Loffelijk Orloff Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Loffelijk Orloff Blond         6,-",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    },
+    {
+     "naam": "Homeland Zeebonk NEIPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Homeland Zeebonk NEIPA         6,50",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    },
+    {
+     "naam": "Homeland Atlantis Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Homeland Atlantis Tripel       6,50",
+     "bron": "https://orloffamsterdam.nl/menukaart/Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Mon, 23 Nov 2026 12:29:08 GMT",
+    "Bestandsnaam: Orloff_MenuEnDrankenkaart_193x273_NOV_2026_NL_LR.pdf; Last-Modified: Mon, 23 Nov 2026 12:16:16 GMT; CreationDate: Thu Nov 12 11:21:37 2026 UTC; ModDate: Thu Nov 12 11:21:38 2026 UTC",
+    "Bestandsnaam: Orloff_MenuEnDrankenkaart_193x273_NOV_2026_ENG_LR.pdf; Last-Modified: Mon, 23 Nov 2026 12:16:16 GMT; CreationDate: Fri Nov 20 12:15:49 2026 UTC; ModDate: Fri Nov 20 12:15:50 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 2635,
+   "kroeg": "Café De Groene Vlinder",
+   "tapbieren": [
+    {
+     "naam": "Amstel pilsener - Fluit 0.18L",
+     "soort": "pils",
+     "cl": 18,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Amstel pilsener - Fluit 0.18L €  3.70",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "Amstel pilsener - Vaas 0.25L",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Amstel pilsener - Vaas 0.25L €  4.00",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "Amstel pilsener - Pint 0.50L",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 8.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Amstel pilsener - Pint 0.50L €  8.00",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "Vedett Extra White",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Vedett Extra White €  6.00",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "Knalpijp",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Knalpijp €  5.80",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Affligem Blond €  6.00",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "La Chouffe €  6.00",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "Zatte",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Zatte €  6.00",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    },
+    {
+     "naam": "Lagunitas IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Lagunitas IPA €  6.00",
+     "bron": "https://www.cafedegroenevlinder.com/menu/drinken"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2026 de groene vlinder. all rights reserved.",
+    "© 2026 de groene vlinder. all rights reserved.",
+    "© 2026 de groene vlinder. all rights reserved.",
+    "© 2026 de groene vlinder. all rights reserved."
+   ]
+  },
+  {
+   "kroeg_id": 2664,
+   "kroeg": "Tapas Cafe Duende",
+   "tapbieren": [
+    {
+     "naam": "jupiler",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "jupiler                                                          € 3,75",
+     "bron": "https://cdn.prod.website-files.com/62a1fea05acdf601b713d779/6a3104e822800e6f54cce799_MENU%202026-ENG).pdf"
+    },
+    {
+     "naam": "mahou",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "mahou                                                            € 4,00",
+     "bron": "https://cdn.prod.website-files.com/62a1fea05acdf601b713d779/6a3104e822800e6f54cce799_MENU%202026-ENG).pdf"
+    },
+    {
+     "naam": "mahou 0.0% tostada",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "mahou 0.0% tostada                                               € 4,00",
+     "bron": "https://cdn.prod.website-files.com/62a1fea05acdf601b713d779/6a3104e822800e6f54cce799_MENU%202026-ENG).pdf"
+    },
+    {
+     "naam": "leffe blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "leffe blond                                                      € 4,50",
+     "bron": "https://cdn.prod.website-files.com/62a1fea05acdf601b713d779/6a3104e822800e6f54cce799_MENU%202026-ENG).pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Sun, 22 Nov 2026 09:15:20 GMT",
+    "Last-Modified: Tue, 16 Jun 2026 08:10:18 GMT",
+    "Title: MENU 2026",
+    "URL-bestandsnaam: ...MENU%202026-ENG).pdf",
+    "CreationDate: Fri Jun 12 12:47:22 2026 UTC",
+    "ModDate: Fri Jun 12 12:47:22 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 2696,
+   "kroeg": "Amigo",
+   "tapbieren": [
+    {
+     "naam": "Heineken Draft",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken Draft\nS €4,00 M €5,00 L €6,50",
+     "bron": "https://amigogrill.nl/menu/"
+    },
+    {
+     "naam": "Heineken Draft",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken Draft\nS €4,00 M €5,00 L €6,50",
+     "bron": "https://amigogrill.nl/menu/"
+    },
+    {
+     "naam": "Heineken Draft",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken Draft\nS €4,00 M €5,00 L €6,50",
+     "bron": "https://amigogrill.nl/menu/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Mon, 23 Nov 2026 06:07:12 GMT",
+    "© 2026 Amigo Grill",
+    "Last-Modified: Mon, 23 Nov 2026 11:50:19 GMT",
+    "© 2026 Amigo Grill"
+   ]
+  },
+  {
+   "kroeg_id": 2763,
+   "kroeg": "Yuzu Dining Bar",
+   "tapbieren": [
+    {
+     "naam": "Asahi",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Asahi\n|\nsuper dry beer\n4.8",
+     "bron": "https://www.yuzu-diningbar.nl/menu/"
+    },
+    {
+     "naam": "Kirin Free",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Kirin Free\n|\nnon alcoholic\n4.8",
+     "bron": "https://www.yuzu-diningbar.nl/menu/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "© 2026 Yuzu Dining Bar"
+   ]
+  },
+  {
+   "kroeg_id": 2789,
+   "kroeg": "Pizza Project Bar",
+   "tapbieren": [
+    {
+     "naam": "Birra Moretti Italian Pilsener",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Birra Moretti Italian Pilsener 25 cl | 50 cl                    3.9 | 7.6",
+     "bron": "https://www.pizzaproject.nl/wp-content/uploads/PPB_Menu_A4_Wilhelminastraat_DRINKS_ENGELS_23022026.pdf"
+    },
+    {
+     "naam": "Birra Moretti Italian Pilsener",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Birra Moretti Italian Pilsener 25 cl | 50 cl                    3.9 | 7.6",
+     "bron": "https://www.pizzaproject.nl/wp-content/uploads/PPB_Menu_A4_Wilhelminastraat_DRINKS_ENGELS_23022026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam/titel: PPB_Menu_A4_Wilhelminastraat_DRINKS_ENGELS_23022026; PDF CreationDate/ModDate: Thu Mar 12 09:25:17 2026 UTC; Last-Modified: Thu, 08 Oct 2026 06:47:02 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 2794,
+   "kroeg": "Cafe Walvis",
+   "tapbieren": [
+    {
+     "naam": "warsteiner",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "warsteiner 4,8% | 3.5 | 3.75 | 6",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "warsteiner",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "warsteiner 4,8% | 3.5 | 3.75 | 6",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "warsteiner",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "warsteiner 4,8% | 3.5 | 3.75 | 6",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "brouwerij ‘t ij ijwit",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "brouwerij ‘t ij ijwit 6,5% | 6.25",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "de koninck bolleke",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "de koninck bolleke   5,0% | 6",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "pater linus blonde",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "pater linus blonde 6,5% | 6",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "konig ludwig weissbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "konig ludwig weissbier 5,5% | 6.25 | 9",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "konig ludwig weissbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 9.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "konig ludwig weissbier 5,5% | 6.25 | 9",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "eeuwige jeugd bullebak",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "eeuwige jeugd bullebak 7,7% | 6.25",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "rye river coastal ipa",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "rye river coastal ipa 5,8% | 6.25",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "albatros dunkelweizen",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "albatros dunkelweizen 6% | 6.25",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "homeland iepa",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "homeland iepa 5,2% | 6.25",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    },
+    {
+     "naam": "funky falcon pale ale",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "funky falcon pale ale 5,2% | 6.25",
+     "bron": "https://walvis-amsterdam.nl/menu/WALVIS-bieren-beers.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Tue, 10 Mar 2026 12:14:38 GMT; CreationDate: Tue Mar 10 12:14:37 2026 UTC; ModDate: Tue Mar 10 12:14:38 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 2796,
+   "kroeg": "Eetcafé de Goos",
+   "tapbieren": [
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken | fluitje / vaasje   3,25 / 3,5",
+     "bron": "https://www.eetcafedegoos.nl/kaart"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken | fluitje / vaasje   3,25 / 3,5",
+     "bron": "https://www.eetcafedegoos.nl/kaart"
+    },
+    {
+     "naam": "Brand",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand | neipa   6,5",
+     "bron": "https://www.eetcafedegoos.nl/kaart"
+    },
+    {
+     "naam": "Mannenliefde",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Mannenliefde | saison   6,5",
+     "bron": "https://www.eetcafedegoos.nl/kaart"
+    },
+    {
+     "naam": "Skuumkoppe",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Skuumkoppe | weizen   6,5",
+     "bron": "https://www.eetcafedegoos.nl/kaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: - (geen datum vermeld)",
+    "Last-Modified: - (geen datum vermeld)",
+    "Wijnjaartallen '19–'25 op de wijnkaart; geen expliciete documentdatum."
+   ]
+  },
+  {
+   "kroeg_id": 2831,
+   "kroeg": "Esh Pitabar",
+   "tapbieren": [
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken                                     pils 0.25l/0.5l................. 3.9/7.6",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite22092026.pdf"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken                                     pils 0.25l/0.5l................. 3.9/7.6",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite22092026.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Texels Skuumkoppe                            wheatbeer 0.3l.............. 6.2",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite22092026.pdf"
+    },
+    {
+     "naam": "Oedipus Gaia",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 6.3,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Oedipus Gaia                                 IPA 0.33l.......................... 6.3",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite22092026.pdf"
+    },
+    {
+     "naam": "Brouwerij ‘t IJ IJwit",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brouwerij ‘t IJ IJwit                        whitebeer 0.3l ............... 6.2",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite22092026.pdf"
+    },
+    {
+     "naam": "Affligem",
+     "soort": "blond",
+     "cl": 30,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem                                     blond 0.3l........................ 6.2",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite22092026.pdf"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken          pils 0.25l/0.5l..... 3.5/6.8",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite29092023.pdf"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.8,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken          pils 0.25l/0.5l..... 3.5/6.8",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite29092023.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Texels Skuumkoppe wheatbeer 0.3l........... 5.6",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite29092023.pdf"
+    },
+    {
+     "naam": "Oedipus",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Oedipus           thai thai tripel 0.33l. 6",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite29092023.pdf"
+    },
+    {
+     "naam": "Brouwerij ‘t IJ",
+     "soort": "anders",
+     "cl": 30,
+     "prijs": 5.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Brouwerij ‘t IJ   seasonal beer 0.3l..... 5.6",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite29092023.pdf"
+    },
+    {
+     "naam": "Kwaremont",
+     "soort": "blond",
+     "cl": 30,
+     "prijs": 5.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Kwaremont         blond 0.3l..................... 5.6",
+     "bron": "https://esh.amsterdam/documents/Menuforwebsite29092023.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 08 Oct 2026 08:05:47 GMT",
+    "Last-Modified: Thu, 08 Oct 2026 08:05:48 GMT; Title: Menuforwebsite22092026; CreationDate: Mon Sep 14 12:21:50 2026 UTC; ModDate: Mon Sep 14 12:21:50 2026 UTC; bestandsnaam: Menuforwebsite22092026.pdf",
+    "Last-Modified: Thu, 08 Oct 2026 08:05:48 GMT; Title: Menuforwebsite29092023; CreationDate: Fri Sep 29 11:44:23 2023 UTC; ModDate: Fri Sep 29 12:24:42 2023 UTC; bestandsnaam: Menuforwebsite29092023.pdf"
+   ]
+  },
+  {
+   "kroeg_id": 2834,
+   "kroeg": "Jack Dish",
+   "tapbieren": [
+    {
+     "naam": "HEINEKEN",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "HEINEKEN\nfluit/vaas/pint - 3.7/4/8\n5% - Premium pils",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "HEINEKEN",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "HEINEKEN\nfluit/vaas/pint - 3.7/4/8\n5% - Premium pils",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "HEINEKEN",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 8.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "HEINEKEN\nfluit/vaas/pint - 3.7/4/8\n5% - Premium pils",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "THAI THAI",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "THAI THAI\n0,25L/0,5L - 6.1/12.2\n8% - Tripple - fruitig, rode pepers,\ncitroengras",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "THAI THAI",
+     "soort": "tripel",
+     "cl": 50,
+     "prijs": 12.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "THAI THAI\n0,25L/0,5L - 6.1/12.2\n8% - Tripple - fruitig, rode pepers,\ncitroengras",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "GAIA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "GAIA\n0,25L/0,5L - 6.1/12.2\n7% - Indian pale ale -\nverfrissende hop, fruitig aroma",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "GAIA",
+     "soort": "ipa",
+     "cl": 50,
+     "prijs": 12.2,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "GAIA\n0,25L/0,5L - 6.1/12.2\n7% - Indian pale ale -\nverfrissende hop, fruitig aroma",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "IJWIT BROUWERIJ ‘T IJ",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "IJWIT BROUWERIJ ‘T IJ\n0,3L/0,4L - 6.5/8.6\n6,5% - Witbier van hoge gisting",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "IJWIT BROUWERIJ ‘T IJ",
+     "soort": "wit",
+     "cl": 40,
+     "prijs": 8.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "IJWIT BROUWERIJ ‘T IJ\n0,3L/0,4L - 6.5/8.6\n6,5% - Witbier van hoge gisting",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "TEXELS ZEEBRIES",
+     "soort": "blond",
+     "cl": 30,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "TEXELS ZEEBRIES\n0,3L/o,5L - 6.1/10.1\n5% - Blond - luchtig en rijk van\nsmaak met een vleugje zee venkel",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "TEXELS ZEEBRIES",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 10.1,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "TEXELS ZEEBRIES\n0,3L/o,5L - 6.1/10.1\n5% - Blond - luchtig en rijk van\nsmaak met een vleugje zee venkel",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "SEIZOENSTAP",
+     "soort": "anders",
+     "cl": 30,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "SEIZOENSTAP\n0,3L/0,5L - 6.1/10.1\nvraag de bediening",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    },
+    {
+     "naam": "SEIZOENSTAP",
+     "soort": "anders",
+     "cl": 50,
+     "prijs": 10.1,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "SEIZOENSTAP\n0,3L/0,5L - 6.1/10.1\nvraag de bediening",
+     "bron": "https://jackdish.nl/wp-content/uploads/2025/12/drankenkaart-jack-dish-winter-2025.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2022 Jack Dish (websitefooter); geen Last-Modified vermeld",
+    "Bestandsnaam: drankenkaart-jack-dish-winter-2025.pdf",
+    "Last-Modified: Mon, 15 Dec 2025 19:40:42 GMT",
+    "CreationDate: Wed Nov 26 20:20:33 2025 UTC",
+    "ModDate: Wed Nov 26 20:20:33 2025 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 2840,
+   "kroeg": "Pasta e Pizza",
+   "tapbieren": [
+    {
+     "naam": "Heineken pilsener",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken pilsener Alc 5.0% | 25cl 4, 50",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "Heineken pilsener",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken pilsener Alc 5.0% | 50cl 6, 50",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "birra moretti",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "birra moretti 4.6% | 25cl 4, 50",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "birra moretti",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "birra moretti 4.6% | 50cl 6, 50",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": 30,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem Blond Alc 6.7% | 30cl 6, 00",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "BRAND IPA",
+     "soort": "ipa",
+     "cl": 30,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "BRAND IPA Alc 7% | 30cl 6, 50",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "Desperados",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Desperados Alc 5.9% | 33cl 6, 00",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Weizen Alc 5.0% | 30cl 6, 00",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "Peroni",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Peroni Alc 5.1% | 33cl 6, 00",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "PANACHE",
+     "soort": "anders",
+     "cl": 50,
+     "prijs": 7.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "PANACHE Alc 2.5% | 50cl 7, 50",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    },
+    {
+     "naam": "Heineken 0.0",
+     "soort": "alcoholvrij",
+     "cl": 30,
+     "prijs": 5.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken 0.0 Alc 0.0% | 30cl 5, 50",
+     "bron": "https://pasta-e-pizza.nl/beer/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "© Copyright 2022. All Rights Reserved. Pasta E Pizza"
+   ]
+  },
+  {
+   "kroeg_id": 2864,
+   "kroeg": "Grand Café Frankendael",
+   "tapbieren": [
+    {
+     "naam": "Amstel",
+     "soort": "pils",
+     "cl": 22,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Fluitje   Amstel   22cl    3,75",
+     "bron": "https://www.frankendael.com/cms/wp-content/uploads/Frankendael_lunchkaart_nov2026.pdf"
+    },
+    {
+     "naam": "Amstel",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.95,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Vaasje   Amstel   25cl    3,95",
+     "bron": "https://www.frankendael.com/cms/wp-content/uploads/Frankendael_lunchkaart_nov2026.pdf"
+    },
+    {
+     "naam": "Amstel",
+     "soort": "pils",
+     "cl": 22,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Fluitje   Amstel   22cl                                3,75",
+     "bron": "https://www.frankendael.com/cms/wp-content/uploads/Frankendael_dinerkaart_nov2026.pdf"
+    },
+    {
+     "naam": "Amstel",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.95,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Vaasje Amstel      25cl                                3,95",
+     "bron": "https://www.frankendael.com/cms/wp-content/uploads/Frankendael_dinerkaart_nov2026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: Frankendael_lunchkaart_nov2026.pdf; Last-Modified: Sat, 14 Nov 2026 20:49:40 GMT; CreationDate: Fri Nov 6 08:13:10 2026 UTC; ModDate: Fri Nov 6 08:13:11 2026 UTC",
+    "Bestandsnaam: Frankendael_dinerkaart_nov2026.pdf; Last-Modified: Sat, 14 Nov 2026 20:49:37 GMT; CreationDate: Fri Nov 6 08:06:18 2026 UTC; ModDate: Fri Nov 6 08:06:19 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 2903,
+   "kroeg": "Mata Hari",
+   "tapbieren": [
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Stella Artois                                4,5/8,9",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 8.9,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Stella Artois                                4,5/8,9",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Goose Island IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Goose Island IPA                             6,5/11",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Goose Island IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 11.0,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Goose Island IPA                             6,5/11",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": null,
+     "prijs": 4.25,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Guinness                                    4,25/8,5",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": null,
+     "prijs": 8.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Guinness                                    4,25/8,5",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Franziskaner hefe weissbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Franziskaner hefe weissbier                  6,5/11",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Franziskaner hefe weissbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 11.0,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Franziskaner hefe weissbier                  6,5/11",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Leffe blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Leffe blond                                  6,5/11",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Leffe blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 11.0,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Leffe blond                                  6,5/11",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Karmeliet - Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Karmeliet - Tripel                              6,5",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Vrijer - wheat beer 0,4%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Vrijer - wheat beer 0,4%                        6,5",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Heineken - pilsner 0,0",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Heineken - pilsner 0,0                            5",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    },
+    {
+     "naam": "Brand IPA - IPA 0,0",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "Brand IPA - IPA 0,0                             6,5",
+     "bron": "https://matahari.yourhotelwebsite.com/upload/files/barkaart%202_0%20%20oktober.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Titel: 'Nieuw menu mata Okt'; CreationDate/ModDate: Tue Oct 20 11:13:13 2026 UTC; Last-Modified: Tue, 20 Oct 2026 11:13:56 GMT",
+    "Titel: 'barkaart 2.0 | oktober'; bestandsnaam 'barkaart 2_0  oktober.pdf'; CreationDate/ModDate: Tue Nov 3 08:28:28 2026 UTC; Last-Modified: Tue, 03 Nov 2026 08:28:42 GMT",
+    "Titel: 'wijnkaart juni | mata hari | website'; CreationDate/ModDate: Wed Jun 17 08:06:36 2026 UTC; Last-Modified: Wed, 17 Jun 2026 08:11:00 GMT",
+    "Titel: 'GROEPMENU September'; CreationDate/ModDate: Wed Sep 9 14:57:52 2026 UTC; Last-Modified: Wed, 09 Sep 2026 14:58:03 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 2921,
+   "kroeg": "The Breakfast Club",
+   "tapbieren": [
+    {
+     "naam": "Heineken Pilsner",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken Pilsner (25 cl)\n€ 3,90",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=oost"
+    },
+    {
+     "naam": "Heineken Pilsner Pull",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken Pilsner Pull (50 cl)\n€ 7,60",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=oost"
+    },
+    {
+     "naam": "Ijwit Brouwerij ’t Ij",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Ijwit Brouwerij ’t Ij (30 cl)\n€ 5,50",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=oost"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": 30,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Texels Skuumkoppe (30 cl)\n€ 5,80",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=oost"
+    },
+    {
+     "naam": "Texels Skuumkoppe Groot",
+     "soort": "anders",
+     "cl": 50,
+     "prijs": 8.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Texels Skuumkoppe Groot (50 cl)\n€ 8,60",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=oost"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Juni 2026",
+    "Jun 2026",
+    "Juni 2026",
+    "Jun 2026"
+   ]
+  },
+  {
+   "kroeg_id": 2937,
+   "kroeg": "Het Karbeel",
+   "tapbieren": [
+    {
+     "naam": "Grolsch tapbier",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Fluitje\t\t3,70",
+     "bron": "https://hetkarbeel.nl/lunch-menu/"
+    },
+    {
+     "naam": "Grolsch tapbier",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Vaas\t\t4,50",
+     "bron": "https://hetkarbeel.nl/lunch-menu/"
+    },
+    {
+     "naam": "Grolsch tapbier",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Groot\t\t7,50",
+     "bron": "https://hetkarbeel.nl/lunch-menu/"
+    },
+    {
+     "naam": "Grolsch tapbier",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Fluitje\t\t3,70",
+     "bron": "https://hetkarbeel.nl/dinner-menu/"
+    },
+    {
+     "naam": "Grolsch tapbier",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Vaas\t\t4,50",
+     "bron": "https://hetkarbeel.nl/dinner-menu/"
+    },
+    {
+     "naam": "Grolsch tapbier",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Groot\t\t7,50",
+     "bron": "https://hetkarbeel.nl/dinner-menu/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Fri, 30 Oct 2026 14:48:32 GMT",
+    "Last-Modified: Fri, 30 Oct 2026 14:48:33 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 2943,
+   "kroeg": "George W.P.A.",
+   "tapbieren": [
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 18,
+     "prijs": 3.75,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken 0.18l / 0.25l / 0.5l\n3¾ / 4½ / 9",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken 0.18l / 0.25l / 0.5l\n3¾ / 4½ / 9",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 9.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken 0.18l / 0.25l / 0.5l\n3¾ / 4½ / 9",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Brouwerij ‘t IJ - IJwit",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brouwerij ‘t IJ - IJwit\n7½",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Brouwerij ‘t IJ - Zatte (triple)",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brouwerij ‘t IJ - Zatte (triple)\n7½",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Jopen - Mooie Nel (ipa)",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Jopen - Mooie Nel (ipa)\n7½",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Eeuwige Jeugd - Lellebel (blond)",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Eeuwige Jeugd - Lellebel (blond)\n7½",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Heineken 0.0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken 0.0%\n5",
+     "bron": "https://www.georgewpa.nl/menu"
+    },
+    {
+     "naam": "Brouwerij ‘t IJ - Vrijwit 0.5%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brouwerij ‘t IJ - Vrijwit 0.5%\n7½",
+     "bron": "https://www.georgewpa.nl/menu"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Fri, 13 Nov 2026 10:54:29 GMT",
+    "Last-Modified: Thu, 19 Nov 2026 12:46:58 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 2945,
+   "kroeg": "Cafe Caribe",
+   "tapbieren": [
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Heineken 5.0% 25cl 3.5 | 50cl | 7",
+     "bron": "https://cafecaribe.nl/menu/CafeCaribe-Drinks-Snacks-2026.pdf"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Heineken 5.0% 25cl 3.5 | 50cl | 7",
+     "bron": "https://cafecaribe.nl/menu/CafeCaribe-Drinks-Snacks-2026.pdf"
+    },
+    {
+     "naam": "Oedipus pais tropical ipa",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Oedipus pais tropical ipa 4.3% 25cl| 6",
+     "bron": "https://cafecaribe.nl/menu/CafeCaribe-Drinks-Snacks-2026.pdf"
+    },
+    {
+     "naam": "Affligem blond",
+     "soort": "blond",
+     "cl": 30,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Affligem blond 6.8% 30cl | 6",
+     "bron": "https://cafecaribe.nl/menu/CafeCaribe-Drinks-Snacks-2026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: CafeCaribe-Drinks-Snacks-2026.pdf (2026)",
+    "Last-Modified: Thu, 08 Jan 2026 10:12:52 GMT",
+    "CreationDate: Wed Jan  7 14:29:09 2026 UTC",
+    "ModDate: Wed Jan  7 14:29:09 2026 UTC",
+    "Bestandsnaam: CafeCaribe-Westerpark-bier-op-de-tap.jpg; Last-Modified: Wed, 28 Aug 2024 15:12:56 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 2949,
+   "kroeg": "Vooges aan 't IJ",
+   "tapbieren": [
+    {
+     "naam": "HEINEKEN",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HEINEKEN                        3.5 / 4 / 7.5\n                                                    small/medium/large (0.5)",
+     "bron": "https://cdn.prod.website-files.com/68b55d1e13355580020ae952/6ac650c8106af679155f964c_Bar%20Staal_Menu%20EN_Lunch_okt%20.pdf"
+    },
+    {
+     "naam": "HEINEKEN",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HEINEKEN                        3.5 / 4 / 7.5\n                                                    small/medium/large (0.5)",
+     "bron": "https://cdn.prod.website-files.com/68b55d1e13355580020ae952/6ac650c8106af679155f964c_Bar%20Staal_Menu%20EN_Lunch_okt%20.pdf"
+    },
+    {
+     "naam": "HEINEKEN",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HEINEKEN                        3.5 / 4 / 7.5\n                                                    small/medium/large (0.5)",
+     "bron": "https://cdn.prod.website-files.com/68b55d1e13355580020ae952/6ac650c8106af679155f964c_Bar%20Staal_Menu%20EN_Lunch_okt%20.pdf"
+    },
+    {
+     "naam": "AFFLIGEM BLOND",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "AFFLIGEM BLOND                             6",
+     "bron": "https://cdn.prod.website-files.com/68b55d1e13355580020ae952/6ac650c8106af679155f964c_Bar%20Staal_Menu%20EN_Lunch_okt%20.pdf"
+    },
+    {
+     "naam": "TEXELS SKUUMKOPPE",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "TEXELS SKUUMKOPPE                          6",
+     "bron": "https://cdn.prod.website-files.com/68b55d1e13355580020ae952/6ac650c8106af679155f964c_Bar%20Staal_Menu%20EN_Lunch_okt%20.pdf"
+    },
+    {
+     "naam": "HEINEKEN WIT PILS",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HEINEKEN WIT PILS                          6",
+     "bron": "https://cdn.prod.website-files.com/68b55d1e13355580020ae952/6ac650c8106af679155f964c_Bar%20Staal_Menu%20EN_Lunch_okt%20.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Mon, 23 Nov 2026 18:37:02 GMT",
+    "Last-Modified: Wed, 07 Oct 2026 14:01:46 GMT; titel: Bar Staal – Menu EN Lunch; bestandsnaam: ...Lunch_okt.pdf",
+    "Last-Modified: Wed, 07 Oct 2026 14:04:15 GMT; CreationDate/ModDate: Wed Oct 7 14:03:50 2026 UTC; titel: Bar Staal – Menu EN All Day; bestandsnaam: ..._oktober.pdf",
+    "Last-Modified: Wed, 02 Sep 2026 15:37:40 GMT; CreationDate/ModDate: Fri Aug 14 15:00:36 2026 UTC; bestandsnaam: 2026, augustus wijnkaart STAAL.pdf"
+   ]
+  },
+  {
+   "kroeg_id": 3053,
+   "kroeg": "Tolbar",
+   "tapbieren": [
+    {
+     "naam": "pilsner",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "fluit                                              3.5",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "pilsner",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "vaas                                               3.9",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "pilsner",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "pint                                               7.6",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "pilsner",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 19.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "pitcher                                           19.5",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "tolbier blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "tolbier blond                                      6.5",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "tolbier saison",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "tolbier saison                                     6.5",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "funky falcon",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.7,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "funky falcon                                       6.7",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "kloster weisse",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "kloster weisse                                  6.5/13",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "kloster weisse",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 13.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "kloster weisse                                  6.5/13",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "korenwolf",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "korenwolf                                       6.5/13",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "korenwolf",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 13.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "korenwolf                                       6.5/13",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "homeland wisseltap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.7,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "homeland wisseltap                                 6.7",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "jopen wisseltap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.7,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "jopen wisseltap                                    6.7",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "pils",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "pils                                               3.5",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "blond",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "blond                                              3.9",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "ipa",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "ipa                                                3.9",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "korenwolf",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "korenwolf                                          3.9",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "radler",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "radler                                             3.9",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    },
+    {
+     "naam": "weizen",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "weizen                                             3.9",
+     "bron": "https://cdn.prod.website-files.com/67fe307c83a73740dc48b1f0/69c6481ee8cea3517305503d_Tolbar%20menu%20ss%20%2726%20online.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Sat, 21 Nov 2026 13:52:18 GMT",
+    "Last-Modified: Fri, 27 Mar 2026 09:04:32 GMT",
+    "CreationDate: Fri Mar 27 09:04:00 2026 UTC",
+    "ModDate: Fri Mar 27 09:04:00 2026 UTC",
+    "Bestandsnaam: Tolbar menu ss '26 online.pdf (bevat '26)"
+   ]
+  },
+  {
+   "kroeg_id": 3059,
+   "kroeg": "The Breakfast Club",
+   "tapbieren": [
+    {
+     "naam": "Heineken Pilsner",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken Pilsner (25 cl) € 3,90",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=sloterdijk"
+    },
+    {
+     "naam": "Heineken Pilsner Pull",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Heineken Pilsner Pull (50 cl) € 7,60",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=sloterdijk"
+    },
+    {
+     "naam": "Ijwit Brouwerij ’t Ij",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Ijwit Brouwerij ’t Ij (30 cl) € 5,50",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=sloterdijk"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": 30,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Texels Skuumkoppe (30 cl) € 5,80",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=sloterdijk"
+    },
+    {
+     "naam": "Texels Skuumkoppe Groot",
+     "soort": "anders",
+     "cl": 50,
+     "prijs": 8.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Texels Skuumkoppe Groot (50 cl) € 8,60",
+     "bron": "https://www.thebreakfastclub.nl/menu?locatie=sloterdijk"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -; © 2026 in footer",
+    "Juni 2026; Jun 2026; © 2026; Last-Modified: -",
+    "Juni 2026; Jun 2026; © 2026; Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 3071,
+   "kroeg": "BAR HOUT",
+   "tapbieren": [
+    {
+     "naam": "Heineken Pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Heineken Pilsener (5.0%) €3,70 | €3,90 | €7,90",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Heineken Pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Heineken Pilsener (5.0%) €3,70 | €3,90 | €7,90",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Heineken Pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.9,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Heineken Pilsener (5.0%) €3,70 | €3,90 | €7,90",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Brand Weizen (5.1%) €6,50 | €10,50",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 10.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Brand Weizen (5.1%) €6,50 | €10,50",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Affligem Blond (6.8%) €6,00 | €10,00",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 10.0,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Affligem Blond (6.8%) €6,00 | €10,00",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Mannenliefde",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Mannenliefde (6%) €6,50 | €10,50",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Mannenliefde",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 10.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Mannenliefde (6%) €6,50 | €10,50",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Lagunitas IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Lagunitas IPA (6.2%) €6,00",
+     "bron": "https://www.barhout.nl/dranken"
+    },
+    {
+     "naam": "Lellebel",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.3,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Lellebel (5.7%) €6,30",
+     "bron": "https://www.barhout.nl/dranken"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2026 Bar Hout Amsterdam (footer); Last-Modified: -",
+    "Last-Modified: Tue, 24 Nov 2026 11:32:44 GMT; PDF CreationDate/ModDate: Mon Oct 19 11:39:53 2026 UTC; titel: Smelt × HOUT menukaart A4 gebroken wit",
+    "Last-Modified: Mon, 23 Nov 2026 15:49:58 GMT; PDF CreationDate: Thu Feb 16 11:38:11 2023 UTC; ModDate: Sat May 4 09:21:24 2024 UTC; titel: V3"
+   ]
+  },
+  {
+   "kroeg_id": 3084,
+   "kroeg": "Hortus Café",
+   "tapbieren": [
+    {
+     "naam": "gulpener pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "pils pilsener                                                           4,00",
+     "bron": "https://www.dehortus.nl/wp-content/uploads/2026/09/HR_Menu_herfst2026_def2.pdf"
+    },
+    {
+     "naam": "korenwolf witbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "korenwolf witbier korenwolf white beer                                   5,00",
+     "bron": "https://www.dehortus.nl/wp-content/uploads/2026/09/HR_Menu_herfst2026_def2.pdf"
+    },
+    {
+     "naam": "pilsener 0,0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "pilsener 0,0% pilsener 0.0%                                             4,00",
+     "bron": "https://www.dehortus.nl/wp-content/uploads/2026/09/HR_Menu_herfst2026_def2.pdf"
+    },
+    {
+     "naam": "Lowlander mango IPA 0,3%",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "mango IPA 0,3%                                                           5,50",
+     "bron": "https://www.dehortus.nl/wp-content/uploads/2026/09/HR_Menu_herfst2026_def2.pdf"
+    },
+    {
+     "naam": "Lowlander blond 3,5%",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "blond 3,5%                                                               5,50",
+     "bron": "https://www.dehortus.nl/wp-content/uploads/2026/09/HR_Menu_herfst2026_def2.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "titel/kaart: herfst / autumn",
+    "bestandsnaam: HR_Menu_herfst2026_def2.pdf (2026)",
+    "Last-Modified: Wed, 30 Sep 2026 10:14:22 GMT",
+    "CreationDate: Tue Sep 22 16:45:01 2026 UTC",
+    "ModDate: Tue Sep 22 16:45:04 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3089,
+   "kroeg": "Roest",
+   "tapbieren": [
+    {
+     "naam": "Amstel Kleintje",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.2,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Amstel Kleintje                       3.2",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Amstel Fluitje",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Amstel Fluitje                        3.5",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Amstel Vaasje",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Amstel Vaasje                         3.8",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Texels Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Texels Blond                          5.5",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Mannenliefde",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Mannenliefde                          5.5",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Paulaner Witbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Paulaner Witbier                      6.5   9.5    18",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Paulaner Witbier",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Paulaner Witbier                      6.5   9.5    18",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Paulaner Witbier",
+     "soort": "wit",
+     "cl": 100,
+     "prijs": 18.0,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Paulaner Witbier                      6.5   9.5    18",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    },
+    {
+     "naam": "Kopstootje",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 7.0,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Kopstootje                            7",
+     "bron": "https://roest-amsterdam.nl/wp-content/uploads/ROEST-DRANKMENU-.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Wed, 25 Nov 2026 11:25:46 GMT",
+    "PDF CreationDate/ModDate: Wed Nov 25 11:18:54 2026 UTC; Last-Modified: Wed, 25 Nov 2026 11:23:32 GMT; Title: DINER KAART ROEST",
+    "PDF CreationDate/ModDate: Wed Nov 25 11:22:33 2026 UTC; Last-Modified: Wed, 25 Nov 2026 11:23:35 GMT; Title: WEBSITE - LUNCH ROEST",
+    "PDF CreationDate/ModDate: Tue Oct 13 14:06:29 2026 UTC; Last-Modified: Mon, 19 Oct 2026 11:41:23 GMT; Title: ROEST DRANKMENU",
+    "PDF CreationDate/ModDate: Tue Oct 13 14:02:58 2026 UTC; Last-Modified: Mon, 19 Oct 2026 11:41:24 GMT; Title: WIJNKAART ROEST DEF"
+   ]
+  },
+  {
+   "kroeg_id": 3107,
+   "kroeg": "de willem",
+   "tapbieren": [
+    {
+     "naam": "Texels Wit of Blond",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Texels Wit of Blond 6.5",
+     "bron": "https://de-willem.nl/wp-content/uploads/DE-WILLEM-CAFE-DRANKENKAART-SEPT.pdf"
+    },
+    {
+     "naam": "Wisseltap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Wisseltap 6.5",
+     "bron": "https://de-willem.nl/wp-content/uploads/DE-WILLEM-CAFE-DRANKENKAART-SEPT.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 03 Sep 2026 08:40:17 GMT; CreationDate: Thu Sep 3 08:27:11 2026 UTC; ModDate: Thu Sep 3 08:27:11 2026 UTC; titel: WEBSITE DRANKENKAART; bestandsnaam bevat 'SEPT'"
+   ]
+  },
+  {
+   "kroeg_id": 3113,
+   "kroeg": "Bar Pepe",
+   "tapbieren": [
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Heineken Fluitje · 0,2 l € 3,80",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Vaasje · 0,25 l € 4,00",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 8.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Pint · 0,5 l € 8,00",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Birra Moretti",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Birra Moretti Vaasje · 0,25 l € 4,00",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Birra Moretti",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 8.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Pint · 0,5 l € 8,00",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": 30,
+     "prijs": 5.95,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Texels Skuumkoppe 0,3 l € 5,95",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Pint · 0,5 l € 9,50",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": 30,
+     "prijs": 5.95,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Affligem Blond 0,3 l € 5,95",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Pint · 0,5 l € 9,50",
+     "bron": "https://barpepewesterpark.nl/drankkaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -; © 2026 Bar Pepe",
+    "Last-Modified: -; © 2026 Bar Pepe"
+   ]
+  },
+  {
+   "kroeg_id": 3139,
+   "kroeg": "Pizza Project",
+   "tapbieren": [
+    {
+     "naam": "Birra Moretti Italian Pilsener",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Birra Moretti Italian Pilsener 25 cl | 50 cl                    3.9 | 7.6",
+     "bron": "https://www.pizzaproject.nl/wp-content/uploads/PPB_Menu_A4_Wilhelminastraat_DRINKS_ENGELS_23022026.pdf"
+    },
+    {
+     "naam": "Birra Moretti Italian Pilsener",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.6,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Birra Moretti Italian Pilsener 25 cl | 50 cl                    3.9 | 7.6",
+     "bron": "https://www.pizzaproject.nl/wp-content/uploads/PPB_Menu_A4_Wilhelminastraat_DRINKS_ENGELS_23022026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -; pagina noemt 'November 21st' (jubileumfeest, geen menukaartdatum).",
+    "Last-Modified: Thu, 08 Oct 2026 06:47:03 GMT; bestandsnaam bevat 23022026; Photoshop-datum in bestand: 2026:03:12 10:24:31.",
+    "PDF CreationDate/ModDate: Thu Mar 12 09:25:17 2026 UTC; Last-Modified: Thu, 08 Oct 2026 06:47:02 GMT; titel/bestandsnaam bevat 23022026.",
+    "Last-Modified: Thu, 08 Oct 2026 06:47:02 GMT; bestandsnaam bevat 23022026; Photoshop-datum in bestand: 2026:03:12 10:29:57.",
+    "PDF CreationDate/ModDate: Thu Mar 12 09:30:40 2026 UTC; Last-Modified: Thu, 08 Oct 2026 06:47:01 GMT; titel/bestandsnaam bevat 23022026.",
+    "Last-Modified: Thu, 08 Oct 2026 06:47:02 GMT; bestandsnaam bevat 23022026; Photoshop-datum in bestand: 2026:03:12 10:20:36.",
+    "PDF CreationDate/ModDate: Thu Mar 12 09:21:12 2026 UTC; Last-Modified: Thu, 08 Oct 2026 06:47:02 GMT; titel/bestandsnaam bevat 23022026."
+   ]
   }
  ]
 }
