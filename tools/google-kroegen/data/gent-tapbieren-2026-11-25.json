@@ -1,0 +1,2448 @@
+{
+ "stad": "Gent",
+ "opgehaald": "2026-11-25",
+ "methode": "eigen websites van kroegen, gelezen door DeepSeek (deepseek-flash); niet nagekeken, alleen voor onderzoek",
+ "kroegen": [
+  {
+   "kroeg_id": 937,
+   "kroeg": "5 voor 12",
+   "tapbieren": [
+    {
+     "naam": "Primus 25 cl",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Primus 25 cl (van ‘t vat)                  3,2",
+     "bron": "https://www.vijfvoortwaalf.be/drinks.php"
+    },
+    {
+     "naam": "Primus 50 cl",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.4,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Primus 50 cl (van ‘t vat)                  6,4",
+     "bron": "https://www.vijfvoortwaalf.be/drinks.php"
+    },
+    {
+     "naam": "Tongerlo Prior 33 cl",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tongerlo Prior 33 cl (van ‘t vat)          5,5",
+     "bron": "https://www.vijfvoortwaalf.be/drinks.php"
+    },
+    {
+     "naam": "Kriek Mystic",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kriek Mystic (van ‘t vat / on the rocks)   4,5",
+     "bron": "https://www.vijfvoortwaalf.be/drinks.php"
+    },
+    {
+     "naam": "Primus 25 cl",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.1,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Primus 25 cl (van ‘t vat)                  3,1",
+     "bron": "https://www.vijfvoortwaalf.be/wp-content/uploads/2024/05/VVT-Prijslijst-WW-A5_04-2024_digitaal.pdf"
+    },
+    {
+     "naam": "Primus 50 cl",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Primus 50 cl (van ‘t vat)                  6,2",
+     "bron": "https://www.vijfvoortwaalf.be/wp-content/uploads/2024/05/VVT-Prijslijst-WW-A5_04-2024_digitaal.pdf"
+    },
+    {
+     "naam": "Kriek Mystic",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 4.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kriek Mystic (van ‘t vat / on the rocks)   4,3",
+     "bron": "https://www.vijfvoortwaalf.be/wp-content/uploads/2024/05/VVT-Prijslijst-WW-A5_04-2024_digitaal.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "CreationDate: Mon Oct 14 17:57:24 2024 UTC",
+    "ModDate: Mon Oct 14 17:57:25 2024 UTC",
+    "Bestandsnaam: VVT-Prijslijst-WW-A5_04-2024_digitaal.pdf",
+    "HTTP-datum: Mon, 20 May 2024 17:16:38 GMT",
+    "CreationDate: Sun Apr 28 10:39:15 2024 UTC",
+    "ModDate: Sun Apr 28 10:39:15 2024 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 1050,
+   "kroeg": "ABA-JOUR",
+   "tapbieren": [
+    {
+     "naam": "Bavik superpils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Bavik superpils                      3,20",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Trappist Dubbel: Westmalle",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 5.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Trappist Dubbel: Westmalle           5,20",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Local Dark: Gulden Draak",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 6.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Local Dark: Gulden Draak             6,20",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Dupont: Bons Voeux",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Dupont: Bons Voeux                   6,00",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Saison: Voisin",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Saison: Voisin                       5,00",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "IPA: Circus Session IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "IPA: Circus Session IPA              5,50",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Chouffe Blonde",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Chouffe Blonde                       5,50",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Sweet/sour: Rodenbach",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 4.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Sweet/sour: Rodenbach                4,20",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Westmalle Dubbel",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 5.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Westmalle Dubbel (van ‘t vat)        5,20",
+     "bron": "./sites/1050-pdf.pdf"
+    },
+    {
+     "naam": "Rodenbach Classic",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Rodenbach Classic on draft         4,00",
+     "bron": "./sites/1050-pdf.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Herfstverlof alle dagen open (behalve din 3/11 en woe 4/11)",
+    "CreationDate: Sun Nov 15 14:22:42 2026 UTC",
+    "ModDate: Sun Nov 15 14:22:42 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 1144,
+   "kroeg": "Amaro",
+   "tapbieren": [
+    {
+     "naam": "Peroni",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.9,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Peroni - 3,9 Italiaanse pils, 33cl, 5,2%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "Papegaei",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.7,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Papegaei - 5,7 Blond, 8%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "Orval",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 5.4,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Orval - 5,4 Blond, 33cl, 6,5%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "Amazonia Erotica",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 7.6,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Amazonia Erotica - 7,6 IPA, 33cl, 6,2%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "Kameradski",
+     "soort": "bruin",
+     "cl": 33,
+     "prijs": 8.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Kameradski - 8 Bruin, 33cl, 12,5%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "3 Fonteinen Oude geuze",
+     "soort": "anders",
+     "cl": 37.5,
+     "prijs": 16.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "3 Fonteinen Oude geuze - 16 Geuze, 37,5cl, 6,5%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "Cantillon Rose de Gambrinus",
+     "soort": "kriek/fruit",
+     "cl": 75,
+     "prijs": 26.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Cantillon Rose de Gambrinus - 26 Lambik en framboos, 75cl, 5,5%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "Peroni 0.0",
+     "soort": "alcoholvrij",
+     "cl": 33,
+     "prijs": 4.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Peroni 0.0 - 4,5 Alcoholvrije Italiaanse pils, 33cl, 0%.",
+     "bron": "https://www.amaro.gent/menu"
+    },
+    {
+     "naam": "Dokkie",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Dokkie - 5,5 Alcoholarme Gentse Sour IPA, 33cl, 0,3%.",
+     "bron": "https://www.amaro.gent/menu"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "NOG OPEN TOT 23/12",
+    "© 2023 AMARO",
+    "© 2023 AMARO",
+    "© 2023 AMARO",
+    "© 2023 AMARO"
+   ]
+  },
+  {
+   "kroeg_id": 1134,
+   "kroeg": "Artevelde Brouwerij",
+   "tapbieren": [
+    {
+     "naam": "Artevelde pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.3,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "25cl: € 3.3",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde pils",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.2,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "33cl: € 4.2",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde pils",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "50cl: € 6",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde leute",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "33cl: € 5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde leute",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 7.2,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "50cl: € 7.2",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde Grand Cru",
+     "soort": "bruin",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "33cl: € 5.5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde Grand Cru",
+     "soort": "bruin",
+     "cl": 50,
+     "prijs": 7.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "50cl: € 7.5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde wijze",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 6.2,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "33cl: € 6.2",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Artevelde wijze",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 8.7,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "50cl: € 8.7",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Delirium Tremens",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 6.2,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Delirium Tremens\n8,5% • 33cl\nBlond bier, lichte Malt met alcoholtoets\n€ 6.2",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Delirium Red",
+     "soort": "kriek/fruit",
+     "cl": 33,
+     "prijs": 6.2,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Delirium Red\n8% • 33cl\nBier met rood fruit aroma en toets van amandel\n€ 6.2",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Delirium Nocturnum",
+     "soort": "bruin",
+     "cl": 33,
+     "prijs": 6.2,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Delirium Nocturnum\n8,5% • 33cl\nDonker roodbruin bier met karamel\n€ 6.2",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Delirium Argentum",
+     "soort": "amber",
+     "cl": 33,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Delirium Argentum\n7% • 33cl\nAmber bier, pittig en complex met karamel in de neus\n€ 6",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Averbode",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Averbode\n7,5% • 33cl\nGoudgeel bier met lichte hop en malt, licht bitter\n€ 6",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Averbode Extra",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 4.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Averbode Extra\n4,8% • 33cl\n€ 4.5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Floris Kriek",
+     "soort": "kriek/fruit",
+     "cl": 25,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Floris Kriek (van het vat)\n3,6% • 25cl\nFruitig bier met kers\n€ 4.5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Floris Cactus",
+     "soort": "kriek/fruit",
+     "cl": 25,
+     "prijs": 5.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Floris Cactus\n3,6% • 25cl\nFloraal met licht citroenzure geur in de neus\n€ 5.5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Mongozo Pilsner",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Mongozo Pilsner\n5% • 25cl\nGlutenvrije Pils\n€ 5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Paranoia",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Paranoia\n5,6% • 33cl\nHoppy aroma\n€ 5.5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Blanche De Neiges",
+     "soort": "wit",
+     "cl": 33,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Blanche De Neiges\n4,8% • 33cl\nFloraal met licht citroenzure geur in de neus\n€ 5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Wolf & Fox Lokaal (Gent) Cider quest 4%",
+     "soort": "cider",
+     "cl": null,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Wolf & Fox Lokaal (Gent)\nCider quest 4%\n€ 6",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Carlsberg 0,0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.8,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Carlsberg 0,0%\n€ 3.8",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "PARANOIA 0,3%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "PARANOIA\n0,3%\n€ 5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "PARANOIA ROUGE",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "PARANOIA ROUGE\n€ 5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    },
+    {
+     "naam": "Deliriooo",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Deliriooo\n€ 5.5",
+     "bron": "https://artevelde.be/menu/drankkaart/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2026 (footer)",
+    "CHÂTEAU TAYET PRESTIGE 2019 BORDEAUX SUPERIEUR 37,5cl"
+   ]
+  },
+  {
+   "kroeg_id": 1161,
+   "kroeg": "Bar Bassie",
+   "tapbieren": [
+    {
+     "naam": "STELLA",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "STELLA - PILS, 25CL [5,2%]                               3.30",
+     "bron": "https://barbassie.be/menu/bar-bassie-drinks.pdf"
+    },
+    {
+     "naam": "TRIPEL KARMELIET",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 5.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "TRIPEL KARMELIET - TRIPEL, 33CL [8,4%]                   5.90",
+     "bron": "https://barbassie.be/menu/bar-bassie-drinks.pdf"
+    },
+    {
+     "naam": "FOURCHETTE",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 5.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "FOURCHETTE - BLEND WHITE BEER & TRIPEL, 33CL [8,5%]      5.90",
+     "bron": "https://barbassie.be/menu/bar-bassie-drinks.pdf"
+    },
+    {
+     "naam": "WAAR IS LOCA?",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "WAAR IS LOCA? - GHENT PALE ALE, 33CL [6,5%]              5,50",
+     "bron": "https://barbassie.be/menu/bar-bassie-drinks.pdf"
+    },
+    {
+     "naam": "FONY'S",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "FONY'S - NON ALCOHOLIC SESSION IPA [0,3%]                5.00",
+     "bron": "https://barbassie.be/menu/bar-bassie-drinks.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "CreationDate: Thu Jun 25 11:56:16 2026 UTC; ModDate: Thu Jun 25 11:56:16 2026 UTC",
+    "Mon, 23 Nov 2026 16:08:14 GMT",
+    "CreationDate: Fri Nov 13 14:25:53 2026 UTC; ModDate: Fri Nov 13 14:25:53 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 1185,
+   "kroeg": "Bar Dada",
+   "tapbieren": [
+    {
+     "naam": "Vedett",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.7,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Vedett 25cl (3,7)",
+     "bron": "https://bardada.gent/menu"
+    },
+    {
+     "naam": "Duvel 666",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 5.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Duvel 666 25cl (5,3)",
+     "bron": "https://bardada.gent/menu"
+    },
+    {
+     "naam": "La chouffe",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "La chouffe 25cl (5,5)",
+     "bron": "https://bardada.gent/menu"
+    }
+   ],
+   "datum_aanwijzingen": []
+  },
+  {
+   "kroeg_id": 1009,
+   "kroeg": "Café Cannelle",
+   "tapbieren": [
+    {
+     "naam": "DOK | Waar is Loca, Pale Ale",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "DOK | Waar is Loca, Pale Ale 6,5° 5",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Stroom West Coast IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Stroom West Coast IPA 6,2° 5",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Stroom Raspberry Sour",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Stroom Raspberry Sour 4,2° 5",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Stroom blood orange IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Stroom blood orange IPA 7,3° 5",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Duvel blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Duvel blond 8,5° 6",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Westmalle tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Westmalle tripel 9,5° 6",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Orval",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Orval 6,2° 6,5",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Boer Bloem",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Boer Bloem 0,3° 5",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Carlsberg",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Carlsberg 0,0° 4",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "Sportzot",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Sportzot 0,4° 4",
+     "bron": "https://www.cafecannelle.be/menukaart"
+    },
+    {
+     "naam": "DOK | Waar is Loca, Pale Ale",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "DOK | Waar is Loca, Pale Ale 6,5° 5",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Stroom West Coast IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Stroom West Coast IPA 6,2° 5",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Stroom Raspberry Sour",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Stroom Raspberry Sour 4,2° 5",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Stroom blood orange IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Stroom blood orange IPA 7,3° 5",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Duvel blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Duvel blond 8,5° 6",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Westmalle tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Westmalle tripel 9,5° 6",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Orval",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Orval 6,2° 6,5",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Boer Bloem",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Boer Bloem 0,3° 5",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Carlsberg",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Carlsberg 0,0° 4",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Sportzot",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Sportzot 0,4° 4",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Dokkie",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Dokkie <0,5° 4,5",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Vedett",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Vedett 0,0° 4",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    },
+    {
+     "naam": "Liefmans on the rocks",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Liefmans on the rocks 0,0° 4",
+     "bron": "https://static1.squarespace.com/static/640da15c47fe32613a4315d3/t/6ad5bc4c5c34411e2ffd7b72/1792392268388/Oeuf+%27tis+weekend.docx.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "donderdag 19 november toe"
+   ]
+  },
+  {
+   "kroeg_id": 1002,
+   "kroeg": "Café Merino",
+   "tapbieren": [
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Stella Artois 25cl/33cl                3,0/4,0",
+     "bron": "https://www.cafemerino.be/menu-merino-11-3-2025"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Stella Artois 25cl/33cl                3,0/4,0",
+     "bron": "https://www.cafemerino.be/menu-merino-11-3-2025"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.1,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tripel Karmeliet                                5,1",
+     "bron": "https://www.cafemerino.be/menu-merino-11-3-2025"
+    },
+    {
+     "naam": "Stella Artois 0,0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Stella Artois 0,0%.                         3,0",
+     "bron": "https://www.cafemerino.be/menu-merino-11-3-2025"
+    },
+    {
+     "naam": "Tripel Karmeliet 0,4%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.2,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Tripel Karmeliet 0,4%                   5,2",
+     "bron": "https://www.cafemerino.be/menu-merino-11-3-2025"
+    },
+    {
+     "naam": "Sportzot",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.4,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Sportzot 0,4%                                 5,4",
+     "bron": "https://www.cafemerino.be/menu-merino-11-3-2025"
+    },
+    {
+     "naam": "Playground IPA",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.6,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Playground IPA 0,5%                     5,6",
+     "bron": "https://www.cafemerino.be/menu-merino-11-3-2025"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "MENU VAN DE WEEK: woe 18/11 - zat 21/11",
+    "MENU MERINO 11/3/2025",
+    "URL/bestandsnaam: menu-merino-11-3-2025",
+    "Wed, 18 Nov 2026 10:21:57 GMT",
+    "Wed, 18 Nov 2026 10:21:57 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 918,
+   "kroeg": "De Dulle Griet",
+   "tapbieren": [
+    {
+     "naam": "Barbãr Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.6,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Barbãr Blond € 5,60",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Bush de Noël",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 7.1,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Bush de Noël € 7,10",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Delirium Tremens",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.6,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Delirium Tremens € 5,60",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Dulle Griet Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 3.6,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Dulle Griet Blond € 3,60",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Dulle Griet Blond",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 6.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Dulle Griet Blond 0.5L € 6,90",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Gulden Draak",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 7.1,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Gulden Draak € 7,10",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Gentse Strop",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.7,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Gentse Strop € 6,70",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Gouden Carolus Whisky Infused Dark",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 7.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Gouden Carolus Whisky Infused Dark € 7,20",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Gruut Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.7,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Gruut Blond € 6,70",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Jack's Precious IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Jack's Precious IPA € 5,80",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Kasteelbier Rouge",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 6.4,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kasteelbier Rouge € 6,40",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Kriek Lindemans",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 4.4,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kriek Lindemans € 4,40",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "La Chouffe Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.1,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "La Chouffe Blond € 6,10",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Sint-Bernardus Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Sint-Bernardus Tripel € 5,30",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Tempelier Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.4,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tempelier Blond € 5,40",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Tête de Mort X-mas",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tête de Mort X-mas € 5,90",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Westmalle Dubbel",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 5.4,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Westmalle Dubbel € 5,40",
+     "bron": "https://www.dullegriet.be/menukaart"
+    },
+    {
+     "naam": "Max van ‘t Huis",
+     "soort": "anders",
+     "cl": 120,
+     "prijs": 14.7,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Max van ‘t Huis 1.2 € 14,70",
+     "bron": "https://www.dullegriet.be/menukaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2026 Herberg De Dulle Griet · Gent",
+    "© 2026 Herberg De Dulle Griet · Gent",
+    "Orval 2026 € 6,20",
+    "Orval 2019 € 14,20"
+   ]
+  },
+  {
+   "kroeg_id": 1126,
+   "kroeg": "Edel Rot",
+   "tapbieren": [
+    {
+     "naam": "VERZET",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 3.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "VERZET______________________________________________________3⁸\nblond bier - fris, hoppig 't Verzet, 5⁸%, 25cl\nvanaf 16 nov !",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "HOPSNOB - PINOT BLANC GRAPE SAISON",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 6.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "HOPSNOB - PINOT BLANC GRAPE SAISON_____________________6⁸\nfris, fruitig OP TAP edelrot x Dok Brewing Co. x Falkenstein, 6⁵%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "SAISON DU MEYBOOM",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 5.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "SAISON DU MEYBOOM_______________________________________52\nSaison - zacht bitter Brasserie de la Senne, 5⁵%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "CARLITO",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "CARLITO_____________________________________________________5\nSession Pale Ale - licht, orange bitter Stroom, 43%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "DE GRAAL BLOND",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "DE GRAAL BLOND_____________________________________________5\nblond bier - zacht bitter De Graal, 6⁵%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "HALVE GARE",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 5.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "HALVE GARE__________________________________________________5⁸\nIPA dryhop - hoppig, tropisch Brouwerij 9900, 7 2%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "XX BITTER",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "XX BITTER____________________________________________________5⁵\nblond bier - vol, bitter De Ranke, 6%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "DE GRAAL TRIPEL",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 5.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "DE GRAAL TRIPEL_____________________________________________5⁸\nblond bier - vol, kruidig De Graal, 9%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "GOLDEN TRICKY",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "GOLDEN TRICKY_______________________________________________5\nIPA - vol, tropisch 't Verzet, 7⁵%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "STEENUILKE",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "STEENUILKE________________________________________________5⁵\nblond bier - vol, kruidig Brouwerij De Ryck, 6⁵%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    },
+    {
+     "naam": "GULDENBERG",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "GULDENBERG_________________________________________________6\nabdijbier - vol, fruitig De Ranke, 8%, 33cl",
+     "bron": "https://www.wijnbar-edelrot.be/_files/ugd/04ab9d_dac5d977698c49eb83c50ae005ac8d23.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "PDF CreationDate: Tue Oct 13 15:10:35 2026 UTC; ModDate: Tue Oct 13 15:14:36 2026 UTC",
+    "vanaf 16 nov !",
+    "PDF CreationDate: Tue Oct 13 15:06:30 2026 UTC; ModDate: Tue Oct 13 15:10:13 2026 UTC",
+    "from 16 nov !",
+    "© 2024 by edelrot",
+    "© 2024 by edelrot"
+   ]
+  },
+  {
+   "kroeg_id": 1078,
+   "kroeg": "Eltòn",
+   "tapbieren": [
+    {
+     "naam": "Ginette Bio Refreshing Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Ginette Bio Refreshing Blond 4,3",
+     "bron": "./sites/1078-pdf.pdf"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Stella Artois 3,3",
+     "bron": "./sites/1078-pdf.pdf"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 3.6,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Hoegaarden 3,6",
+     "bron": "./sites/1078-pdf.pdf"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tripel Karmeliet 5,3",
+     "bron": "./sites/1078-pdf.pdf"
+    },
+    {
+     "naam": "Fourchette",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Fourchette 6",
+     "bron": "./sites/1078-pdf.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "CreationDate: Wed May 28 12:07:03 2025 UTC",
+    "ModDate: Wed May 28 12:07:03 2025 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 1027,
+   "kroeg": "Fluoclub",
+   "tapbieren": [
+    {
+     "naam": "Pilsner beer | Tout bien",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Pilsner beer | Tout bien                 € 3,5",
+     "bron": "https://fluoclub.be/wp-content/uploads/2026/09/Nieuwe-menu-september-2026.pdf"
+    },
+    {
+     "naam": "Rouge beer | Tout bien",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Rouge beer | Tout bien                   € 3,5",
+     "bron": "https://fluoclub.be/wp-content/uploads/2026/09/Nieuwe-menu-september-2026.pdf"
+    },
+    {
+     "naam": "0.0% NA pilsner beer",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "0.0% NA pilsner beer                     € 3,5",
+     "bron": "https://fluoclub.be/wp-content/uploads/2026/09/Nieuwe-menu-september-2026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Titel: Nieuwe menu september 2026",
+    "Bestandsnaam: Nieuwe-menu-september-2026.pdf",
+    "PDF CreationDate: Thu Sep 3 08:58:24 2026 UTC; ModDate: Thu Sep 3 08:58:24 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 976,
+   "kroeg": "Marimain",
+   "tapbieren": [
+    {
+     "naam": "STELLA",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "STELLA 25CL\n3",
+     "bron": "https://www.marimain.be/"
+    },
+    {
+     "naam": "STELLA",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "STELLA 33CL\n4",
+     "bron": "https://www.marimain.be/"
+    },
+    {
+     "naam": "STELLA",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "STELLA 50CL\n6",
+     "bron": "https://www.marimain.be/"
+    },
+    {
+     "naam": "CHERRY CHOUFFE",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 5.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "CHERRY CHOUFFE\n5,2",
+     "bron": "https://www.marimain.be/"
+    },
+    {
+     "naam": "VICTORIA",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "VICTORIA\n5,8",
+     "bron": "https://www.marimain.be/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Tue, 24 Nov 2026 06:37:54 GMT",
+    "Sun, 22 Nov 2026 14:58:30 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 1206,
+   "kroeg": "Soan",
+   "tapbieren": [
+    {
+     "naam": "Duvel",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 7.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "7.00 - 33 cl",
+     "bron": "https://static1.squarespace.com/static/68b896946512c81bad0ab2a6/t/690a4e9ab46c642a3e9780f4/1762283179236/SOAN+Menu+2025.pdf"
+    },
+    {
+     "naam": "Triple d’Anvers",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 7.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "7.00 - 33 cl",
+     "bron": "https://static1.squarespace.com/static/68b896946512c81bad0ab2a6/t/690a4e9ab46c642a3e9780f4/1762283179236/SOAN+Menu+2025.pdf"
+    },
+    {
+     "naam": "Liefmans kriek brut",
+     "soort": "kriek/fruit",
+     "cl": 33,
+     "prijs": 7.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "7.00 - 33 cl",
+     "bron": "https://static1.squarespace.com/static/68b896946512c81bad0ab2a6/t/690a4e9ab46c642a3e9780f4/1762283179236/SOAN+Menu+2025.pdf"
+    },
+    {
+     "naam": "Vedett IPA",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 6.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "6.00 - 33 cl",
+     "bron": "https://static1.squarespace.com/static/68b896946512c81bad0ab2a6/t/690a4e9ab46c642a3e9780f4/1762283179236/SOAN+Menu+2025.pdf"
+    },
+    {
+     "naam": "Vedett Pilsner",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 5.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "5.00 - 33 cl",
+     "bron": "https://static1.squarespace.com/static/68b896946512c81bad0ab2a6/t/690a4e9ab46c642a3e9780f4/1762283179236/SOAN+Menu+2025.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: SOAN+Menu+2025.pdf",
+    "Titel/tekst: soan Edition 2025",
+    "PDF CreationDate: Tue Oct 28 18:11:41 2025 UTC",
+    "PDF ModDate: Tue Nov 4 19:02:59 2025 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 1040,
+   "kroeg": "St.-Martinus Snooker/Pool",
+   "tapbieren": [
+    {
+     "naam": "Haacht ,,Primus\"",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Haacht ,,Primus\" 25cl 3,00 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    },
+    {
+     "naam": "Haacht ,,Primus\"",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Haacht ,,Primus\" 33cl 3,80 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    },
+    {
+     "naam": "Haacht ,,Primus\"",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 5.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Haacht ,,Primus\" 50cl 5,80 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    },
+    {
+     "naam": "Tongerlo ,,Blond\"",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 3.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tongerlo ,,Blond\" 25cl 3,80 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    },
+    {
+     "naam": "Tongerlo ,,Blond\"",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tongerlo ,,Blond\" 33cl 6% 4,50 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    },
+    {
+     "naam": "Tongerlo \"Bruin\"",
+     "soort": "bruin",
+     "cl": 25,
+     "prijs": 3.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tongerlo \"Bruin\" 25cl 6,5% 3,80 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    },
+    {
+     "naam": "Tongerlo \"Bruin\"",
+     "soort": "bruin",
+     "cl": 33,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tongerlo \"Bruin\" 33cl 6,5% 4,50 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    },
+    {
+     "naam": "Super 8 \"Flandrien\"",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Super 8 \"Flandrien\" 33cl 6,4% 4,50 €",
+     "bron": "https://www.snookermartinus.be/nl/scherpe-prijzen-voor-snooker-en-consumpties"
+    }
+   ],
+   "datum_aanwijzingen": []
+  },
+  {
+   "kroeg_id": 902,
+   "kroeg": "The Celtic Towers",
+   "tapbieren": [
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": 25,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Guinness 25cl / 50cl (4.2°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 8.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Guinness 25cl / 50cl (4.2°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Kilkenny",
+     "soort": "amber",
+     "cl": 25,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kilkenny 25cl / 50cl (4.3°) – 4.00 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Kilkenny",
+     "soort": "amber",
+     "cl": 50,
+     "prijs": 7.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kilkenny 25cl / 50cl (4.3°) – 4.00 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Apple Cider",
+     "soort": "cider",
+     "cl": 25,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Apple Cider 25cl / 50cl (4.5°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Apple Cider",
+     "soort": "cider",
+     "cl": 50,
+     "prijs": 7.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Apple Cider 25cl / 50cl (4.5°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Stella Artois 25cl / 50cl (5.2°) – 3.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Stella Artois 25cl / 50cl (5.2°) – 3.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Jupiler",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Jupiler 33cl / 50cl (5.2°) – 4.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Jupiler",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Jupiler 33cl / 50cl (5.2°) – 4.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Leffe Blond 25cl / 50cl (6.6°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 7.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Leffe Blond 25cl / 50cl (6.6°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Hoegaarden 25cl / 50cl (4.8°) – 4.00 / 7.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 7.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Hoegaarden 25cl / 50cl (4.8°) – 4.00 / 7.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tripel Karmeliet 25CL (8,8°) – 5.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Delirium Tremens",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Delirium Tremens 25cl / 50cl (8.5°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Delirium Tremens",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 8.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Delirium Tremens 25cl / 50cl (8.5°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": 25,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Guinness 25cl / 50cl (4.2°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 8.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Guinness 25cl / 50cl (4.2°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Kilkenny",
+     "soort": "amber",
+     "cl": 25,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kilkenny 25cl / 50cl (4.3°) – 4.00 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Kilkenny",
+     "soort": "amber",
+     "cl": 50,
+     "prijs": 7.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kilkenny 25cl / 50cl (4.3°) – 4.00 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Apple Cider",
+     "soort": "cider",
+     "cl": 25,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Apple Cider 25cl / 50cl (4.5°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Apple Cider",
+     "soort": "cider",
+     "cl": 50,
+     "prijs": 7.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Apple Cider 25cl / 50cl (4.5°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Stella Artois 25cl / 50cl (5.2°) – 3.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Stella Artois 25cl / 50cl (5.2°) – 3.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Jupiler",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Jupiler 33cl / 50cl (5.2°) – 4.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Jupiler",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Jupiler 33cl / 50cl (5.2°) – 4.00 / 6.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Leffe Blond 25cl / 50cl (6.6°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 7.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Leffe Blond 25cl / 50cl (6.6°) – 4.50 / 7.50",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 4.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Hoegaarden 25cl / 50cl (4.8°) – 4.00 / 7.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 7.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Hoegaarden 25cl / 50cl (4.8°) – 4.00 / 7.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Tripel Karmeliet 25CL (8,8°) – 5.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Delirium Tremens",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 5.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Delirium Tremens 25cl / 50cl (8.5°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    },
+    {
+     "naam": "Delirium Tremens",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 8.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Delirium Tremens 25cl / 50cl (8.5°) – 5.00 / 8.00",
+     "bron": "https://celtictowers.be/menu/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2026 The Celtic Towers. All Rights Reserved.",
+    "© 2026 The Celtic Towers. All Rights Reserved."
+   ]
+  },
+  {
+   "kroeg_id": 1034,
+   "kroeg": "the Wan & Only",
+   "tapbieren": [
+    {
+     "naam": "CRISTAL",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "CRISTAL 3.2\n25 cl / 33 cl 3.8",
+     "bron": "https://static1.squarespace.com/static/57800b8b20099e05b57b9ae0/t/6ab28c861c94415cc99467a5/1790086278661/menu+%2B+drank+online+2.pdf"
+    },
+    {
+     "naam": "CRISTAL",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "CRISTAL 3.2\n25 cl / 33 cl 3.8",
+     "bron": "https://static1.squarespace.com/static/57800b8b20099e05b57b9ae0/t/6ab28c861c94415cc99467a5/1790086278661/menu+%2B+drank+online+2.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "LUNCH 25/11 - 27/11",
+    "CreationDate: Thu Apr 17 08:13:11 2025 UTC; ModDate: Thu Apr 17 08:13:11 2025 UTC",
+    "CreationDate: Tue Sep 22 14:08:09 2026 UTC; ModDate: Tue Sep 22 14:08:09 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 940,
+   "kroeg": "Trollenkelder",
+   "tapbieren": [
+    {
+     "naam": "Barbar",
+     "soort": "blond",
+     "cl": 33.0,
+     "prijs": 5.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 5.80",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Chimay Blauw",
+     "soort": "bruin",
+     "cl": 33.0,
+     "prijs": 6.7,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 6.70",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Fourchette",
+     "soort": "blond",
+     "cl": 33.0,
+     "prijs": 6.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 6.20",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Gouden Carolus Whiskey Infused",
+     "soort": "bruin",
+     "cl": 33.0,
+     "prijs": 6.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 6.90",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Gulden Draak Brewmaster",
+     "soort": "bruin",
+     "cl": 33.0,
+     "prijs": 6.8,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 6.80",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Kasteelbier Rouge",
+     "soort": "kriek/fruit",
+     "cl": 33.0,
+     "prijs": 5.6,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 5.60",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Kriek Lindemans",
+     "soort": "kriek/fruit",
+     "cl": 25.0,
+     "prijs": 4.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "25.0cl - € 4.20",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Kwak",
+     "soort": "amber",
+     "cl": 33.0,
+     "prijs": 6.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 6.20",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Kwak",
+     "soort": "amber",
+     "cl": 50.0,
+     "prijs": 10.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "50.0cl - € 10.20",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": 25.0,
+     "prijs": 4.6,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "25.0cl - € 4.60",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Ouwen Duiker",
+     "soort": "blond",
+     "cl": 33.0,
+     "prijs": 5.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 5.90",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 25.0,
+     "prijs": 3.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "25.0cl - € 3.20",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 50.0,
+     "prijs": 6.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "50.0cl - € 6.20",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Trollebier Blond",
+     "soort": "blond",
+     "cl": 33.0,
+     "prijs": 5.4,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 5.40",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Troubadour Magma",
+     "soort": "ipa",
+     "cl": 33.0,
+     "prijs": 6.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 6.50",
+     "bron": "https://www.trollekelder.be/vat.html"
+    },
+    {
+     "naam": "Vedett Extra White",
+     "soort": "wit",
+     "cl": 33.0,
+     "prijs": 5.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "33.0cl - € 5.20",
+     "bron": "https://www.trollekelder.be/vat.html"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Mon, 23 Nov 2026 16:30:38 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 997,
+   "kroeg": "VIERNULVIER Café",
+   "tapbieren": [
+    {
+     "naam": "Triomfbier",
+     "soort": "amber",
+     "cl": 25,
+     "prijs": 3.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Triomfbier (Dupont, 6°, 25cl / 33cl)        3,90 / 5,20",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Triomfbier",
+     "soort": "amber",
+     "cl": 33,
+     "prijs": 5.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Triomfbier (Dupont, 6°, 25cl / 33cl)        3,90 / 5,20",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Cristal pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.2,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Cristal pils (5°, 25cl / 33cl / 50cl / 1,8l)                          3,20 / 3,90 / 6,40 / 17,00",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Cristal pils",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Cristal pils (5°, 25cl / 33cl / 50cl / 1,8l)                          3,20 / 3,90 / 6,40 / 17,00",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Cristal pils",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.4,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Cristal pils (5°, 25cl / 33cl / 50cl / 1,8l)                          3,20 / 3,90 / 6,40 / 17,00",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Cristal pils",
+     "soort": "pils",
+     "cl": 180,
+     "prijs": 17.0,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Cristal pils (5°, 25cl / 33cl / 50cl / 1,8l)                          3,20 / 3,90 / 6,40 / 17,00",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Hapkin",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Hapkin (8,5°)                                      4,50",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Kriek Mort Subite",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 4.3,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Kriek Mort Subite (5°)                             4,30",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Grimbergen blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Grimbergen blond (6,7°)                            4,50",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "Affligem blond",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 5.5,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "Affligem blond (6,8°, 33cl)                        5,50",
+     "bron": "./sites/997-pdf.pdf"
+    },
+    {
+     "naam": "IPA Lagunitas",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.9,
+     "van_het_vat": true,
+     "actie": false,
+     "regel": "IPA Lagunitas (6,2°)                               5,90",
+     "bron": "./sites/997-pdf.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "CreationDate: Thu Sep 24 10:02:17 2026 UTC",
+    "ModDate: Thu Sep 24 10:02:18 2026 UTC",
+    "ZOMERSLUITING: Van 03/8 t.e.m. 16/8.",
+    "World Fair Trade Day 2026"
+   ]
+  },
+  {
+   "kroeg_id": 1192,
+   "kroeg": "WhyNot",
+   "tapbieren": [
+    {
+     "naam": "Cymbo",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 7.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Cymbo\n€ 7\n\nFrisse citroengras ale - STROOM Brewery - 33 cl",
+     "bron": "https://whynot.gent/menu"
+    },
+    {
+     "naam": "Meesterke",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 7.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Meesterke\n€ 7\n\nFruitige blonde ale - brouwerij De Meester - 33 cl",
+     "bron": "https://whynot.gent/menu"
+    },
+    {
+     "naam": "Belle Fleur",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 7.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Belle Fleur\n€ 7\n\nIPA - Dochter van de Korenaar - 33 cl",
+     "bron": "https://whynot.gent/menu"
+    },
+    {
+     "naam": "Franc Belge",
+     "soort": "amber",
+     "cl": 33,
+     "prijs": 7.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Franc Belge\n€ 7\n\nAmber - De Ranke - 33 cl",
+     "bron": "https://whynot.gent/menu"
+    },
+    {
+     "naam": "Meester Douze",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 8.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Meester Douze\n€ 8\n\nDonkere quadrupel - Brouwerij De Meester - 33 cl",
+     "bron": "https://whynot.gent/menu"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "AANBEVOLEN · 2026",
+    "© 2026",
+    "Chiantari Chardonnay 2024",
+    "Alison Laghe Arneis (2023), Ciabot",
+    "Moulin à vent V.V. Domaine Gry-Sablon 2023",
+    "Barbera d'Alba \"Visconte\" (2019), Ciabot"
+   ]
+  },
+  {
+   "kroeg_id": 1188,
+   "kroeg": "Yucca",
+   "tapbieren": [
+    {
+     "naam": "Bavik Super Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 1.8,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Bavik Super Pils € 1,80",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "Yucca Rosé",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 2.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Yucca Rosé € 2,00",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "Kwaremont",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Kwaremont € 3,50",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "Petrus Red",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Petrus Red € 3,50",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "St. Louis Kriek Lambic",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 2.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "St. Louis Kriek Lambic € 2,50",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "Kwaremont 0.3",
+     "soort": "blond",
+     "cl": 30,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Kwaremont 0.3 € 3,50",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "Duvel",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.0,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Duvel € 4,00",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "Strongbow",
+     "soort": "cider",
+     "cl": null,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Strongbow € 3,50",
+     "bron": "https://www.vek.be/en/drankkaart"
+    },
+    {
+     "naam": "Desperados",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 3.5,
+     "van_het_vat": null,
+     "actie": false,
+     "regel": "Desperados € 3,50",
+     "bron": "https://www.vek.be/en/drankkaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Copyright © 2026 Vlaams Economische Kring vzw (websitefooter)",
+    "Copyright © 2026 Vlaams Economische Kring vzw (websitefooter)",
+    "Exif/metadata: 2025-10-07; HTTP-datum: Wed, 08 Oct 2025 12:38:14 GMT"
+   ]
+  }
+ ]
+}
