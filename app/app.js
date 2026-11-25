@@ -336,7 +336,9 @@ function afstand(a, b) {
 
 const state = {
   tab: "kaart",
-  kroegen: [],
+  kroegen: [], // alle open kroegen, van alle steden (de kaart)
+  stadKroegen: [], // de kroegen van de stad in beeld (stadNaam): lijst, Pilsindex, lichtkrant, Beurs
+  grenzen: [], // grenzen van de steden (laadGrenzen), om de stad in beeld te kiezen
   stad: null,
   badgeTellers: {}, // tellers voor de badges onder Ik (laadBadges)
   uitgeklapt: new Set(), // namen van open uitklapblokken (data-onthoud), zie uitgeklapt()
@@ -445,7 +447,9 @@ function soortIn(kroegId, soort = state.soort) {
   return lijst.filter((a) => a.prijs_cent).sort((a, b) => a.prijs_cent - b.prijs_cent)[0] ?? lijst[0] ?? null;
 }
 
-const zichtbareKroegen = () => state.soort ? state.kroegen.filter((k) => soortIn(k.id)) : state.kroegen;
+// De kaart toont alle kroegen (alle steden); de lijst, de lichtkrant, de Pilsindex en de Beurs gaan over de stad in
+// beeld (stadNaam, state.stadKroegen)
+const zichtbareKroegen = (lijst = state.kroegen) => state.soort ? lijst.filter((k) => soortIn(k.id)) : lijst;
 
 // Onthoud e-mail en spelersnaam op dit apparaat, zodat je ze bij de volgende keer niet opnieuw typt.
 const onthouden = {
@@ -556,7 +560,8 @@ function koersen() {
   }
   for (const p of punten.values()) p.sort((a, b) => a.t - b.t);
   state.koers.punten = punten;
-  state.koers.index = indexVan(punten);
+  const inStad = new Set(state.stadKroegen.map((k) => k.id));
+  state.koers.index = indexVan(new Map([...punten].filter(([id]) => inStad.has(id))));
 }
 
 // De index van een reeks prijzen per kroeg: stand nu, vergeleken met twaalf maanden terug, en het verloop
@@ -606,12 +611,12 @@ const maandKort = (t) => new Date(t).toLocaleDateString(LOCALE, { month: "short"
 
 // Kroegen met een prijsstap in de afgelopen twaalf maanden, nieuwste eerst
 function bewegers(punten) {
-  return state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c?.recent).sort((a, b) => b.c.vastSinds - a.c.vastSinds);
+  return state.stadKroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c?.recent).sort((a, b) => b.c.vastSinds - a.c.vastSinds);
 }
 
 // Kroegen waarvan de prijs het langst gelijk is gebleven
 function prijsvast(punten) {
-  return state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => a.c.vastSinds - b.c.vastSinds);
+  return state.stadKroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => a.c.vastSinds - b.c.vastSinds);
 }
 
 // Klein trapje in een rij: alleen als de kroeg echt een prijsgeschiedenis heeft. Drie jaar breed, voor elke rij gelijk.
@@ -631,9 +636,10 @@ async function laadKoers() {
   // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee.
   // Daarnaast de laatste activiteit van spelers voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen.
   const [{ data, error }, { data: recent }] = await Promise.all([
-    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron").eq("gemeente", stadNaam)
-      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(5000),
-    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,op").eq("gemeente", stadNaam).eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: false }).limit(20),
+    // Alle steden: de kaart kleurt elke kroeg in beeld; de lichtkrant kiest de activiteit van de stad in beeld
+    sb.from("kroeg_tijdlijn").select("kroeg_id,soort,status,prijs_cent,volume_cl,op,bron")
+      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(20000),
+    sb.from("kroeg_tijdlijn").select("kroeg_id,gemeente,soort,status,op").eq("status", "bevestigd").eq("bron", "speler").order("op", { ascending: false }).limit(200),
   ]);
   if (error) { console.error(error); return; }
   state.koersRuw = data ?? [];
@@ -650,11 +656,11 @@ async function guinnessLichtkrant() {
   if (!guinnessAan()) return;
   const idx = indexVan(punten);
   const items = [`<span class="tk idx"><b>GUINNESS</b>${idx ? `${euro(idx.nu)} <span class="zacht">per pint</span>` : `<span class="zacht">nog geen prijs</span>`}</span>`];
-  for (const { k, c } of state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => b.c.vastSinds - a.c.vastSinds)) {
+  for (const { k, c } of state.stadKroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => b.c.vastSinds - a.c.vastSinds)) {
     const wat = c.recent ? deltaHtml(c.delta) : `<span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span>`;
     items.push(`<button class="tk" data-kroeg="${k.id}" aria-label="${esc(k.naam)} ${euro(c.nu)}"><b>${codeVan(k.id)}</b>${euro(c.nu)} ${wat}</button>`);
   }
-  const totaal = state.kroegen.length, met = state.kroegen.filter((k) => punten.has(k.id)).length;
+  const totaal = state.stadKroegen.length, met = state.stadKroegen.filter((k) => punten.has(k.id)).length;
   if (totaal) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${met}/${totaal} <span class="zacht">met Guinness-prijs</span></span>`);
   zetLichtkrant(items);
 }
@@ -675,7 +681,7 @@ function lichtkrant() {
     `<span class="tk idx"><b>PILSINDEX</b>${idx ? `${euro(idx.nu)} ${idx.delta != null ? `${deltaHtml(idx.delta, { pct: idx.pct })} <span class="zacht">12 mnd</span>` : ""}` : `<span class="zacht">nog geen koers</span>`}</span>`,
   ];
   const gezien = new Set();
-  for (const g of state.koers.recent ?? []) {
+  for (const g of (state.koers.recent ?? []).filter((g) => g.gemeente === stadNaam).slice(0, 20)) {
     const k = state.kroegen.find((x) => x.id === g.kroeg_id), c = koersVan(g.kroeg_id);
     if (!k || !c || gezien.has(k.id)) continue;
     gezien.add(k.id);
@@ -687,7 +693,7 @@ function lichtkrant() {
   // Prijzen die al lang gelijk zijn, verdienen ook een plek
   const vast = prijsvast().filter((x) => Date.now() - x.c.vastSinds > 365 * DAG && !gezien.has(x.k.id)).slice(0, 3);
   for (const { k, c } of vast) items.push(`<button class="tk" data-kroeg="${k.id}"><b>${codeVan(k.id)}</b>${euro(c.nu)} <span class="zacht">vast sinds ${maandJaar(c.vastSinds)}</span></button>`);
-  const totaal = state.kroegen.length, metPrijs = inKaart();
+  const totaal = state.stadKroegen.length, metPrijs = inKaart();
   if (totaal) items.push(`<span class="tk"><b>${esc(stadNaam.toUpperCase())}</b>${metPrijs}/${totaal} <span class="zacht">in kaart</span></span>`);
   if (totaal - metPrijs > 0) items.push(`<span class="tk"><span class="zacht">${totaal - metPrijs} kroegen zonder prijs</span></span>`);
   if (s?.oud) items.push(`<span class="tk"><span class="zacht">${s.oud} koersen ouder dan 90 dagen · controleer ze</span></span>`);
@@ -1110,10 +1116,12 @@ function setDetent(d) {
 // ---------------------------------------------------------------------------
 
 async function laadKroegen() {
-  const { data, error } = await sb.from("kroeg_kaart").select("*").eq("gemeente", stadNaam).eq("open", true).order("naam");
+  // Alle steden tegelijk: bij schuiven over de kaart staan de kroegen van de buurstad er meteen
+  const { data, error } = await sb.from("kroeg_kaart").select("*").eq("open", true).order("naam");
   if (error) { console.error(error); toast("Kroegen laden mislukt"); return; }
   state.kroegen = data;
   state.codes = maakCodes(data);
+  zetStadKroegen();
   if (kaartNaarStad && data.length) { kaartNaarStad = false; map.jumpTo({ center: stadCentrum(), zoom: STAD.zoom }); }
   koersen();
   kaartBijwerken();
@@ -1123,8 +1131,85 @@ async function laadKroegen() {
 
 // Midden van de stad: de mediaan van de kroegen, zodat losse kroegen in de dorpen eromheen het niet verschuiven
 function stadCentrum() {
-  if (stadNaam === STAD.naam || !state.kroegen.length) return STAD.centrum;
-  return [mediaan(state.kroegen.map((k) => k.lon)), mediaan(state.kroegen.map((k) => k.lat))];
+  if (stadNaam === STAD.naam || !state.stadKroegen.length) return STAD.centrum;
+  return [mediaan(state.stadKroegen.map((k) => k.lon)), mediaan(state.stadKroegen.map((k) => k.lat))];
+}
+
+const zetStadKroegen = () => { state.stadKroegen = state.kroegen.filter((k) => k.gemeente === stadNaam); };
+
+// Grenzen van de steden (view stad_grenzen), om de stad te kiezen die het meest van het scherm vult
+async function laadGrenzen() {
+  const { data } = await sb.from("stad_grenzen").select("gemeente,vlak");
+  state.grenzen = (data ?? []).filter((g) => g.vlak?.coordinates).map((g) => {
+    const polygonen = g.vlak.type === "Polygon" ? [g.vlak.coordinates] : g.vlak.coordinates;
+    const xs = polygonen.flatMap((p) => p[0].map((c) => c[0])), ys = polygonen.flatMap((p) => p[0].map((c) => c[1]));
+    return { gemeente: g.gemeente, polygonen, kader: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] };
+  });
+  stadVolgen();
+}
+
+function inRing([x, y], ring) {
+  let binnen = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) binnen = !binnen;
+  }
+  return binnen;
+}
+const inGrens = (p, g) => p[0] >= g.kader[0] && p[0] <= g.kader[2] && p[1] >= g.kader[1] && p[1] <= g.kader[3]
+  && g.polygonen.some(([buiten, ...gaten]) => inRing(p, buiten) && !gaten.some((r) => inRing(p, r)));
+
+// De stad die het meest van het zichtbare deel van de kaart vult (niet achter het blad): een raster van 12 bij 12
+// punten, elk punt telt voor de stad waarin het ligt. Ligt er geen grens in beeld, dan telt het aantal kroegen in
+// beeld. Bij gelijke stand blijft de huidige stad, zodat de index niet heen en weer springt.
+function stadInBeeld() {
+  if (!kaartKlaar || !state.steden?.length) return null;
+  const kaart = map.getContainer().getBoundingClientRect(), blad = sheet.getBoundingClientRect();
+  let x0 = 0, x1 = kaart.width, y0 = 0, y1 = kaart.height;
+  if (wide()) x0 = Math.max(0, blad.right - kaart.left);
+  else y1 = Math.min(y1, blad.top - kaart.top);
+  if (x1 - x0 < 40 || y1 - y0 < 40) return null;
+  const score = new Map(), N = 12;
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const p = map.unproject([x0 + ((i + 0.5) * (x1 - x0)) / N, y0 + ((j + 0.5) * (y1 - y0)) / N]);
+    const g = (state.grenzen ?? []).find((x) => inGrens([p.lng, p.lat], x));
+    if (g) score.set(g.gemeente, (score.get(g.gemeente) ?? 0) + 1);
+  }
+  if (!score.size) {
+    for (const k of state.kroegen) {
+      const q = map.project([k.lon, k.lat]);
+      if (q.x >= x0 && q.x <= x1 && q.y >= y0 && q.y <= y1) score.set(k.gemeente, (score.get(k.gemeente) ?? 0) + 1);
+    }
+  }
+  let beste = stadNaam, max = score.get(stadNaam) ?? 0;
+  for (const [naam, n] of score) if (n > max && state.steden.some((s) => s.gemeente === naam)) { beste = naam; max = n; }
+  return beste;
+}
+
+// Tijdens het schuiven hoogstens vier keer per seconde kijken welke stad in beeld is, en aan het eind nog een keer
+let volgTijd = 0;
+function stadVolgen(nu = false) {
+  if (!nu && performance.now() - volgTijd < 250) return;
+  volgTijd = performance.now();
+  const naam = stadInBeeld();
+  if (naam && naam !== stadNaam) wisselStad(naam);
+}
+map.on("move", () => stadVolgen());
+map.on("moveend", () => stadVolgen(true));
+
+// Een andere stad in beeld: index, lichtkrant, lijst en Beurs gaan erover, zonder te laden en zonder dat de kaart
+// verspringt (alle kroegen en koersen zijn er al)
+function wisselStad(naam) {
+  stadNaam = naam;
+  try { localStorage.setItem("bierkoers-stad", naam); } catch { /* privévenster */ }
+  state.stad = state.steden?.find((s) => s.gemeente === naam) ?? null;
+  state.wijk = null;
+  state.limiet = 40;
+  zetStadKroegen();
+  koersen();
+  hud();
+  lichtkrant();
+  if (state.selected == null && !state.pagina && !state.tocht && !bezigMetTypen()) draw();
 }
 
 async function laadStad() {
@@ -1135,6 +1220,7 @@ async function laadStad() {
   if (!state.stad && data?.length && stadNaam !== STAD.naam) return kiesStad(STAD.naam);
   hud();
   lichtkrant();
+  stadVolgen(true);
 }
 
 async function laadProfiel() {
@@ -1159,21 +1245,21 @@ async function laadMijn() {
 function hud() {
   const idx = state.koers.index;
   if (guinnessAan()) {
-    const met = state.kroegen.filter((k) => soortIn(k.id));
+    const met = state.stadKroegen.filter((k) => soortIn(k.id));
     const pint = mediaan(met.map((k) => perPint(soortIn(k.id))).filter(Boolean));
-    zetRing(state.kroegen.length ? Math.round((met.length / state.kroegen.length) * 100) : 0,
+    zetRing(state.stadKroegen.length ? Math.round((met.length / state.stadKroegen.length) * 100) : 0,
       `${met.length} ${met.length === 1 ? "kroeg schenkt" : "kroegen schenken"} Guinness`, "Guinness, pint", pint, null);
     return;
   }
   if (state.modus === "mijn") {
-    const totaal = state.kroegen.length, mijn = state.kroegen.filter((k) => state.mijn.has(k.id));
+    const totaal = state.stadKroegen.length, mijn = state.stadKroegen.filter((k) => state.mijn.has(k.id));
     // De bekende prijs van elke kroeg waar je was, ook als hij nog op bevestiging wacht: je ziet je bijdrage meteen
     const eigen = mediaan(mijn.map((k) => prijsPer25(k)).filter(Boolean));
     zetRing(totaal ? Math.round((mijn.length / totaal) * 100) : 0, `${mijn.length} van ${totaal} kroegen bezocht`,
       "Jouw index", eigen, eigen && idx ? eigen - idx.nu : null);
     return;
   }
-  const pct = state.kroegen.length ? Math.round((inKaart() / state.kroegen.length) * 100) : 0;
+  const pct = state.stadKroegen.length ? Math.round((inKaart() / state.stadKroegen.length) * 100) : 0;
   zetRing(pct, `${stadNaam} in kaart`, "Pilsindex", idx?.nu, idx?.delta, idx?.pct);
 }
 
@@ -1205,7 +1291,7 @@ let vernieuwTimer;
 function vernieuw() {
   clearTimeout(vernieuwTimer);
   vernieuwTimer = setTimeout(async () => {
-    await Promise.all([laadKroegen(), laadStad(), laadProfiel().then(laadBerichten), laadAanbod(), laadMijn(), laadKoers()]);
+    await Promise.all([laadKroegen(), laadStad(), laadGrenzen(), laadProfiel().then(laadBerichten), laadAanbod(), laadMijn(), laadKoers()]);
     if (!bezigMetTypen()) draw();
   }, 400);
 }
@@ -1248,7 +1334,7 @@ function kroegVersheid(k) {
 }
 
 // Hoeveel kroegen in kaart zijn: alle kroegen met een prijs in de app, bevestigd, van de menukaart of nog te bevestigen
-const inKaart = (lijst = state.kroegen) => lijst.filter((k) => prijsPer25(k) != null).length;
+const inKaart = (lijst = state.stadKroegen) => lijst.filter((k) => prijsPer25(k) != null).length;
 
 function rowHtml(k) {
   const v = kroegVersheid(k);
@@ -1291,7 +1377,7 @@ function lijstView() {
   const q = state.zoek.trim().toLowerCase();
   // Met een soort gekozen: "Goedkoopst" sorteert op de prijs van die soort; kroegen zonder prijs ervan achteraan
   const prijsVoor = (k) => state.soort ? (perPint(soortIn(k.id)) ?? Infinity) : prijsPer25(k);
-  let rows = zichtbareKroegen()
+  let rows = zichtbareKroegen(state.stadKroegen)
     .filter((k) => state.soort && state.filter === "goedkoop" ? true : f.f(k))
     .filter((k) => !state.wijk || k.wijk === state.wijk)
     .filter((k) => !q || [k.naam, k.wijk, k.adres].some((x) => (x ?? "").toLowerCase().includes(q)));
@@ -1299,7 +1385,7 @@ function lijstView() {
   else if (state.pos) rows.sort((a, b) => afstand(state.pos, [a.lon, a.lat]) - afstand(state.pos, [b.lon, b.lat]));
   // Zonder locatie: eerst de kroegen met een prijs (de lijst is anders vooral "Nog geen prijs"), daarna op naam
   else rows.sort((a, b) => (prijsPer25(a) == null) - (prijsPer25(b) == null));
-  const leeg = state.kroegen.length === 0
+  const leeg = state.stadKroegen.length === 0
     ? `<div class="empty">Nog geen kroegen geladen.<br><span class="small">Een beheerder importeert ze via het tabblad Ik.</span></div>`
     : state.soort ? `<div class="empty">Nog geen kroeg met Guinness gemeld.<br><span class="small">Weet je er een? Meld het bij de kroeg onder "Guinness".</span></div>`
     : state.filter === "controleren" && !q ? `<div class="empty">Niets te controleren.<br><span class="small">Geen meldingen die wachten en geen prijzen van 90 dagen of ouder.</span></div>`
@@ -1323,7 +1409,7 @@ function lijstView() {
 function kiesWijk(naam) {
   state.wijk = naam; state.filter = "alles"; state.limiet = 40;
   setTab("kaart");
-  const ks = state.kroegen.filter((k) => k.wijk === naam);
+  const ks = state.stadKroegen.filter((k) => k.wijk === naam);
   if (ks.length && kaartKlaar) {
     const b = ks.reduce((bb, k) => bb.extend([k.lon, k.lat]), new maplibregl.LngLatBounds([ks[0].lon, ks[0].lat], [ks[0].lon, ks[0].lat]));
     map.fitBounds(b, { padding: wide() ? { left: 440, top: 80, bottom: 40, right: 40 } : { top: 140, bottom: innerHeight * 0.5, left: 30, right: 30 }, maxZoom: 15.5, duration: 700 });
@@ -1669,7 +1755,7 @@ async function beoordeelAanbod(id, oordeel) {
 
 async function laadAanbod() {
   const [{ data: aanbod, error }, soorten] = await Promise.all([
-    sb.from("aanbod_overzicht").select("*").eq("gemeente", stadNaam),
+    sb.from("aanbod_overzicht").select("*"),
     state.biersoorten.length ? { data: state.biersoorten } : sb.from("biersoorten").select("*").order("volgorde"),
   ]);
   // Bestaat de tabel nog niet (migratie nog niet uitgevoerd), dan blijft de app gewoon werken zonder extra's
@@ -2036,7 +2122,7 @@ async function beursView() {
   const s = state.stad ?? { vers: 0, oud: 0, bijdragen_week: 0, spelers_week: 0 };
   // Dezelfde telling als op de kaart en in de lichtkrant: elke kroeg met een prijs (in de Guinness-stand: met een Guinness-prijs)
   const metPrijsIn = (lijst) => guinness ? lijst.filter((k) => punten.has(k.id)).length : inKaart(lijst);
-  const totaal = state.kroegen.length, metPrijs = metPrijsIn(state.kroegen);
+  const totaal = state.stadKroegen.length, metPrijs = metPrijsIn(state.stadKroegen);
   const pct = totaal ? Math.round((metPrijs / totaal) * 100) : 0;
   const MS = [25, 50, 75, 100], next = MS.find((m) => m > pct), nodig = next ? Math.ceil((next / 100) * totaal) - metPrijs : 0;
   const C = 2 * Math.PI * 42;
@@ -2049,7 +2135,7 @@ async function beursView() {
   const verhoogd = jaar.filter((x) => x.c.delta > 0).slice(0, 3);
   const goedkoper = jaar.filter((x) => x.c.delta < 0);
   const vast = prijsvast(punten).slice(0, 3);
-  const metKoers = state.kroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => a.c.nu - b.c.nu);
+  const metKoers = state.stadKroegen.map((k) => ({ k, c: koersVan(k.id, punten) })).filter((x) => x.c).sort((a, b) => a.c.nu - b.c.nu);
   const mover = ({ k, c }, onder, rechts = "") => `<button class="mover" data-kroeg="${k.id}">
       <span class="n">${esc(k.naam)}</span><span class="p">${euro(c.nu)}</span>
       <span class="w">${codeVan(k.id)}${onder ? ` · ${onder}` : ""}</span>${rechts}</button>`;
@@ -2064,7 +2150,7 @@ async function beursView() {
 
   // Wijken als sectoren: de mediaan per wijk naast de index (in de Guinness-stand de Guinness-prijzen)
   const sector = (w) => {
-    const inWijk = state.kroegen.filter((k) => k.wijk === w.naam);
+    const inWijk = state.stadKroegen.filter((k) => k.wijk === w.naam);
     const m = mediaan(inWijk.map((k) => koersVan(k.id, punten)?.nu).filter(Boolean));
     const wi = metPrijsIn(inWijk);
     return `<button type="button" class="sector" data-wijk="${esc(w.naam)}" aria-label="${esc(w.naam)} op de kaart tonen">
@@ -2364,18 +2450,14 @@ function stadKeuzeBlok() {
       `<option value="${esc(s.gemeente)}"${s.gemeente === stadNaam ? " selected" : ""}>${esc(s.gemeente)} (${s.kroegen})</option>`).join("")}</select></div>`;
 }
 
+// Stad kiezen onder Ik: de kaart vliegt erheen
 function kiesStad(naam) {
   if (naam === stadNaam) return;
-  stadNaam = naam;
-  try { localStorage.setItem("bierkoers-stad", naam); } catch { /* privévenster */ }
-  kaartNaarStad = true;
   state.selected = null;
   state.tocht = null;
-  state.kroegen = [];
-  state.koersRuw = [];
-  state.stad = state.steden?.find((s) => s.gemeente === naam) ?? null;
-  vernieuw();
-  draw();
+  wisselStad(naam);
+  if (state.stadKroegen.length) map.flyTo({ center: stadCentrum(), zoom: STAD.zoom, duration: 900 });
+  else { kaartNaarStad = true; vernieuw(); }
 }
 
 // Weergave kiezen: licht, donker of het systeem volgen. Staat boven de taalkeuze.
@@ -2946,7 +3028,7 @@ async function laadBadges() {
 }
 
 function mijnKroegenHtml() {
-  const alle = state.kroegen;
+  const alle = state.stadKroegen;
   const mijn = alle.filter((k) => state.mijn.has(k.id)).map((k) => ({ ...k, ...state.mijn.get(k.id) }));
   const pct = alle.length ? Math.round((mijn.length / alle.length) * 100) : 0;
   const kop = `<h2 style="margin-top:22px">Mijn kroegen</h2>
@@ -3681,7 +3763,7 @@ sb.auth.onAuthStateChange((gebeurtenis, sessie) => {
   const { data } = await sb.auth.getSession();
   // Geen sessie in de browser: misschien wel in de bewaarcookie
   state.sessie = data.session ?? (await bewaar.herstel());
-  await Promise.all([laadKroegen(), laadStad(), laadProfiel().then(laadBerichten), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
+  await Promise.all([laadKroegen(), laadStad(), laadGrenzen(), laadProfiel().then(laadBerichten), laadAanbieders(), laadAanbod(), laadMijn(), laadKoers(), teksten.laad()]);
   sessieBekend = true; // nu weten we of er al een sessie is en of anonieme accounts in Supabase aanstaan
   koersen(); lichtkrant(); hud(); kaartBijwerken();
   draw();

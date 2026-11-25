@@ -828,6 +828,12 @@ await db.exec(`update public.profielen set is_beheerder = false where id = '${E}
 for (let i = 0; i < 9; i++) await als(B, `select public.meld_bug('Nog een bug nummer ${i}')`);
 check('na 10 berichten op een dag is het genoeg (20261122120000_berichten)', /al 10 berichten gestuurd/.test((await als(B, `select public.meld_bug('De elfde bug vandaag')`)).fout ?? ''));
 
+// Grens per stad voor de kaart (20261125100000_stad_grenzen): de wijken samengevoegd, voor iedereen leesbaar
+const grens = await als(null, `select gemeente, vlak from public.stad_grenzen where gemeente = 'Nijmegen'`);
+check('de grens van een stad is een vlak dat de wijken omvat', ['Polygon', 'MultiPolygon'].includes(grens.rows?.[0]?.vlak?.type)
+  && JSON.stringify(grens.rows[0].vlak.coordinates).includes('5.85'), JSON.stringify(grens));
+check('een gemeente zonder wijken heeft geen grens', (await als(null, `select count(*)::int as n from public.stad_grenzen where gemeente = 'Vervangstad'`)).rows?.[0]?.n === 0);
+
 // ---------------------------------------------------------------------------
 // Nieuwe stad aanvragen: elke speler via vraag_stad_aan, alleen beheerders lezen en behandelen
 // ---------------------------------------------------------------------------
