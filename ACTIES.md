@@ -2,6 +2,10 @@
 
 Wat alleen in een dashboard, bij een registrar of op een echte telefoon kan. Hier staat alleen wat nog openstaat; afgeronde punten staan in de geschiedenis van Git. Hoe alles nu is ingesteld, staat onderaan. Algemene installatiestappen: `supabase/README.md`, stap 3.
 
+## Uitrollen
+
+- **Kroeg ontbreekt live zetten.** De migratie `supabase/migrations/20261125150000_kroeg_voorstellen.sql` uitvoeren en de Edge Function `melding-mail` opnieuw uitrollen (kent nu de soort `kroeg`). Koppel de Supabase-connector in Claude (Instellingen, Connectors), dan doet een sessie het. Tot die tijd geeft "Kroeg ontbreekt?" in de app een foutmelding. Daarna de beveiligingsadviezen draaien: `kroeg_voorstellen` heeft, net als `stadsaanvragen`, een leesregel die alleen voor beheerders geldt.
+
 ## Voor de eerste spelers
 
 1. **Inloggen met Google naar productie.** Google Cloud Console, APIs & Services, OAuth consent screen (Branding): Privacy policy `https://bierkoers.nl/privacy`, Application home page `https://bierkoers.nl`; zet bij Audience de status op **In production**. Zolang hij op Testing staat, kunnen alleen testgebruikers met Google inloggen. Een cloudsessie kan dit niet doen of controleren.
