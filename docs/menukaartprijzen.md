@@ -304,3 +304,5 @@ Afgevallen:
 Oude kaarten staan erin met hun eigen datum (Café Baron 2023, Café Ons 2024, Sluyswacht, Café Pieper en Smit & Voogt 2025); ze vallen onder Te controleren. Van de 48 crawlfouten in Amsterdam en 42 in Antwerpen is niets opnieuw geprobeerd met Playwright. Alle tapbieren: `tools/google-kroegen/data/<stad>-tapbieren-2026-11-25.json`.
 
 DeepSeek: ongeveer 2,1 miljoen tokens in en 0,6 miljoen uit, vooral het lezen van Amsterdam (1,7 miljoen in).
+
+**Horecaregister van Amsterdam.** De gemeente publiceert de exploitatievergunningen (`https://api.data.amsterdam.nl/v1/horeca/exploitatievergunning/`, kaart op kaart.amsterdam.nl/horecavergunningen): 4.290 vergunningen, waarvan 895 cafés en 29 nachtzaken, met naam, adres, categorie en locatie, maar zonder website. Van de 602 kroegen uit OpenStreetMap hebben er 433 binnen 30 m een vergunning als café en 45 geen vergunning in de buurt. La Tertulia Coffeeshop is gesloten (`open = false`, `gesloten_door_spelers = true`). 320 cafés en nachtzaken uit het register staan niet in de app; een deel zijn eetcafés en hotelbars.
