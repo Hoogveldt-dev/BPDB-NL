@@ -509,10 +509,12 @@ function deltaHtml(d, { pct = null, pil = false } = {}) {
   return `<span class="delta ${r}${pil ? " pil" : ""}" title="${label}">${KOERS_TAAL[r]} ${tekst}</span>`;
 }
 
-function mediaan(lijst) {
+// Middelste waarde, afgerond op hele centen; voor coördinaten zonder afronden (heel = false)
+function mediaan(lijst, heel = true) {
   if (!lijst.length) return null;
   const s = [...lijst].sort((a, b) => a - b), m = s.length >> 1;
-  return Math.round(s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2);
+  const v = s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  return heel ? Math.round(v) : v;
 }
 
 // Tickercode van vier letters per kroeg ("Café De Hemel" wordt HEME), uniek binnen de stad.
@@ -1132,7 +1134,7 @@ async function laadKroegen() {
 // Midden van de stad: de mediaan van de kroegen, zodat losse kroegen in de dorpen eromheen het niet verschuiven
 function stadCentrum() {
   if (stadNaam === STAD.naam || !state.stadKroegen.length) return STAD.centrum;
-  return [mediaan(state.stadKroegen.map((k) => k.lon)), mediaan(state.stadKroegen.map((k) => k.lat))];
+  return [mediaan(state.stadKroegen.map((k) => k.lon), false), mediaan(state.stadKroegen.map((k) => k.lat), false)];
 }
 
 const zetStadKroegen = () => { state.stadKroegen = state.kroegen.filter((k) => k.gemeente === stadNaam); };
@@ -1189,7 +1191,8 @@ function stadInBeeld() {
 // Tijdens het schuiven hoogstens vier keer per seconde kijken welke stad in beeld is, en aan het eind nog een keer
 let volgTijd = 0;
 function stadVolgen(nu = false) {
-  if (!nu && performance.now() - volgTijd < 250) return;
+  // Eerst naar de bewaarde stad springen (laadKroegen); de kaart begint op de pilotstad
+  if (kaartNaarStad || (!nu && performance.now() - volgTijd < 250)) return;
   volgTijd = performance.now();
   const naam = stadInBeeld();
   if (naam && naam !== stadNaam) wisselStad(naam);
