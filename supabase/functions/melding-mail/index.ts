@@ -1,14 +1,15 @@
 // Mailt via de Infomaniak-mailbox van Bierkoers over een nieuw bericht (soort "bug"), een stadsaanvraag (soort
-// "stad") of een antwoord in een gesprek over een bericht (soort "antwoord"). De app roept deze functie aan nadat
-// de speler of beheerder het deed (meld_bug, vraag_stad_aan of beantwoord_bericht). Wie het deed, volgt uit de
+// "stad"), een antwoord in een gesprek over een bericht (soort "antwoord") of een kroeg die ontbreekt (soort "kroeg").
+// De app roept deze functie aan nadat de speler of beheerder het deed (meld_bug, vraag_stad_aan, beantwoord_bericht
+// of stel_kroeg_voor). Wie het deed, volgt uit de
 // sessie (Authorization), nooit uit het verzoek; elke melding wordt hoogstens een keer gemaild
 // (public.claim_melding_mail).
-// Een bericht, stadsaanvraag of antwoord van een speler gaat naar de beheerder. Een antwoord van de beheerder gaat
+// Een bericht, stadsaanvraag, voorgestelde kroeg of antwoord van een speler gaat naar de beheerder. Een antwoord van de beheerder gaat
 // naar het e-mailadres van de speler die het bericht stuurde; zonder e-mailadres alleen in de app.
 //
 // POST /functions/v1/melding-mail
 // Authorization: Bearer <sessie>
-// { "soort": "bug" | "stad" | "antwoord", "id": <id van de melding of het antwoord> }
+// { "soort": "bug" | "stad" | "antwoord" | "kroeg", "id": <id van de melding of het antwoord> }
 //
 // Instellingen (Edge Functions, Secrets): SMTP_WACHTWOORD is verplicht (apparaatwachtwoord van Infomaniak).
 // Optioneel: SMTP_GEBRUIKER (standaard proost@bierkoers.nl), SMTP_HOST (standaard mail.infomaniak.com) en
@@ -24,7 +25,7 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const TABEL: Record<string, string> = { bug: "bugmeldingen", stad: "stadsaanvragen", antwoord: "bericht_antwoorden" };
+const TABEL: Record<string, string> = { bug: "bugmeldingen", stad: "stadsaanvragen", antwoord: "bericht_antwoorden", kroeg: "kroeg_voorstellen" };
 
 function antwoord(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
