@@ -2913,15 +2913,15 @@ function overView() {
   return `<button class="back" data-sluit-pagina>‹ Terug</button>
     <h2>Over Bierkoers</h2>
     <p>Bierkoers is een kaart met bierprijzen per kroeg, bijgehouden door spelers. Begonnen in Nijmegen.</p>
-    <h3>Het project</h3>
-    <p>Bierkoers is een project van Kjell Hoogveldt.</p>
     <h3>Met dank aan</h3>
     <ul class="list over">
       ${bron("https://guindex.ie", "Guindex", "Houdt de prijs van een pint Guinness in Ierland bij, met prijzen van bezoekers. Het voorbeeld voor Bierkoers.")}
       ${bron("https://divebardb.com", "Divebar Database", "Een kaart van echte kroegen, door en voor liefhebbers. Van hen komt het idee om meteen mee te doen, zonder account.")}
     </ul>
     <h3>Contact</h3>
-    <p><a class="mail" href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a></p>`;
+    <p><a class="mail" href="mailto:proost@bierkoers.nl">proost@bierkoers.nl</a></p>
+    <h3>Het project</h3>
+    <p>Bierkoers is een project van Kjell Hoogveldt.</p>`;
 }
 
 // Beheer: een eigen pagina, bereikbaar via de regel Beheer onder Ik. Bovenaan wat aandacht vraagt (berichten,
