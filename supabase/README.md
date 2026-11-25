@@ -52,6 +52,7 @@ Alles wat in de database en bij Supabase draait, staat in deze map.
 | `kroeg_fotos` | Foto's van de kaart bij een kroeg, los van een prijsmelding. Openbaar leesbaar (zolang `verwijderd_op` leeg is); schrijven alleen via `meld_foto` en `verwijder_foto` (alleen je eigen foto). Een ongepaste foto van een ander verwijdert een beheerder in de SQL Editor, zie ACTIES.md. |
 | `bugmeldingen` | Berichten van spelers (vragen, suggesties, problemen, opmerkingen): tekst, schermgrootte en browser, met de status van het gesprek. De speler leest zijn eigen berichten, een beheerder alles; schrijven alleen via `meld_bug`, `beantwoord_bericht`, `lees_bericht` en `zet_bericht_status`. |
 | `bericht_antwoorden` | Antwoorden in een gesprek over een bericht, van een beheerder of van de speler die het bericht stuurde. Zelfde leesregels als `bugmeldingen`; schrijven alleen via `beantwoord_bericht`. |
+| `stad_kaders` (view) | Rechthoek om de open kroegen per gemeente, zodat de app alleen de steden in beeld laadt. Iedereen leest. |
 | `stad_grenzen` (view) | Vereenvoudigde grens per gemeente (de wijken samengevoegd), voor de stad die het meest van het scherm vult. Iedereen leest. |
 | `gemeenten` | Gemeenten in Nederland en België die spelers kunnen aanvragen, met provincie en een andere naam om op te zoeken (Den Bosch, Luik). Iedereen leest; alleen migraties schrijven. |
 | `stadsaanvragen` | Steden die spelers willen vrijspelen, met gemeentecode en status open, goedgekeurd of afgewezen. Alleen beheerders lezen ze; schrijven alleen via `vraag_stad_aan` en `zet_stadsaanvraag`. |
