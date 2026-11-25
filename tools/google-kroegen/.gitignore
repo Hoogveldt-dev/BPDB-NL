@@ -5,3 +5,4 @@ testset/fotos/
 testset/uitslagen/
 .tesseract/
 nakijken/
+__pycache__/
