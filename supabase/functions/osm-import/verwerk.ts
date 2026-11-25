@@ -31,25 +31,65 @@ export function cafeIsKroeg(t: Record<string, string>): boolean {
 
 const SOORTEN = new Set(["pub", "bar", "biergarten", "cafe", "nightclub"]);
 
+// Gemeenten met een openbaar register van horecavergunningen. Daar telt een café, restaurant of nachtclub uit
+// OpenStreetMap als kroeg als er binnen 40 m een vergunning als café of nachtzaak is met een gelijkende naam
+// (in Amsterdam staan veel bruine cafés in OSM als restaurant of café); een naam als van een koffiezaak telt niet. De query in app/overpass.js haalt voor
+// deze gemeenten ook cafés, restaurants en nachtclubs op (REGISTER_GEMEENTEN).
+export const HORECAREGISTER: Record<string, string> = {
+  // Gemeente Amsterdam: exploitatievergunningen horeca (api.data.amsterdam.nl, CC0)
+  GM0363: "https://api.data.amsterdam.nl/v1/horeca/exploitatievergunning/?_format=json&_pageSize=1000&_fields=zaaknaam,zaakCategorie,statusVergunning,locatie",
+};
+export type Vergunning = { naam: string; lat: number; lon: number };
+
+// Rijen van het register (locatie in WGS84) naar de vergunningen van cafés en nachtzaken
+export function vergunningen(rijen: any[]): Vergunning[] {
+  return rijen
+    .filter((r) => /^(Café|Nachtzaak)$/.test(r.zaakCategorie ?? "") && r.statusVergunning !== "Buiten behandeling" && r.locatie?.coordinates)
+    .map((r) => ({ naam: r.zaaknaam ?? "", lon: r.locatie.coordinates[0], lat: r.locatie.coordinates[1] }));
+}
+
+const kaal = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/\b(grand|eet)?(cafe|caf|bar|restaurant|b\.?v\.?|de|het|the|t)\b/g, "").replace(/[^a-z0-9]/g, "");
+
+export function inRegister(naam: string, lat: number, lon: number, register: Vergunning[]): boolean {
+  const n = kaal(naam);
+  if (n.length < 3) return false;
+  return register.some((v) => {
+    const m = Math.hypot((v.lat - lat) * 111_320, (v.lon - lon) * 111_320 * Math.cos(lat * Math.PI / 180));
+    if (m > 40) return false;
+    const w = kaal(v.naam);
+    return w.length >= 3 && (w.includes(n) || n.includes(w) || w.slice(0, 5) === n.slice(0, 5));
+  });
+}
+
 export type Verwerkt = {
   gevonden: boolean;
   kroegen: { osm_id: string; naam: string; soort: string; adres: string | null; lat: number; lon: number }[];
   cafes: number;
+  uitRegister: number;
   wijken: { type: string; features: unknown[] } | null;
 };
 
 // elementen: het antwoord van de query die de app stuurt (gemeente-relatie zonder tags, kroegen met tags en
-// center, in België ook de deelgemeenten met geometrie)
-export function verwerk(elementen: OsmElement[], gemeente: string, belgie: boolean): Verwerkt {
+// center, in België ook de deelgemeenten met geometrie); register: vergunningen als de gemeente een register heeft
+export function verwerk(elementen: OsmElement[], gemeente: string, belgie: boolean, register?: Vergunning[]): Verwerkt {
   const gevonden = elementen.some((e) => e.type === "relation" && !e.tags);
+  const plek = (e: OsmElement) => ({ lat: (e.lat ?? e.center?.lat)!, lon: (e.lon ?? e.center?.lon)! });
+  const viaRegister = (e: OsmElement) => !!register && ["cafe", "restaurant", "nightclub"].includes(e.tags!.amenity) &&
+    !KOFFIE_NAAM.test(e.tags!.name) && inRegister(e.tags!.name, plek(e).lat, plek(e).lon, register);
+  let uitRegister = 0;
   const kroegen = elementen
-    .filter((e) => SOORTEN.has(e.tags?.amenity ?? "") && e.tags!.name)
-    .filter((e) => e.tags!.amenity !== "cafe" || cafeIsKroeg(e.tags!))
+    .filter((e) => e.tags?.name && (SOORTEN.has(e.tags.amenity ?? "") || e.tags.amenity === "restaurant"))
+    .filter((e) => {
+      const a = e.tags!.amenity;
+      if (register && ["cafe", "restaurant", "nightclub"].includes(a)) return viaRegister(e) && ++uitRegister > 0;
+      return a === "cafe" ? cafeIsKroeg(e.tags!) : a !== "restaurant";
+    })
     .map((e) => {
       const t = e.tags!;
       const straat = [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" ");
       return { osm_id: `${e.type}/${e.id}`, naam: t.name, soort: t.amenity, adres: straat || null,
-        lat: (e.lat ?? e.center?.lat)!, lon: (e.lon ?? e.center?.lon)! };
+        ...plek(e) };
     })
     .filter((k) => Number.isFinite(k.lat) && Number.isFinite(k.lon));
   const wijken = belgie
@@ -65,7 +105,7 @@ export function verwerk(elementen: OsmElement[], gemeente: string, belgie: boole
         .filter((f) => f.geometry),
     }
     : null;
-  return { gevonden, kroegen, cafes: kroegen.filter((k) => k.soort === "cafe").length, wijken };
+  return { gevonden, kroegen, cafes: belgie ? kroegen.filter((k) => k.soort === "cafe").length : 0, uitRegister, wijken };
 }
 
 // Gemeenten met een eigen, officiële wijkindeling: het lokale equivalent van de CBS-wijken. Zonder vermelding hier

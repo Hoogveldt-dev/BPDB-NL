@@ -234,7 +234,8 @@ def merk_van(naam):
     for m in MERKEN:
         if m.lower().split()[0] in naam.lower() and (len(m.split()) == 1 or m.lower() in naam.lower() or m in ("Stella Artois", "Birra Moretti", "Estrella Galicia")):
             return m
-    return re.sub(r"\s*(\(?\d+[,.]?\d*\s*c?l\)?|vaasje|vaas|pils(ener)?|pilsner|\d+[,.]\d%)\s*", " ", naam, flags=re.I).strip() or naam
+    rest = re.sub(r"\(?\d+[,.]?\d*\s*c?l\)?|\b(vaasje|vaas|pilsener|pilsner|pils|tapbier)\b|\d+[,.]\d\s*%", " ", naam, flags=re.I)
+    return " ".join(rest.split()) or "Pils"
 
 
 def datum_ok(j, m, d):
@@ -324,6 +325,7 @@ def stap_datum(stad, map_):
         print(f"  {'GOED' if not fout else 'af  '} {g['kroeg'][:30]:30} € {prijs:.2f}  {g['datum'] or '':10}  {fout or g['datum_bron']}")
         if fout: continue
         host = urllib.parse.urlparse(g["bron"]).netloc.replace("www.", "")
+        if re.search(r"cdn|static|cloudfront|amazonaws|website-files", host): host = g["kroeg"]  # bestand bij een opslagdienst
         omschr = f"Drankkaart {host} ({g['datum_bron'].split(' (')[0]} {g['datum']})" + (", maat aangenomen" if g.get("maat_aangenomen") else "")
         invoer.append({"kroeg_id": g["kroeg_id"], "merk": merk_van(g["gelezen"]["merk"]), "volume_cl": 25, "prijs_cent": round(prijs * 100),
                        "datum": g["datum"], "bron_omschrijving": omschr[:80]})

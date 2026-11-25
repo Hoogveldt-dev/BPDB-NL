@@ -1,8 +1,8 @@
 // Test van de kroegimport: ophalen bij OpenStreetMap in de browser (app/overpass.js), de cafés die als kroeg tellen
 // en het omzetten van grenzen naar wijken (supabase/functions/osm-import/verwerk.ts en grenzen.ts).
 import { multipolygoon } from "../functions/osm-import/grenzen.ts";
-import { LOKALE_WIJKEN, cafeIsKroeg, laatOpen, lokaleWijken, verwerk } from "../functions/osm-import/verwerk.ts";
-import { OVERPASS, haalOsm, osmQuery } from "../../app/overpass.js";
+import { HORECAREGISTER, LOKALE_WIJKEN, cafeIsKroeg, inRegister, laatOpen, lokaleWijken, verwerk, vergunningen } from "../functions/osm-import/verwerk.ts";
+import { OVERPASS, REGISTER_GEMEENTEN, haalOsm, osmQuery } from "../../app/overpass.js";
 
 let goed = 0, fout = 0;
 function check(naam, ok, info = "") {
@@ -70,6 +70,32 @@ check("verwerk: de deelgemeente wordt een wijk van Gent", v.wijken?.features.len
 check("verwerk in Nederland: geen wijken uit OpenStreetMap (die komen van het CBS)", verwerk(elementen, "Nijmegen", false).wijken === null);
 check("verwerk zonder de gemeente-relatie: niet gevonden", verwerk(elementen.slice(1), "Gent", true).gevonden === false);
 
+// Horecaregister (Amsterdam): een café, restaurant of nachtclub telt als er binnen 40 m een vergunning als café of
+// nachtzaak is met een gelijkende naam; pub en bar tellen altijd
+const register = vergunningen([
+  { zaaknaam: "Café Het Paardje B.V.", zaakCategorie: "Café", statusVergunning: "Verleend", locatie: { coordinates: [4.9000, 52.3700] } },
+  { zaaknaam: "Dokzicht", zaakCategorie: "Nachtzaak", statusVergunning: null, locatie: { coordinates: [4.9100, 52.3800] } },
+  { zaaknaam: "Pizzeria Roma", zaakCategorie: "Restaurant", statusVergunning: "Verleend", locatie: { coordinates: [4.9200, 52.3600] } },
+  { zaaknaam: "Oud", zaakCategorie: "Café", statusVergunning: "Buiten behandeling", locatie: { coordinates: [4.93, 52.36] } },
+]);
+check("register: alleen cafés en nachtzaken die niet buiten behandeling zijn", register.map((r) => r.naam).join() === "Café Het Paardje B.V.,Dokzicht", JSON.stringify(register));
+check("register: zelfde naam binnen 40 m", inRegister("Het Paardje", 52.37010, 4.90010, register) && inRegister("Eetcafé Dokzicht", 52.3800, 4.9100, register));
+check("register: niet verder dan 40 m of met een andere naam", !inRegister("Het Paardje", 52.3710, 4.9000, register) && !inRegister("Sushi Zen", 52.3700, 4.9000, register));
+const amsterdam = [
+  { type: "relation", id: 271110 },
+  { type: "node", id: 11, lat: 52.3700, lon: 4.9000, tags: { amenity: "restaurant", name: "Het Paardje" } },
+  { type: "node", id: 12, lat: 52.3800, lon: 4.9100, tags: { amenity: "nightclub", name: "Dokzicht" } },
+  { type: "node", id: 13, lat: 52.3600, lon: 4.9200, tags: { amenity: "restaurant", name: "Pizzeria Roma" } },
+  { type: "node", id: 14, lat: 52.3700, lon: 4.9001, tags: { amenity: "cafe", name: "Coffee Company" } },
+  { type: "node", id: 15, lat: 52.3500, lon: 4.8000, tags: { amenity: "pub", name: "De Druif" } },
+  { type: "node", id: 16, lat: 52.3700, lon: 4.9000, tags: { amenity: "cafe", name: "Paardje Espressobar" } },
+];
+const va = verwerk(amsterdam, "Amsterdam", false, register);
+check("verwerk met register: pub, en restaurant en nachtclub met een vergunning als café", va.kroegen.map((k) => k.naam).join() === "Het Paardje,Dokzicht,De Druif" && va.uitRegister === 2 && va.cafes === 0, JSON.stringify(va));
+check("verwerk zonder register: geen restaurants (een nachtclub telde al)", verwerk(amsterdam, "Utrecht", false).kroegen.map((k) => k.naam).join() === "Dokzicht,De Druif");
+check("Amsterdam heeft een register en de query haalt er cafés en restaurants op", !!HORECAREGISTER.GM0363?.startsWith("https://api.data.amsterdam.nl/") &&
+  REGISTER_GEMEENTEN.includes("GM0363") && osmQuery({ code: "GM0363", naam: "Amsterdam" }).includes("restaurant"));
+
 // Eigen wijkindeling van een stad (Gent: stadswijken van data.stad.gent)
 const vlak = { type: "Polygon", coordinates: [[[3.72, 51.04], [3.73, 51.04], [3.73, 51.05], [3.72, 51.04]]] };
 const gentWijken = lokaleWijken({ features: [
@@ -111,6 +137,9 @@ check("ophalen: na twee rondes een duidelijke fout", /niet bereikbaar/.test(mis 
 n = nep({ status: 200, body: { elements: [] } }, goedAntwoord);
 const weg2 = await haalOsm(gent, { haal: n.haal }).then(() => null, (e) => e.message);
 check("ophalen: gemeente niet gevonden, dan niet opnieuw proberen", weg2 === "Gent niet gevonden in OpenStreetMap" && n.gevraagd.length === 1, weg2);
+
+n = nep({ status: 200, body: { elements: [{ type: "relation", id: 897671 }] } }, goedAntwoord);
+check("ophalen: gemeente zonder een enkele kroeg telt als onvolledig, dan de volgende server", (await haalOsm(gent, { haal: n.haal })).length === 2 && n.gevraagd.length === 2);
 
 console.log(`\n${goed} goed, ${fout} fout`);
 if (fout) process.exit(1);
