@@ -3,6 +3,8 @@
 //
 // De app haalt de gegevens zelf bij OpenStreetMap (app/overpass.js) en stuurt het antwoord van Overpass mee: vanuit
 // Supabase is Overpass niet betrouwbaar bereikbaar. Deze functie verwerkt het (verwerk.ts) en bewaart het.
+// Met een horecaregister van de gemeente (HORECAREGISTER) tellen ook cafés, restaurants en nachtclubs met een
+// vergunning als café of nachtzaak.
 // Wijken: een eigen wijkindeling van de gemeente als die er is (LOKALE_WIJKEN, zoals de stadswijken van Gent),
 // anders in Nederland van het CBS (PDOK) en in België de deelgemeenten uit het antwoord van Overpass.
 //
@@ -11,7 +13,7 @@
 //   { "gemeentecode": "BE44021", "elementen": [ ...elements uit het antwoord van Overpass... ] }
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
-import { LOKALE_WIJKEN, lokaleWijken, verwerk } from "./verwerk.ts";
+import { HORECAREGISTER, LOKALE_WIJKEN, lokaleWijken, verwerk, vergunningen, type Vergunning } from "./verwerk.ts";
 
 const USER_AGENT = "Bierkoers kroegimport (https://bierkoers.nl)";
 const PDOK_WIJKEN = "https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0";
@@ -68,8 +70,23 @@ async function importeer(req: Request): Promise<Response> {
   const gemeente: string = g.naam;
 
   // 3. Verwerken: kroegen (in België met de cafés die op een kroeg lijken) en de Belgische deelgemeenten
-  const v = verwerk(elementen, gemeente, g.land === "BE");
+  // Met een horecaregister (HORECAREGISTER) tellen ook cafés, restaurants en nachtclubs met een vergunning als café
+  let register: Vergunning[] | undefined;
+  if (HORECAREGISTER[g.code]) {
+    const rijen: any[] = [];
+    for (let u: string | undefined = HORECAREGISTER[g.code]; u;) {
+      const res = await fetch(u, { headers: { "User-Agent": USER_AGENT, "Accept-Crs": "EPSG:4326" } });
+      if (!res.ok) return antwoord({ fout: `Het horecaregister van ${gemeente} gaf ${res.status}` }, 502);
+      const d = await res.json();
+      rijen.push(...(Object.values(d._embedded ?? {})[0] as any[] ?? []));
+      u = d._links?.next?.href;
+    }
+    register = vergunningen(rijen);
+  }
+  const v = verwerk(elementen, gemeente, g.land === "BE", register);
   if (!v.gevonden) return antwoord({ fout: `${gemeente} niet gevonden in OpenStreetMap` }, 400);
+  // Zonder kroegen zou importeer_kroegen alle kroegen van de gemeente sluiten: dan is het antwoord onvolledig
+  if (!v.kroegen.length) return antwoord({ fout: `Geen kroegen in het antwoord voor ${gemeente}; er is niets gewijzigd` }, 400);
 
   // 4. Wijken: de eigen indeling van de gemeente, anders in België de deelgemeenten en in Nederland het CBS (PDOK)
   let wijkGeo = v.wijken;
@@ -112,5 +129,5 @@ async function importeer(req: Request): Promise<Response> {
   });
   if (kroegFout) return antwoord({ fout: kroegFout.message }, 500);
 
-  return antwoord({ gemeente, gemeentecode: g.code, wijken, kroegen: aantal, cafes: v.cafes });
+  return antwoord({ gemeente, gemeentecode: g.code, wijken, kroegen: aantal, cafes: v.cafes, uitRegister: v.uitRegister });
 }

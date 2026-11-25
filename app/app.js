@@ -696,7 +696,7 @@ const map = new maplibregl.Map({
   center: STAD.centrum,
   zoom: STAD.zoom,
   // Bronnen van de wijken (de kaart zelf vermeldt OpenStreetMap)
-  attributionControl: { compact: true, customAttribution: "Wijken: CBS, Stad Gent, OpenStreetMap" },
+  attributionControl: { compact: true, customAttribution: "Wijken: CBS, Stad Gent, OpenStreetMap · Kroegen: OpenStreetMap, Gemeente Amsterdam" },
 });
 let kaartKlaar = false;
 
@@ -2871,6 +2871,8 @@ async function importeerStad(welke, knop) {
 
 const importTekst = (d) => d.cafes
   ? `${d.gemeente}: ${d.kroegen} kroegen (waarvan ${d.cafes} cafés) en ${d.wijken} wijken geïmporteerd`
+  : d.uitRegister
+  ? `${d.gemeente}: ${d.kroegen} kroegen (waarvan ${d.uitRegister} uit het horecaregister) en ${d.wijken} wijken geïmporteerd`
   : `${d.gemeente}: ${d.kroegen} kroegen en ${d.wijken} wijken geïmporteerd`;
 
 async function wijsStadAf(knop, stad) {
