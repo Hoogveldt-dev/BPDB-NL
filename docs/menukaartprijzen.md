@@ -10,8 +10,8 @@ Stand van 21 november 2026.
 
 1. **Eigen websites (DAEN).** `osm_id` uit de database, tags per 50 via `https://api.openstreetmap.org/api/0.6/nodes.json?nodes=...` (Overpass geeft vanuit de cloud een time-out). Daarna crawlen op links met menu, kaart, drank, bier, tap of pdf; pdf's met `pdftotext -layout`; WordPress-datums via `/wp-json/wp/v2/media` en `/wp-json/wp/v2/pages`; sites met JavaScript nog een keer met Playwright. Kroegen zonder website in OSM: agents laten zoeken, met weinig opbrengst.
 2. **Foto's in Google Maps (JAN).** `node menufotos.mjs --kroegen <bestand> --extern --sinds 2024-11-01 --max-fotos 150` vanuit `tools/google-kroegen`. Een kroeg tegelijk, 3 seconden pauze; bij een CAPTCHA stopt de run.
-3. **Lezen en nakijken.** Elke prijs zelf op de kaart lezen (pdf-pagina als afbeelding met `pdftoppm`), een geval maken in `tools/google-kroegen/nakijken/<datum>/<id>-<naam>/` met `geval.json`, `uitsnede.jpg` en `foto.jpg`, en de subagent menukaart-controleur per geval laten oordelen. Elke prijs wordt nagekeken, niet alleen een steekproef. Afgekeurd omdat de bron onduidelijk was: verbeter alleen de bron (nooit de prijs) en laat opnieuw beoordelen.
-4. **Regels.** Alleen de goedkoopste pils van de tap in 25 cl, of het woord "vaasje" of "vaas"; geen actieprijs; een datum van de kaart zelf (pdf ModDate, wijzigingsdatum van de pagina, sitemap `lastmod`, of een vaste `Last-Modified`), nooit de dag van kijken; is er een nieuwere kaart die je niet kunt lezen, dan geen prijs. Daarna de vaste controles (€ 2,00 tot € 7,50, hoogstens 30% van de mediaan) en importeren met `select public.importeer_menuprijzen('<json>'::jsonb)` via `execute_sql`. Liever geen prijs dan een verkeerde.
+3. **Lezen en nakijken.** Elke prijs zelf op de kaart lezen (pdf-pagina als afbeelding met `pdftoppm`), een geval maken in `tools/google-kroegen/nakijken/<datum>/<id>-<naam>/` met `geval.json`, `uitsnede.jpg` en `foto.jpg`, en elk geval laten nakijken met `NODE_USE_ENV_PROXY=1 node deepseek-controleur.mjs nakijken/<datum>` (DeepSeek met dezelfde opdracht als de subagent menukaart-controleur; schrijft per geval `oordeel.json`). De Haiku-subagent alleen als DeepSeek niet beschikbaar is: Claude-gebruik is schaars. Elke prijs wordt nagekeken, niet alleen een steekproef. Afgekeurd omdat de bron onduidelijk was: verbeter alleen de bron (nooit de prijs) en laat opnieuw beoordelen.
+4. **Regels.** Alleen de goedkoopste pils van de tap in 25 cl, of het woord "vaasje" of "vaas"; in België ook een pils van het vat zonder maat als de prijs binnen 15% van de Pilsindex van de stad ligt (daar is het kleine glas het pintje van 25 cl; spelers corrigeren het als het niet klopt); geen actieprijs; een datum van de kaart zelf (pdf ModDate, wijzigingsdatum van de pagina, sitemap `lastmod`, of een vaste `Last-Modified`), nooit de dag van kijken; is er een nieuwere kaart die je niet kunt lezen, dan geen prijs. Daarna de vaste controles (€ 2,00 tot € 7,50, hoogstens 30% van de mediaan) en importeren met `select public.importeer_menuprijzen('<json>'::jsonb)` via `execute_sql`. Liever geen prijs dan een verkeerde.
 5. **Verslag.** Zet onderaan dit document wat er is gedaan en gevonden.
 
 Wat nog kan: eigen websites periodiek opnieuw doorzoeken (kaarten veranderen; op 21 november vielen er zes af omdat de maat van het kleine glas ontbrak), en de fotomethode opnieuw draaien als er nieuwe foto's zijn.
@@ -56,7 +56,7 @@ De lezer geeft bij elke prijs ook aan waar de regel op de foto staat (`vak`) en 
 
 Per geval een map met `uitsnede.jpg` (de prijsregel over de hele breedte, met marge en de kop erboven), `foto.jpg` (de hele foto op 1024 px) en `geval.json` (gelezen prijs, oordeel van lezer en kijker, reden). `rijen.json` bevat de prijzen waar beide modellen het eens waren.
 
-Daarna, in Claude Code op de eigen computer:
+Daarna nakijken met DeepSeek: `node deepseek-controleur.mjs nakijken/<datum>` (in een cloudsessie met `NODE_USE_ENV_PROXY=1`). Het script stuurt per geval dezelfde opdracht als de subagent hieronder, met `geval.json`, de uitsnede en de foto, naar DeepSeek en schrijft `oordeel.json`. Op 25 november 2026 gaf het bij alle 11 Gentse gevallen hetzelfde oordeel als de subagent en keurde het twee nagemaakte fouten af (verkeerde prijs, een tripel in plaats van pils). Alleen als DeepSeek niet beschikbaar is, met de subagent in Claude Code:
 
 1. Vraag: "Kijk `tools/google-kroegen/nakijken/<datum>` na met de menukaart-controleur en zet elk antwoord als `oordeel.json` in de map van het geval." De subagent `.claude/agents/menukaart-controleur.md` draait op Haiku, mag alleen lezen, bekijkt eerst de uitsnede en alleen bij twijfel de hele foto, en antwoordt met `{"is_menukaart", "prijs_klopt", "juiste_prijs", "toelichting"}`.
 2. `node verwerk-oordelen.mjs nakijken/<datum>` maakt `nakijken/<datum>/nagekeken.json`: goedgekeurde twijfels erbij, afgekeurde steekproefprijzen eraf, en een rapport met hoe vaak de modellen samen fout zaten. Een andere prijs van de controleur (`juiste_prijs`) importeren we niet: liever geen prijs dan een verkeerde.
@@ -249,3 +249,25 @@ Afgevallen, met reden:
 - **Niet te lezen**: Bar Martine (pdf geeft 403), 19 sites gaven een fout of bestaan niet meer.
 
 Wat nog kan: de kroegen die de agents door het zoekbudget niet konden zoeken opnieuw laten zoeken (in een nieuwe beurt, met minder agents tegelijk), en de JAN-methode zodra de Gentse kroegen een Google Place ID hebben.
+
+### Tweede ronde Gent: DeepSeek leest alle websites (25 november 2026)
+
+- **Zoeken naar websites.** Vijf Haiku-agents zochten met een zoekopdracht per kroeg de eigen website van de 100 kroegen die in de eerste ronde niet aan bod kwamen. Geen enkele gevonden: alle 258 kroegen zonder website in OSM zijn nu gezocht.
+- **Lezen met DeepSeek.** Van de 116 kroegen met een website (109 uit OSM, 7 gevonden door agents) gingen alle opgehaalde pagina's en pdf's naar DeepSeek (`deepseek-flash`, via de proxy van de sessie), met de vraag om alle bieren van het vat met soort, maat, prijs, de letterlijke regel en datumaanwijzingen. 108 kroegen, ongeveer 400.000 tokens in en 180.000 uit. 26 kroegen hebben een drankkaart met tapbieren online.
+- **Alle tapbieren bewaard** in `tools/google-kroegen/data/gent-tapbieren-2026-11-25.json` (21 kroegen, 221 tapbieren, niet nagekeken), om later te beslissen of het goedkoopste bier van het vat als vergelijking meetelt, zoals Dulle Griet Blond (€ 3,60) bij De Dulle Griet, die geen pils van de tap heeft.
+- **Nieuwe regel voor België**: een pils van het vat zonder maat telt als pintje van 25 cl als de prijs binnen 15% van de Pilsindex van de stad ligt (in Gent € 2,72 tot € 3,68). Spelers corrigeren het als het niet klopt. De menukaart-controleur kent de regel (`.claude/agents/menukaart-controleur.md`).
+
+Daarna elke nieuwe kandidaat zelf nagelezen en door de controleur goedgekeurd:
+
+| Kroeg | Pintje (van het vat) | Datum | Bron van de datum |
+|---|---|---|---|
+| Marimain | Stella Artois 25 cl € 3,00 | 2026-11-24 | `Last-Modified` van de startpagina, vast bij herhaald opvragen |
+| St.-Martinus Snooker/Pool | Primus 25 cl € 3,00 | 2026-01-22 | `lastmod` in `sitemap.xml` |
+| ABA-JOUR | Bavik superpils € 3,20, maat aangenomen | 2026-11-15 | pdf (ModDate en bestandsnaam) |
+| Eltòn | Stella Artois € 3,30, maat aangenomen | 2025-05-28 | pdf (ModDate, "Mei 2025") |
+
+Uitslag: Gent van 7 naar 11 kroegen in kaart, Pilsindex € 3,20.
+
+Afgevallen: Artevelde Brouwerij (huispils 25 cl € 3,30, maar niet duidelijk van de tap, en de site vraagt eerst of je ouder dan 18 bent; die vraag beantwoordt een sessie niet), Bar Dada (Vedett 25 cl € 3,70 van de tap, geen datum), Fluoclub (pils zonder maat en niet duidelijk van de tap).
+
+Sinds deze ronde doet DeepSeek het lezen en nakijken; Haiku-agents worden niet meer ingezet, omdat Claude-gebruik schaars is. Zoeken naar websites kan DeepSeek niet (geen zoekfunctie); bij Gent leverde dat met agents ook niets meer op.
