@@ -631,7 +631,7 @@ export const EN = {
   "Kroegen en wijken importeren": "Import pubs and areas",
   "Kroegen ophalen…": "Fetching pubs…",
   "Wijken: CBS, Stad Gent, OpenStreetMap": "Districts: CBS, City of Ghent, OpenStreetMap",
-  "Kroegen: OpenStreetMap, Gemeente Amsterdam": "Pubs: OpenStreetMap, City of Amsterdam",
+  "Wijken: CBS, Stad Gent, OpenStreetMap · Kroegen: OpenStreetMap, Gemeente Amsterdam*": "Districts: CBS, City of Ghent, OpenStreetMap · Pubs: OpenStreetMap, City of Amsterdam*",
   "Opslaan…": "Saving…",
   "Import mislukt:": "Import failed:",
   "Meldingen laden…": "Loading reports…",
