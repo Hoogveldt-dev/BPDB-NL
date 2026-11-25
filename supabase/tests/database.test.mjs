@@ -419,6 +419,11 @@ const KS = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
 const stam = async () => (await als(null, `select gebruiker_id, bijdragen from public.kroeg_stamgast where kroeg_id = ${KS}`)).rows?.[0];
 const bijdr2 = async (kroeg, wie) => (await als(null, `select bijdragen, plek from public.kroeg_bijdragers where kroeg_id = ${kroeg} and gebruiker_id = '${wie}'`)).rows?.[0];
 const bijdr = async (wie) => (await als(null, `select bijdragen, plek from public.kroeg_bijdragers where kroeg_id = ${KS} and gebruiker_id = '${wie}'`)).rows?.[0];
+// Stamgast telt dagen: schuif de geschiedenis van een kroeg een dag terug, alsof de volgende stap een dag later is
+const dagLater = async (kroeg) => {
+  await db.query(`update public.bevestigingen set op = op - interval '1 day' where gebeurtenis_id in (select id from public.gebeurtenissen where kroeg_id = ${kroeg})`);
+  await db.query(`update public.gebeurtenissen set op = op - interval '1 day' where kroeg_id = ${kroeg}`);
+};
 
 // Anna meldt de eerste prijs. Een melder onder 90% heeft twee anderen nodig; tot die er zijn telt niets.
 const s1 = (await als(A, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 300)`)).rows?.[0];
@@ -428,6 +433,7 @@ await klopt(s1.id, C);
 check('bevestigde eigen melding telt', (await bijdr(A))?.bijdragen === 1);
 check('"klopt" op een bevestigde melding telt', (await bijdr(B))?.bijdragen === 1 && (await bijdr(C))?.bijdragen === 1);
 check('een bijdrage is nog geen stamgast', (await stam()) === undefined, JSON.stringify(await stam()));
+await dagLater(KS);
 
 // Bram meldt een wijziging, Anna en Carla bevestigen: Bram, Anna en Carla hebben er allemaal twee
 const s2 = (await als(B, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 310)`)).rows?.[0];
@@ -435,6 +441,7 @@ await klopt(s2.id, C, A);
 check('bij gelijkspel wint wie de stand het eerst bereikte', (await stam())?.gebruiker_id === B && (await stam())?.bijdragen === 2, JSON.stringify(await stam()));
 check('stamgast heeft plek 1', (await bijdr(B))?.plek === 1);
 check('de anderen staan ook op 2 bijdragen', (await bijdr(A))?.bijdragen === 2 && (await bijdr(C))?.bijdragen === 2);
+await dagLater(KS);
 
 // Eva meldt, Anna en Carla bevestigen: die twee hebben er nu drie, Anna bereikte dat het eerst
 const s3 = (await als(E, `select * from public.meld_prijs(${KS}, 'Heineken', 25, 320)`)).rows?.[0];
@@ -459,6 +466,7 @@ const t1 = (await als(D, `select * from public.meld_prijs(${KT}, 'Heineken', 25,
 check('melder boven 90% wacht op een andere speler', t1?.status === 'wacht', JSON.stringify(t1));
 check('melder boven 90%: eigen open melding telt nog niet', (await bijdr2(KT, D)) === undefined);
 check('melder boven 90%: een andere speler is genoeg', (await klopt(t1.id, E)) === 'bevestigd');
+await dagLater(KT);
 const tb = (await als(null, `select gebruiker_id, bijdragen from public.kroeg_bijdragers where kroeg_id = ${KT} order by gebruiker_id`)).rows;
 check('beide spelers hebben een bijdrage', tb?.length === 2 && tb.every((r) => r.bijdragen === 1), JSON.stringify(tb));
 check('geen bijdrage zonder speler', !tb?.some((r) => r.gebruiker_id === null), JSON.stringify(tb));
@@ -467,6 +475,26 @@ const t2 = (await als(D, `select * from public.meld_prijs(${KT}, 'Heineken', 25,
 await klopt(t2.id, E);
 const ts = (await als(null, `select gebruiker_id, bijdragen from public.kroeg_stamgast where kroeg_id = ${KT}`)).rows;
 check('stamgast door eigen meldingen, maar elke melding is door een ander bevestigd', ts?.length === 1 && ts[0].gebruiker_id === D && ts[0].bijdragen === 2, JSON.stringify(ts));
+
+// Een bezoek is een bijdrage: een melding bevestigen en meteen daarna "klopt nog" maakt nog geen stamgast
+const KU = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
+  values ('test/stam3', 'Café Een Bezoek', 'pub', 'SRID=4326;POINT(5.8815 51.8315)') returning id`)).id;
+const stu1 = (await als(D, `select * from public.meld_prijs(${KU}, 'Heineken', 25, 330)`)).rows?.[0];
+await klopt(stu1.id, E);
+await dagLater(KU);
+const stu2 = (await als(D, `select * from public.meld_prijs(${KU}, 'Heineken', 25, 340)`)).rows?.[0];
+check('zelfde dag: melding bevestigd', (await klopt(stu2.id, E)) === 'bevestigd');
+const stu3 = await als(E, `select * from public.klopt_nog(${KU})`);
+check('zelfde dag: klopt nog lukt', !stu3.fout, JSON.stringify(stu3));
+check('twee dagen, waarvan een met bevestigen en klopt nog: twee bijdragen', (await bijdr2(KU, E))?.bijdragen === 2, JSON.stringify(await bijdr2(KU, E)));
+const KW = (await een(`insert into public.kroegen (osm_id, naam, soort, locatie)
+  values ('test/stam4', 'Café Een Dag', 'pub', 'SRID=4326;POINT(5.8817 51.8317)') returning id`)).id;
+const stw1 = (await als(D, `select * from public.meld_prijs(${KW}, 'Heineken', 25, 330)`)).rows?.[0];
+await klopt(stw1.id, E);
+const stw2 = await als(E, `select * from public.klopt_nog(${KW})`);
+check('een dag: klopt nog lukt', !stw2.fout, JSON.stringify(stw2));
+check('bevestigen en klopt nog bij een bezoek telt als een', (await bijdr2(KW, E))?.bijdragen === 1, JSON.stringify(await bijdr2(KW, E)));
+check('na een bezoek nog geen stamgast', (await als(null, `select 1 from public.kroeg_stamgast where kroeg_id = ${KW}`)).rows?.length === 0);
 
 // ---------------------------------------------------------------------------
 // Kaart: een nog niet bevestigde prijs naast de laatst bevestigde
