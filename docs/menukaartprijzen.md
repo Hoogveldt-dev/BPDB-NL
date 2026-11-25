@@ -23,8 +23,8 @@ Voor elke Nederlandse en Belgische gemeente die in de app staat, vanuit een clou
 1. `python3 drankkaarten.py <stad>` in `tools/google-kroegen` (de naam zoals in de app, bijvoorbeeld `Gent` of `Den Haag`). Het script haalt de open kroegen zonder prijs en zonder openstaande melding uit de database, hun websites uit OpenStreetMap, crawlt die (pagina's met menu, kaart, drank, bier, tap of vat, en pdf's), laat DeepSeek per kroeg alle bieren van het vat uitlezen, kiest de kandidaten en maakt per kandidaat een geval in `nakijken/<datum>-<stad>/gevallen/`. Stappen apart: `kroegen`, `crawl`, `lees`, `kies`, `gevallen`. Ken je zelf websites die niet in OSM staan: `--extra websites.json` (`{"<kroeg_id>": "https://..."}`).
 2. Kandidaten (`kandidaten.json`): de goedkoopste pils van het vat in 25 cl (of vaasje/vaas), tussen € 2,00 en € 7,50; in België ook zonder maat als de prijs binnen 15% van de Pilsindex van de stad ligt. Alle tapbieren, ook blond en speciaalbier, staan in `tapbieren.json`, voor later.
 3. Nakijken: `NODE_USE_ENV_PROXY=1 node deepseek-controleur.mjs nakijken/<datum>-<stad>`. Een geval zonder uitsnede (een HTML-pagina) heeft de tekst rond de regel in `geval.json`; bij twijfel een schermafbeelding maken (Playwright) en opnieuw laten nakijken.
-4. Datum per goedgekeurd geval, van de kaart zelf (zie de DAEN-methode hieronder): pdf-datum, datum op de kaart, `modified` uit `/wp-json/wp/v2/pages?slug=<pagina>`, `dateModified`, `lastmod` in `sitemap.xml`, of een `Last-Modified` die bij herhaald opvragen gelijk blijft. Geen datum, geen prijs.
-5. Controle op de mediaan (hoogstens 30% ervan af, zodra de stad er 5 heeft), dan importeren met `select public.importeer_menuprijzen('<json>'::jsonb)` (velden `kroeg_id`, `merk`, `volume_cl`, `prijs_cent`, `datum`, `bron_omschrijving` tot 80 tekens; bij een aangenomen maat staat dat in de omschrijving).
+4. `python3 drankkaarten.py <stad> datum`: per goedgekeurd geval de datum van de kaart zelf, in deze volgorde: een datum in de bestandsnaam, de pdf-datum (`ModDate`, anders `CreationDate`), WordPress `modified` (de pagina zelf, of de voorpagina via `page-id-N`), `dateModified` of `article:modified_time` in de HTML, `lastmod` in de sitemap (ook als de hele site dezelfde datum heeft, behalve als dat vandaag is), en een `Last-Modified` die na drie seconden gelijk blijft. Geen datum, geen prijs. Daarna de vaste controles (€ 2,00 tot € 7,50, hoogstens 30% van de mediaan van de stad zodra er 5 prijzen zijn) en `import.json` in de map van de stad. Kijk de uitvoer na; een `Last-Modified` van vandaag vraag je later nog eens op.
+5. Importeren met `select public.importeer_menuprijzen('<inhoud van import.json>'::jsonb)` (velden `kroeg_id`, `merk`, `volume_cl`, `prijs_cent`, `datum`, `bron_omschrijving` tot 80 tekens; bij een aangenomen maat staat dat in de omschrijving).
 6. Verslag onderaan dit document en `tapbieren.json` naar `tools/google-kroegen/data/<stad>-tapbieren-<datum>.json`.
 
 Proef op 25 november 2026 in Nijmegen: 139 kroegen zonder prijs, 44 met een website, 38 gelezen (ongeveer 190.000 tokens in), 1 kandidaat (Café de Opstand, Pilsner 25 cl € 3,90, pagina gewijzigd 24 november 2026), goedgekeurd en geïmporteerd. De rest van Nijmegen met een website was in eerdere rondes al gedaan.
@@ -284,3 +284,25 @@ Uitslag: Gent van 7 naar 11 kroegen in kaart, Pilsindex € 3,20.
 Afgevallen: Artevelde Brouwerij (huispils 25 cl € 3,30, maar niet duidelijk van de tap, en de site vraagt eerst of je ouder dan 18 bent; die vraag beantwoordt een sessie niet), Bar Dada (Vedett 25 cl € 3,70 van de tap, geen datum), Fluoclub (pils zonder maat en niet duidelijk van de tap).
 
 Sinds deze ronde doet DeepSeek het lezen en nakijken; Haiku-agents worden niet meer ingezet, omdat Claude-gebruik schaars is. Zoeken naar websites kan DeepSeek niet (geen zoekfunctie); bij Gent leverde dat met agents ook niets meer op.
+
+## Helmond, Amsterdam en Antwerpen: import en DeepSeek (25 november 2026)
+
+**Kroegen importeren vanuit een cloudsessie.** Overpass gaf vanuit de sessie vaak een time-out of 504; met een eigen `User-Agent` en om de beurt `maps.mail.ru` en `overpass.private.coffee` lukte het binnen een paar pogingen (dezelfde query als `osmQuery()` in `app/overpass.js`). `overpass-api.de` was vanuit de sessie niet bereikbaar en weigerde verzoeken vanuit Supabase (406). Het antwoord ging naar `osm-import` via een eenmalige Edge Function met een willekeurige sleutel (zoals bij Migratie uitvoeren vanuit een sessie in `supabase/README.md`), die daarna een lege versie werd.
+
+| Stad | Kroegen | Wijken | Met website | Gelezen | Tapbieren | Kandidaten | Geïmporteerd |
+|---|---|---|---|---|---|---|---|
+| Helmond | 18 | 12 | 6 | 5 | 1 kroeg, 9 | 1 | 1 |
+| Antwerpen | 466 (44 cafés) | 10 | 142 | 100 | 18 kroegen, 149 | 17 | 11 |
+| Amsterdam | 602 | 110 | 306 | 258 | 48 kroegen, 544 | 26 | 22 |
+
+Alle kandidaten zijn door DeepSeek nagekeken; de datum komt van de kaart zelf (pdf-datum, datum in de bestandsnaam, WordPress `modified`, `lastmod` in de sitemap of een vaste `Last-Modified`). In Antwerpen kwamen in een tweede ronde zes pilsen zonder maat bij, toen de stad met de eerste vijf prijzen een Pilsindex had (€ 3,10; regel van 15%).
+
+Afgevallen:
+- Antwerpen, geen datum: Café Kamiel, Gilbert, Quinten Matsijs, Kid's Rhythm 'n' Blues Kaffee, New Arena, Poisson Pilote.
+- Amsterdam, geen datum: Side Quest bar, Checkpoint Charlie, Czaar. Afgekeurd: Cantina L'esquina (lager zonder maat).
+
+Oude kaarten staan erin met hun eigen datum (Café Baron 2023, Café Ons 2024, Sluyswacht, Café Pieper en Smit & Voogt 2025); ze vallen onder Te controleren. Van de 48 crawlfouten in Amsterdam en 42 in Antwerpen is niets opnieuw geprobeerd met Playwright. Alle tapbieren: `tools/google-kroegen/data/<stad>-tapbieren-2026-11-25.json`.
+
+DeepSeek: ongeveer 2,1 miljoen tokens in en 0,6 miljoen uit, vooral het lezen van Amsterdam (1,7 miljoen in).
+
+**Horecaregister van Amsterdam.** De gemeente publiceert de exploitatievergunningen (`https://api.data.amsterdam.nl/v1/horeca/exploitatievergunning/`, kaart op kaart.amsterdam.nl/horecavergunningen): 4.290 vergunningen, waarvan 895 cafés en 29 nachtzaken, met naam, adres, categorie en locatie, maar zonder website. Van de 602 kroegen uit OpenStreetMap hebben er 433 binnen 30 m een vergunning als café en 45 geen vergunning in de buurt. La Tertulia Coffeeshop is gesloten (`open = false`, `gesloten_door_spelers = true`). 320 cafés en nachtzaken uit het register staan niet in de app; een deel zijn eetcafés en hotelbars.

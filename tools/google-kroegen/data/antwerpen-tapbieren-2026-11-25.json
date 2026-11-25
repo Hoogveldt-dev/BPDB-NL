@@ -1,0 +1,1843 @@
+{
+ "stad": "Antwerpen",
+ "opgehaald": "2026-11-25",
+ "methode": "eigen websites, gelezen door DeepSeek; niet nagekeken",
+ "kroegen": [
+  {
+   "kroeg_id": 1289,
+   "kroeg": "Baron",
+   "tapbieren": [
+    {
+     "naam": "STELLA 25cl",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.3,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "STELLA 25cl\n3,30",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "STELLA 33cl",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "STELLA 33cl\n4,00",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "HOEGAARDEN",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 3.3,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "HOEGAARDEN\n3,30",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "DE KONINCK",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 3.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "DE KONINCK\n3,60",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "LA CHOUFFE",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "LA CHOUFFE\n4,80",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "KRIEK LIEFMANS",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 3.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "KRIEK LIEFMANS\n3,60",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "KRIEK LIEFMANS 0,0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "KRIEK LIEFMANS 0,0%\n3,80",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "TRIPEL D’ANVERS",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "TRIPEL D’ANVERS\n5,00",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "MAZOUT",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "MAZOUT\n3,50",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "TRIPEL KARMELIET",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "TRIPEL KARMELIET\n5,00",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "JACKS IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 4.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "JACKS IPA\n4,60",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "DUVEL",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.1,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "DUVEL\n5,10",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "VEDETT IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 4.6,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "VEDETT IPA\n4,60",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "VEDETT",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.6,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "VEDETT\n4,60",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "VEDETT 0,0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.6,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "VEDETT 0,0%\n4,60",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "WESTMALLE TRIPPEL",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.1,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "WESTMALLE TRIPPEL\n5,10",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "WESTMALLE TRAPPIST",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 5.1,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "WESTMALLE TRAPPIST\n5,10",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "ORVAL",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "ORVAL\n6,50",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "GEUZE BOON",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.7,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "GEUZE BOON\n4,70",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "TIPSY GOLD",
+     "soort": "cider",
+     "cl": null,
+     "prijs": 5.2,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "TIPSY GOLD\n5,20",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "TIPSY SILVER 0,3%",
+     "soort": "cider",
+     "cl": null,
+     "prijs": 4.2,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "TIPSY SILVER 0,3%\n4,2O",
+     "bron": "https://cafebaron.be/"
+    },
+    {
+     "naam": "STELLA 0,0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "STELLA 0,0%\n3,50",
+     "bron": "https://cafebaron.be/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Wed, 25 Nov 2026 11:02:56 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 1321,
+   "kroeg": "Café Kamiel",
+   "tapbieren": [
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 2.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois\n5,2 % vol - 25 cl\n€ 2,80",
+     "bron": "https://www.cafekamiel.be/menu2305"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.4,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois\n5,2 % vol - 33 cl\n€ 3,40",
+     "bron": "https://www.cafekamiel.be/menu2305"
+    },
+    {
+     "naam": "Seef",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Seef\n6,5 % vol - 33 cl\n€ 4,00",
+     "bron": "https://www.cafekamiel.be/menu2305"
+    },
+    {
+     "naam": "Goose Island IPA",
+     "soort": "ipa",
+     "cl": 33,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Goose Island IPA\n5,9 % vol - 33 cl\n€ 4,00",
+     "bron": "https://www.cafekamiel.be/menu2305"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 4.4,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Tripel Karmeliet\n8,4 % vol - 33 cl\n€ 4,40",
+     "bron": "https://www.cafekamiel.be/menu2305"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Last-Modified: -",
+    "URL-pad: /menu2305",
+    "Geen expliciete datum op de kaart/titel"
+   ]
+  },
+  {
+   "kroeg_id": 1399,
+   "kroeg": "Bar Noord",
+   "tapbieren": [
+    {
+     "naam": "ESTAMINET",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "ESTAMINET\n3,50€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "STEENBRUGGE BLOND",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "STEENBRUGGE BLOND\n4,80€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "STEENBRUGGE BRUIN",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "STEENBRUGGE BRUIN\n4,80€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "DUvel",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "DUvel\n6,50€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "BRUGGE TRIPEL",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "BRUGGE TRIPEL\n5,00€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "RODENBACH",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 4.4,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "RODENBACH\n4,40€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "RODENBACH FRUITAGE",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 4.7,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "RODENBACH FRUITAGE\n4,70€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "CORNET",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.2,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "CORNET\n5,20€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "CORNET SMOKED",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.9,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "CORNET SMOKED\n5,90€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "PERONI",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 5.2,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "PERONI\n5,20€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "SALITOS/ SALITOS ICE/ SALITOS MOJITO",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "SALITOS/ SALITOS ICE/ SALITOS MOJITO\n5,50€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "Somersby Apple Cider",
+     "soort": "cider",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Somersby Apple Cider\n5,00€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "ESTAMINET 0.0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "ESTAMINET 0.0%\n3,50€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "CORNET 0.3%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.2,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "CORNET 0.3%\n5,20€",
+     "bron": "https://barnoord.be/food-drinks/"
+    },
+    {
+     "naam": "Somersby Apple Cider 0.0%",
+     "soort": "cider",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Somersby Apple Cider 0.0%\n5,00€",
+     "bron": "https://barnoord.be/food-drinks/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "vrijdag 26 maart 2027 ... tot en met 3 oktober 2027",
+    "© 2026",
+    "Last-Modified: -",
+    "Food & Drinks 2027 - Bar Noord Antwerpen (titel)",
+    "In 2027 ... Menu bar Noord 2027",
+    "© 2026",
+    "Last-Modified: -",
+    "© 2026",
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 1464,
+   "kroeg": "Billie's Bier Kafétaria",
+   "tapbieren": [
+    {
+     "naam": "Budvar Original",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.2,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "1. (nitro) Budvar Original - Budejovický Budvar (CZ) - abv. 5% - Czech/ Bohemian Pilsner – €3,2/20cl ; €6/44cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Budvar Original",
+     "soort": "pils",
+     "cl": 44,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "1. (nitro) Budvar Original - Budejovický Budvar (CZ) - abv. 5% - Czech/ Bohemian Pilsner – €3,2/20cl ; €6/44cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Lupulus Blond",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 5.2,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "2. Lupulus Blond - Brasserie Lupulus (BE) - abv. 8,5% - Belgian Tripel - €5,2/25cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Amarillo",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 6.8,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "4. Amarillo - La Superbe (FR) - Abv. 6% - Single Hop DDH IPA - €6,8/25cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Black & Tan Bruichladdich BA 2015",
+     "soort": "stout",
+     "cl": 20,
+     "prijs": 10.0,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "5. Black & Tan Bruichladdich BA 2015  - Emelisse (NL) - abv. 10,5% - Bruichladdich Whisky Barrel Aged Stout - €10/20cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Bourbon Barrel Oil of Aphrodite 2021",
+     "soort": "stout",
+     "cl": 20,
+     "prijs": 12.0,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "6. (nitro) Bourbon Barrel Oil of Aphrodite 2021 - Jackie O’s (US) - Abv. 12,1% - Bourbon BA Imperial Stout brewed w/ black walnuts and Belgian candied syrup - €12/20cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Rodenbach Grand Cru",
+     "soort": "bruin",
+     "cl": 33,
+     "prijs": 6.8,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "7. (nitro) Rodenbach Grand Cru – Rodenbach (BE) – abv. 6% - Flemish Red Ale - €6,8/33cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "West Life",
+     "soort": "ipa",
+     "cl": 20,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "8. West Life - Spéciale Belge Brewers (BE) - Abv. 8,2% - WC DIPA w/ Colombus, Citra Cryo, Chinook, Idaho 7 & Simcoe -  €6,2/20cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Looped",
+     "soort": "ipa",
+     "cl": 20,
+     "prijs": 6.8,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "9. Looped - Norm Brewing (BE) - abv. 8% - DDH DIPA w/ Citra, Strata & Nectaron - €6,8/20cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Ton (vat 157)",
+     "soort": "anders",
+     "cl": 20,
+     "prijs": 9.8,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "10.  Ton (vat 157) - Tommie Sjef (NL) - abv. 6,8% - Single barrel wild ale, aged on Foeder n° 157 - €9,8/20cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    },
+    {
+     "naam": "Oude KriekenLambik",
+     "soort": "kriek/fruit",
+     "cl": 20,
+     "prijs": 9.0,
+     "tap": true,
+     "actie": false,
+     "doc": 7,
+     "regel": "11. Oude KriekenLambik – Brouwerij 3 Fonteinen (BE) - Abv. 6,2% - 2 yr old lambic macerated w/ sour cherries (380g/L) - €9/20cl",
+     "bron": "https://billiesbier.be/menu/tapbeersandchangingbottles"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Wed, 25 Nov 2026 14:57:18 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 1469,
+   "kroeg": "Gilbert",
+   "tapbieren": [
+    {
+     "naam": "STELLA \"Boerke\" 25cl",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "STELLA \"Boerke\" 25cl - 5.2% Alc.\n25cl Van het vat\n€ 3,50",
+     "bron": "https://www.gilbertantwerpen.be/Menu-Restaurant"
+    },
+    {
+     "naam": "STELLA 33cl",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "STELLA 33cl - 5.2% Alc.\n33cl Van het vat\n€ 4,50",
+     "bron": "https://www.gilbertantwerpen.be/Menu-Restaurant"
+    },
+    {
+     "naam": "STELLA 50cl",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "STELLA 50cl - 5.2% Alc.\n50cl Bierpul van het vat\n€ 6,50",
+     "bron": "https://www.gilbertantwerpen.be/Menu-Restaurant"
+    },
+    {
+     "naam": "KARMELIET TRIPEL 25cl",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "KARMELIET TRIPEL 25cl - 8% alc.\n25cl Van het vat\n€ 5,50",
+     "bron": "https://www.gilbertantwerpen.be/Menu-Restaurant"
+    },
+    {
+     "naam": "KARMELIET Tripel 33CL",
+     "soort": "tripel",
+     "cl": 33,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "KARMELIET Tripel 33CL - 8% alc.\n33CL Van het vat\n€ 6,50",
+     "bron": "https://www.gilbertantwerpen.be/Menu-Restaurant"
+    },
+    {
+     "naam": "De Koninck Bolleke",
+     "soort": "amber",
+     "cl": 25,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "De Koninck Bolleke Alc.5.2%Vol.\nBolleke van het vat - Antwerpse Stadsbrouwerij, sinds 1833, 25cl, Alc.5.2%Vol.\n€ 4,20",
+     "bron": "https://www.gilbertantwerpen.be/Menu-Restaurant"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: - (geen datum)",
+    "Last-Modified: - (geen datum op de bierkaart)",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten",
+    "Afhaal-/leverkalender toont: wo. 25 nov Gesloten t/m wo. 09 december Gesloten"
+   ]
+  },
+  {
+   "kroeg_id": 1477,
+   "kroeg": "Bar Salon",
+   "tapbieren": [
+    {
+     "naam": "Primus",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Primus 25cl 3",
+     "bron": "https://bar-salon.be/"
+    },
+    {
+     "naam": "Primus",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Primus 33cl 3,7",
+     "bron": "https://bar-salon.be/"
+    },
+    {
+     "naam": "Bolleke",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Bolleke 4",
+     "bron": "https://bar-salon.be/"
+    },
+    {
+     "naam": "IPA Super 8",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "IPA Super 8 25cl 4,2",
+     "bron": "https://bar-salon.be/"
+    },
+    {
+     "naam": "Flandrien",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 5.7,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Flandrien 33cl 5,7",
+     "bron": "https://bar-salon.be/"
+    },
+    {
+     "naam": "Tongerlo Blond",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 4.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Tongerlo Blond 25cl 4,8",
+     "bron": "https://bar-salon.be/"
+    },
+    {
+     "naam": "Rouge",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 4.3,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Rouge 25cl 4,3",
+     "bron": "https://bar-salon.be/"
+    },
+    {
+     "naam": "Seef",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 4.4,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Seef 25cl  4,4",
+     "bron": "https://bar-salon.be/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 1483,
+   "kroeg": "De Zure",
+   "tapbieren": [
+    {
+     "naam": "Stella",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.1,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Stella 25cl 3.1",
+     "bron": "https://cafedezure.be/"
+    },
+    {
+     "naam": "Stella",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Stella 33cl 3.7",
+     "bron": "https://cafedezure.be/"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "La Chouffe 4",
+     "bron": "https://cafedezure.be/"
+    },
+    {
+     "naam": "Tripel D'Anvers",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Tripel D'Anvers 4.5",
+     "bron": "https://cafedezure.be/"
+    },
+    {
+     "naam": "Bolleke",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Bolleke 3.7",
+     "bron": "https://cafedezure.be/"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Guinness 0.25 4.5",
+     "bron": "https://cafedezure.be/"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 8.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Guinness 0.5 8.0",
+     "bron": "https://cafedezure.be/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Fri, 18 Sep 2026 07:59:26 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 1503,
+   "kroeg": "Quinten Matsijs",
+   "tapbieren": [
+    {
+     "naam": "De Koninck Bolleke",
+     "soort": "amber",
+     "cl": 25,
+     "prijs": 2.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "De Koninck Bolleke 25cl 2,60",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "De Koninck Tripel d'Anvers",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "De Koninck Tripel d'Anvers 3,80",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "Maredsous Tripel 10°",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Maredsous Tripel 10° 3,80",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 3.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "La Chouffe 3,60",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "Chouffe N'ice 10°",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Chouffe N'ice 10° 4,50",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "Cherry Chouffe",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Cherry Chouffe 3,80",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "Stella Artois pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 2.4,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Stella Artois pils 25cl 2,40",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "Stella Artois pils",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 2.9,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Stella Artois pils 33cl 2,90",
+     "bron": "https://www.quintenmatsijs.be"
+    },
+    {
+     "naam": "Stella Artois pils",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 4.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Stella Artois pils 50cl 4,60",
+     "bron": "https://www.quintenmatsijs.be"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Gazet van Antwerpen - 4 november 2022"
+   ]
+  },
+  {
+   "kroeg_id": 1520,
+   "kroeg": "Paloma",
+   "tapbieren": [
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois 5.2% – The world’s best premium pils! 3.2",
+     "bron": "http://paloma-antwerp.be/kaart"
+    },
+    {
+     "naam": "Tripel D’Anvers",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Tripel D’Anvers 8% – Subtle combination of spices and sweet notes. Top notch tripel! 5",
+     "bron": "http://paloma-antwerp.be/kaart"
+    },
+    {
+     "naam": "Bolleke De Koninck",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bolleke De Koninck 5.2% – Legendary Antwerp amber colored beer with hints of caramel. 4.2",
+     "bron": "http://paloma-antwerp.be/kaart"
+    },
+    {
+     "naam": "Lupulus Blonde",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Lupulus Blonde  8.5% – Unfiltered strong beer with hints of thyme. 5",
+     "bron": "http://paloma-antwerp.be/kaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 1560,
+   "kroeg": "Kid's Rhythm 'n' Blues Kaffee",
+   "tapbieren": [
+    {
+     "naam": "Affligem",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem – 4,8",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Apple Cider Strongbow",
+     "soort": "cider",
+     "cl": null,
+     "prijs": 4.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Apple Cider Strongbow – 4,9",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Bolleke De Koninck",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bolleke De Koninck – 3,9",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Cristal Alken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 2.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Cristal Alken 0.25cl – 2,9",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Cristal Alken",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Cristal Alken 0.33cl – 3,9",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Cristal Alken",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Cristal Alken 0.50cl – 5,8",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Cristal 0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Cristal 0% – 3",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Guiness",
+     "soort": "stout",
+     "cl": 25,
+     "prijs": 4.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Guiness 0.25cl – 4,9",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Guiness",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 9.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Guiness 0.50cl – 9,8",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Hapkin",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Hapkin – 4,8",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "IPA Langunitas",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 4.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "IPA Langunitas – 4,8",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    },
+    {
+     "naam": "Mort Subite Kriek Lambic",
+     "soort": "kriek/fruit",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Mort Subite Kriek Lambic – 4,5",
+     "bron": "https://www.kidsrhythmnblueskaffee.com/drinks-menu"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: - (geen datum)",
+    "Last-Modified: - (geen datum)"
+   ]
+  },
+  {
+   "kroeg_id": 1690,
+   "kroeg": "New Arena",
+   "tapbieren": [
+    {
+     "naam": "pils 25 cl",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 2.9,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "pils 25 cl € 2,90",
+     "bron": "https://www.newarena.be/Menu-Restaurant"
+    },
+    {
+     "naam": "wissel tap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.7,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "wissel tap € 4,70",
+     "bron": "https://www.newarena.be/Menu-Restaurant"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Koers 10/07/2022; Last-Modified: -",
+    "Koers 10/07/2022; Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 1698,
+   "kroeg": "Cabagine",
+   "tapbieren": [
+    {
+     "naam": "CRISTAL VAN’T VAT",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "CRISTAL VAN’T VAT      3",
+     "bron": "https://cdn.website.dish.co/media/65/bc/10216035/Menu-1.pdf"
+    },
+    {
+     "naam": "HAPKIN VAN’T VAT",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HAPKIN VAN’T VAT       4.5",
+     "bron": "https://cdn.website.dish.co/media/65/bc/10216035/Menu-1.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Last-Modified: Wed, 07 Oct 2026 13:25:04 GMT",
+    "Title: Cabagine_Carte.pdf",
+    "CreationDate: Fri Sep 18 12:20:05 2026 UTC",
+    "ModDate: Fri Sep 18 12:20:05 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 1703,
+   "kroeg": "Borze Café",
+   "tapbieren": [
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois 25 cl / 33 cl € 3,2 / 4,2",
+     "bron": "https://www.borzecafe.be/en/menukaart"
+    },
+    {
+     "naam": "Stella Artois",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois 25 cl / 33 cl € 3,2 / 4,2",
+     "bron": "https://www.borzecafe.be/en/menukaart"
+    },
+    {
+     "naam": "De Koninck",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "De Koninck € 4,2",
+     "bron": "https://www.borzecafe.be/en/menukaart"
+    },
+    {
+     "naam": "Chimay Blonde",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Chimay Blonde € 5,2",
+     "bron": "https://www.borzecafe.be/en/menukaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: - (geen datum)",
+    "Last-Modified: - (geen datum)"
+   ]
+  },
+  {
+   "kroeg_id": 1710,
+   "kroeg": "MoMu Café",
+   "tapbieren": [
+    {
+     "naam": "Stella Artois (5,2%)",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": null,
+     "actie": false,
+     "doc": 3,
+     "regel": "Stella Artois (5,2%)              € 3.50            Stella Artois (5,2%)",
+     "bron": "https://d4r8ypmqnkoz0.cloudfront.net/documents/MoMu_Cafe_Menu_December_2026.pdf"
+    },
+    {
+     "naam": "Stella Artois (0,0%)",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": null,
+     "actie": false,
+     "doc": 3,
+     "regel": "Stella Artois (0,0%)              € 3.50            Stella Artois (0,0%)",
+     "bron": "https://d4r8ypmqnkoz0.cloudfront.net/documents/MoMu_Cafe_Menu_December_2026.pdf"
+    },
+    {
+     "naam": "Duvel (8,5%)",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 3,
+     "regel": "Duvel (8,5%)                      € 5.00                   Duvel (8,5%)",
+     "bron": "https://d4r8ypmqnkoz0.cloudfront.net/documents/MoMu_Cafe_Menu_December_2026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: MoMu_Cafe_Menu_December_2026.pdf; Last-Modified: Wed, 25 Nov 2026 14:49:44 GMT; CreationDate: Wed Nov 25 13:20:52 2026 UTC; ModDate: Wed Nov 25 13:20:52 2026 UTC; PDF Title metadata: MOMUCAFE_MENU_A5_V4_May.indd"
+   ]
+  },
+  {
+   "kroeg_id": 1726,
+   "kroeg": "Cabardouche",
+   "tapbieren": [
+    {
+     "naam": "Blonde Stoot",
+     "soort": "blond",
+     "cl": 33,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Blonde Stoot - Cabardouche - 5% - 33cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Blonde Stoot",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 6.6,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Blonde Stoot - Cabardouche - 5% - 50cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Zenne Pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 2.9,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Zenne Pils - Brasserie de la Senne - 4,9% - 25cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Zenne Pils",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Zenne Pils - Brasserie de la Senne - 4,9% - 33cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Zenne Pils",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 5.7,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Zenne Pils - Brasserie de la Senne - 4,9% - 50cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Saison de Dottignies",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Saison de Dottignies - De Ranke - 5,5% - 25cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Saison de Dottignies",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 5.3,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Saison de Dottignies - De Ranke - 5,5% - 33cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Hotel Reumantiek",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Hotel Reumantiek - Collab Vleesmeester & Spéciale Belge - 6% - 25cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Hotel Reumantiek",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 7.7,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Hotel Reumantiek - Collab Vleesmeester & Spéciale Belge - 6% - 25cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Kamil Sauvage",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 5.6,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Kamil Sauvage - Bieren van Begeerte - 6,5% - 25cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Kamil Sauvage",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 7.3,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Kamil Sauvage - Bieren van Begeerte - 6,5% - 33cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Belle Désir",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Belle Désir - Collab Cabardouche & Bieren van Begeerte - 6% - 25cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Belle Désir",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 7.2,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Belle Désir - Collab Cabardouche & Bieren van Begeerte - 6% - 33cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Westies 4 ever",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 5.3,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Westies 4 ever - Cabardouche collab - 5,5% - 25cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    },
+    {
+     "naam": "Westies 4 ever",
+     "soort": "anders",
+     "cl": 33,
+     "prijs": 6.9,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Westies 4 ever - Cabardouche collab - 5,5% - 33cl",
+     "bron": "https://www.cabardouche.be/taproom"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: - (geen datum bovenaan document)",
+    "Agenda: 28/11 Broeistof (live optreden); 05/12 Skipper (live optreden); 12/12 Warm Winterfeest; 16/12 Meug Higland Park Whisky Tasting; 23/12 I Drove a Tank (live optreden)"
+   ]
+  },
+  {
+   "kroeg_id": 1728,
+   "kroeg": "Bar Nest",
+   "tapbieren": [
+    {
+     "naam": "Bavik pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bavik pils 3.00",
+     "bron": "https://risingyou.be/wp-content/uploads/2026/02/202510-menu-bar-nest.pdf"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "La Chouffe 4.50",
+     "bron": "https://risingyou.be/wp-content/uploads/2026/02/202510-menu-bar-nest.pdf"
+    },
+    {
+     "naam": "Tripel d’Anvers",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Tripel d’Anvers 5.50",
+     "bron": "https://risingyou.be/wp-content/uploads/2026/02/202510-menu-bar-nest.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: 202510-menu-bar-nest.pdf (oktober 2025); PDF CreationDate: Mon Oct 20 06:07:03 2025 UTC; ModDate: Mon Oct 20 06:07:03 2025 UTC; Last-Modified: Tue, 10 Feb 2026 14:22:01 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 1732,
+   "kroeg": "Bar Zorro",
+   "tapbieren": [
+    {
+     "naam": "Stella Artois Boerke",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois Boerke               € 3,5",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Stella Artois Tulpke",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois Tulpke              € 3,5",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Stella Artois Boerke 33cl",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois Boerke 33cl          €4",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Stella Artois Tulpke 33cl",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Stella Artois Tulpke 33cl          €4",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Hoegaarden                         € 4,5",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Kwak Rouge",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Kwak Rouge                         €5",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Bolleke De Koninck",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bolleke De Koninck                 € 4,5",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Tripel Karmeliet                   €5",
+     "bron": "https://www.zorroantwerp.be/s/Zorro-EN-Insert-Menu.pdf"
+    },
+    {
+     "naam": "Stella Artois Boerke",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Stella Artois Boerke              € 3,5",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    },
+    {
+     "naam": "Stella Artois Tulpke",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Stella Artois Tulpke              € 3,5",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    },
+    {
+     "naam": "Stella Artois Boerke 33cl",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Stella Artois Boerke 33cl         €4",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    },
+    {
+     "naam": "Stella Artois Tulpek 33cl",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Stella Artois Tulpek 33cl         €4",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Hoegaarden                        € 4,5",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    },
+    {
+     "naam": "Kwak Rouge",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Kwak Rouge                        €5",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    },
+    {
+     "naam": "Bolleke De Koninck",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Bolleke De Koninck                € 4,5",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Tripel Karmeliet                  €5",
+     "bron": "https://www.zorroantwerp.be/s/Menukaart-Zorro-print-NL.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: - (geen datum)",
+    "CreationDate: Tue Jul 28 12:44:58 2026 UTC; ModDate: Tue Jul 28 12:44:58 2026 UTC",
+    "CreationDate: Fri Jun 5 11:29:42 2026 UTC; ModDate: Fri Jun 5 11:29:42 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 1735,
+   "kroeg": "Poisson Pilote",
+   "tapbieren": [
+    {
+     "naam": "cristal pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 2.9,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "cristal pils 25 cl. — 5 %   2.9",
+     "bron": "https://www.poisson-pilote.be/"
+    },
+    {
+     "naam": "cristal pils",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 3.3,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "cristal pils 33 cl. — 5 %   3.3",
+     "bron": "https://www.poisson-pilote.be/"
+    },
+    {
+     "naam": "jack's ipa",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 4.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "jack's ipa — 5,9 %   4.6",
+     "bron": "https://www.poisson-pilote.be/"
+    },
+    {
+     "naam": "tripel d'anvers",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "tripel d'anvers — 8 %   5",
+     "bron": "https://www.poisson-pilote.be/"
+    },
+    {
+     "naam": "mort subite juicy",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "mort subite juicy — 7,2 %.  5",
+     "bron": "https://www.poisson-pilote.be/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "© 2024 All rights reserved"
+   ]
+  }
+ ]
+}
