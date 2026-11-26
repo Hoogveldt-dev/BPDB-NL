@@ -2476,8 +2476,9 @@ function ikView() {
     ${taalBlok()}
     <details class="uitklap" data-onthoud="gegevens"${uitgeklapt("gegevens")}><summary><span class="uitklap-kop">Jouw gegevens</span></summary>
     <p class="small muted">${anoniem() ? "Je speelt zonder e-mailadres. We bewaren alleen je spelersnaam." : "We bewaren je e-mailadres en je spelersnaam. Andere spelers zien alleen je spelersnaam."}
-      Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p></details>
-    <div class="btns">${anoniem() ? "" : `<button class="btn" data-logout>Uitloggen</button>`}<button class="btn stil" data-verwijder>Account verwijderen</button></div>
+      Je locatie gaat alleen mee als je dat zelf aangeeft, en dan bewaren we alleen de afstand tot de kroeg. Foto's van prijslijsten zijn openbaar, zodat anderen de prijs kunnen nakijken.</p>
+      <p class="gegevens-acties">${state.mijn.size ? `<button type="button" class="linkbtn" data-wis-mijn>Mijn check-ins wissen</button>` : ""}<button type="button" class="linkbtn gevaar" data-verwijder>Account verwijderen</button></p></details>
+    ${anoniem() ? "" : `<div class="btns"><button class="btn" data-logout>Uitloggen</button></div>`}
     ${voetRegel()}`;
 }
 
@@ -3272,8 +3273,7 @@ function mijnKroegenHtml() {
     ${nieuwInBuurt.length ? `<div class="muted small" style="margin-top:4px">Dichtbij en nog niet bezocht</div>
       <ul class="list">${nieuwInBuurt.map(({ k, d }) => `<li><button class="row" data-kroeg="${k.id}"><span class="dot ${kroegVersheid(k)}"></span>
         <span class="row-main"><span class="row-title">${esc(k.naam)}</span><span class="row-sub">${meters(d)}${k.wijk ? ` · ${esc(k.wijk)}` : ""}</span></span>
-        ${k.per25_cent ? `<span class="price">${spelPrijs(k)}<small>per vaasje</small></span>` : ""}</button></li>`).join("")}</ul>` : ""}
-    <div class="btns"><button class="btn" data-wis-mijn>Mijn check-ins wissen</button></div>`;
+        ${k.per25_cent ? `<span class="price">${spelPrijs(k)}<small>per vaasje</small></span>` : ""}</button></li>`).join("")}</ul>` : ""}`;
 }
 
 // Kroegentocht: een route langs de goedkoopste kroegen of langs kroegen waar je nog niet was.
