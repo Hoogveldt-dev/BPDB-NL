@@ -4,6 +4,70 @@
  "methode": "eigen websites, gelezen door DeepSeek; niet nagekeken",
  "kroegen": [
   {
+   "kroeg_id": 3347,
+   "kroeg": "Dok 19 Breda",
+   "tapbieren": [
+    {
+     "naam": "Guinness Draught stout",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 7.95,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Guinness Draught stout 7.95\n50cl | St. James Gate | 4,2% | IE",
+     "bron": "https://dok19.nl/biercafe/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 3372,
+   "kroeg": "Le Petit",
+   "tapbieren": [
+    {
+     "naam": "Jupiler",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Jupiler\n3,50",
+     "bron": "https://www.barlepetit.nl/"
+    },
+    {
+     "naam": "Hertog Jan",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.6,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Hertog Jan\n3,60",
+     "bron": "https://www.barlepetit.nl/"
+    },
+    {
+     "naam": "Jupiler 0.0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Jupiler 0.0%\n3,50",
+     "bron": "https://www.barlepetit.nl/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Wed, 13 May 2026 19:43:44 GMT",
+    "zaterdag 31 augustus 2024"
+   ]
+  },
+  {
    "kroeg_id": 3402,
    "kroeg": "Boerke Verschuren",
    "tapbieren": [
@@ -32,7 +96,7 @@
     {
      "naam": "Fluitje",
      "soort": "pils",
-     "cl": 20,
+     "cl": null,
      "prijs": 3.3,
      "tap": true,
      "actie": false,
@@ -42,7 +106,7 @@
     },
     {
      "naam": "Waterzakje",
-     "soort": "pils",
+     "soort": "anders",
      "cl": null,
      "prijs": 3.7,
      "tap": true,
@@ -143,8 +207,7 @@
    "datum_aanwijzingen": [
     "Last-Modified: Tue, 09 Apr 2024 18:02:48 GMT",
     "Title: 2024 Boerkes Hardlopers Neutkaart_v3.indd",
-    "CreationDate: Fri Mar  1 07:38:23 2024 UTC",
-    "ModDate: Fri Mar  1 07:38:25 2024 UTC"
+    "CreationDate: Fri Mar 1 07:38:23 2024 UTC; ModDate: Fri Mar 1 07:38:25 2024 UTC"
    ]
   },
   {
@@ -154,12 +217,12 @@
     {
      "naam": "Brand Pilsener",
      "soort": "pils",
-     "cl": null,
+     "cl": 20,
      "prijs": 3.25,
      "tap": true,
      "actie": false,
      "doc": 2,
-     "regel": "Brand Pilsener van de tap / € 3,25 / fluitje",
+     "regel": "Brand Pilsener van de tap € 3,25 fluitje",
      "bron": "https://dorpsherbergteteringen.nl/menu/"
     },
     {
@@ -170,7 +233,7 @@
      "tap": true,
      "actie": false,
      "doc": 2,
-     "regel": "Speciaal bieren van de tap / € 4,90 / Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
+     "regel": "Speciaal bieren van de tap € 4,90 Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
      "bron": "https://dorpsherbergteteringen.nl/menu/"
     },
     {
@@ -181,7 +244,7 @@
      "tap": true,
      "actie": false,
      "doc": 2,
-     "regel": "Speciaal bieren van de tap / € 4,90 / Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
+     "regel": "Speciaal bieren van de tap € 4,90 Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
      "bron": "https://dorpsherbergteteringen.nl/menu/"
     },
     {
@@ -192,7 +255,7 @@
      "tap": true,
      "actie": false,
      "doc": 2,
-     "regel": "Speciaal bieren van de tap / € 4,90 / Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
+     "regel": "Speciaal bieren van de tap € 4,90 Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
      "bron": "https://dorpsherbergteteringen.nl/menu/"
     }
    ],
@@ -230,9 +293,837 @@
    ],
    "datum_aanwijzingen": [
     "© 2026 Bar Santé — Breda",
-    "Last-Modified: -",
-    "© 2026 Bar Santé — Breda",
-    "Last-Modified: -"
+    "© 2026 Bar Santé — Breda"
+   ]
+  },
+  {
+   "kroeg_id": 3536,
+   "kroeg": "Aogse Markt",
+   "tapbieren": [
+    {
+     "naam": "Brand Pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Brand Pils € 3,80 5% alc. I 25 cl.",
+     "bron": "https://aogsemarkt.nl/bierlokaal/drankenkaart/"
+    },
+    {
+     "naam": "Brand Pils",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.7,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Brand Pils € 7,70 5% alc. I 50 cl.",
+     "bron": "https://aogsemarkt.nl/bierlokaal/drankenkaart/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© Copyright Aogse Markt 2025.",
+    "© Copyright Aogse Markt 2025.",
+    "Last-Modified: Thu, 15 Oct 2020 14:16:19 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 3543,
+   "kroeg": "Brasserie 't Archief",
+   "tapbieren": [
+    {
+     "naam": "Hertog Jan pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Hertog Jan pilsener\n€ 3,00",
+     "bron": "https://www.brasserie-archief.nl/drankkaart"
+    },
+    {
+     "naam": "Hertog Jan middel",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.65,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Hertog Jan middel\n€ 3,65",
+     "bron": "https://www.brasserie-archief.nl/drankkaart"
+    },
+    {
+     "naam": "Leffe blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.35,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Leffe blond\n€ 5,35",
+     "bron": "https://www.brasserie-archief.nl/drankkaart"
+    },
+    {
+     "naam": "Leffe bruin",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 5.35,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Leffe bruin\n€ 5,35",
+     "bron": "https://www.brasserie-archief.nl/drankkaart"
+    },
+    {
+     "naam": "Hertog Jan Weizener 0.3l",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Hertog Jan Weizener 0.3l\n€ 5,50",
+     "bron": "https://www.brasserie-archief.nl/drankkaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2025 Brasserie 't Archief (footer); geen expliciete kaartdatum of Last-Modified opgegeven.",
+    "Last-Modified: Mon, 23 Nov 2026 13:25:16 GMT (D7 is een afbeelding, geen drankkaart)."
+   ]
+  },
+  {
+   "kroeg_id": 3555,
+   "kroeg": "Café Noir",
+   "tapbieren": [
+    {
+     "naam": "Jupiler",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Jupiler 0,2, 0,25 of 0,5 va. 3.8",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "Hertog Jan",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Hertog Jan 0,2, 0,25 of 0,5 va. 4.2",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "Franziskaner Hefe-Weissbier",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Franziskaner Hefe-Weissbier 0,3 5.8",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "Franziskaner Hefe-Weissbier",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 8.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Franziskaner Hefe-Weissbier 0,5 8.8",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.3,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Leffe Blond 6.3",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "Hoegaarden Wit",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Hoegaarden Wit 6.1",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "De Koninck",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "De Koninck 6",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "Wisseltap Brouwerij ‘T IJ",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Wisseltap Brouwerij ‘T IJ va. 6.2",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.6,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Tripel Karmeliet 6.6",
+     "bron": "https://cafenoirbreda.nl/wp-content/uploads/2026/05/Noir_Drankkaart_Mei-2026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: Noir_Drankkaart_Mei-2026.pdf (mei 2026)",
+    "Last-Modified: Wed, 13 May 2026 07:50:08 GMT",
+    "CreationDate: Tue Apr 28 10:32:42 2026 UTC",
+    "ModDate: Tue Apr 28 10:32:42 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3561,
+   "kroeg": "De Botanist - Bar & Kitchen",
+   "tapbieren": [
+    {
+     "naam": "Brand Pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.1,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Pilsener 4.6% 4.1",
+     "bron": "https://debotanistbreda.nl/wp-content/uploads/2022/11/De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem Blond 6.8% 5.9",
+     "bron": "https://debotanistbreda.nl/wp-content/uploads/2022/11/De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Texels Skuumkoppe 6.0% 5.8",
+     "bron": "https://debotanistbreda.nl/wp-content/uploads/2022/11/De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf"
+    },
+    {
+     "naam": "Texels Skiller Wit",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Texels Skiller Wit 5.0% 5.8",
+     "bron": "https://debotanistbreda.nl/wp-content/uploads/2022/11/De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf"
+    },
+    {
+     "naam": "Oedipus Mannenliefde Saison",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Oedipus Mannenliefde Saison 5.0% 5.9",
+     "bron": "https://debotanistbreda.nl/wp-content/uploads/2022/11/De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf"
+    },
+    {
+     "naam": "Oedipus Pais Tropical IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Oedipus Pais Tropical IPA 6.0% 6.0",
+     "bron": "https://debotanistbreda.nl/wp-content/uploads/2022/11/De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf"
+    },
+    {
+     "naam": "Bier van het moment",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bier van het moment 6.0",
+     "bron": "https://debotanistbreda.nl/wp-content/uploads/2022/11/De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 26 Nov 2026 10:30:36 GMT",
+    "© De Botanist Breda – 2022",
+    "Last-Modified: Fri, 16 Oct 2026 11:08:48 GMT",
+    "Titel: De Botanist Breda - Menukaart najaar 2026 - 05-10-2026",
+    "Bestandsnaam: De-Botanist-Breda-Menukaart-najaar-2026-05-10-2026.pdf",
+    "CreationDate: Fri Oct 9 15:52:55 2026 UTC; ModDate: Fri Oct 9 15:52:55 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3566,
+   "kroeg": "Elsakker",
+   "tapbieren": [
+    {
+     "naam": "Hertog Jan",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Hertog Jan 5,1% 3,50",
+     "bron": "https://elsakker.com/wp-content/uploads/2026/10/0003-scaled.jpg"
+    },
+    {
+     "naam": "Kwaremont",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Kwaremont 6,6% 5,50",
+     "bron": "https://elsakker.com/wp-content/uploads/2026/10/0003-scaled.jpg"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Leffe Blond 6,6% 5,50",
+     "bron": "https://elsakker.com/wp-content/uploads/2026/10/0003-scaled.jpg"
+    },
+    {
+     "naam": "Westmalle Dubbel",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Westmalle Dubbel 7,0% 5,50",
+     "bron": "https://elsakker.com/wp-content/uploads/2026/10/0003-scaled.jpg"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 08 Oct 2026 11:58:34 GMT; bestandspad /2026/10/0003-scaled.jpg",
+    "Last-Modified: Thu, 08 Oct 2026 11:58:43 GMT; bestandspad /2026/10/0002-scaled.jpg"
+   ]
+  },
+  {
+   "kroeg_id": 3576,
+   "kroeg": "LOLO Pizzabar Ginnekenmarkt (AVPN certified)",
+   "tapbieren": [
+    {
+     "naam": "PERONI",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.1,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "PERONI 25CL € 4.10",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    },
+    {
+     "naam": "PERONI",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 8.0,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "PERONI 0.5L € 8.00",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    },
+    {
+     "naam": "GROLSCH WEIZEN",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.85,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "GROLSCH WEIZEN 0.3L € 5.85",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    },
+    {
+     "naam": "GROLSCH WEIZEN",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "GROLSCH WEIZEN 0.5L € 9.50",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    },
+    {
+     "naam": "WITBIER",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "WITBIER € 5.75",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    },
+    {
+     "naam": "GRIMBERGEN BLOND",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "GRIMBERGEN BLOND € 5.75",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    },
+    {
+     "naam": "PERONI 0.0",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 3.75,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "PERONI 0.0 € 3.75",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    },
+    {
+     "naam": "GROLSCH WEIZEN 0.0",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": null,
+     "actie": false,
+     "doc": 4,
+     "regel": "GROLSCH WEIZEN 0.0 € 5.00",
+     "bron": "https://lolobreda.nl/wp-content/uploads/2026/10/Menu-Ginneken-restaurant-07-01-4-1086x1536.png"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 26 Nov 2026 13:09:59 GMT",
+    "Last-Modified: Thu, 26 Nov 2026 12:26:06 GMT",
+    "Last-Modified: Sat, 17 Oct 2026 19:42:38 GMT",
+    "Last-Modified: Sat, 17 Oct 2026 19:42:38 GMT",
+    "Last-Modified: Thu, 26 Nov 2026 04:36:22 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 3577,
+   "kroeg": "New Maddox",
+   "tapbieren": [
+    {
+     "naam": "Hertog Jan",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Hertog Jan 5,1% 4,10 8,20",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "Hertog Jan",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 8.2,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Hertog Jan 5,1% 4,10 8,20",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "Hertog Jan Bock*",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 6.3,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Hertog Jan Bock* 6,5% 6,30",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "Guinness",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 7.3,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Guinness 4,2% 7,30",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 6.3,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Leffe Blond 6,6% 6,30",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 6.4,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "La Chouffe 8% 6,40",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "Tripel Karmeliet",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 6.6,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Tripel Karmeliet 8,4% 6,60",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "Franziskaner Hefe-Weissbier",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.9,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Franziskaner Hefe-Weissbier 5% 5,90 9,20",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    },
+    {
+     "naam": "Franziskaner Hefe-Weissbier",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.2,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Franziskaner Hefe-Weissbier 5% 5,90 9,20",
+     "bron": "https://maddoxbreda.nl/wp-content/uploads/2026/10/Maddox-Drankaart-Oktober-2026.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam/titel: Maddox-Drankaart-Oktober-2026.pdf (oktober 2026)",
+    "Last-Modified: Mon, 05 Oct 2026 15:30:13 GMT",
+    "CreationDate: Mon Oct 5 12:34:08 2026 UTC",
+    "ModDate: Mon Oct 5 12:34:09 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3579,
+   "kroeg": "Post",
+   "tapbieren": [
+    {
+     "naam": "Post Pils 18 cl",
+     "soort": "pils",
+     "cl": 18,
+     "prijs": 2.5,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Post Pils 18 cl € 2,50",
+     "bron": "https://restaurantpostbreda.nl/"
+    },
+    {
+     "naam": "Post Pils 25 cl",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 2.9,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Post Pils 25 cl € 2,90",
+     "bron": "https://restaurantpostbreda.nl/"
+    },
+    {
+     "naam": "Post Blond",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Post Blond € 4,00 25 cl",
+     "bron": "https://restaurantpostbreda.nl/"
+    },
+    {
+     "naam": "IJwit",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "IJwit € 4,00 25 cl",
+     "bron": "https://restaurantpostbreda.nl/"
+    },
+    {
+     "naam": "Wisseltap",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 4.0,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Wisseltap € 4,00 25 cl",
+     "bron": "https://restaurantpostbreda.nl/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: - (geen datum)"
+   ]
+  },
+  {
+   "kroeg_id": 3591,
+   "kroeg": "The 25 - Social Gaming Bar Breda",
+   "tapbieren": [
+    {
+     "naam": "BUDWEISER",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "BUDWEISER                                        3.9",
+     "bron": "https://www.the25.nl/_files/ugd/222124_097a55202a8b4a8c8967d2ee642026b9.pdf"
+    },
+    {
+     "naam": "HERTOG JAN WEIZENER · KLEIN",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "HERTOG JAN WEIZENER · KLEIN                      6.5",
+     "bron": "https://www.the25.nl/_files/ugd/222124_097a55202a8b4a8c8967d2ee642026b9.pdf"
+    },
+    {
+     "naam": "HERTOG JAN WEIZENER · GROOT",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 8.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "HERTOG JAN WEIZENER · GROOT                      8.5",
+     "bron": "https://www.the25.nl/_files/ugd/222124_097a55202a8b4a8c8967d2ee642026b9.pdf"
+    },
+    {
+     "naam": "LEFFE BLOND",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "LEFFE BLOND                                      6.5",
+     "bron": "https://www.the25.nl/_files/ugd/222124_097a55202a8b4a8c8967d2ee642026b9.pdf"
+    },
+    {
+     "naam": "GOOSE ISLAND IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "GOOSE ISLAND IPA                                 6.5",
+     "bron": "https://www.the25.nl/_files/ugd/222124_097a55202a8b4a8c8967d2ee642026b9.pdf"
+    },
+    {
+     "naam": "TRIPEL KARMELIET",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "TRIPEL KARMELIET                                6.5",
+     "bron": "https://www.the25.nl/_files/ugd/222124_097a55202a8b4a8c8967d2ee642026b9.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -; © 2026 by The 25 Social Gaming Bar; WE OPENEN BINNENKORT!",
+    "Last-Modified: -; © 2026 by The 25 Social Gaming Bar",
+    "PDF CreationDate: Thu Nov 19 09:00:22 2026 UTC; ModDate: Thu Nov 19 09:00:22 2026 UTC; Last-Modified: Thu, 26 Nov 2026 08:55:47 GMT",
+    "Last-Modified: Sat, 26 Sep 2026 08:13:08 GMT; afbeelding is logo"
+   ]
+  },
+  {
+   "kroeg_id": 3592,
+   "kroeg": "The Bar Next Door",
+   "tapbieren": [
+    {
+     "naam": "HERTOG JAN PILSENER",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 4.1,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HERTOG JAN PILSENER                  25CL        5.1         4,1",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "HERTOG JAN PILSENER",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HERTOG JAN PILSENER                  50CL        5.1         7,9",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "HERTOG JAN WEIZENER",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 4.7,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HERTOG JAN WEIZENER                  25CL        5.7         4,7",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "HERTOG JAN WEIZENER",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "HERTOG JAN WEIZENER                  50CL        5.7           9",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "LEFFE RUBY",
+     "soort": "kriek/fruit",
+     "cl": 25,
+     "prijs": 5.7,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "LEFFE RUBY                           25CL        5.0         5,7",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "GOOSE ISLAND IPA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "GOOSE ISLAND IPA                     25CL        5.9           5",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "GOOSE ISLAND IPA",
+     "soort": "ipa",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "GOOSE ISLAND IPA                     50CL        5.9         9,5",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "GUINNESS",
+     "soort": "stout",
+     "cl": 25,
+     "prijs": 4.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "GUINNESS                             25CL        5.5         4,2",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "GUINNESS",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 7.3,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "GUINNESS                             50CL        5.5         7,3",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    },
+    {
+     "naam": "SEASONAL TAP - ASK OUR STAFF ABOUT THIS SEASON",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "SEASONAL TAP - ASK OUR STAFF ABOUT THIS SEASON          FROM 4,9",
+     "bron": "https://www.thebar-nextdoor.nl/wp-content/uploads/2026/10/DrankkaartOnline_WEB_TBND_v2026-10-1.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam/titel: DrankkaartOnline_WEB_TBND_v2026-10.pdf (v2026-10)",
+    "Last-Modified: Fri, 23 Oct 2026 14:53:13 GMT",
+    "CreationDate: Fri Oct 23 13:58:09 2026 UTC; ModDate: Fri Oct 23 13:58:09 2026 UTC",
+    "© 2026 The Bar Next Door; opgericht in 2025"
    ]
   }
  ]

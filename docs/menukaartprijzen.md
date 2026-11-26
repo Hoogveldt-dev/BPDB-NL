@@ -321,3 +321,16 @@ Houten is eerst uit OpenStreetMap geïmporteerd (`importeer-stad.sh GM0321`). OS
 - Breda: 101 kroegen zonder prijs, 64 met een website, 52 gelezen (ongeveer 178.000 tokens in en 57.000 uit). Maar 3 kroegen noemen tapbieren met een prijs en geen daarvan een pils met maat. Boerke Verschuren noemt Jupiler € 3,70 zonder maat, naast een fluitje en een halve liter; in Nederland telt een pils zonder maat niet.
 
 Crawlfouten (6 in Utrecht, 12 in Breda) zijn niet opnieuw geprobeerd met Playwright. Alle tapbieren: `tools/google-kroegen/data/<stad>-tapbieren-2026-11-26.json`.
+
+**Tweede ronde, dezelfde dag.** Zes prijzen in Utrecht en geen in Breda was te weinig. Wat er veranderde:
+
+- Kroegen uit Google Maps (`cli.mjs`, alleen zekerheid `hoog`): Houten van 1 naar 6 kroegen, Utrecht 109 en Breda 64 kroegen erbij. `cli.mjs` bewaart nu ook de website, en `drankkaarten.py` gebruikt die als OSM er geen heeft.
+- De crawler laadt een pagina met weinig tekst opnieuw met Playwright (`render.mjs`), en stuurt afbeeldingen van de kaart als beeld naar DeepSeek. Datum van een afbeelding: EXIF, of de uploadmap van WordPress.
+- Pils van het vat zonder maat telt ook in Nederland als vaasje, als het het gewone glas is (zie Werkwijze in het kort, Regels). Een fluitje of halve liter zonder getal herkent het script aan de naam.
+- Lent (Nijmegen) nagelopen met extra zoektermen (eetcafé, brasserie, proeflokaal, tapperij): Sound & Soul ontbrak, en elders in Nijmegen De Dromaai, Kemps en Kamsma, Klinkklaar en Villa Voorstad.
+
+Opbrengst van de websites: Utrecht 14 prijzen erbij, Breda 9 (onder meer Boerke Verschuren, Jupiler € 3,70 met aangenomen maat), Houten 1 (Brother Louie). Afgevallen zonder datum: Klein Berlijn, Café Kanaalzicht, Stadsbrouwerij RoodNoot, Flore (Utrecht) en Heren van Houten.
+
+Daarna de foto's in Google Maps (`menufotos.mjs --extern`, in brokken van 15 kroegen) voor 303 kroegen zonder prijs: Breda 3 prijzen (De Beyerd, Red Sea Café, Sojubar), Utrecht 2 (Kaasbar, Teds), Houten geen. Kafé België (Jupiler € 2,50 op een krijtbord) is goedgekeurd door de controleur maar valt buiten 30% van de mediaan en is niet geïmporteerd. Geen CAPTCHA.
+
+Stand: Utrecht 22 menukaartprijzen, Breda 12, Houten 1. DeepSeek: ongeveer 2,2 miljoen tokens in en 0,6 miljoen uit voor beide rondes samen, ongeveer $ 0,60.
