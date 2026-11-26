@@ -237,6 +237,11 @@ def kies_zonder_maat(pils, index, belgie):
     """Pils van het vat zonder maat als 25 cl, als het het gewone glas is: er staat maar een prijs zonder maat bij dat bier
     en (a) de kaart noemt het kleinere glas (fluitje) en/of een groter glas apart, met de prijs ertussen, of (b) de prijs ligt
     binnen 15% van de Pilsindex van de stad (zonder index in de stad: van het land). In Belgie is dat glas het pintje."""
+    for x in pils:  # de lezer vergeet soms de maat bij een glas met een eigen naam
+        if x.get("cl") is None:
+            t = f"{x.get('naam', '')} {x.get('regel', '')}".lower()
+            if re.search(r"fluit", t): x["cl"] = 20
+            elif re.search(r"halve liter|\bpint\b|0[,.]5\s*l", t): x["cl"] = 50
     zonder = [b for b in pils if b.get("cl") is None and b.get("tap") is not False]
     if not zonder: return None
     if len({b["prijs"] for b in zonder}) > 1: return None  # meer prijzen zonder maat: welk glas is welk?
@@ -342,7 +347,7 @@ def merk_van(naam):
         if m.lower().split()[0] in naam.lower() and (len(m.split()) == 1 or m.lower() in naam.lower() or m in ("Stella Artois", "Birra Moretti", "Estrella Galicia")):
             return m
     rest = re.sub(r"\(?\d+[,.]?\d*\s*c?l\)?|\b(vaasje|vaas|pilsener|pilsner|pils|tapbier)\b|\d+[,.]\d\s*%", " ", naam, flags=re.I)
-    return " ".join(rest.split()) or "Pils"
+    return " ".join(rest.split()).strip(" -|·,") or "Pils"
 
 
 def datum_ok(j, m, d):
@@ -444,9 +449,10 @@ def stap_datum(stad, map_):
         if fout: continue
         host = urllib.parse.urlparse(g["bron"]).netloc.replace("www.", "")
         if re.search(r"cdn|static|cloudfront|amazonaws|website-files", host): host = g["kroeg"]  # bestand bij een opslagdienst
-        omschr = f"Drankkaart {host} ({g['datum_bron'].split(' (')[0]} {g['datum']})" + (", maat aangenomen" if g.get("maat_aangenomen") else "")
+        bron = re.sub(r"(bestandsnaam) .*", r"\1", g["datum_bron"].split(" (")[0])
+        omschr = f"Drankkaart {host} ({bron} {g['datum']})" + (", maat aangenomen" if g.get("maat_aangenomen") else "")
         invoer.append({"kroeg_id": g["kroeg_id"], "merk": merk_van(g["gelezen"]["merk"]), "volume_cl": 25, "prijs_cent": round(prijs * 100),
-                       "datum": g["datum"], "bron_omschrijving": omschr[:80]})
+                       "datum": g["datum"], "bron_omschrijving": omschr[:78]})
     json.dump(invoer, open(f"{map_}/import.json", "w"), ensure_ascii=False)
     print(f"mediaan {mediaan}; {len(invoer)} in {map_}/import.json: select public.importeer_menuprijzen('<inhoud>'::jsonb)")
 
