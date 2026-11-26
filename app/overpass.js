@@ -12,13 +12,13 @@ export const OVERPASS = [
 // Nederland, ref:INS in België), niet op naam. In België ook amenity=cafe, want daar betekent café kroeg (de
 // functie houdt alleen de cafés die op een kroeg lijken), en de deelgemeenten met hun grenzen als wijken.
 // Gemeenten met een horecaregister (HORECAREGISTER in supabase/functions/osm-import/verwerk.ts): ook cafés,
-// restaurants en nachtclubs ophalen; osm-import houdt alleen die met een vergunning als café.
+// restaurants ophalen; osm-import houdt alleen die met een vergunning als café.
 export const REGISTER_GEMEENTEN = ["GM0363"];
 
 export function osmQuery(g) {
   const belgie = g.code.startsWith("BE");
   const ref = belgie ? `["ref:INS"="${g.code.slice(2)}"]` : `["ref:gemeentecode"="${g.code.slice(2)}"]`;
-  const soorten = REGISTER_GEMEENTEN.includes(g.code) ? "pub|bar|biergarten|cafe|restaurant|nightclub"
+  const soorten = REGISTER_GEMEENTEN.includes(g.code) ? "pub|bar|biergarten|cafe|restaurant"
     : belgie ? "pub|bar|biergarten|cafe" : "pub|bar|biergarten";
   return `[out:json][timeout:90];
 rel["boundary"="administrative"]["admin_level"="8"]${ref}->.r;

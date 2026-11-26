@@ -70,7 +70,7 @@ check("verwerk: de deelgemeente wordt een wijk van Gent", v.wijken?.features.len
 check("verwerk in Nederland: geen wijken uit OpenStreetMap (die komen van het CBS)", verwerk(elementen, "Nijmegen", false).wijken === null);
 check("verwerk zonder de gemeente-relatie: niet gevonden", verwerk(elementen.slice(1), "Gent", true).gevonden === false);
 
-// Horecaregister (Amsterdam): een café, restaurant of nachtclub telt als er binnen 40 m een vergunning als café of
+// Horecaregister (Amsterdam): een café of restaurant telt als er binnen 40 m een vergunning als café of
 // nachtzaak is met een gelijkende naam; pub en bar tellen altijd
 const register = vergunningen([
   { zaaknaam: "Café Het Paardje B.V.", zaakCategorie: "Café", statusVergunning: "Verleend", locatie: { coordinates: [4.9000, 52.3700] } },
@@ -91,10 +91,10 @@ const amsterdam = [
   { type: "node", id: 16, lat: 52.3700, lon: 4.9000, tags: { amenity: "cafe", name: "Paardje Espressobar" } },
 ];
 const va = verwerk(amsterdam, "Amsterdam", false, register);
-check("verwerk met register: pub, en restaurant en nachtclub met een vergunning als café", va.kroegen.map((k) => k.naam).join() === "Het Paardje,Dokzicht,De Druif" && va.uitRegister === 2 && va.cafes === 0, JSON.stringify(va));
-check("verwerk zonder register: geen restaurants (een nachtclub telde al)", verwerk(amsterdam, "Utrecht", false).kroegen.map((k) => k.naam).join() === "Dokzicht,De Druif");
+check("verwerk met register: pub, en restaurant met een vergunning als café, nooit een nachtclub", va.kroegen.map((k) => k.naam).join() === "Het Paardje,De Druif" && va.uitRegister === 1 && va.cafes === 0, JSON.stringify(va));
+check("verwerk zonder register: geen restaurants en geen nachtclubs", verwerk(amsterdam, "Utrecht", false).kroegen.map((k) => k.naam).join() === "De Druif");
 check("Amsterdam heeft een register en de query haalt er cafés en restaurants op", !!HORECAREGISTER.GM0363?.startsWith("https://api.data.amsterdam.nl/") &&
-  REGISTER_GEMEENTEN.includes("GM0363") && osmQuery({ code: "GM0363", naam: "Amsterdam" }).includes("restaurant"));
+  REGISTER_GEMEENTEN.includes("GM0363") && osmQuery({ code: "GM0363", naam: "Amsterdam" }).includes("restaurant") && !osmQuery({ code: "GM0363", naam: "Amsterdam" }).includes("nightclub"));
 
 // Eigen wijkindeling van een stad (Gent: stadswijken van data.stad.gent)
 const vlak = { type: "Polygon", coordinates: [[[3.72, 51.04], [3.73, 51.04], [3.73, 51.05], [3.72, 51.04]]] };

@@ -24,8 +24,9 @@ test("geen kroegen", () => {
   assert.equal(classificeer([]).soort, null);
 });
 
-test("nachtclubs alleen met clubs", () => {
+test("nachtclubs als hoofdcategorie zijn geen kroeg", () => {
   assert.equal(classificeer(["Nachtclub"]).soort, null);
-  assert.deepEqual(classificeer(["Nachtclub"], { clubs: true }), { soort: "nightclub", zekerheid: "hoog" });
+  assert.equal(classificeer(["Discotheek", "Bar"]).soort, null);
+  assert.deepEqual(classificeer(["Bar", "Nachtclub"]), { soort: "bar", zekerheid: "hoog" });
   assert.deepEqual(classificeer(["Café", "Dansclub", "Nachtclub"]), { soort: "pub", zekerheid: "hoog" });
 });

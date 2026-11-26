@@ -3,7 +3,7 @@
 //
 // De app haalt de gegevens zelf bij OpenStreetMap (app/overpass.js) en stuurt het antwoord van Overpass mee: vanuit
 // Supabase is Overpass niet betrouwbaar bereikbaar. Deze functie verwerkt het (verwerk.ts) en bewaart het.
-// Met een horecaregister van de gemeente (HORECAREGISTER) tellen ook cafés, restaurants en nachtclubs met een
+// Met een horecaregister van de gemeente (HORECAREGISTER) tellen ook cafés en restaurants met een
 // vergunning als café of nachtzaak.
 // Wijken: een eigen wijkindeling van de gemeente als die er is (LOKALE_WIJKEN, zoals de stadswijken van Gent),
 // anders in Nederland van het CBS (PDOK) en in België de deelgemeenten uit het antwoord van Overpass.
@@ -70,7 +70,7 @@ async function importeer(req: Request): Promise<Response> {
   const gemeente: string = g.naam;
 
   // 3. Verwerken: kroegen (in België met de cafés die op een kroeg lijken) en de Belgische deelgemeenten
-  // Met een horecaregister (HORECAREGISTER) tellen ook cafés, restaurants en nachtclubs met een vergunning als café
+  // Met een horecaregister (HORECAREGISTER) tellen ook cafés en restaurants met een vergunning als café
   let register: Vergunning[] | undefined;
   if (HORECAREGISTER[g.code]) {
     const rijen: any[] = [];
