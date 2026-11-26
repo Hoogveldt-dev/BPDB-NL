@@ -2,10 +2,12 @@
 """Drankkaarten van eigen websites (DAEN-methode) voor een hele stad, met DeepSeek als lezer.
 
 Stappen (elk schrijft naar nakijken/<datum>-<stad>/, niet in Git):
-  kroegen   open kroegen zonder prijs uit de database (openbaar) en hun website uit OpenStreetMap
-  crawl     per website de startpagina en links met menu, kaart, drank, bier of pdf; pdf's met pdftotext
+  kroegen   open kroegen zonder prijs uit de database (openbaar) en hun website uit OpenStreetMap of, als
+            google-kroegen-<stad>.json er is (cli.mjs), uit Google Maps
+  crawl     per website de startpagina en links met menu, kaart, drank, bier of pdf; pdf's met pdftotext; weinig
+            tekst: nog een keer met Playwright (render.mjs); afbeeldingen van de drankkaart als jpg
   lees      DeepSeek leest per kroeg alles en geeft alle bieren van het vat (soort, maat, prijs, regel, datum)
-  kies      kandidaten volgens de regels (pils van het vat, 25 cl; in Belgie zonder maat binnen 15% van de index)
+  kies      kandidaten volgens de regels (pils van het vat, 25 cl; zonder maat als het het gewone glas is, zie kies_zonder_maat)
   gevallen  per kandidaat een map met geval.json en, bij een pdf, uitsnede.jpg en foto.jpg voor het nakijken
   datum     (na het nakijken) per goedgekeurd geval de datum van de kaart zelf, de vaste controles en import.json
 
@@ -14,18 +16,21 @@ Zonder stap draaien de stappen tot en met gevallen. Nakijken daarna met deepseek
 datum; import.json gaat naar importeer_menuprijzen (zie docs/menukaartprijzen.md). Vanuit een cloudsessie voegt de proxy de DeepSeek-sleutel
 toe; zet anders DEEPSEEK_API_KEY.
 """
-import concurrent.futures as cf, datetime, glob, html, json, os, re, statistics, subprocess, sys, time
+import concurrent.futures as cf, datetime, glob, html, json, os, re, shutil, statistics, subprocess, sys, time
 import urllib.error, urllib.parse, urllib.request
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 SUPABASE = "https://yzaootlrhxzyxtvacrot.supabase.co/rest/v1"
 SLEUTEL = re.search(r'SUPABASE_KEY = "([^"]+)"', open(os.path.join(HIER, "../../app/config.js")).read()).group(1)
 UA = {"User-Agent": "Mozilla/5.0 (Bierkoers drankkaart; +https://bierkoers.nl)"}
+GEEN_SITE = re.compile(r"facebook\.com|instagram\.com|nlcompanies|tripadvisor|thefork|google\.|linktr\.ee|wa\.me", re.I)
+BEELD = re.compile(r"\.(jpe?g|png|webp)(\?|$)", re.I)
 LINK = re.compile(r"menu|kaart|drank|drink|bier|beer|tap|vat|prijs|price|carte|boisson|\.pdf", re.I)
 MODEL = os.environ.get("MENU_MODEL", "deepseek-flash")
 MODEL_URL = os.environ.get("MENU_MODEL_URL", "https://api.deepseek.com")
 
 OPDRACHT = """Je leest de teksten van de website van een kroeg in Nederland of België: pagina's en drankkaarten (pdf), elk met een nummer [D1], [D2], ...
+Een document met "[afbeelding]" is een foto of plaatje van de website; lees de kaart op die afbeelding.
 Zoek ALLE bieren van het vat (tap, draft, draught, "van 't vat", "op tap"). Geen flessen of blikjes. Staat een bier onder een kop als "van 't vat", "on tap" of "draft", dan is het van het vat. Is het niet duidelijk, zet "tap": null.
 Geef per bier: naam zoals op de kaart, soort (pils, blond, tripel, dubbel, wit, ipa, amber, bruin, stout, kriek/fruit, cider, alcoholvrij of anders), maat in cl (null als die er niet staat; "vaasje" of "vaas" is 25 cl, "fluitje" 18 tot 22 cl), prijs in euro voor die maat, of het een actieprijs is (happy hour, dagaanbieding), het nummer van het document en de regel letterlijk.
 Staan er meer maten (25cl / 50cl met 3,00 / 6,00), maak dan per maat een regel.
@@ -51,7 +56,7 @@ def rest(pad):
 
 
 def stap_kroegen(stad, map_, extra):
-    k = rest(f"kroegen?select=id,naam,osm_id,adres&gemeente=eq.{urllib.parse.quote(stad)}&open=is.true&huidig_prijs_cent=is.null&order=id")
+    k = rest(f"kroegen?select=id,naam,osm_id,adres,google_place_id&gemeente=eq.{urllib.parse.quote(stad)}&open=is.true&huidig_prijs_cent=is.null&order=id")
     # Ook geen openstaande melding (zoals importeer_menuprijzen): een menukaartprijs wacht op een speler
     wacht = {r["id"] for r in rest(f"kroeg_kaart?select=id&gemeente=eq.{urllib.parse.quote(stad)}&open_melding_id=not.is.null")}
     k = [x for x in k if x["id"] not in wacht]
@@ -65,9 +70,15 @@ def stap_kroegen(stad, map_, extra):
                 tags[f"{soort}/{e['id']}"] = e.get("tags", {})
             time.sleep(3)
     extra = json.load(open(extra)) if extra else {}
+    google = {}
+    gbestand = os.path.join(HIER, f"google-kroegen-{re.sub(r'[^a-z0-9]+', '-', stad.lower()).strip('-')}.json")
+    if os.path.exists(gbestand):
+        g = json.load(open(gbestand)); g = g.get("kroegen", g) if isinstance(g, dict) else g
+        google = {x["place_id"]: x.get("website") for x in g if x.get("website") and not GEEN_SITE.search(x["website"])}
     for x in k:
         t = tags.get(x["osm_id"] or "", {})
-        x["website"] = extra.get(str(x["id"])) or t.get("website") or t.get("contact:website") or t.get("url") or t.get("website:menu")
+        x["website"] = extra.get(str(x["id"])) or t.get("website") or t.get("contact:website") or t.get("url") or t.get("website:menu") \
+            or google.get(x.get("google_place_id") or "")
     json.dump(k, open(f"{map_}/kroegen.json", "w"), ensure_ascii=False, indent=0)
     print(f"{len(k)} kroegen zonder prijs, {sum(1 for x in k if x['website'])} met een website")
 
@@ -82,12 +93,58 @@ def tekst_van(data, soort, pad):
     return "\n".join(re.sub(r"[ \t]+", " ", l).strip() for l in t.splitlines() if l.strip())
 
 
+def render(url):
+    """HTML na JavaScript (Playwright, render.mjs), of None."""
+    try:
+        r = subprocess.run(["node", os.path.join(HIER, "render.mjs"), url], capture_output=True, timeout=90, env={**os.environ, "NODE_NO_WARNINGS": "1"})
+        return r.stdout if len(r.stdout) > 500 else None
+    except Exception:
+        return None
+
+
+def zichtbaar(data):
+    return len(tekst_van(data, "text/html", "/dev/null")) if data else 0
+
+
+def beelden_van(pagina_url, data, label_ok):
+    """Afbeeldingen die op een drankkaart lijken: in de naam of alt-tekst, of alle grote op een pagina met menu of kaart."""
+    uit = []
+    for tag in re.findall(r"<img[^>]+>", data.decode("utf-8", "ignore"), re.I):
+        src = re.search(r'(?:data-src|src)=["\']([^"\']+)["\']', tag); alt = re.search(r'alt=["\']([^"\']*)["\']', tag)
+        srcset = re.search(r'srcset=["\']([^"\']+)["\']', tag)
+        if srcset: src_ = srcset[1].split(",")[-1].strip().split(" ")[0]
+        elif src: src_ = src[1]
+        else: continue
+        u = urllib.parse.urljoin(pagina_url, src_)
+        if not u.startswith("http") or re.search(r"logo|icon|favicon|sprite|avatar", u, re.I): continue
+        if LINK.search(u.rsplit("/", 1)[-1]) or (alt and LINK.search(alt[1])) or label_ok:
+            uit.append(u)
+    return list(dict.fromkeys(uit))
+
+
+def bewaar_beeld(data, pad):
+    """Afbeelding als jpg van hoogstens 1600 px; None als hij te klein is voor een kaart."""
+    from PIL import Image
+    import io
+    try:
+        im = Image.open(io.BytesIO(data)).convert("RGB")
+    except Exception:
+        return False
+    if im.width * im.height < 250_000: return False
+    im.thumbnail((1600, 1600)); im.save(pad, quality=85)
+    return True
+
+
 def crawl_een(x, map_):
     url = x["website"] if x["website"].startswith("http") else "https://" + x["website"]
     try:
         data, soort, lm, echt = haal(url)
     except Exception as e:
-        return x["id"], f"fout: {str(e)[:80]}"
+        data = render(url)
+        if not data: return x["id"], f"fout: {str(e)[:80]}"
+        soort, lm, echt = "text/html", None, url
+    if "html" in soort and zichtbaar(data) < 1500:
+        data = render(echt) or data
     paginas = [(echt, data, soort, lm)]
     host = urllib.parse.urlparse(echt).netloc.replace("www.", "")
     links = []
@@ -96,15 +153,30 @@ def crawl_een(x, map_):
         if u.startswith("http") and (LINK.search(u) or LINK.search(re.sub(r"<[^>]+>", " ", label))) \
                 and (urllib.parse.urlparse(u).netloc.replace("www.", "") == host or u.lower().split("?")[0].endswith(".pdf")):
             links.append(u)
+    beelden = beelden_van(echt, data, False)
     for u in list(dict.fromkeys(links))[:12]:
         try:
-            paginas.append((u, *haal(u)[:3]))
+            d, s, l = haal(u)[:3]
+            if "html" in s and zichtbaar(d) < 800: d = render(u) or d
+            paginas.append((u, d, s, l))
+            if "html" in s: beelden += beelden_van(u, d, True)
         except Exception:
             pass
-    for i, (u, d, s, l) in enumerate(paginas):
-        basis = f"{map_}/sites/{x['id']}-{i}"
-        open(basis + ".txt", "w").write(f"{u}\nLast-Modified: {l or '-'}\n{tekst_van(d, s, basis)}")
-    return x["id"], f"{len(paginas)} pagina's"
+    i = 0
+    for u, d, s, l in paginas:
+        basis = f"{map_}/sites/{x['id']}-{i:02d}"
+        open(basis + ".txt", "w").write(f"{u}\nLast-Modified: {l or '-'}\n{tekst_van(d, s, basis)}"); i += 1
+    n = 0
+    for u in list(dict.fromkeys(beelden))[:30]:
+        if n >= 6: break
+        try:
+            d, s, l = haal(u)[:3]
+        except Exception:
+            continue
+        basis = f"{map_}/sites/{x['id']}-{i:02d}"
+        if bewaar_beeld(d, basis + ".jpg"):
+            open(basis + ".txt", "w").write(f"{u}\nLast-Modified: {l or '-'}\n[afbeelding, zie de bijlage]"); i += 1; n += 1
+    return x["id"], f"{len(paginas)} pagina's, {n} afbeeldingen"
 
 
 def stap_crawl(map_):
@@ -116,12 +188,22 @@ def stap_crawl(map_):
 
 
 def lees_een(kid, naam, map_):
-    docs = [open(f, errors="ignore").read()[:40000] for f in sorted(glob.glob(f"{map_}/sites/{kid}-*.txt"))]
+    import base64
+    bestanden = sorted(glob.glob(f"{map_}/sites/{kid}-*.txt"))
+    docs = [open(f, errors="ignore").read()[:40000] for f in bestanden]
     if not docs:
         return None
-    inhoud = "\n\n".join(f"[D{i + 1}] {d}" for i, d in enumerate(docs))[:150000]
+    inhoud = [{"type": "text", "text": f"Kroeg: {naam}"}]
+    ruimte = 150000
+    for i, (f, d) in enumerate(zip(bestanden, docs)):
+        stuk = f"[D{i + 1}] {d}"[:ruimte]; ruimte -= len(stuk)
+        inhoud.append({"type": "text", "text": stuk})
+        if os.path.exists(f[:-4] + ".jpg"):
+            inhoud.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(open(f[:-4] + ".jpg", "rb").read()).decode()}})
+    if not any(c["type"] == "image_url" for c in inhoud):
+        inhoud = "\n\n".join(c["text"] for c in inhoud)
     body = {"model": MODEL, "temperature": 0, "response_format": {"type": "json_object"},
-            "messages": [{"role": "system", "content": OPDRACHT}, {"role": "user", "content": f"Kroeg: {naam}\n\n{inhoud}"}]}
+            "messages": [{"role": "system", "content": OPDRACHT}, {"role": "user", "content": inhoud}]}
     req = urllib.request.Request(f"{MODEL_URL}/chat/completions", data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json", "Authorization": f"Bearer {os.environ.get('DEEPSEEK_API_KEY', 'via-proxy')}"})
     try:
@@ -151,9 +233,35 @@ def index_van(stad):
     return statistics.median(laatst.values()) / 100 if len(laatst) >= 5 else None
 
 
+def kies_zonder_maat(pils, index, belgie):
+    """Pils van het vat zonder maat als 25 cl, als het het gewone glas is: er staat maar een prijs zonder maat bij dat bier
+    en (a) de kaart noemt het kleinere glas (fluitje) en/of een groter glas apart, met de prijs ertussen, of (b) de prijs ligt
+    binnen 15% van de Pilsindex van de stad (zonder index in de stad: van het land). In Belgie is dat glas het pintje."""
+    zonder = [b for b in pils if b.get("cl") is None and b.get("tap") is not False]
+    if not zonder: return None
+    if len({b["prijs"] for b in zonder}) > 1: return None  # meer prijzen zonder maat: welk glas is welk?
+    b = zonder[0]
+    klein = [x["prijs"] for x in pils if x.get("cl") and x["cl"] < 25]
+    groot = [x["prijs"] for x in pils if x.get("cl") and x["cl"] >= 33]
+    if (klein or groot) and all(p < b["prijs"] for p in klein) and all(p > b["prijs"] for p in groot) and b["prijs"] >= 2.5:
+        return {**b, "maat_aangenomen": True, "maat_reden": "andere maten apart op de kaart"}
+    if index and abs(b["prijs"] - index) / index <= 0.15:
+        return {**b, "maat_aangenomen": True, "maat_reden": f"binnen 15% van de Pilsindex (€ {index:.2f})"}
+    return None
+
+
+def landindex(belgie):
+    """Mediaan per 25 cl van bevestigde en menukaartprijzen in het hele land."""
+    codes = {g["naam"]: g["code"] for g in rest("gemeenten?select=naam,code")}
+    rij = rest("kroeg_tijdlijn?select=kroeg_id,gemeente,prijs_cent,volume_cl,status,bron&soort=neq.check&order=op")
+    laatst = {r["kroeg_id"]: r["prijs_cent"] * 25 / r["volume_cl"] for r in rij if r["volume_cl"] and (r["status"] == "bevestigd" or r["bron"] == "menukaart")
+              and codes.get(r["gemeente"], "").startswith("BE" if belgie else "GM")}
+    return statistics.median(laatst.values()) / 100 if len(laatst) >= 5 else None
+
+
 def stap_kies(stad, map_, belgie):
     d = json.load(open(f"{map_}/deepseek.json"))
-    index = index_van(stad)
+    index = index_van(stad) or landindex(belgie)
     kandidaten, tapbieren = [], []
     for kid, v in d.items():
         tb = [b for b in v.get("tapbieren", []) if b.get("tap") is not False and not b.get("actie") and b.get("prijs")]
@@ -164,11 +272,8 @@ def stap_kies(stad, map_, belgie):
         pils = [b for b in tb if b.get("soort") == "pils"]
         p25 = [b for b in pils if b.get("cl") in (25, 25.0)]
         kies = min(p25, key=lambda b: b["prijs"]) if p25 else None
-        zonder = [b for b in pils if b.get("cl") is None]
-        if not kies and belgie and zonder and index:
-            b = min(zonder, key=lambda b: b["prijs"])
-            if abs(b["prijs"] - index) / index <= 0.15:
-                kies = {**b, "maat_aangenomen": True}
+        if not kies:
+            kies = kies_zonder_maat(pils, index, belgie)
         if kies and 2.0 <= kies["prijs"] <= 7.5:
             br = v.get("_bronnen", [])
             kandidaten.append({"kroeg_id": int(kid), "kroeg": v["naam"], **kies, "bron": br[kies["doc"] - 1] if isinstance(kies.get("doc"), int) and 0 < kies["doc"] <= len(br) else None,
@@ -213,12 +318,14 @@ def stap_gevallen(map_):
                 i = t.find(c["regel"].split("\n")[0][:30]); tekst = t[max(0, i - 800): i + 800] if i >= 0 else ""
                 pdf = f[:-4] + ".pdf"
                 if os.path.exists(pdf): uitsnede(pdf, c["regel"].split("\n")[0], doel)
+                if os.path.exists(f[:-4] + ".jpg"): shutil.copy(f[:-4] + ".jpg", f"{doel}/foto.jpg")
         geval = {"kroeg": c["kroeg"], "kroeg_id": c["kroeg_id"], "bron": c.get("bron"), "regel_op_de_kaart": c["regel"],
                  "gelezen": {"merk": c["naam"], "volume_cl": 25, "prijs": c["prijs"], "tap": c.get("tap")},
                  "datum_aanwijzingen": c.get("datum_aanwijzingen"), "tekst_rond_de_regel": tekst,
                  "lezer": "DeepSeek las de website", "reden": "DAEN-methode: elke prijs wordt nagekeken"}
         if c.get("maat_aangenomen"):
-            geval.update(maat_aangenomen=True, index=k["index"], regel_maat=f"In België is een pils van het vat zonder maat een pintje van 25 cl als de prijs binnen 15% van de Pilsindex van de stad ligt (index € {k['index']:.2f}).")
+            geval.update(maat_aangenomen=True, index=k["index"], regel_maat="Een pils van het vat zonder maat telt als het gewone glas van 25 cl (vaasje, in België pintje) "
+                         f"als er maar een prijs zonder maat bij dat bier staat en: {c.get('maat_reden', 'binnen 15% van de Pilsindex')}.")
         json.dump(geval, open(f"{doel}/geval.json", "w"), ensure_ascii=False, indent=1)
     print(f"{len(k['kandidaten'])} gevallen in {map_}/gevallen; zonder uitsnede: maak een schermafbeelding of laat de controleur de tekst gebruiken")
 
@@ -264,6 +371,17 @@ def datum_van(map_, c):
             if d: return d, f"datum in de bestandsnaam {naam}"
     try: data, soort, lm, _ = haal(u, pogingen=1)
     except Exception: return None, "bron niet bereikbaar"
+    if data[:3] == b"\xff\xd8\xff" or data[:4] == b"\x89PNG" or data[8:12] == b"WEBP":  # afbeelding: EXIF, dan de uploadmap van WordPress
+        try:
+            from PIL import Image
+            import io
+            ex = Image.open(io.BytesIO(data)).getexif()
+            m = re.match(r"(\d{4}):(\d\d):(\d\d)", str(ex.get_ifd(0x8769).get(36867) or ex.get(306) or ""))
+            if m and datum_ok(*m.groups()): return datum_ok(*m.groups()), "EXIF van de afbeelding"
+        except Exception:
+            pass
+        m = re.search(r"/uploads/(20\d\d)/(\d\d)/", u)
+        if m and datum_ok(m[1], m[2], 1): return datum_ok(m[1], m[2], 1), "uploadmap van WordPress"
     if data[:5] == b"%PDF-":  # 2. pdf-datum
         open(f"{map_}/_datum.pdf", "wb").write(data)
         info = subprocess.run(["pdfinfo", f"{map_}/_datum.pdf"], capture_output=True, text=True).stdout

@@ -42,7 +42,7 @@ export function plaatsUitZaak(z) {
   const adresregels = lijst(pad(z, 2)).filter((r) => typeof r === "string");
   const { postcode, plaats } = postcodeEnPlaats(adresregels[1]);
   const statusRuw = [pad(z, 88, 0), pad(z, 34, 4, 4)].find((s) => typeof s === "string" && STATUS.has(s));
-  // Bewust niet: beoordeling, reviews, telefoon en website. BPDB slaat alleen op wat het spel gebruikt.
+  // Bewust niet: beoordeling, reviews en telefoon. De website gaat niet naar de database, maar helpt drankkaarten.py.
   return {
     place_id: tekst(pad(z, 78)),
     data_id: dataId,
@@ -56,6 +56,7 @@ export function plaatsUitZaak(z) {
     lon: getal(pad(z, 9, 3)),
     openingstijden: openingstijden(z),
     status: statusRuw ?? null,
+    website: tekst(pad(z, 7, 0)) ?? null,
   };
 }
 
