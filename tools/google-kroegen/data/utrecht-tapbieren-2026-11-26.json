@@ -1,0 +1,2171 @@
+{
+ "stad": "Utrecht",
+ "opgehaald": "2026-11-26",
+ "methode": "eigen websites, gelezen door DeepSeek; niet nagekeken",
+ "kroegen": [
+  {
+   "kroeg_id": 3203,
+   "kroeg": "De Poort",
+   "tapbieren": [
+    {
+     "naam": "Heineken Pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.6,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken Pilsener | 5.0% v.a. 3,60",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Paulaner Hefe-Weissbier Weizen",
+     "soort": "wit",
+     "cl": 33,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Paulaner Hefe-Weissbier Weizen | 5.5% 0,33L / 0,5L 6,10 / 9,20",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Paulaner Hefe-Weissbier Weizen",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.2,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Paulaner Hefe-Weissbier Weizen | 5.5% 0,33L / 0,5L 6,10 / 9,20",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Paulaner Toren 3L Weizen",
+     "soort": "wit",
+     "cl": 300,
+     "prijs": 45.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Paulaner Toren 3L Weizen | 5.5% 45,00",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Affligem Blond Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem Blond Blond | 6.8% 6,50",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Brouwerij 't IJ IJwit Witbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brouwerij 't IJ IJwit Witbier | 6.5% kan 1 liter 24,50 6,50",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "La Chouffe Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "La Chouffe Blond | 8.0% 6,50",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Skuumkoppe Donker tarwebier",
+     "soort": "bruin",
+     "cl": 33,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Skuumkoppe Donker tarwebier | 6.0% 0,33L / 0,5L 6,50 / 9,50",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Skuumkoppe Donker tarwebier",
+     "soort": "bruin",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Skuumkoppe Donker tarwebier | 6.0% 0,33L / 0,5L 6,50 / 9,50",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    },
+    {
+     "naam": "Wissel tap/fles/blik Wisselend speciaalbier",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Wissel tap/fles/blik Wisselend speciaalbier | zie bord v.a. 6,50",
+     "bron": "https://www.eetcafedepoort.nl/menu-2/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 3217,
+   "kroeg": "Walden",
+   "tapbieren": [
+    {
+     "naam": "JUPILER",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "JUPILER 5,2% alc. vol. 25cl | 50cl | Pitcher €3,9 | €7,5 | €22",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "JUPILER",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "JUPILER 5,2% alc. vol. 25cl | 50cl | Pitcher €3,9 | €7,5 | €22",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "JUPILER",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 22.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "JUPILER 5,2% alc. vol. 25cl | 50cl | Pitcher €3,9 | €7,5 | €22",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "LEFFE BLOND",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "LEFFE BLOND 6,6% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "LEFFE BLOND",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 11.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "LEFFE BLOND 6,6% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "LA CHOUFFE BLOND",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "LA CHOUFFE BLOND 5,7% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "LA CHOUFFE BLOND",
+     "soort": "blond",
+     "cl": 50,
+     "prijs": 11.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "LA CHOUFFE BLOND 5,7% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "FRANZISKANER WIZENR",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "FRANZISKANER WIZENR 4,8% alc. vol. 30cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "FRANZISKANER WIZENR",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 11.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "FRANZISKANER WIZENR 4,8% alc. vol. 30cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "LOWLANDER IPA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 6.8,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "LOWLANDER IPA 6% alc. vol. 25cl | 50cl €6,8 | €12",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "LOWLANDER IPA",
+     "soort": "ipa",
+     "cl": 50,
+     "prijs": 12.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "LOWLANDER IPA 6% alc. vol. 25cl | 50cl €6,8 | €12",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "GOOSE IPA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "GOOSE IPA 5,9% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "GOOSE IPA",
+     "soort": "ipa",
+     "cl": 50,
+     "prijs": 11.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "GOOSE IPA 5,9% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "TRIPEL KARMELIET",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "TRIPEL KARMELIET 8,4% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    },
+    {
+     "naam": "TRIPEL KARMELIET",
+     "soort": "tripel",
+     "cl": 50,
+     "prijs": 11.0,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "TRIPEL KARMELIET 8,4% alc. vol. 25cl | 50cl €6,5 | €11",
+     "bron": "https://barwalden.nl/images/kaart/drinksmenu2026-03.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 26 Nov 2026 11:51:39 GMT",
+    "Titel: Food Menu_Walden; bestandsnaam foodmenu2026-03.pdf; Last-Modified: Tue, 07 Apr 2026 12:16:33 GMT; CreationDate: Thu Mar 12 13:43:34 2026 UTC; ModDate: Thu Mar 12 13:43:33 2026 UTC",
+    "Titel: Drinks menu 2026_Walden (A4 (Landscape)); bestandsnaam drinksmenu2026-03.pdf; Last-Modified: Tue, 07 Apr 2026 12:16:32 GMT; CreationDate: Thu Mar 12 12:27:18 2026 UTC; ModDate: Thu Mar 12 12:27:18 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3220,
+   "kroeg": "Club Claar",
+   "tapbieren": [
+    {
+     "naam": "Birra Moretti Authentica",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Birra Moretti Authentica 3.75 7.50",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Birra Moretti Authentica",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Birra Moretti Authentica 3.75 7.50",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Weizen 6.25 8.95",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 8.95,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Weizen 6.25 8.95",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Ciney Blond",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Ciney Blond 6.25",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Brand NEIPA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand NEIPA 6.25",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Wisselkraan",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Wisselkraan vanaf 5.75",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem Blond 5.75",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": 25,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "La Chouffe 6.25",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "'t IJ Zatte Tripel",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 6.95,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "'t IJ Zatte Tripel 6.95",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Affligem Dubbel",
+     "soort": "dubbel",
+     "cl": 25,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem Dubbel 5.75",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Affligem Trippel",
+     "soort": "tripel",
+     "cl": 25,
+     "prijs": 5.95,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem Trippel 5.95",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Liefmans Fruitesse",
+     "soort": "kriek/fruit",
+     "cl": 25,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Liefmans Fruitesse 5.50",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "'t IJ IJwit",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 6.95,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "'t IJ IJwit 6.95",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Birra Moretti Zero",
+     "soort": "alcoholvrij",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Birra Moretti Zero 3.50",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Amstel Radler 0,0%",
+     "soort": "alcoholvrij",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Amstel Radler 0,0% 4.50",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Brand Weizen 0,0%",
+     "soort": "alcoholvrij",
+     "cl": 25,
+     "prijs": 4.95,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Weizen 0,0% 4.95",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Van de Streek Playground <0,5%",
+     "soort": "alcoholvrij",
+     "cl": 25,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Van de Streek Playground <0,5% 5.50",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "'t IJ Vrijwit",
+     "soort": "alcoholvrij",
+     "cl": 25,
+     "prijs": 6.95,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "'t IJ Vrijwit 6.95",
+     "bron": "https://clubclaar.nl/dranken/"
+    },
+    {
+     "naam": "Liefmans Fruitesse 0%",
+     "soort": "alcoholvrij",
+     "cl": 25,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Liefmans Fruitesse 0% 5.50",
+     "bron": "https://clubclaar.nl/dranken/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Thu, 26 Nov 2026 03:28:36 GMT",
+    "Last-Modified: Thu, 26 Nov 2026 05:43:40 GMT",
+    "Op 31 december en 1 januari 2027 zijn we dicht."
+   ]
+  },
+  {
+   "kroeg_id": 3222,
+   "kroeg": "Orloff",
+   "tapbieren": [
+    {
+     "naam": "Grolsch fluitje",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.3,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Grolsch fluitje 5,0%\t\t\t3,3",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Grolsch vaasje",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Grolsch vaasje 5,0%\t\t\t3,8",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Grolsch pul",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Grolsch pul 5,0% (50cl)\t\t\t7,5",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Peroni",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Peroni 5,1%\t\t\t5",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Orloff Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Orloff Blond 6,0%\t\t\t5",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Grolsch Weizen",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Grolsch Weizen 5,5% (30cl)\t\t6",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Grolsch Weizen",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Grolsch Weizen 5,5% (50cl)\t\t\t9,5",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Grimbergen Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Grimbergen Blond 6,7%\t\t\t6,5",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Grimbergen Dubbel",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Grimbergen Dubbel 6,5%\t\t\t6,5",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "La Chouffe",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "La Chouffe 8,0%\t\t\t6",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Jopen Mooie Nel",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Jopen Mooie Nel 6,5%\t\t\t6",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "‘t IJ IJwit",
+     "soort": "wit",
+     "cl": 33,
+     "prijs": 7.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "‘t IJ IJwit 6,5% (33cl)\t\t\t7",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Wisseltap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 5,
+     "regel": "Wisseltap                                vanaf \t\t    5",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Borrelkaart-Orloff-adk-mei-2026.pdf"
+    },
+    {
+     "naam": "Hertog Jan Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.1,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Hertog Jan Pils 5,2%\t\t\t3,10 / 3,50 / 7,00\nfluitje / vaasje / pint",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Hertog Jan Pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Hertog Jan Pils 5,2%\t\t\t3,10 / 3,50 / 7,00\nfluitje / vaasje / pint",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Hertog Jan Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.0,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Hertog Jan Pils 5,2%\t\t\t3,10 / 3,50 / 7,00\nfluitje / vaasje / pint",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Orloff Bier Blond IPA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 4.75,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Orloff Bier Blond IPA 6%\t\t\t4,75 / 9,50\n0,25cl / 0,50cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Orloff Bier Blond IPA",
+     "soort": "ipa",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Orloff Bier Blond IPA 6%\t\t\t4,75 / 9,50\n0,25cl / 0,50cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Franziskaner Weissbier",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Franziskaner Weissbier 5%\t\t\t5,00 / 8,25\n0,30cl / 0,5cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Franziskaner Weissbier",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 8.25,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Franziskaner Weissbier 5%\t\t\t5,00 / 8,25\n0,30cl / 0,5cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "IJwit Witbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "IJwit Witbier 6,5%\t\t\t6,00",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "La Chouffe Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "La Chouffe Blond 8%\t\t\t5,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Leffe Blond Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Leffe Blond Blond 6,6%\t\t\t5,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Jopen Mooie Nel IPA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Jopen Mooie Nel IPA 6,5%\t\t\t5,50 / 11,00\n0,25cl / 0,5cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Jopen Mooie Nel IPA",
+     "soort": "ipa",
+     "cl": 50,
+     "prijs": 11.0,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Jopen Mooie Nel IPA 6,5%\t\t\t5,50 / 11,00\n0,25cl / 0,5cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Tripel Karmeliet Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Tripel Karmeliet Tripel 8%\t\t\t6,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Wisseltaps",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 9,
+     "regel": "Wisseltaps vanaf\t\t\t5,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/09/Drankenkaart-Cafe-Orloff-versie-1-2026-2.pdf"
+    },
+    {
+     "naam": "Stella Artois Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.1,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Stella Artois Pils 5,2%\t\t\t3,10 / 3,50 / 7,00\nfluitje / vaasje / pint",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Stella Artois Pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Stella Artois Pils 5,2%\t\t\t3,10 / 3,50 / 7,00\nfluitje / vaasje / pint",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Stella Artois Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.0,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Stella Artois Pils 5,2%\t\t\t3,10 / 3,50 / 7,00\nfluitje / vaasje / pint",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Orloff Bier Blond IPA",
+     "soort": "ipa",
+     "cl": 25,
+     "prijs": 4.75,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Orloff Bier Blond IPA 6%\t\t\t4,75 / 9,50\n0,25cl / 0,50cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Orloff Bier Blond IPA",
+     "soort": "ipa",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Orloff Bier Blond IPA 6%\t\t\t4,75 / 9,50\n0,25cl / 0,50cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Franziskaner Weissbier",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Franziskaner Weissbier 5%\t\t\t5,00 / 8,50\n0,30cl / 0,5cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Franziskaner Weissbier",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 8.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Franziskaner Weissbier 5%\t\t\t5,00 / 8,50\n0,30cl / 0,5cl",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "IJwit Witbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "IJwit Witbier 6,5%\t\t\t6,00",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "La Chouffe Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "La Chouffe Blond 8%\t\t\t5,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Leffe Blond Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Leffe Blond Blond 6,6%\t\t\t5,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Pauwel Kwak Amberbier",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Pauwel Kwak Amberbier 8,4%\t\t\t6,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Tripel Karmeliet Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Tripel Karmeliet Tripel 8%\t\t\t6,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    },
+    {
+     "naam": "Wisseltaps",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 11,
+     "regel": "Wisseltaps vanaf\t\t\t5,50",
+     "bron": "https://www.orloff.nl/wp-content/uploads/2026/06/Kopie-van-Drankenkaart-Versie-4.1-A4.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Bestandsnaam: Borrelkaart-Orloff-adk-mei-2026.pdf; Last-Modified: Wed, 10 Jun 2026 11:00:01 GMT; CreationDate: Thu Jun 4 13:05:27 2026 UTC; ModDate: Thu Jun 4 13:05:28 2026 UTC",
+    "Title: Drankenkaart Cafe Orloff versie 1 2026; Last-Modified: Thu, 24 Sep 2026 11:49:02 GMT; CreationDate: Mon Jul 6 12:34:34 2026 UTC; ModDate: Mon Jul 6 12:34:34 2026 UTC",
+    "Title: Kopie van Drankenkaart Versie 4.1 (A4); Last-Modified: Wed, 24 Jun 2026 08:49:02 GMT; CreationDate: Wed Jun 24 08:48:24 2026 UTC; ModDate: Wed Jun 24 08:48:24 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3226,
+   "kroeg": "Ouwe Dikke Dries",
+   "tapbieren": [
+    {
+     "naam": "Meantime IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 4.65,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Meantime IPA op de tap | 4,65",
+     "bron": "https://ouwedikkedries.nl/speciaal-bierenkaart/"
+    },
+    {
+     "naam": "Grimbergen Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 4.65,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Grimbergen Tripel Op de tap | 4,65",
+     "bron": "https://ouwedikkedries.nl/speciaal-bierenkaart/"
+    },
+    {
+     "naam": "Grimbergen Dubbel",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 4.65,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Grimbergen Dubbel Op de tap | 4,65",
+     "bron": "https://ouwedikkedries.nl/speciaal-bierenkaart/"
+    },
+    {
+     "naam": "Grimbergen Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.65,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Grimbergen Blond Op de tap | 4,65",
+     "bron": "https://ouwedikkedries.nl/speciaal-bierenkaart/"
+    },
+    {
+     "naam": "Grolsch Herfstbok",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.65,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Grolsch Herfstbok Op de tap | 4,65",
+     "bron": "https://ouwedikkedries.nl/speciaal-bierenkaart/"
+    },
+    {
+     "naam": "Grolsch Weissbier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 4.65,
+     "tap": true,
+     "actie": false,
+     "doc": 3,
+     "regel": "Grolsch Weissbier Op de tap | 4,65",
+     "bron": "https://ouwedikkedries.nl/speciaal-bierenkaart/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "SPECIAALBIERENKAART jeroen van oers 2019-03-21T11:02:18+00:00",
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 3230,
+   "kroeg": "Café Kalff",
+   "tapbieren": [
+    {
+     "naam": "Grolsch Pils",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Grolsch Pils (25cl)\n3,80",
+     "bron": "https://www.cafekalff.nl/"
+    },
+    {
+     "naam": "Grolsch Pils",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.2,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Grolsch Pils (50cl)\n7,20",
+     "bron": "https://www.cafekalff.nl/"
+    },
+    {
+     "naam": "Grolsch Weizen",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.7,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Grolsch Weizen (30cl)\n5,70",
+     "bron": "https://www.cafekalff.nl/"
+    },
+    {
+     "naam": "Grolsch Weizen",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 8.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Grolsch Weizen (50cl)\n8,80",
+     "bron": "https://www.cafekalff.nl/"
+    },
+    {
+     "naam": "Seasonal Tap (Now: Grimbergen Blanche)",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.7,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Seasonal Tap\n5,70\nNow: Grimbergen Blanche",
+     "bron": "https://www.cafekalff.nl/"
+    },
+    {
+     "naam": "La Choufe",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.8,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "La Choufe\n5,80",
+     "bron": "https://www.cafekalff.nl/"
+    },
+    {
+     "naam": "Lowlander IPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.7,
+     "tap": true,
+     "actie": false,
+     "doc": 1,
+     "regel": "Lowlander IPA\n5,70",
+     "bron": "https://www.cafekalff.nl/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 3239,
+   "kroeg": "'t Pakhuis",
+   "tapbieren": [
+    {
+     "naam": "Kleintje pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 2.4,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Kleintje pils 2,40",
+     "bron": "https://barpakhuis.nl/wp-content/uploads/2026/06/Drinks-A4lang.pdf"
+    },
+    {
+     "naam": "Heineken fluit",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 2.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken fluit 2,90",
+     "bron": "https://barpakhuis.nl/wp-content/uploads/2026/06/Drinks-A4lang.pdf"
+    },
+    {
+     "naam": "Heineken vaas",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken vaas 3,50",
+     "bron": "https://barpakhuis.nl/wp-content/uploads/2026/06/Drinks-A4lang.pdf"
+    },
+    {
+     "naam": "Bar Pakhuis blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bar Pakhuis blond 5,75",
+     "bron": "https://barpakhuis.nl/wp-content/uploads/2026/06/Drinks-A4lang.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Copyright Bar Pakhuis 2026 ©",
+    "Do 05.03 | PAKHUIS RE-OPENING",
+    "Last-Modified: Sun, 21 Jun 2026 11:18:00 GMT",
+    "CreationDate: Thu Jun 11 20:13:03 2026 UTC",
+    "ModDate: Thu Jun 11 20:13:03 2026 UTC",
+    "bestandsnaam: Drinks-A4lang.pdf (2026/06)",
+    "Last-Modified: Mon, 10 Aug 2026 17:16:16 GMT",
+    "CreationDate: Wed Aug 5 08:26:37 2026 UTC",
+    "ModDate: Wed Aug 5 08:26:37 2026 UTC",
+    "bestandsnaam: Food-A5.pdf (2026/08)",
+    "Last-Modified: Mon, 10 Aug 2026 17:16:18 GMT",
+    "CreationDate: Sat Aug 1 20:26:16 2026 UTC",
+    "ModDate: Sat Aug 1 20:26:16 2026 UTC",
+    "bestandsnaam: happyhour.pdf (2026/08)"
+   ]
+  },
+  {
+   "kroeg_id": 3250,
+   "kroeg": "Tripleclub",
+   "tapbieren": [
+    {
+     "naam": "Heineken 0.0",
+     "soort": "alcoholvrij",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken 0.0 25cl",
+     "bron": "https://www.tripleclub.nl/food-and-drinks"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": 25,
+     "prijs": 4.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Texels Skuumkoppe 25cl",
+     "bron": "https://www.tripleclub.nl/food-and-drinks"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": 25,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Weizen 25cl",
+     "bron": "https://www.tripleclub.nl/food-and-drinks"
+    },
+    {
+     "naam": "Heineken Pitcher",
+     "soort": "pils",
+     "cl": 180,
+     "prijs": 20.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken Pitcher 1,8L",
+     "bron": "https://www.tripleclub.nl/food-and-drinks"
+    },
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.8,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken 25cl",
+     "bron": "https://www.tripleclub.nl/food-and-drinks"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Sun, 22 Nov 2026 11:13:38 GMT",
+    "Opgelet! Op vrijdag 4 december hebben we van 12.00 tot 21.00 uur een besloten event.",
+    "Agenda June 2025",
+    "Zondag 22 november",
+    "17 september t/m 20 september",
+    "31 augustus vanaf 20.00",
+    "donderdag 3 september ... verplaatst naar zondag 27 september",
+    "Last-Modified: Sun, 22 Nov 2026 11:32:20 GMT",
+    "Last-Modified: Sun, 22 Nov 2026 14:36:06 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 3254,
+   "kroeg": "Beuntjes Feestcafé",
+   "tapbieren": [
+    {
+     "naam": "Bavaria Pilsener",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bavaria Pilsener van de tap Vaasje € 3,50",
+     "bron": "https://www.beuntjesfeestcafe.nl/dranken"
+    },
+    {
+     "naam": "Bavaria Pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 18.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bavaria Pilsener van de tap Pitcher € 18,50",
+     "bron": "https://www.beuntjesfeestcafe.nl/dranken"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Sat, 23 Aug 2025 15:41:45 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 3257,
+   "kroeg": "'t Gras van de Buren",
+   "tapbieren": [
+    {
+     "naam": "Heineken Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Heineken Pils|5%         3.50               3.90 7.50 20.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Heineken Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.9,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Heineken Pils|5%         3.50               3.90 7.50 20.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Heineken Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Heineken Pils|5%         3.50               3.90 7.50 20.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Heineken Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 20.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Heineken Pils|5%         3.50               3.90 7.50 20.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Heineken Wit Pils",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Heineken Wit Pils|5,5%                      5.75 10.50 30.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Heineken Wit Pils",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 10.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Heineken Wit Pils|5,5%                      5.75 10.50 30.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Heineken Wit Pils",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 30.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Heineken Wit Pils|5,5%                      5.75 10.50 30.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Oedipus Mannenliefde",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.75,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Oedipus Mannenliefde|6,0%                   6.75",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Brand NEIPA",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.75,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Brand NEIPA|5.0%                            6.75",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Affligem Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.75,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Affligem Blond|6,7%                         6.75",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.75,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Texels Skuumkoppe|6,0%                      6.75 12.50",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 12.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Texels Skuumkoppe|6,0%                      6.75 12.50",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Oedipus Bride",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Oedipus Bride|5,0%                          6.50",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Brand Weizen|5,0%                           6.50 12.50",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Brand Weizen",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 12.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Brand Weizen|5,0%                           6.50 12.50",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Amstel Rosé",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Amstel Rosé|4,0%                            5.50       30.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    },
+    {
+     "naam": "Amstel Rosé",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 30.0,
+     "tap": true,
+     "actie": false,
+     "doc": 6,
+     "regel": "Amstel Rosé|4,0%                            5.50       30.00",
+     "bron": "https://www.grasvandeburen.nl/images/kaart/menu.pdf"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Tue, 23 Jun 2026 16:13:55 GMT",
+    "Title: Kopie van 't Gras van de Buren tijdelijke kaart Juli 2021 A4",
+    "CreationDate/ModDate: Mon May 11 14:33:53 2026 UTC",
+    "Last-Modified: Tue, 23 Jun 2026 16:18:06 GMT",
+    "Title: Kopie van 't Gras van de Buren tijdelijke kaart Juli 2021 A4",
+    "CreationDate/ModDate: Mon May 11 14:33:53 2026 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3258,
+   "kroeg": "Wijnbar Kurk",
+   "tapbieren": [
+    {
+     "naam": "Heineken",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.95,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "Heineken 0,25L 3,95",
+     "bron": "https://wijnbar-kurk.nl/"
+    },
+    {
+     "naam": "Skuumkoppe Texels",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.95,
+     "tap": null,
+     "actie": false,
+     "doc": 1,
+     "regel": "Skuumkoppe Texels 6,95",
+     "bron": "https://wijnbar-kurk.nl/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Mon, 13 Jul 2026 21:44:25 GMT",
+    "Wordt het 30 graden of warmer in Utrecht? Dan krijg je deze juli 50% korting op al het eten."
+   ]
+  },
+  {
+   "kroeg_id": 3264,
+   "kroeg": "Brouwerij Maximus B.V.",
+   "tapbieren": [
+    {
+     "naam": "Pandora Blond (6%)",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Pandora Blond (6%) €5,- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Pandora Blond (6%)",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Pandora Blond (6%) €5,- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Dakhaas Tarwebier (5,5%)",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Dakhaas Tarwebier (5,5%) €5,- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Dakhaas Tarwebier (5,5%)",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Dakhaas Tarwebier (5,5%) €5,- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Little Fred Session Saison (3,7%)",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Little Fred Session Saison (3,7%) €5,- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Little Fred Session Saison (3,7%)",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Little Fred Session Saison (3,7%) €5,- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Aurora Alcoholarm Blond (0,30%)",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Aurora Alcoholarm Blond (0,30%) €4,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Maximus Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Maximus Pils €4,50- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Maximus Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Maximus Pils €4,50- | €9,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Donderstraal Tripel (8%)",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Donderstraal Tripel (8%) €5,50 | €10,-",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Donderstraal Tripel (8%)",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 10.0,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Donderstraal Tripel (8%) €5,50 | €10,-",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "High Hops Westcoast IPA (6%)",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "High Hops Westcoast IPA (6%) €6,- | €11,-",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "High Hops Westcoast IPA (6%)",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 11.0,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "High Hops Westcoast IPA (6%) €6,- | €11,-",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Viets Radler (3%)",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Viets Radler (3%) €4,50 | €8,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    },
+    {
+     "naam": "Viets Radler (3%)",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 8.5,
+     "tap": true,
+     "actie": false,
+     "doc": 8,
+     "regel": "Viets Radler (3%) €4,50 | €8,50",
+     "bron": "https://maximusbrouwerij.nl/over-maximus/onze-kaart/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "©2026 - Brewed by Sommet Media"
+   ]
+  },
+  {
+   "kroeg_id": 3274,
+   "kroeg": "Sumventure",
+   "tapbieren": [
+    {
+     "naam": "DUKE JAN 5.1%",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 3.8,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "DUKE JAN 5.1% 3.80",
+     "bron": "https://sumventure.nl//nl/menu"
+    },
+    {
+     "naam": "HERTOG JAN WEIZENER 5.7%",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "HERTOG JAN WEIZENER 5.7% 6.00",
+     "bron": "https://sumventure.nl//nl/menu"
+    },
+    {
+     "naam": "LEFFE BLOND 6.6%",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "LEFFE BLOND 6.6% 6.00",
+     "bron": "https://sumventure.nl//nl/menu"
+    },
+    {
+     "naam": "CORONA EXTRA",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "CORONA EXTRA 6.00",
+     "bron": "https://sumventure.nl//nl/menu"
+    },
+    {
+     "naam": "OF THE REGION'S PLAYGROUND 0.4%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "OF THE REGION'S PLAYGROUND 0.4% 6.00",
+     "bron": "https://sumventure.nl//nl/menu"
+    },
+    {
+     "naam": "CORONA CERO 0.0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "CORONA CERO 0.0% 6.00",
+     "bron": "https://sumventure.nl//nl/menu"
+    },
+    {
+     "naam": "LEFFE BLOND 0.0%",
+     "soort": "alcoholvrij",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "LEFFE BLOND 0.0% 6.00",
+     "bron": "https://sumventure.nl//nl/menu"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "© 2026 Sumventure Flightbar"
+   ]
+  },
+  {
+   "kroeg_id": 3284,
+   "kroeg": "Café Kanaalzicht",
+   "tapbieren": [
+    {
+     "naam": "Heineken fluit",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.6,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken fluit   3,60",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Heineken vaas",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Heineken vaas   3,75",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Brand Weizen 0,3ltr",
+     "soort": "wit",
+     "cl": 30,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Weizen 0,3ltr   5,-",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Brand Weizen 0,5ltr",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 7.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Weizen 0,5ltr   7,75",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Texels Skuumkoppe   5,25",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Affligem blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Affligem blond   5,75",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "La Chouffe blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "La Chouffe blond 6,-",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Brugse Zot blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brugse Zot blond   5,75",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Lagunitas I.P.A.",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Lagunitas I.P.A. 6,-",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    },
+    {
+     "naam": "Texels Jutter Bock",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 5.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Texels Jutter Bock 5,25",
+     "bron": "https://www.cafekanaalzicht.nl/kaart/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -; © 2020 Café Kanaalzicht",
+    "Last-Modified: -; © 2020 Café Kanaalzicht"
+   ]
+  },
+  {
+   "kroeg_id": 3286,
+   "kroeg": "Kleine Max",
+   "tapbieren": [
+    {
+     "naam": "Swinckels Pils",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Tap bier Swinckels Pils €3.75",
+     "bron": "https://kleinemax.nl/menu/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "CreationDate: Tue Nov 19 16:35:33 2024 UTC; ModDate: Tue Nov 19 18:24:49 2024 UTC; Last-Modified: Fri, 22 Nov 2024 12:54:57 GMT"
+   ]
+  },
+  {
+   "kroeg_id": 3291,
+   "kroeg": "Stadsbrouwerij RoodNoot",
+   "tapbieren": [
+    {
+     "naam": "Grolsch 0,25L",
+     "soort": "pils",
+     "cl": 25,
+     "prijs": 3.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Grolsch 0,25L\n€ 3.75",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Grolsch 0,50L",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Grolsch 0,50L\n€ 7.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Urquell 0,33L",
+     "soort": "pils",
+     "cl": 33,
+     "prijs": 5.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Urquell 0,33L\n€ 5.25",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Urquell 0,50L",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 8.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Urquell 0,50L\n€ 8.00",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "RoodNoot (6,5%)",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "RoodNoot (6,5%)\n€ 5.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Utreg's Wit (6%)",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Utreg's Wit (6%)\n€ 5.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Toontje (6%)",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Toontje (6%)\n€ 5.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Blonde Maartje (6,5%)",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Blonde Maartje (6,5%)\n€ 5.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Dappere Door Tripel (7,5%)",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Dappere Door Tripel (7,5%)\n€ 6.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Guinness (4,2%) 0,25L",
+     "soort": "stout",
+     "cl": 25,
+     "prijs": 5.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Guinness (4,2%) 0,25L\n€ 5.00",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Guinness (4,2%) 0,50L",
+     "soort": "stout",
+     "cl": 50,
+     "prijs": 8.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Guinness (4,2%) 0,50L\n€ 8.00",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Puur Weizen (5,1%)",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Puur Weizen (5,1%)\n€ 5.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Hangende Harry IPA (5,9%)",
+     "soort": "ipa",
+     "cl": null,
+     "prijs": 5.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Hangende Harry IPA (5,9%)\n€ 5.75",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Venloosch Alt (5%)",
+     "soort": "bruin",
+     "cl": null,
+     "prijs": 5.5,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Venloosch Alt (5%)\n€ 5.50",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Westmalle Dubbel (7%)",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Westmalle Dubbel (7%)\n€ 6.00",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Krachtig Dort (Alfa) (7,5%)",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Krachtig Dort (Alfa) (7,5%)\n€ 6.00\nTap.",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "IJ Wit (6,5%)",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 6.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "IJ Wit (6,5%)\n€ 6.25\nTap.",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "De Koninck Bolleke (5,2%)",
+     "soort": "amber",
+     "cl": null,
+     "prijs": 6.0,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "De Koninck Bolleke (5,2%)\n€ 6.00\nTap.",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    },
+    {
+     "naam": "Paix Dieu Triple (10,0%)",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.75,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Paix Dieu Triple (10,0%)\n€ 6.75\nTap.",
+     "bron": "https://www.stadsbrouwerijroodnoot.nl/onze-kaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Last-Modified: -"
+   ]
+  }
+ ]
+}

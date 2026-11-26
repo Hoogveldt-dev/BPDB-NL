@@ -1,0 +1,239 @@
+{
+ "stad": "Breda",
+ "opgehaald": "2026-11-26",
+ "methode": "eigen websites, gelezen door DeepSeek; niet nagekeken",
+ "kroegen": [
+  {
+   "kroeg_id": 3402,
+   "kroeg": "Boerke Verschuren",
+   "tapbieren": [
+    {
+     "naam": "Jupiler",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Jupiler                  3,70",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Halve liter Jupiler",
+     "soort": "pils",
+     "cl": 50,
+     "prijs": 7.2,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Halve liter Jupiler      7,20",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Fluitje",
+     "soort": "pils",
+     "cl": 20,
+     "prijs": 3.3,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Fluitje                  3,30",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Waterzakje",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.7,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Waterzakje               3,70",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Hoegaarden",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 5.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Hoegaarden               5,10",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Halve liter Hoegaarden",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.6,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Halve liter Hoegaarden   9,60",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Leffe Blond",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 5.2,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Leffe Blond              5,20",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Leffe Dubbel",
+     "soort": "dubbel",
+     "cl": null,
+     "prijs": 5.2,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Leffe Dubbel             5,20",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Le Fort Tripel",
+     "soort": "tripel",
+     "cl": null,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Le Fort Tripel           6,10",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Weihenstephaner 33cl",
+     "soort": "wit",
+     "cl": 33,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Weihenstephaner 33cl     6,10",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Weihenstephaner 50cl",
+     "soort": "wit",
+     "cl": 50,
+     "prijs": 9.5,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "Weihenstephaner 50cl     9,50",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    },
+    {
+     "naam": "Wisselend van het vat",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 6.1,
+     "tap": true,
+     "actie": false,
+     "doc": 4,
+     "regel": "WISSELEND VAN HET VAT 6,10",
+     "bron": "https://boerkeverschuren.nl/boerkes-hardlopers-neutkaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: Tue, 09 Apr 2024 18:02:48 GMT",
+    "Title: 2024 Boerkes Hardlopers Neutkaart_v3.indd",
+    "CreationDate: Fri Mar  1 07:38:23 2024 UTC",
+    "ModDate: Fri Mar  1 07:38:25 2024 UTC"
+   ]
+  },
+  {
+   "kroeg_id": 3404,
+   "kroeg": "De Dorpsherberg",
+   "tapbieren": [
+    {
+     "naam": "Brand Pilsener",
+     "soort": "pils",
+     "cl": null,
+     "prijs": 3.25,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Brand Pilsener van de tap / € 3,25 / fluitje",
+     "bron": "https://dorpsherbergteteringen.nl/menu/"
+    },
+    {
+     "naam": "Brand Weizen bier",
+     "soort": "wit",
+     "cl": null,
+     "prijs": 4.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Speciaal bieren van de tap / € 4,90 / Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
+     "bron": "https://dorpsherbergteteringen.nl/menu/"
+    },
+    {
+     "naam": "Kwaremont Blond bier",
+     "soort": "blond",
+     "cl": null,
+     "prijs": 4.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Speciaal bieren van de tap / € 4,90 / Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
+     "bron": "https://dorpsherbergteteringen.nl/menu/"
+    },
+    {
+     "naam": "Texels Skuumkoppe",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.9,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Speciaal bieren van de tap / € 4,90 / Brand Weizen bier , Kwaremont Blond bier, Texels Skuumkoppe",
+     "bron": "https://dorpsherbergteteringen.nl/menu/"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "Last-Modified: -",
+    "Last-Modified: -"
+   ]
+  },
+  {
+   "kroeg_id": 3415,
+   "kroeg": "Bar Santé",
+   "tapbieren": [
+    {
+     "naam": "Bier van de tap",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 3.6,
+     "tap": true,
+     "actie": false,
+     "doc": 2,
+     "regel": "Bier van de tap €3,60",
+     "bron": "https://barsante.nl/menukaart"
+    },
+    {
+     "naam": "Speciaalbier",
+     "soort": "anders",
+     "cl": null,
+     "prijs": 4.5,
+     "tap": null,
+     "actie": false,
+     "doc": 2,
+     "regel": "Speciaalbier €4,50",
+     "bron": "https://barsante.nl/menukaart"
+    }
+   ],
+   "datum_aanwijzingen": [
+    "© 2026 Bar Santé — Breda",
+    "Last-Modified: -",
+    "© 2026 Bar Santé — Breda",
+    "Last-Modified: -"
+   ]
+  }
+ ]
+}
