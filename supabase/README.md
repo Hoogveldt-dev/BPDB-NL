@@ -148,6 +148,15 @@ Lezen en gewone `insert`, `update` en `delete` gaan via de Supabase-connector. V
 2. Roep hem aan met `curl -X POST -H "x-eenmalig: <sleutel>" https://<project-ref>.supabase.co/functions/v1/eenmalig-migratie` en lees de controle.
 3. Rol direct een lege versie uit (`verify_jwt: true`, altijd 410), gooi de sleutel weg en draai de beveiligingsadviezen. Een Edge Function verwijderen kan niet via de connector, alleen in het dashboard.
 
+## Kroegen importeren vanuit een sessie
+
+Overpass is vanuit een cloudsessie wisselend bereikbaar en `osm-import` vraagt een ingelogde beheerder. Zo gaat het toch:
+
+1. `openssl rand -hex 24` geeft een sleutel; `printf %s <sleutel> | sha256sum` de hash.
+2. Rol met `deploy_edge_function` de functie `eenmalig-import` uit met `verify_jwt: false` en alleen dit `index.ts`: `import { start } from "https://raw.githubusercontent.com/Hoogveldt-dev/BPDB-NL/<commit>/supabase/functions/eenmalig-import/index.ts"; start("<hash>");` (geef ook een `deno.json` met `{"imports":{}}` en `import_map_path: "deno.json"` mee). De code wordt bij het uitrollen gebundeld.
+3. `EENMALIG=<sleutel> tools/google-kroegen/importeer-stad.sh <gemeentecode>`: haalt Overpass op met nieuwe pogingen, accepteert alleen een volledig antwoord en stuurt het door naar `osm-import`.
+4. Rol direct een lege versie uit (`verify_jwt: true`, altijd 410) en gooi de sleutel weg.
+
 ## Kaartscans
 
 Het terraskaartje heeft een QR-code naar `https://bierkoers.nl/k`. `app/kaartscan.js` draait voor `app.js`: het zet het adres terug naar `/` en voegt een rij toe aan `kaartscans` met de bron (`kaartje`). Verversen telt dus niet opnieuw. Een nieuwe drukwerkversie krijgt een eigen pad in `BRONNEN` in `app/kaartscan.js`.
