@@ -14,8 +14,6 @@ Beer Price Database voor Nederland: een door gebruikers gevulde kaart met bierpr
 - [`supabase/`](supabase/README.md): databaseschema, spelregels, Edge Function voor de kroegimport en installatiestappen.
 - [`tools/google-kroegen/`](tools/google-kroegen/README.md): haalt cafés en kroegen uit Google Maps en koppelt ze aan de kroegen uit OSM. Waarom en hoe: [`docs/google-maps-bronnen.md`](docs/google-maps-bronnen.md).
 
-Alle data in de prototypes is verzonnen. De kaart van Nijmegen is vereenvoudigd nagetekend.
-
 ## Wat je in prototype v2 kunt doen
 
 - Kroegen onder de mist vrijspelen; de dichtstbijzijnde kroeg op slot staat bovenaan.
@@ -23,8 +21,6 @@ Alle data in de prototypes is verzonnen. De kaart van Nijmegen is vereenvoudigd 
 - Inchecken met de prijs van je pils ("Klopt" of een andere prijs) en zien hoe een andere speler je bevestigt.
 - In het tabblad Samen de voortgang van de stad, weekdoelen, voortgang per wijk en recente activiteit bekijken.
 - De ranglijst bekijken: wie draagt het meest bij.
-
-Veroveringen (kroegbaas, wijkbezit) en teams staan uit. De code staat er nog in, achter `FEATURES` bovenaan het script in `prototype/index.html`.
 
 ## De app draaien
 
