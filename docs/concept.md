@@ -127,7 +127,7 @@ Teams zijn groepen spelers die samen punten en titels verzamelen, bijvoorbeeld e
 | Prijswijziging melden | +30 | Meteen; eraf als de melding wordt weerlegd (met veroveringen: maakt je kroegbaas) |
 | Oude prijs controleren | +15 | Prijs is 90 dagen of ouder |
 | Vrije titel pakken (alleen met veroveringen) | +25 | Kroegbaas checkte 90 dagen niet zelf |
-| "Klopt nog" | +5 | Max. 1 keer per kroeg per 7 dagen |
+| "Klopt nog" | +5 | Max. 1 keer per kroeg per 7 dagen; ook niet binnen 7 dagen na een eigen melding of een eigen "klopt" bij die kroeg |
 | Ter plaatse (binnen 75 m) | x1,5 | Automatisch via locatie |
 | Foto van de prijslijst | +5 | Optioneel |
 | Bijdrage weerlegd | -20 | Plus daling betrouwbaarheid |
@@ -214,12 +214,12 @@ Bovenaan de geschiedenis staat de **stamgast**: de speler die in deze kroeg het 
 |---|---|
 | Wat telt | Eigen meldingen die bevestigd zijn (eerst gemeld, gewijzigd, "klopt nog") en jouw "klopt" op een melding van een ander die daarna bevestigd is |
 | Wat niet telt | Openstaande en weerlegde meldingen, en "klopt" op een melding die weerlegd werd |
-| Per dag | Per speler telt hoogstens een bijdrage per dag: een melding bevestigen en meteen daarna "klopt nog" is een bezoek, geen twee |
+| Per dag | Per speler telt hoogstens een bijdrage per dag: twee keer "klopt" op een dag is een bezoek, geen twee |
 | Drempel | Stamgast vanaf 2 dagen met een bijdrage; een enkel bezoek maakt nog geen vaste gast |
 | Gelijkspel | Wie de stand het eerst bereikte, blijft stamgast; inhalen kan alleen met een dag meer |
 | Wat je ziet | Naam van de stamgast en op hoeveel dagen die bijdroeg. Ben jij het niet, dan zie je hoeveel dagen je nog nodig hebt. Is er nog niemand, dan zie je hoe je de eerste wordt |
 
-"Klopt nog" kan hoogstens een keer per week per kroeg, meldingen tellen pas na bevestiging door een ander en per dag telt maar een bijdrage. Stamgast word je dus door er echt vaker te komen, niet door snel achter elkaar te tikken. De titel levert geen punten op; hij is erkenning.
+"Klopt nog" kan hoogstens een keer per week per kroeg (ook niet vlak na je eigen melding of "klopt"), meldingen tellen pas na bevestiging door een ander en per dag telt maar een bijdrage. Stamgast word je dus door er echt vaker te komen, niet door snel achter elkaar te tikken. De titel levert geen punten op; hij is erkenning.
 
 In de database is dit de view `kroeg_stamgast` (op basis van `kroeg_bijdragers`), een query op `gebeurtenissen` en `bevestigingen` zonder aparte opslag.
 
