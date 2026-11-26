@@ -24,7 +24,6 @@ Zoeken:
   --pauze-ms 1200           pauze tussen verzoeken (met spreiding)
   --transport auto          auto | http | browser
   --zichtbaar               browser zichtbaar openen (bij --transport browser)
-  --clubs                   ook nachtclubs en discotheken
   --alleen-zeker            alleen zaken met een kroegcategorie als hoofdcategorie
 
 Uitvoer:
@@ -45,7 +44,6 @@ const { values: o } = parseArgs({
     "pauze-ms": { type: "string", default: "1200" },
     transport: { type: "string", default: "auto" },
     zichtbaar: { type: "boolean", default: false },
-    clubs: { type: "boolean", default: false },
     "alleen-zeker": { type: "boolean", default: false },
     uit: { type: "string" },
     "naar-supabase": { type: "boolean", default: false },
@@ -99,7 +97,6 @@ try {
     transport,
     maxPaginas: Number(o["max-paginas"]),
     pauzeMs: Number(o["pauze-ms"]),
-    clubs: o.clubs,
     minZekerheid: o["alleen-zeker"] ? "hoog" : "middel",
     log,
   });

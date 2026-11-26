@@ -23,7 +23,6 @@ export async function verzamel({
   transport,
   maxPaginas = 6,
   pauzeMs = 1200,
-  clubs = false,
   minZekerheid = "middel",
   gezondheid = new Gezondheid(),
   log = () => {},
@@ -64,7 +63,7 @@ export async function verzamel({
           }
           if (genegeerd.has(k)) continue;
           onbekend++;
-          const { soort, zekerheid } = classificeer(p.categorieen, { clubs });
+          const { soort, zekerheid } = classificeer(p.categorieen);
           if (!soort || (minZekerheid === "hoog" && zekerheid !== "hoog")) {
             genegeerd.set(k, p);
             continue;

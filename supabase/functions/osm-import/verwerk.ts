@@ -29,12 +29,13 @@ export function cafeIsKroeg(t: Record<string, string>): boolean {
   return KROEG_NAAM.test(t.name ?? "");
 }
 
-const SOORTEN = new Set(["pub", "bar", "biergarten", "cafe", "nightclub"]);
+// Geen nachtclubs (amenity=nightclub): hun hoge prijzen vertekenen de koers en de app is voor kroegen en cafés waar je zit.
+const SOORTEN = new Set(["pub", "bar", "biergarten", "cafe"]);
 
-// Gemeenten met een openbaar register van horecavergunningen. Daar telt een café, restaurant of nachtclub uit
+// Gemeenten met een openbaar register van horecavergunningen. Daar telt een café of restaurant uit
 // OpenStreetMap als kroeg als er binnen 40 m een vergunning als café of nachtzaak is met een gelijkende naam
 // (in Amsterdam staan veel bruine cafés in OSM als restaurant of café); een naam als van een koffiezaak telt niet. De query in app/overpass.js haalt voor
-// deze gemeenten ook cafés, restaurants en nachtclubs op (REGISTER_GEMEENTEN).
+// deze gemeenten ook cafés en restaurants op (REGISTER_GEMEENTEN).
 export const HORECAREGISTER: Record<string, string> = {
   // Gemeente Amsterdam: exploitatievergunningen horeca (api.data.amsterdam.nl, CC0)
   GM0363: "https://api.data.amsterdam.nl/v1/horeca/exploitatievergunning/?_format=json&_pageSize=1000&_fields=zaaknaam,zaakCategorie,statusVergunning,locatie",
@@ -75,14 +76,14 @@ export type Verwerkt = {
 export function verwerk(elementen: OsmElement[], gemeente: string, belgie: boolean, register?: Vergunning[]): Verwerkt {
   const gevonden = elementen.some((e) => e.type === "relation" && !e.tags);
   const plek = (e: OsmElement) => ({ lat: (e.lat ?? e.center?.lat)!, lon: (e.lon ?? e.center?.lon)! });
-  const viaRegister = (e: OsmElement) => !!register && ["cafe", "restaurant", "nightclub"].includes(e.tags!.amenity) &&
+  const viaRegister = (e: OsmElement) => !!register && ["cafe", "restaurant"].includes(e.tags!.amenity) &&
     !KOFFIE_NAAM.test(e.tags!.name) && inRegister(e.tags!.name, plek(e).lat, plek(e).lon, register);
   let uitRegister = 0;
   const kroegen = elementen
     .filter((e) => e.tags?.name && (SOORTEN.has(e.tags.amenity ?? "") || e.tags.amenity === "restaurant"))
     .filter((e) => {
       const a = e.tags!.amenity;
-      if (register && ["cafe", "restaurant", "nightclub"].includes(a)) return viaRegister(e) && ++uitRegister > 0;
+      if (register && ["cafe", "restaurant"].includes(a)) return viaRegister(e) && ++uitRegister > 0;
       return a === "cafe" ? cafeIsKroeg(e.tags!) : a !== "restaurant";
     })
     .map((e) => {

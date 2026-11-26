@@ -118,7 +118,7 @@ Twijfels en een steekproef van 10% komen in `nakijken/<datum>/`, zodat Claude ze
 | middel | Kroegcategorie op plek 2 of 3 | Brouwerij, Café, Restaurant |
 | geen | Anders, of een cannabiswinkel | Restaurant; Koffiehuis; Cannabiswinkel, Loungebar |
 
-Met `--alleen-zeker` blijven alleen de zaken met zekerheid "hoog" over. Nachtclubs en discotheken alleen met `--clubs`.
+Met `--alleen-zeker` blijven alleen de zaken met zekerheid "hoog" over. Nachtclubs en discotheken (als hoofdcategorie) vallen altijd af.
 
 ## Als het misgaat
 

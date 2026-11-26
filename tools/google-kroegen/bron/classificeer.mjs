@@ -21,26 +21,27 @@ const SOORT = new Map(
     "gay bar": "bar", "whiskey bar": "bar", "hotel bar": "bar", "live music bar": "bar",
     // OSM amenity=biergarten
     "biertuin": "biergarten", "beer garden": "biergarten",
-    // OSM amenity=nightclub (alleen met --clubs)
-    "nachtclub": "nightclub", "discotheek": "nightclub", "dansclub": "nightclub",
-    "night club": "nightclub", "dance club": "nightclub",
   }),
 );
 
 // Nooit een kroeg, ook niet als er "bar" naast staat. In Nederland is een coffeeshop een cannabiswinkel.
 const NOOIT = new Set(["cannabiswinkel", "coffeeshop", "cannabis store"]);
 
+// Een nachtclub of discotheek als hoofdcategorie is geen kroeg: hun hoge prijzen vertekenen de koers. Staat zo'n
+// categorie verderop ("Café, Dansclub"), dan blijft het een kroeg.
+const CLUB = new Set(["nachtclub", "discotheek", "dansclub", "night club", "nightclub", "dance club", "disco", "club"]);
+
 // Is de hoofdcategorie een winkel of ijssalon, dan telt een kroegcategorie verderop niet
 // ("IJssalon, Cocktailbar"; "Restaurant, Biertuin, Bierwinkel" mag wel).
 const WINKEL = /winkel|ijssalon|bakkerij|supermarkt|slijterij|\bstore\b|\bshop\b|ice cream/;
 
-export function classificeer(categorieen, { clubs = false } = {}) {
+export function classificeer(categorieen) {
   const cats = (categorieen ?? []).map((c) => c.toLowerCase().trim());
-  if (cats.some((c) => NOOIT.has(c))) return { soort: null, zekerheid: null };
+  if (cats.some((c) => NOOIT.has(c)) || CLUB.has(cats[0])) return { soort: null, zekerheid: null };
   const plekken = cats.length && WINKEL.test(cats[0]) ? 1 : 3;
   for (let i = 0; i < Math.min(cats.length, plekken); i++) {
     const soort = SOORT.get(cats[i]);
-    if (!soort || (soort === "nightclub" && !clubs)) continue;
+    if (!soort) continue;
     return { soort, zekerheid: i === 0 ? "hoog" : "middel" };
   }
   return { soort: null, zekerheid: null };
