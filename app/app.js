@@ -84,7 +84,7 @@ const GLAZEN = [{ naam: "Vaasje", cl: 25 }, { naam: "Fluitje", cl: 20 }, { naam:
 const VAASJE = 25;
 const MERKEN = ["Heineken", "Amstel", "Grolsch", "Brand", "Bavaria", "Hertog Jan", "Jupiler", "Gulpener"];
 const WEEKDOEL = 12;
-const STAMGAST_MIN = 2; // gelijk aan de drempel in de view kroeg_stamgast
+const STAMGAST_MIN = 2; // dagen, gelijk aan de drempel in de view kroeg_stamgast
 const INCHECK_M = 75; // gelijk aan de grens in private.inchecken
 const TOCHT_STRAAL_M = 2000;
 const ICON_PIN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><path d="m9 10 2 2 4-4"/></svg>`;
@@ -1844,21 +1844,22 @@ async function laadTijdlijn(id) {
   if (!guinnessAan()) $("#spark").innerHTML = spark(data);
 }
 
-// Stamgast: wie hier het vaakst de prijs heeft bijgewerkt of bevestigd (zie view kroeg_stamgast).
+// Stamgast: wie hier op de meeste dagen de prijs heeft bijgewerkt of bevestigd (zie view kroeg_stamgast).
+// Per dag telt hoogstens een bijdrage, zodat een bezoek nooit genoeg is.
 function stamgastHtml(bijdragers, uid) {
   const eerste = bijdragers.find((b) => b.plek === 1);
   const stam = eerste && eerste.bijdragen >= STAMGAST_MIN ? eerste : null;
   const mijn = uid ? bijdragers.find((b) => b.gebruiker_id === uid)?.bijdragen ?? 0 : 0;
-  const bijdr = (n) => (n === 1 ? "1 bijdrage" : `${n} bijdragen`);
+  const bijdr = (n) => (TAAL === "en" ? (n === 1 ? "1 day" : `${n} days`) : n === 1 ? "1 dag" : `${n} dagen`);
   let sub = "";
   if (stam && stam.gebruiker_id === uid) sub = "Dit is jouw stamkroeg. Blijf de prijs bijhouden om dat zo te houden.";
-  else if (stam && uid) sub = `Jij: ${keer(mijn)}. Nog <b>${bijdr(stam.bijdragen - mijn + 1)}</b> om stamgast te worden.`;
+  else if (stam && uid) sub = `Jij: ${bijdr(mijn)}. Nog <b>${bijdr(stam.bijdragen - mijn + 1)}</b> om stamgast te worden.`;
   else if (!stam && uid) sub = `Nog <b>${bijdr(Math.max(1, STAMGAST_MIN - mijn))}</b> en jouw naam staat hier.`;
-  else if (!stam) sub = `Wie hier minstens ${STAMGAST_MIN} keer de prijs bijwerkt of bevestigt, wordt stamgast.`;
+  else if (!stam) sub = `Wie hier op minstens ${STAMGAST_MIN} dagen de prijs bijwerkt of bevestigt, wordt stamgast.`;
   return `<div class="card stamgast ${stam ? "" : "vrij"}">
     <span class="ic">${ICON_GLAS}</span>
     <div>${stam
-      ? `<div class="t">Stamgast</div><b>${esc(stam.naam)}</b><div class="t">${keer(stam.bijdragen)} bijgewerkt of bevestigd</div>`
+      ? `<div class="t">Stamgast</div><b>${esc(stam.naam)}</b><div class="t">Op ${stam.bijdragen} dagen bijgewerkt of bevestigd</div>`
       : `<div class="t">Stamgast</div><b>Nog niemand</b>`}</div>
     ${sub ? `<div class="sub">${sub}</div>` : ""}
   </div>`;

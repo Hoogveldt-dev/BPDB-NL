@@ -214,11 +214,12 @@ Bovenaan de geschiedenis staat de **stamgast**: de speler die in deze kroeg het 
 |---|---|
 | Wat telt | Eigen meldingen die bevestigd zijn (eerst gemeld, gewijzigd, "klopt nog") en jouw "klopt" op een melding van een ander die daarna bevestigd is |
 | Wat niet telt | Openstaande en weerlegde meldingen, en "klopt" op een melding die weerlegd werd |
-| Drempel | Stamgast vanaf 2 bijdragen; een enkele melding maakt nog geen vaste gast |
-| Gelijkspel | Wie de stand het eerst bereikte, blijft stamgast; inhalen kan alleen met een bijdrage meer |
-| Wat je ziet | Naam en aantal bijdragen van de stamgast. Ben jij het niet, dan zie je hoeveel bijdragen je nog nodig hebt. Is er nog niemand, dan zie je hoe je de eerste wordt |
+| Per dag | Per speler telt hoogstens een bijdrage per dag: een melding bevestigen en meteen daarna "klopt nog" is een bezoek, geen twee |
+| Drempel | Stamgast vanaf 2 dagen met een bijdrage; een enkel bezoek maakt nog geen vaste gast |
+| Gelijkspel | Wie de stand het eerst bereikte, blijft stamgast; inhalen kan alleen met een dag meer |
+| Wat je ziet | Naam van de stamgast en op hoeveel dagen die bijdroeg. Ben jij het niet, dan zie je hoeveel dagen je nog nodig hebt. Is er nog niemand, dan zie je hoe je de eerste wordt |
 
-"Klopt nog" kan hoogstens een keer per week per kroeg, en meldingen tellen pas na bevestiging door een ander. Stamgast word je dus door er echt vaker te komen, niet door snel achter elkaar te tikken. De titel levert geen punten op; hij is erkenning.
+"Klopt nog" kan hoogstens een keer per week per kroeg, meldingen tellen pas na bevestiging door een ander en per dag telt maar een bijdrage. Stamgast word je dus door er echt vaker te komen, niet door snel achter elkaar te tikken. De titel levert geen punten op; hij is erkenning.
 
 In de database is dit de view `kroeg_stamgast` (op basis van `kroeg_bijdragers`), een query op `gebeurtenissen` en `bevestigingen` zonder aparte opslag.
 
