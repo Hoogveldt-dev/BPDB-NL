@@ -433,6 +433,8 @@ def stap_datum(stad, map_):
         if not (oordeel.get("is_menukaart") and oordeel.get("prijs_klopt")):
             print(f"  af   {geval['kroeg'][:30]:30} {oordeel.get('toelichting', '')[:80]}"); continue
         geval["datum"], geval["datum_bron"] = datum_van(map_, geval)
+        if not geval["datum"]:  # de prijs is belangrijker dan de datum: zonder datum van de kaart geldt de dag van kijken
+            geval["datum"], geval["datum_bron"] = datetime.date.today().isoformat(), "gezien op"
         gevallen.append(geval)
     oud = rest(f"kroeg_tijdlijn?select=kroeg_id,prijs_cent,volume_cl,status,bron&gemeente=eq.{urllib.parse.quote(stad)}&soort=neq.check&order=op")
     prijzen = {r["kroeg_id"]: r["prijs_cent"] / 100 * 25 / r["volume_cl"] for r in oud if r["volume_cl"] and (r["status"] == "bevestigd" or r["bron"] == "menukaart")}
