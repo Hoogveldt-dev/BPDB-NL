@@ -11,6 +11,7 @@ Wat alleen in een dashboard, bij een registrar of op een echte telefoon kan. Hie
 5. **Inlogcode naar iCloud en Outlook.** Bij Gmail komt de code in de inbox; kijk of dat bij iCloud en Outlook ook zo is. Na een paar weken zonder problemen kan DMARC van `p=none` naar `p=quarantine`; zeg het, dan doet een sessie het via de API van Cloudflare.
 6. **Gent inladen.** Vraag onder Ik, Nieuwe stad aanvragen, Gent aan (kies "Gent, Oost-Vlaanderen" uit de lijst) en tik onder Beheer, Stadsaanvragen op Goedkeuren. Je telefoon haalt de kroegen dan zelf bij OpenStreetMap op (de knop toont "Kroegen ophalen…" en daarna "Opslaan…"); houd de app zo lang open. Gent geeft ongeveer 367 kroegen, waarvan 30 cafés, en de 25 stadswijken van Stad Gent.
 7. **Twijfelgevallen in de kroegenlijst:** Strik Bakkers Cafe (lijkt een ijssalon), Café Royal en café Billabong (bestaan mogelijk niet meer). Kijk als je er langskomt, of meld ze in de app met "Klopt deze kroeg niet?".
+8. **Google Search Console en Bing Webmaster Tools.** Voeg `bierkoers.nl` toe als domein (verificatie met een TXT-record in Cloudflare DNS), dien `https://bierkoers.nl/sitemap.xml` in en kijk na een paar weken onder Prestaties welke zoektermen binnenkomen. Een sessie kan dit niet doen.
 
 ## Onderhoud
 
