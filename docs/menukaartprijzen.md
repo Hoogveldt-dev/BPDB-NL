@@ -310,3 +310,13 @@ DeepSeek: ongeveer 2,1 miljoen tokens in en 0,6 miljoen uit, vooral het lezen va
 Sindsdien haalt de kroegimport voor Amsterdam ook cafés, restaurants en nachtclubs uit OpenStreetMap, en houdt `osm-import` die met een vergunning als café of nachtzaak binnen 40 m en een gelijkende naam (`HORECAREGISTER` en `inRegister()` in `supabase/functions/osm-import/verwerk.ts`, `REGISTER_GEMEENTEN` in `app/overpass.js`); een naam als van een koffiezaak telt niet. Amsterdam ging zo van 602 naar 846 kroegen (244 uit het register, vooral bruine cafés die in OSM als restaurant of café staan, maar ook een paar restaurants met een cafévergunning). DeepSeek las de 153 nieuwe kroegen met een website (ongeveer 1,06 miljoen tokens in en 0,25 miljoen uit, nakijken 35.000 in en 7.000 uit): 20 kandidaten, alle goedgekeurd, 17 met een datum geïmporteerd met de stap `datum`. Afgevallen zonder datum: Eetcafé de Goos en The Breakfast Club (twee vestigingen). Amsterdam heeft nu 39 menukaartprijzen, Pilsindex € 3,90.
 
 Een server van Overpass gaf voor Amsterdam een antwoord met de gemeente maar zonder een enkele kroeg (een verouderde kopie). Met zo'n antwoord zou de import alle kroegen van de stad sluiten. Daarom telt zo'n antwoord nu als onvolledig (`haalOsm()`) en weigert `osm-import` een import zonder kroegen.
+
+### Houten, Utrecht en Breda, 26 november 2026
+
+Houten is eerst uit OpenStreetMap geïmporteerd (`importeer-stad.sh GM0321`). OSM kent in Houten maar een kroeg of bar (Mango's), zonder website; er viel dus niets te lezen.
+
+- Utrecht: 114 kroegen zonder prijs, 99 met een website, 93 gelezen (ongeveer 388.000 tokens in en 181.000 uit). 10 kandidaten; DeepSeek keurde er 8 goed (bij Orloff pas in een tweede poging, de eerste gaf een onleesbaar antwoord). 6 met een datum geïmporteerd: Walden, Orloff, Café Kalff, 't Pakhuis, Tripleclub en Beuntjes Feestcafé. Mediaan € 3,65.
+- Utrecht, afgevallen: Café Kanaalzicht en Stadsbrouwerij RoodNoot (geen datum); afgekeurd: Club Claar (Birra Moretti zonder maat) en Wijnbar Kurk (Heineken 25 cl, niet duidelijk van de tap).
+- Breda: 101 kroegen zonder prijs, 64 met een website, 52 gelezen (ongeveer 178.000 tokens in en 57.000 uit). Maar 3 kroegen noemen tapbieren met een prijs en geen daarvan een pils met maat. Boerke Verschuren noemt Jupiler € 3,70 zonder maat, naast een fluitje en een halve liter; in Nederland telt een pils zonder maat niet.
+
+Crawlfouten (6 in Utrecht, 12 in Breda) zijn niet opnieuw geprobeerd met Playwright. Alle tapbieren: `tools/google-kroegen/data/<stad>-tapbieren-2026-11-26.json`.
