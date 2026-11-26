@@ -11,7 +11,8 @@ const maplibregl = window.maplibregl;
 
 // Stad: de gekozen stad (Ik, Stad), bewaard in localStorage als bierkoers-stad. Standaard de pilotstad uit config.js.
 // De lijst met steden komt uit stad_voortgang: elke gemeente met kroegen doet mee.
-let stadNaam = (() => { try { return localStorage.getItem("bierkoers-stad") || STAD.naam; } catch { return STAD.naam; } })();
+// Een stadsadres (bierkoers.nl/utrecht) wint van de bewaarde stad: de werker zet dan window.BK_STAD (app/_worker.js)
+let stadNaam = window.BK_STAD || (() => { try { return localStorage.getItem("bierkoers-stad") || STAD.naam; } catch { return STAD.naam; } })();
 // Bij een andere stad dan de pilotstad springt de kaart naar het midden van de kroegen zodra die geladen zijn
 let kaartNaarStad = stadNaam !== STAD.naam;
 
