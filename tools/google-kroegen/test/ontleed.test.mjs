@@ -26,7 +26,8 @@ test("ontleedt alle velden van een zaak", () => {
   assert.equal(p.lon, 5.8634);
   assert.deepEqual(p.openingstijden, WEEK);
   assert.equal(p.status, null, "'Honden toegestaan' op [88][0] is geen status");
-  for (const weg of ["beoordeling", "aantal_reviews", "telefoon", "website", "cid"]) assert.ok(!(weg in p), `${weg} hoort er niet in`);
+  assert.ok("website" in p, "website voor drankkaarten.py");
+  for (const weg of ["beoordeling", "aantal_reviews", "telefoon", "cid"]) assert.ok(!(weg in p), `${weg} hoort er niet in`);
 });
 
 test("oude plek van openingstijden en echte status", () => {
