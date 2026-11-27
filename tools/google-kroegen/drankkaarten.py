@@ -2,6 +2,7 @@
 """Drankkaarten van eigen websites (DAEN-methode) voor een hele stad, met DeepSeek als lezer.
 
 Stappen (elk schrijft naar nakijken/<datum>-<stad>/, niet in Git):
+  restaurants  restaurants zonder kroegkenmerken sluiten (restaurantfilter.py), vóór de rest
   kroegen   open kroegen zonder prijs uit de database (openbaar) en hun website uit OpenStreetMap of, als
             google-kroegen-<stad>.json er is (cli.mjs), uit Google Maps
   crawl     per website de startpagina en links met menu, kaart, drank, bier of pdf; pdf's met pdftotext; weinig
@@ -12,7 +13,8 @@ Stappen (elk schrijft naar nakijken/<datum>-<stad>/, niet in Git):
   datum     (na het nakijken) per goedgekeurd geval de datum van de kaart zelf, de vaste controles en import.json
 
 Gebruik: python3 drankkaarten.py <stad> [stap ...] [--extra extra-websites.json]
-Zonder stap draaien de stappen tot en met gevallen. Nakijken daarna met deepseek-controleur.mjs, dan de stap
+Zonder stap draaien de stappen tot en met gevallen, met vooraf de stap restaurants (restaurantfilter.py: een restaurant
+zonder kroegkenmerken valt af voordat we er een drankkaart voor lezen). Nakijken daarna met deepseek-controleur.mjs, dan de stap
 datum; import.json gaat naar importeer_menuprijzen (zie docs/menukaartprijzen.md). Vanuit een cloudsessie voegt de proxy de DeepSeek-sleutel
 toe; zet anders DEEPSEEK_API_KEY.
 """
@@ -55,11 +57,8 @@ def rest(pad):
     return haal(f"{SUPABASE}/{pad}", json_=True, headers={"apikey": SLEUTEL})
 
 
-def stap_kroegen(stad, map_, extra):
-    k = rest(f"kroegen?select=id,naam,osm_id,adres,google_place_id&gemeente=eq.{urllib.parse.quote(stad)}&open=is.true&huidig_prijs_cent=is.null&order=id")
-    # Ook geen openstaande melding (zoals importeer_menuprijzen): een menukaartprijs wacht op een speler
-    wacht = {r["id"] for r in rest(f"kroeg_kaart?select=id&gemeente=eq.{urllib.parse.quote(stad)}&open_melding_id=not.is.null")}
-    k = [x for x in k if x["id"] not in wacht]
+def osm_tags(k):
+    """De OSM-tags (website, openingstijden, keuken) van kroegen met een osm_id, per osm_id."""
     tags = {}
     for soort in ("node", "way", "relation"):
         ids = [x["osm_id"].split("/")[1] for x in k if (x["osm_id"] or "").startswith(soort + "/")]
@@ -69,6 +68,20 @@ def stap_kroegen(stad, map_, extra):
                           headers={"User-Agent": "Bierkoers kroegimport (https://bierkoers.nl)"}, pogingen=6)["elements"]:
                 tags[f"{soort}/{e['id']}"] = e.get("tags", {})
             time.sleep(3)
+    return tags
+
+
+def stap_kroegen(stad, map_, extra):
+    k = rest(f"kroegen?select=id,naam,osm_id,adres,google_place_id&gemeente=eq.{urllib.parse.quote(stad)}&open=is.true&huidig_prijs_cent=is.null&order=id")
+    # Ook geen openstaande melding (zoals importeer_menuprijzen): een menukaartprijs wacht op een speler
+    wacht = {r["id"] for r in rest(f"kroeg_kaart?select=id&gemeente=eq.{urllib.parse.quote(stad)}&open_melding_id=not.is.null")}
+    k = [x for x in k if x["id"] not in wacht]
+    # Restaurants die de restaurantfilter net als geen kroeg beoordeelde, ook als dat nog niet in de database staat
+    oordelen = f"{HIER}/nakijken/{datetime.date.today().isoformat()}-{re.sub(r'[^a-z0-9]+', '-', stad.lower())}-restaurants/oordelen.json"
+    if os.path.exists(oordelen):
+        uit = {o["kroeg_id"] for o in json.load(open(oordelen)) if o["oordeel"] == "restaurant"}
+        k = [x for x in k if x["id"] not in uit]
+    tags = osm_tags(k)
     extra = json.load(open(extra)) if extra else {}
     google = {}
     gbestand = os.path.join(HIER, f"google-kroegen-{re.sub(r'[^a-z0-9]+', '-', stad.lower()).strip('-')}.json")
@@ -464,7 +477,7 @@ if __name__ == "__main__":
     extra = sys.argv[sys.argv.index("--extra") + 1] if "--extra" in sys.argv else None
     if extra in args: args.remove(extra)
     if not args: print(__doc__); sys.exit(1)
-    stad, stappen = args[0], args[1:] or ["kroegen", "crawl", "lees", "kies", "gevallen"]
+    stad, stappen = args[0], args[1:] or ["restaurants", "kroegen", "crawl", "lees", "kies", "gevallen"]
     gem = rest(f"gemeenten?select=code&naam=eq.{urllib.parse.quote(stad)}")
     if not gem: sys.exit(f"{stad} staat niet in de gemeentelijst")
     belgie = gem[0]["code"].startswith("BE")
@@ -472,6 +485,6 @@ if __name__ == "__main__":
     os.makedirs(map_, exist_ok=True)
     for s in stappen:
         print(f"== {s}")
-        {"kroegen": lambda: stap_kroegen(stad, map_, extra), "crawl": lambda: stap_crawl(map_), "lees": lambda: stap_lees(map_),
+        {"restaurants": lambda: __import__("restaurantfilter").draai(stad), "kroegen": lambda: stap_kroegen(stad, map_, extra), "crawl": lambda: stap_crawl(map_), "lees": lambda: stap_lees(map_),
          "kies": lambda: stap_kies(stad, map_, belgie), "gevallen": lambda: stap_gevallen(map_), "datum": lambda: stap_datum(stad, map_)}[s]()
     print(f"map: {map_}")

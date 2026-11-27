@@ -1234,5 +1234,32 @@ check('de import koppelt een toegevoegde kroeg aan dezelfde kroeg in OSM', gekop
 check('een andere kroeg vlakbij wordt niet gekoppeld maar komt erbij', (await een(`select count(*)::int as n from public.kroegen where gemeente = 'Nijmegen'`)).n === voorImport + 1);
 await db.exec(`update public.profielen set is_beheerder = false where id = '${E}'`);
 
+// Restaurantfilter: een restaurant dat geen kroeg is gaat dicht en blijft dicht, ook na een import; twijfel blijft open
+await db.exec(`insert into public.kroegen (osm_id, naam, soort, gemeente, locatie) values
+  ('node/980', 'Restaurant Gangen', 'restaurant', 'Amsterdam', extensions.st_setsrid(extensions.st_makepoint(4.90, 52.37), 4326)::extensions.geography),
+  ('node/981', 'Eetcafe Borrel', 'restaurant', 'Amsterdam', extensions.st_setsrid(extensions.st_makepoint(4.91, 52.37), 4326)::extensions.geography),
+  ('node/982', 'Bistro Misschien', 'restaurant', 'Amsterdam', extensions.st_setsrid(extensions.st_makepoint(4.92, 52.37), 4326)::extensions.geography)`);
+const rIds = (await db.query(`select id, osm_id from public.kroegen where osm_id in ('node/980','node/981','node/982') order by osm_id`)).rows;
+check('een speler kan restaurantoordelen niet zetten', /permission denied/.test((await als(E, `select public.zet_restaurantoordelen('[]'::jsonb)`)).fout ?? ''));
+const ro = await alsService(`select public.zet_restaurantoordelen($1::jsonb) as r`, [JSON.stringify([
+  { kroeg_id: rIds[0].id, oordeel: 'restaurant', reden: 'alleen een gangenkaart' },
+  { kroeg_id: rIds[1].id, oordeel: 'kroeg', reden: 'borrelkaart' },
+  { kroeg_id: rIds[2].id, oordeel: 'twijfel', reden: 'onduidelijk' },
+])]);
+check('de oordelen worden verwerkt: 3 bijgewerkt, 1 gesloten', ro.rows?.[0]?.r?.bijgewerkt === 3 && ro.rows[0].r.gesloten === 1, JSON.stringify(ro));
+const rOpen = async () => Object.fromEntries((await db.query(`select osm_id, open from public.kroegen where osm_id in ('node/980','node/981','node/982')`)).rows.map((x) => [x.osm_id, x.open]));
+const rO1 = await rOpen();
+check('restaurant gaat dicht, kroeg en twijfel blijven open', rO1['node/980'] === false && rO1['node/981'] === true && rO1['node/982'] === true, JSON.stringify(rO1));
+await alsService(`select public.importeer_kroegen($1::jsonb, 'Amsterdam')`, [JSON.stringify([
+  { osm_id: 'node/980', naam: 'Restaurant Gangen', soort: 'restaurant', lat: 52.37, lon: 4.90 },
+  { osm_id: 'node/981', naam: 'Eetcafe Borrel', soort: 'restaurant', lat: 52.37, lon: 4.91 },
+  { osm_id: 'node/982', naam: 'Bistro Misschien', soort: 'restaurant', lat: 52.37, lon: 4.92 },
+])]);
+const rO2 = await rOpen();
+check('een import opent een restaurant niet opnieuw', rO2['node/980'] === false && rO2['node/981'] === true && rO2['node/982'] === true, JSON.stringify(rO2));
+await alsService(`select public.zet_restaurantoordelen($1::jsonb)`, [JSON.stringify([{ kroeg_id: rIds[0].id, oordeel: 'kroeg', reden: 'na nalopen toch een kroeg' }])]);
+check('een later oordeel kroeg opent hem weer', (await rOpen())['node/980'] === true);
+check('een onbekend oordeel wordt geweigerd', /Onbekend oordeel/.test((await alsService(`select public.zet_restaurantoordelen('[{"kroeg_id": 1, "oordeel": "x"}]'::jsonb)`)).fout ?? ''));
+
 console.log(`\n${ok} goed, ${fout} fout`);
 process.exit(fout ? 1 : 0);
