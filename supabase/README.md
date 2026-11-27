@@ -156,6 +156,7 @@ Overpass is vanuit een cloudsessie wisselend bereikbaar en `osm-import` vraagt e
 2. Rol met `deploy_edge_function` de functie `eenmalig-import` uit met `verify_jwt: false` en alleen dit `index.ts`: `import { start } from "https://raw.githubusercontent.com/Hoogveldt-dev/BPDB-NL/<commit>/supabase/functions/eenmalig-import/index.ts"; start("<hash>");` (geef ook een `deno.json` met `{"imports":{}}` en `import_map_path: "deno.json"` mee). De code wordt bij het uitrollen gebundeld.
 3. `EENMALIG=<sleutel> tools/google-kroegen/importeer-stad.sh <gemeentecode>`: haalt Overpass op met nieuwe pogingen, accepteert alleen een volledig antwoord en stuurt het door naar `osm-import`.
 4. Rol direct een lege versie uit (`verify_jwt: true`, altijd 410) en gooi de sleutel weg.
+5. Draai daarna altijd de prijsscan: `python3 tools/google-kroegen/scan_stad.py <stad>` (zie `docs/menukaartprijzen.md`, Prijsscan na het inladen). Dat geldt ook na een import vanuit de app (Beheer, Stadsaanvragen) en na kroegen uit Google Maps.
 
 ## Kaartscans
 
