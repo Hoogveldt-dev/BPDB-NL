@@ -1833,7 +1833,8 @@ async function laadTijdlijn(id) {
     el.innerHTML = `<div><b>${esc(open.door)}</b> meldt ${euro(open.prijs_cent)} voor ${esc(open.merk)} ${open.volume_cl} cl</div>
       <div class="muted small">${wanneer(open.op)}${open.ter_plaatse ? " · ter plaatse" : ""}${open.uitschieter ? " · wijkt sterk af, twee bevestigingen nodig" : ""}</div>
       ${open.foto_pad ? `<div class="small"><button type="button" class="linkbtn" data-foto="${esc(fotoUrl(open.foto_pad))}">Foto van de prijslijst</button></div>` : ""}
-      ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door andere spelers.</div>`
+      ${eigen ? `<div class="small muted" style="margin-top:8px">Wacht op bevestiging door andere spelers.</div>
+           <div class="small" style="margin-top:8px"><button type="button" class="linkbtn" data-form="${dichtbij ? "hier" : "afstand"}" data-soort="pils" data-anders>Klopt je melding niet? Pas hem aan</button></div>`
         : al ? `<div class="small muted" style="margin-top:8px">Je hebt deze melding al beoordeeld.</div>`
         : !magControleren() ? ""
         : `<div class="btns"><button class="btn good" data-oordeel="klopt" data-g="${open.id}">Klopt</button>
