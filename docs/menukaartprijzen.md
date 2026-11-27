@@ -336,3 +336,13 @@ Daarna de foto's in Google Maps (`menufotos.mjs --extern`, in brokken van 15 kro
 Stand: Utrecht 22 menukaartprijzen, Breda 12, Houten 1. DeepSeek: ongeveer 2,2 miljoen tokens in en 0,6 miljoen uit voor beide rondes samen, ongeveer $ 0,60.
 
 **Zonder datum.** Sinds 26 november 2026 krijgt een goedgekeurde prijs zonder datum van de kaart de dag van kijken. Zo kwamen Klein Berlijn, Café Kanaalzicht, Stadsbrouwerij RoodNoot, Flore (Utrecht) en Heren van Houten erbij.
+
+### Foto's in Google Maps voor Amsterdam, Nijmegen en Helmond, 27 november 2026
+
+`menufotos.mjs --extern` voor 969 kroegen zonder prijs (Amsterdam 820, Nijmegen 122, Helmond 27), in brokken van 15. De container herstartte onderweg en een run stopt na twee uur; een brok dat al klaar is slaat het script over, en twee lopers (een van voren, een van achteren) maakten Amsterdam sneller af. Geen CAPTCHA.
+
+- Amsterdam: 30 prijzen erbij (van 88 naar 117 kroegen met een menukaartprijs). De controleur keurde de steekproeven goed op drie na: Craft & Draft (Gulpener van 30 cl), De Blaffende Vis (prijs niet te lezen) en The Palace (de prijs was van een pint). Vier twijfels buiten 30% van de mediaan zijn goedgekeurd en geïmporteerd; in Amsterdam kost een vaasje van € 4,70 tot € 5 gewoon.
+- Utrecht: Kafé België (Jupiler € 2,50) alsnog geïmporteerd, na goedkeuring door de controleur.
+- Nijmegen en Helmond: geen prijs. Er waren 323 foto's die op een kaart leken, maar daarop stond geen pils met een prijs en maat.
+
+De mediaan per brok van 15 kroegen is te klein voor de grens van 30%: dure maar gewone prijzen in het centrum van Amsterdam worden dan twijfels. Met de controleur erachter gaat daar niets mis. DeepSeek: ongeveer $ 5 voor de hele ronde, vooral voor lange antwoorden bij foto's die niet op een kaart leken.
