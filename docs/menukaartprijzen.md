@@ -358,3 +358,12 @@ De Amsterdamse import (café-vergunning binnen 40 m) nam ook 141 zaken mee die i
 Het oordeel staat op `kroegen` (`restaurant_oordeel`, `restaurant_reden`, `restaurant_beoordeeld_op`, migratie `20261127090000_restaurantoordeel.sql`), geschreven met `zet_restaurantoordelen` (alleen service_role). Een trigger houdt een restaurant dicht, ook als een OSM-import of Google-koppeling hem weer opent. `drankkaarten.py` draait het filter als eerste stap, zodat een nieuwe scan restaurants sluit voordat er een drankkaart voor gelezen wordt. De twijfelgevallen na te lopen: `select naam, restaurant_reden from kroegen where restaurant_oordeel = 'twijfel' and open`.
 
 Amsterdam: van 141 restaurants bleven er 57 als kroeg en 61 als twijfel (48 daarvan zonder website), 23 gingen eruit. Kosten: ongeveer 321.000 tokens in en 39.000 uit.
+
+## Tilburg, 27 november 2026
+
+Na de OSM-import (66 kroegen) kwamen er 70 kroegen uit Google Maps bij (`cli.mjs --gemeentecode GM0855`, zekerheid `hoog`, zonder zaken met de categorie nachtclub, discotheek of dansclub); 39 Google-zaken werden aan een bestaande OSM-kroeg gekoppeld. Daarna `drankkaarten.py Tilburg` en de foto's in Google Maps.
+
+- Websites: 102 van de 136 kroegen hebben er een, 98 gelezen. 10 kandidaten, alle tien goedgekeurd door de controleur en geïmporteerd; twee zonder datum van de kaart kregen de dag van kijken.
+- Foto's in Google Maps: 100 kroegen zonder prijs, 1 prijs (Café De Slijterij, Jupiler € 3,50).
+
+Stand: 11 menukaartprijzen in Tilburg, mediaan € 3,80. Hertog Jan staat het vaakst op de kaart. Geen CAPTCHA.
