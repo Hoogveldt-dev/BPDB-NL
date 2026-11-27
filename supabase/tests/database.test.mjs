@@ -96,6 +96,16 @@ const n0 = await een(`select naam, naam_vast from public.profielen where id = '$
 // Een willekeurige naam: bijvoeglijk naamwoord, streepje, zelfstandig naamwoord (dorstige-zebra), eventueel met een nummer
 const willekeurig = (naam) => /^[a-z]+-[a-z]+[0-9]*$/.test(naam ?? '') && naam.length <= 24;
 check('speler zonder gekozen naam krijgt een willekeurige naam en mag nog kiezen', willekeurig(n0?.naam) && n0.naam_vast === false, JSON.stringify(n0));
+// Verbuiging: een het-woord krijgt de grondvorm (moutig pilsje), een de-woord de e-vorm (koele pul), en er is veel variatie
+{
+  const rij = await db.query(`select private.willekeurige_naam() as naam from generate_series(1, 600)`);
+  const hetNamen = ['pilsje', 'vaasje', 'fust', 'vaatje', 'bierviltje', 'dopje', 'rondje', 'bokbier', 'weizen', 'lager', 'biertje', 'blondje', 'glas', 'vat', 'kratje', 'flesje', 'schuim', 'tapbier', 'tarwebier', 'terras', 'fustje', 'halfje', 'wit', 'bruin', 'trappist', 'abdijbier', 'tafelbier', 'zomerbier', 'winterbier', 'herfstbier'];
+  const delen = rij.rows.map((r) => r.naam.split('-'));
+  const fout = delen.filter(([adj, zn]) => hetNamen.includes(zn) ? /e$/.test(adj) : !/(e|gouden|koperen|tevreden)$/.test(adj));
+  check('biernamen: het-woord met grondvorm, de-woord met e-vorm', fout.length === 0, JSON.stringify(fout.slice(0, 5)));
+  check('biernamen: veel variatie (minstens 40 bijvoeglijke en 40 zelfstandige naamwoorden in 600 namen)', new Set(delen.map((d) => d[0])).size >= 40 && new Set(delen.map((d) => d[1])).size >= 40, `${new Set(delen.map((d) => d[0])).size} / ${new Set(delen.map((d) => d[1])).size}`);
+  check('biernamen: nooit langer dan 24 tekens', rij.rows.every((r) => r.naam.length <= 24));
+}
 const nv = await een(`select naam_vast from public.profielen where id = '${A}'`);
 check('zelfgekozen naam bij aanmelden staat vast', nv?.naam_vast === true, JSON.stringify(nv));
 const r1 = await als(A, `update public.profielen set naam = 'Anna B' where id = '${A}' returning naam`);
