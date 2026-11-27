@@ -920,7 +920,7 @@ await als(B, `select public.beoordeel(${va.id}, 'klopt')`);
 const voorA = await stand(A), voorB = await stand(B);
 const vx = await als(X, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 380)`);
 check('een anonieme speler vervangt een melding niet', /e-mailadres/.test(vx.fout ?? ''), JSON.stringify(vx));
-check('je eigen melding vervang je niet', /eigen melding/.test((await als(A, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 380)`)).fout ?? ''));
+check('dezelfde prijs als je eigen open melding kan niet', /al doorgegeven/.test((await als(A, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 350)`)).fout ?? ''));
 check('dezelfde prijs als de open melding vervangt niet', /staat al open/.test((await als(C, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 350)`)).fout ?? ''));
 check('na die weigeringen wacht de melding nog', (await een(`select status from public.gebeurtenissen where id = ${va.id}`)).status === 'wacht');
 const vc = (await als(C, `select * from public.meld_prijs(${VK['node/971']}, 'Heineken', 25, 380)`)).rows?.[0];
@@ -954,6 +954,18 @@ check('vijf vervangingen op een dag lukken', (await een(`select count(*)::int as
 await als(A, `select * from public.meld_prijs(${VK['node/972']}, 'Heineken', 25, 350)`);
 const zesde = await als(D, `select * from public.meld_prijs(${VK['node/972']}, 'Heineken', 25, 370)`);
 check('de zesde vervanging op een dag wordt geweigerd', /al 5 meldingen/.test(zesde.fout ?? ''), JSON.stringify(zesde));
+
+// Je eigen openstaande melding corrigeer je zelf: de oude vervalt met zijn punten, de nieuwe telt als verse melding
+await db.query(`select private.importeer_kroegen($1, 'Vervangstad')`, [JSON.stringify([{ osm_id: 'node/991', naam: 'Eigen fout', soort: 'pub', lat: 51.86, lon: 5.86 }])]);
+const EK = (await een(`select id from public.kroegen where osm_id = 'node/991'`)).id;
+const ek1 = (await als(A, `select * from public.meld_prijs(${EK}, 'Heineken', 30, 495)`)).rows[0];
+const puntenA = async () => (await een(`select coalesce(sum(punten), 0)::int as n from public.punten where gebruiker_id = '${A}'`)).n;
+const ekPunten1 = await puntenA();
+const ek2 = await als(A, `select * from public.meld_prijs(${EK}, 'Heineken', 35, 495)`);
+check('je eigen melding corrigeer je zelf', !!ek2.rows?.[0] && ek2.rows[0].status === 'wacht' && ek2.rows[0].volume_cl === 35, JSON.stringify(ek2));
+check('de oude eigen melding is vervangen', (await een(`select status from public.gebeurtenissen where id = ${ek1.id}`)).status === 'vervangen');
+check('je krijgt de punten niet dubbel', (await puntenA()) === ekPunten1, `${ekPunten1} nu ${await puntenA()}`);
+check('er staat maar een melding open', (await een(`select count(*)::int as n from public.gebeurtenissen where kroeg_id = ${EK} and status = 'wacht'`)).n === 1);
 
 // Mail naar de beheerder: claim_melding_mail geeft de gegevens voor de mail, hoogstens een keer, alleen aan de melder
 const bugId = bug1.rows[0].id;
