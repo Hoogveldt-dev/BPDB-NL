@@ -89,16 +89,16 @@ begin
       delete from public.punten p
       where p.gebeurtenis_id = open_m.id and p.gebruiker_id = ik and p.reden in ('vrijgespeeld', 'prijswijziging', 'foto');
     else
-    if open_m.prijs_cent = p_prijs_cent and open_m.volume_cl = p_volume_cl and lower(open_m.merk) = lower(trim(p_merk)) then
-      raise exception 'Deze prijs staat al open; tik op "Klopt"' using errcode = 'P0001';
-    end if;
-    if private.is_anoniem() then
-      raise exception 'Er staat al een melding open voor deze kroeg. Koppel eerst je e-mailadres (tabblad Ik) om een andere prijs door te geven' using errcode = '42501';
-    end if;
-    if (select count(*) from public.gebeurtenissen x where x.vervangen_door = ik and x.afgerond_op > now() - interval '1 day') >= 5 then
-      raise exception 'Je hebt vandaag al 5 meldingen van anderen vervangen. Probeer het morgen weer; is een prijs echt fout, zeg dan "Klopt niet"' using errcode = 'P0001';
-    end if;
-    update public.gebeurtenissen set status = 'vervangen', afgerond_op = now(), vervangen_door = ik where id = open_m.id;
+      if open_m.prijs_cent = p_prijs_cent and open_m.volume_cl = p_volume_cl and lower(open_m.merk) = lower(trim(p_merk)) then
+        raise exception 'Deze prijs staat al open; tik op "Klopt"' using errcode = 'P0001';
+      end if;
+      if private.is_anoniem() then
+        raise exception 'Er staat al een melding open voor deze kroeg. Koppel eerst je e-mailadres (tabblad Ik) om een andere prijs door te geven' using errcode = '42501';
+      end if;
+      if (select count(*) from public.gebeurtenissen x where x.vervangen_door = ik and x.afgerond_op > now() - interval '1 day') >= 5 then
+        raise exception 'Je hebt vandaag al 5 meldingen van anderen vervangen. Probeer het morgen weer; is een prijs echt fout, zeg dan "Klopt niet"' using errcode = 'P0001';
+      end if;
+      update public.gebeurtenissen set status = 'vervangen', afgerond_op = now(), vervangen_door = ik where id = open_m.id;
     end if;
   end if;
 
