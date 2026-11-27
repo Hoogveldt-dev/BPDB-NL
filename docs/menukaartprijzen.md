@@ -346,3 +346,15 @@ Stand: Utrecht 22 menukaartprijzen, Breda 12, Houten 1. DeepSeek: ongeveer 2,2 m
 - Nijmegen en Helmond: geen prijs. Er waren 323 foto's die op een kaart leken, maar daarop stond geen pils met een prijs en maat.
 
 De mediaan per brok van 15 kroegen is te klein voor de grens van 30%: dure maar gewone prijzen in het centrum van Amsterdam worden dan twijfels. Met de controleur erachter gaat daar niets mis. DeepSeek: ongeveer $ 5 voor de hele ronde, vooral voor lange antwoorden bij foto's die niet op een kaart leken.
+
+## Restaurants zonder kroegkenmerken, 27 november 2026
+
+De Amsterdamse import (café-vergunning binnen 40 m) nam ook 141 zaken mee die in OpenStreetMap als restaurant staan. Een restaurant hoort in Bierkoers alleen als je er ook gewoon een biertje kunt drinken. `tools/google-kroegen/restaurantfilter.py <stad>` laat DeepSeek per restaurant de website lezen (tekst, hoogstens 24.000 tekens, zonder kaartfoto's) en geeft een oordeel:
+
+- `kroeg`: losse drank- of borrelkaart, borrelhapjes, bar of tap, een naam als café of eetcafé, of een keuken die eerder sluit dan de zaak. Blijft.
+- `twijfel`: onduidelijk, geen website, of een naam met café, bar of pub bij een gangenkaart. Blijft, met een markering om na te lopen.
+- `restaurant`: een kaart van gangen of gerechten met drank als bijzaak. De kroeg wordt gesloten; de geschiedenis blijft.
+
+Het oordeel staat op `kroegen` (`restaurant_oordeel`, `restaurant_reden`, `restaurant_beoordeeld_op`, migratie `20261127090000_restaurantoordeel.sql`), geschreven met `zet_restaurantoordelen` (alleen service_role). Een trigger houdt een restaurant dicht, ook als een OSM-import of Google-koppeling hem weer opent. `drankkaarten.py` draait het filter als eerste stap, zodat een nieuwe scan restaurants sluit voordat er een drankkaart voor gelezen wordt. De twijfelgevallen na te lopen: `select naam, restaurant_reden from kroegen where restaurant_oordeel = 'twijfel' and open`.
+
+Amsterdam: van 141 restaurants bleven er 57 als kroeg en 61 als twijfel (48 daarvan zonder website), 23 gingen eruit. Kosten: ongeveer 321.000 tokens in en 39.000 uit.
