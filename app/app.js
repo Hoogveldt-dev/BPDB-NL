@@ -2155,12 +2155,14 @@ async function guinnessKoers() {
 async function beursView() {
   // In de Guinness-stand gaat de hele Beurs over Guinness: index, prijsbewegingen, in kaart, buurten en meldingen
   const guinness = guinnessAan();
+  // Laatste meldingen: van de stad in beeld, of van alle steden (state.meldingenAlle)
+  const voorStad = (q, kolom) => state.meldingenAlle ? q : q.eq(kolom, stadNaam);
   const [{ data: wijken }, { data: recent }, gPunten] = await Promise.all([
     sb.from("wijk_voortgang").select("*").eq("gemeente", stadNaam).order("naam"),
     guinness
-      ? sb.from("kroeg_aanbod").select("id,kroeg_id,volume_cl,prijs_cent,op,status,door:profielen(naam),kroegen!inner(naam,gemeente)")
-        .eq("soort", GUINNESS).eq("kroegen.gemeente", stadNaam).order("op", { ascending: false }).limit(15)
-      : sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler").eq("gemeente", stadNaam).order("op", { ascending: false }).limit(15),
+      ? voorStad(sb.from("kroeg_aanbod").select("id,kroeg_id,volume_cl,prijs_cent,op,status,door:profielen(naam),kroegen!inner(naam,gemeente)")
+        .eq("soort", GUINNESS), "kroegen.gemeente").order("op", { ascending: false }).limit(15)
+      : voorStad(sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,gemeente,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler"), "gemeente").order("op", { ascending: false }).limit(15),
     guinness ? guinnessKoers() : null,
   ]);
   if (state.tab !== "beurs" || state.selected != null || state.pagina) return;
@@ -2210,14 +2212,14 @@ async function beursView() {
     const verschil = g.soort === "wijziging" && g.vorige_prijs_cent != null ? g.prijs_cent - g.vorige_prijs_cent : null;
     return `<li><button class="row" data-kroeg="${g.kroeg_id}">
       <span class="row-main"><span class="row-title">${codeHtml(g.kroeg_id)}${esc(g.door ?? "Iemand")} ${g.soort === "eerst" ? "ontdekte" : g.soort === "wijziging" ? "wijzigde" : "controleerde"} ${esc(g.kroeg)}</span>
-      <span class="row-sub">${wanneer(g.op)}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span>
+      <span class="row-sub">${wanneer(g.op)}${state.meldingenAlle && g.gemeente ? ` · ${esc(g.gemeente)}` : ""}${g.status === "wacht" ? " · wacht op bevestiging" : g.status === "weerlegd" ? " · weerlegd" : ""}</span></span>
       ${g.soort !== "check" && per25 ? `<span class="price">${euro(g.prijs_cent)}${verschil ? `<small class="delta ${richting(verschil)}">${KOERS_TAAL[richting(verschil)]} ${bedrag(verschil)}</small>` : `<small>${g.volume_cl} cl</small>`}</span>` : ""}</button></li>`;
   };
 
   // Een Guinness-melding: een nieuwe prijs vervangt de oude (status vervangen), "weg" is afgekeurd
   const guinnessMelding = (a) => `<li><button class="row" data-kroeg="${a.kroeg_id}">
       <span class="row-main"><span class="row-title">${codeHtml(a.kroeg_id)}${esc(a.door?.naam ?? "Iemand")} meldde Guinness bij ${esc(a.kroegen?.naam ?? "")}</span>
-      <span class="row-sub">${wanneer(a.op)}${a.status === "weg" ? " · afgekeurd" : ""}</span></span>
+      <span class="row-sub">${wanneer(a.op)}${state.meldingenAlle && a.kroegen?.gemeente ? ` · ${esc(a.kroegen.gemeente)}` : ""}${a.status === "weg" ? " · afgekeurd" : ""}</span></span>
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}<small>${a.volume_cl} cl</small></span>` : ""}</button></li>`;
 
   body.innerHTML = `
@@ -2251,7 +2253,8 @@ async function beursView() {
     <h3>Sectoren <span class="muted">tik voor de kaart</span></h3>
     ${(wijken ?? []).length ? `<div class="card" style="padding:4px 14px">${(wijken ?? []).map(sector).join("")}</div>` : `<div class="muted small">Nog geen wijken geladen.</div>`}
     <h3>Laatste meldingen</h3>
-    ${(recent ?? []).length ? `<ul class="list">${recent.map(guinness ? guinnessMelding : melding).join("")}</ul>` : `<div class="muted small">Nog geen activiteit.</div>`}`;
+    <div class="chips">${[[false, "Deze stad"], [true, "Alle steden"]].map(([alle, n]) => `<button class="chip" data-meldingen="${alle}" aria-pressed="${!!state.meldingenAlle === alle}">${n}</button>`).join("")}</div>
+    ${(recent ?? []).length ? `<ul class="list">${recent.map(guinness ? guinnessMelding : melding).join("")}</ul>` : `<div class="muted small">${state.meldingenAlle ? "Nog geen activiteit." : `Nog geen activiteit in ${esc(stadNaam)}. Kies Alle steden voor de laatste meldingen van het hele land.`}</div>`}`;
 }
 
 async function rangView() {
@@ -3637,6 +3640,7 @@ body.addEventListener("click", (e) => {
   if (t.dataset.wijk) return kiesWijk(t.dataset.wijk);
   if (t.dataset.meer !== undefined) { state.limiet += 40; return draw(); }
   if (t.dataset.locatieLijst !== undefined) return locatie().then((pos) => { if (!pos) toast("Locatie niet beschikbaar. Sta hem toe in de instellingen van je browser."); draw(); });
+  if (t.dataset.meldingen) { state.meldingenAlle = t.dataset.meldingen === "true"; return beursView(); }
   if (t.dataset.periode) { state.periode = t.dataset.periode; return rangView(); }
   if (t.dataset.form) {
     const k = state.kroegen.find((x) => x.id === state.selected);
