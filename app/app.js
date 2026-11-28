@@ -1111,15 +1111,27 @@ function setDetent(d) {
 // Per stad komen de kroegen, de koersen, de laatste activiteit, Guinness en de grens in een keer binnen en worden ze
 // samengevoegd met wat er al is. Een stad die al geladen is, wordt alleen opnieuw geladen bij vernieuw().
 const geladen = new Set(), bezigMet = new Set();
+// De database geeft hoogstens 1000 rijen per verzoek (Amsterdam heeft meer kroegen): haal ze in delen op.
+// maak() bouwt steeds een nieuwe query; de volgorde moet vastliggen, anders vallen er rijen tussen de delen.
+async function alleRijen(maak) {
+  const rijen = [];
+  for (let van = 0; ; van += 1000) {
+    const { data, error } = await maak().range(van, van + 999);
+    if (error) return { data: null, error };
+    rijen.push(...data);
+    if (data.length < 1000) return { data: rijen, error: null };
+  }
+}
+
 async function laadSteden(namen, opnieuw = false) {
   namen = [...new Set(namen)].filter((n) => n && !bezigMet.has(n) && (opnieuw || !geladen.has(n)));
   if (!namen.length) return;
   namen.forEach((n) => bezigMet.add(n));
   const [kroegen, koers, recent, aanbod, grenzen] = await Promise.all([
-    sb.from("kroeg_kaart").select("*").in("gemeente", namen).eq("open", true).order("naam"),
+    alleRijen(() => sb.from("kroeg_kaart").select("*").in("gemeente", namen).eq("open", true).order("naam").order("id")),
     // Een menukaart die achterhaald bleek, was op die datum wel de prijs; die telt dus mee
-    sb.from("kroeg_tijdlijn").select("kroeg_id,gemeente,soort,status,prijs_cent,volume_cl,op,bron").in("gemeente", namen)
-      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).limit(20000),
+    alleRijen(() => sb.from("kroeg_tijdlijn").select("kroeg_id,gemeente,soort,status,prijs_cent,volume_cl,op,bron").in("gemeente", namen)
+      .neq("soort", "check").or("status.eq.bevestigd,bron.eq.menukaart").order("op", { ascending: true }).order("id")),
     // De laatste activiteit van spelers voor de lichtkrant: controles komen veel vaker voor dan prijswijzigingen
     sb.from("kroeg_tijdlijn").select("kroeg_id,gemeente,soort,status,op").in("gemeente", namen).eq("status", "bevestigd").eq("bron", "speler")
       .order("op", { ascending: false }).limit(40 * namen.length),
@@ -1692,7 +1704,7 @@ function aanbodBlok(k) {
   return `<h3>Guinness</h3>
     ${a ? `<div class="aanbod">
       <div class="aanbod-main"><b>Guinness van de tap</b>${a.volume_cl ? ` <span class="muted">${a.volume_cl === PINT ? "pint" : `${a.volume_cl} cl`}</span>` : ""}
-        <div class="small muted">${esc(a.door ?? "Onbekend")}, ${wanneer(a.gecontroleerd_op ?? a.op)}${a.klopt_niet ? " · 1 keer klopt niet" : ""}</div></div>
+        <div class="small muted">${a.door_id ? esc(a.door ?? "Onbekend") : "Van de menukaart"}, ${wanneer(a.gecontroleerd_op ?? a.op)}${a.klopt_niet ? " · 1 keer klopt niet" : ""}</div></div>
       ${a.prijs_cent ? `<span class="price">${euro(a.prijs_cent)}</span>` : `<span class="small muted">prijs?</span>`}
       <div class="aanbod-knoppen">${knoppen}</div>
     </div>
@@ -1715,7 +1727,7 @@ function guinnessPrijsHtml(k) {
 // kroeg_aanbod is een stap. Onder het Guinness-blok, en in de Guinness-stand ook als koersverloop (per pint).
 async function laadGuinness(id) {
   if (!aanbodVan(id).some((x) => x.soort === GUINNESS) && !guinnessAan()) return;
-  const { data } = await sb.from("kroeg_aanbod").select("id,volume_cl,prijs_cent,op,status,door:profielen(naam)")
+  const { data } = await sb.from("kroeg_aanbod").select("id,volume_cl,prijs_cent,op,status,door_id,door:profielen(naam)")
     .eq("kroeg_id", id).eq("soort", GUINNESS).order("op");
   if (state.selected !== id || state.form || state.aanbodForm || state.tijdenForm) return;
   const rijen = data ?? [];
@@ -1730,7 +1742,7 @@ async function laadGuinness(id) {
       // Een vervangen prijs spreekt voor zich: de regel erboven toont de wijziging
       const status = a.status === "weg" ? " (afgekeurd)" : "";
       return `<li class="${a.status === "actief" ? "" : a.status === "weg" ? "weerlegd" : "vervangen"}"><div class="t-what">${wat}${status ? `<span>${status}</span>` : ""}</div>
-        <div class="t-meta">${wanneer(a.op)} door ${esc(a.door?.naam ?? "onbekend")}${a.volume_cl ? ` · ${a.volume_cl} cl` : ""}</div></li>`;
+        <div class="t-meta">${wanneer(a.op)} ${a.door_id ? `door ${esc(a.door?.naam ?? "onbekend")}` : "van de menukaart"}${a.volume_cl ? ` · ${a.volume_cl} cl` : ""}</div></li>`;
     });
     // Alleen tonen als er iets te volgen is: meer dan de ene melding die er al boven staat
     // In de Guinness-stand is dit de Geschiedenis; anders staat ze onder het Guinness-blok, alleen als er iets te volgen is
@@ -2161,7 +2173,7 @@ async function beursView() {
     sb.from("wijk_voortgang").select("*").eq("gemeente", stadNaam).order("naam"),
     guinness
       ? voorStad(sb.from("kroeg_aanbod").select("id,kroeg_id,volume_cl,prijs_cent,op,status,door:profielen(naam),kroegen!inner(naam,gemeente)")
-        .eq("soort", GUINNESS), "kroegen.gemeente").order("op", { ascending: false }).limit(15)
+        .eq("soort", GUINNESS).not("door_id", "is", null), "kroegen.gemeente").order("op", { ascending: false }).limit(15)
       : voorStad(sb.from("kroeg_tijdlijn").select("id,kroeg_id,kroeg,gemeente,soort,status,door,op,prijs_cent,vorige_prijs_cent,volume_cl").eq("bron", "speler"), "gemeente").order("op", { ascending: false }).limit(15),
     guinness ? guinnessKoers() : null,
   ]);

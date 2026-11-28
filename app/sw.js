@@ -1,5 +1,5 @@
 // Eenvoudige service worker: app-schil offline beschikbaar, data altijd vers van het netwerk.
-const CACHE = "bierkoers-v86";
+const CACHE = "bierkoers-v87";
 const SCHIL = ["./", "index.html", "styles.css", "app.js", "overpass.js", "kaartscan.js", "en.js", "config.js", "icon.svg", "icon-180.png", "icon-512.png", "icon-maskable-512.png", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {

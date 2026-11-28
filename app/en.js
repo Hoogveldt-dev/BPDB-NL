@@ -255,6 +255,7 @@ export const EN = {
   "Gewijzigd: * → *": "Changed: * → *",
   "Gecontroleerd: klopt nog": "Checked: still correct",
   "* door *": "* by *",
+  "* van de menukaart": "* from the menu",
   "bevestigd door *": "confirmed by *",
   "weerlegd door *": "refuted by *",
   "ter plaatse": "on site",
