@@ -2,7 +2,8 @@
 """Prijsscan voor een stad, de vaste laatste stap na het inladen van kroegen (OSM-import of kroegen uit Google Maps).
 
 Stappen, elk met DeepSeek als lezer en controleur:
-  1. websites   drankkaarten.py <stad> (restaurantfilter, crawlen, lezen, kandidaten), deepseek-controleur.mjs, stap datum
+  1. websites   drankkaarten.py <stad> (restaurantfilter, crawlen, lezen, kandidaten), deepseek-controleur.mjs, stap datum,
+                en Guinness uit dezelfde tapbieren (guinness.py, import-guinness.json)
   2. foto's     menufotos.mjs --extern voor de kroegen met een Google-koppeling die daarna nog geen prijs hebben,
                 in brokken van 15 (een afgebroken run gaat verder waar hij was), en deepseek-controleur.mjs
 Is het DeepSeek-tegoed op, dan slaat het script de rest over met een melding en eindigt het zonder fout: de kroegen
@@ -17,6 +18,7 @@ Gebruik: python3 scan_stad.py <stad> [--zonder-fotos]
 import datetime, glob, json, os, re, subprocess, sys, urllib.error, urllib.parse, urllib.request
 
 import drankkaarten as dk
+import guinness
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 NODE = {**os.environ, "NODE_USE_ENV_PROXY": "1", "NODE_NO_WARNINGS": "1"}
@@ -106,6 +108,12 @@ if __name__ == "__main__":
         controleer(f"{map_}/gevallen")
         subprocess.run([sys.executable, "drankkaarten.py", stad, "datum"], cwd=HIER, check=True)
     importeer(f"{map_}/import.json")
+    # Guinness uit dezelfde tapbieren: geen nieuwe scan, alleen nakijken (guinness.py)
+    if os.path.exists(f"{map_}/tapbieren.json") and not os.path.exists(f"{map_}/import-guinness.json"):
+        if not tegoed(): stop_zonder_tegoed("Guinness en de foto's")
+        g = guinness.rijen([f"{map_}/tapbieren.json"])
+        json.dump(g, open(f"{map_}/import-guinness.json", "w"), ensure_ascii=False)
+        guinness.importeer(g)
     if "--zonder-fotos" not in sys.argv:
         fotos(stad, map_)
     print(f"map: {map_}")
