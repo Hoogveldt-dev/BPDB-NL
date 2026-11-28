@@ -2497,6 +2497,24 @@ function stadKeuzeBlok() {
       `<option value="${esc(s.gemeente)}"${s.gemeente === stadNaam ? " selected" : ""}>${esc(s.gemeente)} (${s.kroegen})</option>`).join("")}</select></div>`;
 }
 
+// Tik op het beursbord: een lijst met steden om snel te wisselen, met onderaan de weg naar de Beurs
+function stadMenu() {
+  const m = $("#stadMenu");
+  if (!m.hidden) { m.hidden = true; return; }
+  const steden = [...(state.steden ?? [])].sort((a, b) => b.kroegen - a.kroegen || a.gemeente.localeCompare(b.gemeente));
+  m.innerHTML = steden.map((s) => `<button type="button" role="menuitem" data-stad="${esc(s.gemeente)}"${s.gemeente === stadNaam ? ' aria-current="true"' : ""} data-geen-teksten>${esc(s.gemeente)}<span>${s.kroegen}</span></button>`).join("")
+    + `<button type="button" role="menuitem" class="beurs" data-beurs>Naar de Beurs</button>`;
+  m.hidden = false;
+}
+$("#stadMenu").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  $("#stadMenu").hidden = true;
+  if (b.dataset.beurs != null) { setTab("beurs"); if (!wide() && sheet.dataset.detent === "peek") setDetent("half"); return; }
+  kiesStad(b.dataset.stad);
+});
+document.addEventListener("click", (e) => { if (!e.target.closest("#stadMenu, #hud")) $("#stadMenu").hidden = true; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#stadMenu").hidden = true; });
+
 // Stad kiezen onder Ik: de kaart vliegt erheen
 function kiesStad(naam) {
   if (naam === stadNaam) return;
@@ -3875,7 +3893,9 @@ $("#tabs").addEventListener("click", (e) => {
 $("#guinness").addEventListener("click", () => setGuinness(!guinnessAan()));
 $("#modus").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setModus(b.dataset.modus); });
 $("#ticker").addEventListener("click", (e) => { const b = e.target.closest("[data-kroeg]"); if (b) openKroeg(b.dataset.kroeg); });
-$("#hud").addEventListener("click", () => { setTab(state.modus === "mijn" ? "ik" : "beurs"); if (!wide() && sheet.dataset.detent === "peek") setDetent("half"); });
+$("#hud").addEventListener("click", () => {
+  if ((state.steden?.length ?? 0) > 1) return stadMenu();
+  setTab(state.modus === "mijn" ? "ik" : "beurs"); if (!wide() && sheet.dataset.detent === "peek") setDetent("half"); });
 $("#locate").addEventListener("click", async () => {
   const pos = await locatie();
   if (!pos) return toast("Locatie niet beschikbaar");
