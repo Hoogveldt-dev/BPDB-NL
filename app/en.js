@@ -16,6 +16,8 @@ export const EN = {
   "Kaart met kroegen": "Map of pubs",
   "Lichtkrant met de laatste koersen": "Ticker with the latest prices",
   "Naar de beurs": "To the market",
+  "Naar de Beurs": "To the market",
+  "Stad kiezen": "Choose a city",
   "Naar de kaart": "To the map",
   "Naar mijn locatie": "To my location",
   "Terug naar pils": "Back to lager",
